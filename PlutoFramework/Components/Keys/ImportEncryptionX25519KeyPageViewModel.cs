@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Model;
 using PlutoFrameworkCore;
 
 namespace PlutoFramework.Components.Keys
@@ -52,6 +53,14 @@ namespace PlutoFramework.Components.Keys
         {
             await Model.KeysModel.GenerateNewEncryptionX25519KeyAsync();
             
+            await Navigation.Invoke();
+        }
+
+        [RelayCommand]
+        public async Task ImportJsonAsync()
+        {
+            await KeysModel.ImportJsonX25519KeyAsync();
+
             await Navigation.Invoke();
         }
     }
