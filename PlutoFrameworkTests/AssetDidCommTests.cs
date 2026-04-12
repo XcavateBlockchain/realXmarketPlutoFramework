@@ -1,4 +1,6 @@
-﻿using Nethereum.JsonRpc.Client;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using Nethereum.JsonRpc.Client;
+using NSec.Cryptography;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.AjunaExt;
@@ -125,6 +127,31 @@ namespace PlutoFrameworkTests
             {
                 Console.WriteLine($"BucketId: {bucket.BucketId.Value}, BucketName: {bucket.Name}");
             }
+        }
+
+        [Test]
+        public async Task GetEncryptionKeyAsync()
+        {
+            string pinataMsgUri = "https://aquamarine-legal-boa-846.mypinata.cloud/ipfs/" +
+                                  "bafkreibthu6knasfrjosu3rymnpb6reqogkqhang4lsae3zbonxi2dn4n4";
+
+            // pubKey: "wRBdNn0vOUKQL8gbAE_xYia1G2FbpeW8DgpQk94nTSE"
+            byte[] privKeyBytes = WebEncoders.Base64UrlDecode("T4-XrTkRIewEZfeq5fGoKEIQSEyiKUXCDSNzXHlIL7k");
+
+            var encKeyJson = await AssetDidCommModel.GetMessageFromUriAsync(pinataMsgUri, privKeyBytes);
+            Console.WriteLine($"encKeyJson: {encKeyJson}");
+        }
+
+        [Test]
+        public async Task GetMessageAsync()
+        {
+            string pinataMsgUri = "https://aquamarine-legal-boa-846.mypinata.cloud/ipfs/" +
+                                  "bafkreihp2bwlmwqa4oachxases2n4wlxzuspxt54egiv5mhldvmmumfwxy";
+
+            byte[] privKeyBytes = WebEncoders.Base64UrlDecode("11oBBQvMVTeSYFbvgpN0E136M9_Ag57WWYkpKztBJp8");
+
+            var msg = await AssetDidCommModel.GetMessageFromUriAsync(pinataMsgUri, privKeyBytes, true);
+            Console.WriteLine($"message: {msg}");
         }
     }
 }

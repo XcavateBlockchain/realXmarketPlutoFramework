@@ -1,7 +1,9 @@
-﻿using NSec.Cryptography;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using NSec.Cryptography;
 using Org.BouncyCastle.Crypto.Agreement.Kdf;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
 using Substrate.NetApi.Extensions;
 using System.Security.Cryptography;
@@ -24,7 +26,7 @@ namespace PlutoFrameworkCore.AssetDidComm
                 { "alg", "ECDH-ES+A256KW" }
             });
 
-            var protectedB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(protectedHeaderJson));
+            var protectedB64 = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(protectedHeaderJson));
             var aad = Encoding.ASCII.GetBytes(protectedB64); // AAD is the base64url(protected)
 
             // Encrypt plaintext with AES-GCM (A256GCM): produce iv, ciphertext, tag
@@ -65,7 +67,7 @@ namespace PlutoFrameworkCore.AssetDidComm
                 var zBytes = z.Export(SharedSecretBlobFormat.RawSharedSecret); // 32 bytes
 
                 // Concat KDF (SHA-256) to derive KEK for A256KW (256-bit)
-                byte[] otherInfo = BuildOtherInfo(alg: "A256KW", apu: null, apv: null, keyDataLenBits: 256);
+                byte[] otherInfo = BuildOtherInfo(alg: "ECDH-ES+A256KW", apu: null, apv: null, keyDataLenBits: 256);
                 var kdf = new ConcatenationKdfGenerator(new Sha256Digest());
                 kdf.Init(new KdfParameters(zBytes, otherInfo));
 
@@ -88,10 +90,10 @@ namespace PlutoFrameworkCore.AssetDidComm
                         {
                             ["kty"] = "OKP",
                             ["crv"] = "X25519",
-                            ["x"] = Convert.ToBase64String(epkPub)
+                            ["x"] = WebEncoders.Base64UrlEncode(epkPub)
                         }
                     },
-                    ["encrypted_key"] = Convert.ToBase64String(encryptedKey),
+                    ["encrypted_key"] = WebEncoders.Base64UrlEncode(encryptedKey),
                 });
             }
 
@@ -99,9 +101,9 @@ namespace PlutoFrameworkCore.AssetDidComm
             var jwe = new Dictionary<string, object>
             {
                 ["protected"] = protectedB64,
-                ["iv"] = Convert.ToBase64String(iv),
-                ["ciphertext"] = Convert.ToBase64String(cipher),
-                ["tag"] = Convert.ToBase64String(tag),
+                ["iv"] = WebEncoders.Base64UrlEncode(iv),
+                ["ciphertext"] = WebEncoders.Base64UrlEncode(cipher),
+                ["tag"] = WebEncoders.Base64UrlEncode(tag),
                 ["recipients"] = recipientsArray
             };
 
@@ -120,23 +122,23 @@ namespace PlutoFrameworkCore.AssetDidComm
         /// <param name="recipientPublicKey">Recipient's raw 32-byte X25519 public key</param>
         /// <param name="recipientPrivateKey">Recipient's raw 32-byte X25519 private key</param>
         /// <returns>UTF-8 plaintext</returns>
-        public static string DecryptForRecipient(string jweJson, byte[] recipientPublicKey, Key recipientSecretKey)
+        public static string DecryptForRecipient(string jweJson, Key recipientSecretKey)
         {
             using var doc = JsonDocument.Parse(jweJson);
             var root = doc.RootElement;
 
             // Extract core JWE parts
             var protectedB64 = root.GetProperty("protected").GetString()!;
-            var iv = Convert.FromBase64String(root.GetProperty("iv").GetString()!);
-            var ciphertext = Convert.FromBase64String(root.GetProperty("ciphertext").GetString()!);
-            var tag = Convert.FromBase64String(root.GetProperty("tag").GetString()!);
+            var iv = WebEncoders.Base64UrlDecode(root.GetProperty("iv").GetString()!);
+            var ciphertext = WebEncoders.Base64UrlDecode(root.GetProperty("ciphertext").GetString()!);
+            var tag = WebEncoders.Base64UrlDecode(root.GetProperty("tag").GetString()!);
             var recipients = root.GetProperty("recipients");
 
             // AAD is the ASCII of the base64url(protected)
             var aad = Encoding.ASCII.GetBytes(protectedB64);
 
             // Validate enc from protected header
-            var protectedJson = Encoding.UTF8.GetString(Convert.FromBase64String(protectedB64));
+            var protectedJson = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(protectedB64));
             using (var ph = JsonDocument.Parse(protectedJson))
             {
                 if (!ph.RootElement.TryGetProperty("enc", out var encEl) || encEl.GetString() != "A256GCM")
@@ -162,13 +164,13 @@ namespace PlutoFrameworkCore.AssetDidComm
                 if (epk.GetProperty("kty").GetString() != "OKP") continue;
                 if (epk.GetProperty("crv").GetString() != "X25519") continue;
 
-                var epkX = Convert.FromBase64String(epk.GetProperty("x").GetString()!);
+                var epkX = WebEncoders.Base64UrlDecode(epk.GetProperty("x").GetString()!);
 
                 // Optional apu/apv (base64url in JOSE)
                 byte[]? apu = header.TryGetProperty("apu", out var apuEl)
-                    ? Convert.FromBase64String(apuEl.GetString()!) : null;
+                    ? WebEncoders.Base64UrlDecode(apuEl.GetString()!) : null;
                 byte[]? apv = header.TryGetProperty("apv", out var apvEl)
-                    ? Convert.FromBase64String(apvEl.GetString()!) : null;
+                    ? WebEncoders.Base64UrlDecode(apvEl.GetString()!) : null;
 
                 // ECDH -> Z using recipient's private key & sender's epk
                 var senderEpk = PublicKey.Import(KeyAgreementAlgorithm.X25519, epkX, KeyBlobFormat.RawPublicKey);
@@ -180,7 +182,7 @@ namespace PlutoFrameworkCore.AssetDidComm
                 var zBytes = z.Export(SharedSecretBlobFormat.RawSharedSecret); // 32 bytes
 
                 // Concat KDF -> KEK (256 bits for A256KW)
-                var otherInfo = BuildOtherInfo("A256KW", apu, apv, 256);
+                var otherInfo = BuildOtherInfo("ECDH-ES+A256KW", apu, apv, 256);
                 var kdf = new ConcatenationKdfGenerator(new Sha256Digest());
                 kdf.Init(new KdfParameters(zBytes, otherInfo));
 
@@ -188,7 +190,7 @@ namespace PlutoFrameworkCore.AssetDidComm
                 kdf.GenerateBytes(kek, 0, kek.Length);
 
                 // AES-KW unwrap CEK
-                var encryptedKey = Convert.FromBase64String(rec.GetProperty("encrypted_key").GetString()!);
+                var encryptedKey = WebEncoders.Base64UrlDecode(rec.GetProperty("encrypted_key").GetString()!);
 
                 byte[] cekCandidate;
 
@@ -219,6 +221,57 @@ namespace PlutoFrameworkCore.AssetDidComm
             var decrypted = AesGcm.Decrypt(cek, iv, aad, ciphertext, tag);
 
             return Encoding.UTF8.GetString(decrypted);
+        }
+
+        public static string DecryptCompact(string compactJwe, Key recipientSecretKey)
+        {
+            var parts = compactJwe.Split('.');
+            if (parts.Length != 5)
+                throw new ArgumentException("Invalid Compact JWE format.");
+
+            byte[] aad = Encoding.ASCII.GetBytes(parts[0]);
+
+            var headerJson = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(parts[0]));
+            var encryptedKey = WebEncoders.Base64UrlDecode(parts[1]);
+            var iv = WebEncoders.Base64UrlDecode(parts[2]);
+            var ciphertext = WebEncoders.Base64UrlDecode(parts[3]);
+            var tag = WebEncoders.Base64UrlDecode(parts[4]);
+
+            using var headerDoc = JsonDocument.Parse(headerJson);
+            var header = headerDoc.RootElement;
+            var epkX = WebEncoders.Base64UrlDecode(header.GetProperty("epk").GetProperty("x").GetString()!);
+
+            var senderEpk = PublicKey.Import(KeyAgreementAlgorithm.X25519, epkX, KeyBlobFormat.RawPublicKey);
+            using var z = KeyAgreementAlgorithm.X25519.Agree(
+                recipientSecretKey,
+                senderEpk,
+                new SharedSecretCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
+
+            var zBytes = z.Export(SharedSecretBlobFormat.RawSharedSecret);
+
+            var otherInfo = BuildOtherInfo("ECDH-ES+A256KW", null, null, 256);
+            var kdf = new ConcatenationKdfGenerator(new Sha256Digest());
+            kdf.Init(new KdfParameters(zBytes, otherInfo));
+            var kek = new byte[32];
+            kdf.GenerateBytes(kek, 0, kek.Length);
+
+            var wrap = new Rfc3394WrapEngine(new AesEngine());
+            wrap.Init(false, new KeyParameter(kek));
+            byte[] cek = wrap.Unwrap(encryptedKey, 0, encryptedKey.Length);
+
+            byte[] input = new byte[ciphertext.Length + tag.Length];
+            Buffer.BlockCopy(ciphertext, 0, input, 0, ciphertext.Length);
+            Buffer.BlockCopy(tag, 0, input, ciphertext.Length, tag.Length);
+
+            var cipher = new GcmBlockCipher(new AesEngine());
+            var parameters = new AeadParameters(new KeyParameter(cek), 128, iv, aad);
+            cipher.Init(false, parameters);
+
+            byte[] decryptedBytes = new byte[cipher.GetOutputSize(input.Length)];
+            int len = cipher.ProcessBytes(input, 0, input.Length, decryptedBytes, 0);
+            cipher.DoFinal(decryptedBytes, len);
+
+            return Encoding.UTF8.GetString(decryptedBytes).TrimEnd('\0');
         }
 
         static byte[] BuildOtherInfo(string alg, byte[]? apu, byte[]? apv, int keyDataLenBits)

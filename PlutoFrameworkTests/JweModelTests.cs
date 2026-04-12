@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace PlutoFrameworkTests
 {
@@ -22,7 +23,7 @@ namespace PlutoFrameworkTests
 
         private static string DecodeProtectedJson(string protectedB64)
         {
-            var json = Encoding.UTF8.GetString(Convert.FromBase64String(protectedB64));
+            var json = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(protectedB64));
             return json;
         }
 
@@ -54,7 +55,7 @@ namespace PlutoFrameworkTests
             // Act
             var jweObj = EncryptCall(new[] { pk }, plaintext);
             var jwe = ToJson(jweObj);
-            var decrypted = JweModel.DecryptForRecipient(jwe, pk, sk);
+            var decrypted = JweModel.DecryptForRecipient(jwe, sk);
 
             // Assert
             Assert.That(decrypted, Is.EqualTo(plaintext));
@@ -72,7 +73,7 @@ namespace PlutoFrameworkTests
             // Act: encrypt for three recipients, then decrypt using #2
             var jweObj = EncryptCall(new[] { pk1, pk2, pk3 }, plaintext);
             var jwe = ToJson(jweObj);
-            var decrypted = JweModel.DecryptForRecipient(jwe, pk2, sk2);
+            var decrypted = JweModel.DecryptForRecipient(jwe, sk2);
 
             // Assert
             Assert.That(decrypted, Is.EqualTo(plaintext));
@@ -90,7 +91,7 @@ namespace PlutoFrameworkTests
             var jwe = ToJson(jweObj);
 
             // Act + Assert
-            Assert.Throws<CryptographicException>(() => JweModel.DecryptForRecipient(jwe, intendedPk, wrongSk));
+            Assert.Throws<CryptographicException>(() => JweModel.DecryptForRecipient(jwe, wrongSk));
         }
 
         [Test]
@@ -160,7 +161,7 @@ namespace PlutoFrameworkTests
             var tampered = ToJson(jweObj);
 
             // Act + Assert
-            Assert.Throws<NotSupportedException>(() => JweModel.DecryptForRecipient(tampered, pk, sk));
+            Assert.Throws<NotSupportedException>(() => JweModel.DecryptForRecipient(tampered, sk));
         }
 
         [Test]
@@ -179,7 +180,7 @@ namespace PlutoFrameworkTests
             var tampered = ToJson(jweObj);
 
             // Act + Assert
-            Assert.Throws<AuthenticationTagMismatchException>(() => JweModel.DecryptForRecipient(tampered, pk, sk));
+            Assert.Throws<AuthenticationTagMismatchException>(() => JweModel.DecryptForRecipient(tampered, sk));
         }
 
         [Test]
@@ -194,7 +195,7 @@ namespace PlutoFrameworkTests
             var jwe = ToJson(jweObj);
 
             // Act + Assert
-            Assert.Throws<CryptographicException>(() => JweModel.DecryptForRecipient(jwe, pk, sk));
+            Assert.Throws<CryptographicException>(() => JweModel.DecryptForRecipient(jwe, sk));
         }
     }
 }
