@@ -50,7 +50,7 @@ namespace PlutoFrameworkTests
             var (sk, pk) = NewX25519();
             var plaintext = "Hello JWE";
 
-            Console.WriteLine(Convert.ToBase64String(pk));
+            Console.WriteLine(WebEncoders.Base64UrlEncode(pk));
 
             // Act
             var jweObj = EncryptCall(new[] { pk }, plaintext);
@@ -155,7 +155,7 @@ namespace PlutoFrameworkTests
             var protectedB64 = jweObj["protected"]!.GetValue<string>();
             var protectedJson = Parse(DecodeProtectedJson(protectedB64));
             protectedJson["enc"] = "A128GCM";
-            var newProtectedB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(ToJson(protectedJson)));
+            var newProtectedB64 = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(ToJson(protectedJson)));
             jweObj["protected"] = newProtectedB64;
 
             var tampered = ToJson(jweObj);
@@ -173,9 +173,9 @@ namespace PlutoFrameworkTests
 
             // flip a bit in ciphertext
             var ctB64 = jweObj["ciphertext"]!.GetValue<string>();
-            var ct = Convert.FromBase64String(ctB64);
+            var ct = WebEncoders.Base64UrlDecode(ctB64);
             ct[^1] ^= 0x01; // toggle last bit
-            jweObj["ciphertext"] = Convert.ToBase64String(ct);
+            jweObj["ciphertext"] = WebEncoders.Base64UrlEncode(ct);
 
             var tampered = ToJson(jweObj);
 
