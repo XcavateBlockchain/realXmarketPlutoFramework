@@ -482,18 +482,17 @@ namespace PlutoFrameworkCore.AssetDidComm
         /// <param name="pinataMsgUri">The URI of the Pinata message.</param>
         /// <param name="privKeyBytes">The recipient's private key bytes.</param>
         /// <param name="compact">Whether the JWE is in compact format.</param>
-        /// <returns>The plaintext message as a string, or null if decryption fails.</returns>
+        /// <returns>The plaintext message as a string. Propagates exceptions on fail</returns>
         public static async Task<string?> GetMessageFromUriAsync(string pinataMsgUri, byte[] privKeyBytes, bool compact = false)
         {
             var client = new HttpClient();
             var res = await client.GetAsync(pinataMsgUri);
             res.EnsureSuccessStatusCode();
-            if (res == null) return null;
 
             var jweObj = await res.Content.ReadAsStringAsync();
             if (jweObj == null) return null;
 
-            var privKey = Key.Import(
+            using var privKey = Key.Import(
                 KeyAgreementAlgorithm.X25519,
                 privKeyBytes,
                 KeyBlobFormat.RawPrivateKey,
