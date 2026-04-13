@@ -5,6 +5,7 @@ using PlutoFramework.Model;
 using PlutoFrameworkCore.Keys;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+﻿using Microsoft.AspNetCore.WebUtilities;
 
 namespace PlutoFramework.Components.Keys
 {
@@ -13,7 +14,7 @@ namespace PlutoFramework.Components.Keys
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SecretKey))]
         private EncryptionX25519Key? unlockedKey;
-        public string SecretKey => UnlockedKey is not null ? Convert.ToBase64String(UnlockedKey.SecretKey) : "No secret key";
+        public string SecretKey => UnlockedKey is not null ? WebEncoders.Base64UrlEncode(UnlockedKey.SecretKey) : "No secret key";
 
         [RelayCommand]
         public async Task ExportJsonAsync()
@@ -37,8 +38,8 @@ namespace PlutoFramework.Components.Keys
             var privateKeyParams = new bc26::Org.BouncyCastle.Crypto.Parameters.X25519PrivateKeyParameters(UnlockedKey.SecretKey);
             var publicKeyParams = privateKeyParams.GeneratePublicKey();
 
-            var publicKeyBase64 = Convert.ToBase64String(publicKeyParams.GetEncoded());
-            var privateKeyBase64 = Convert.ToBase64String(UnlockedKey.SecretKey);
+            var publicKeyBase64 = WebEncoders.Base64UrlEncode(publicKeyParams.GetEncoded());
+            var privateKeyBase64 = WebEncoders.Base64UrlEncode(UnlockedKey.SecretKey);
             var kid = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "-" + Random.Shared.Next();
 
             var jsonObject = new
