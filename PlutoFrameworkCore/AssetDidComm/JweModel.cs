@@ -239,6 +239,18 @@ namespace PlutoFrameworkCore.AssetDidComm
 
             using var headerDoc = JsonDocument.Parse(headerJson);
             var header = headerDoc.RootElement;
+
+            if (!header.TryGetProperty("alg", out var algProperty) ||
+                algProperty.GetString() != "ECDH-ES+A256KW")
+            {
+                throw new ArgumentException("Invalid JWE alg header. Expected 'ECDH-ES+A256KW'.");
+            }
+
+            if (!header.TryGetProperty("enc", out var encProperty) ||
+                encProperty.GetString() != "A256GCM")
+            {
+                throw new ArgumentException("Invalid JWE enc header. Expected 'A256GCM'.");
+            }
             var epkX = WebEncoders.Base64UrlDecode(header.GetProperty("epk").GetProperty("x").GetString()!);
 
             var senderEpk = PublicKey.Import(KeyAgreementAlgorithm.X25519, epkX, KeyBlobFormat.RawPublicKey);
