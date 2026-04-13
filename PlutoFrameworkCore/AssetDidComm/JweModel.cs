@@ -119,7 +119,6 @@ namespace PlutoFrameworkCore.AssetDidComm
         /// the recipient's X25519 key pair. Tries each "recipients[i]" entry until unwrap succeeds.
         /// </summary>
         /// <param name="jweJson">JSON string returned by CreateForRecipients</param>
-        /// <param name="recipientPublicKey">Recipient's raw 32-byte X25519 public key</param>
         /// <param name="recipientPrivateKey">Recipient's raw 32-byte X25519 private key</param>
         /// <returns>UTF-8 plaintext</returns>
         public static string DecryptForRecipient(string jweJson, Key recipientSecretKey)
