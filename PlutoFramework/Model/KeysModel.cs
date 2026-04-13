@@ -15,6 +15,7 @@ using Substrate.NET.Wallet;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using System.Text.Json;
+﻿using Microsoft.AspNetCore.WebUtilities;
 
 namespace PlutoFramework.Model
 {
@@ -242,8 +243,8 @@ namespace PlutoFramework.Model
             var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
 
             await KeysModel.SaveKeyAsync(
-                publicKey: Convert.ToBase64String(publicKey.GetEncoded()),
-                secret: Convert.ToBase64String(privateKey),
+                publicKey: WebEncoders.Base64UrlEncode(publicKey.GetEncoded()),
+                secret: WebEncoders.Base64UrlEncode(privateKey),
                 password: password!,
                 type: KeyTypeEnum.EncryptionX25519
             );
@@ -326,7 +327,7 @@ namespace PlutoFramework.Model
                     throw new InvalidOperationException("Private key 'd' value not found in JSON");
                 }
 
-                var privateKeyBytes = Convert.FromBase64String(dValue);
+                var privateKeyBytes = WebEncoders.Base64UrlDecode(dValue);
 
                 await SaveEncryptionX25519KeyAsync(privateKeyBytes);
 
