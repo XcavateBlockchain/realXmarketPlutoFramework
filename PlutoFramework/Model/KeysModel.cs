@@ -243,8 +243,8 @@ namespace PlutoFramework.Model
             var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
 
             await KeysModel.SaveKeyAsync(
-                publicKey: WebEncoders.Base64UrlEncode(publicKey.GetEncoded()),
-                secret: WebEncoders.Base64UrlEncode(privateKey),
+                publicKey: Convert.ToBase64String(publicKey.GetEncoded()),
+                secret: Convert.ToBase64String(privateKey),
                 password: password!,
                 type: KeyTypeEnum.EncryptionX25519
             );

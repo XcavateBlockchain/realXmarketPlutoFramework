@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.AspNetCore.WebUtilities;
 using PlutoFramework.Model;
 using PlutoFrameworkCore;
 
@@ -20,7 +21,7 @@ namespace PlutoFramework.Components.Keys
         {
             try
             {
-                var secretKeyBytes = Convert.FromBase64String(SecretKey);
+                var secretKeyBytes = WebEncoders.Base64UrlDecode(SecretKey);
 
                 if (secretKeyBytes.Length != 32)
                 {
