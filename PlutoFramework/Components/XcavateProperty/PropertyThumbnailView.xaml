@@ -152,7 +152,7 @@
                             <ColumnDefinition Width="auto" />
                         </Grid.ColumnDefinitions>
 
-                        <Label Text="Tokens"
+                        <Label Text="Shares"
                            HorizontalTextAlignment="Start"
                            VerticalOptions="Center"
                            VerticalTextAlignment="Center"

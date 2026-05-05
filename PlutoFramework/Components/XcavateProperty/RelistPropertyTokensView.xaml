@@ -34,14 +34,14 @@
                     </AbsoluteLayout>
                     
                     <form:FormInputView KeyboardType="Numeric"
-                                        Placeholder="Tokens"
+                                        Placeholder="Shares"
                                         Text="{Binding Tokens}"
                                         MaxValue="{Binding MaxValue}"
                                         UpdateCommand="{Binding FormChangedCommand}"
                                         CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}"
                                         />
                     <form:FormAssetInputView KeyboardType="Numeric"
-                                        Placeholder="Price per token"
+                                        Placeholder="Price per share"
                                         Text="{Binding PricePerToken}"
                                         UpdateCommand="{Binding FormChangedCommand}"
                                         CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}"/>

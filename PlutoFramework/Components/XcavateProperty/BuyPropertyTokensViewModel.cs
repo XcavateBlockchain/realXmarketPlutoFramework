@@ -163,21 +163,21 @@ namespace PlutoFramework.Components.XcavateProperty
             if (!int.TryParse(Tokens, out parsedTokens))
             {
 
-                ErrorMessage = "Tokens is not valid number";
+                ErrorMessage = "Shares is not valid number";
 
                 return;
             }
 
             if (parsedTokens < 1)
             {
-                ErrorMessage = "Tokens must be greater than 0";
+                ErrorMessage = "Shares must be greater than 0";
 
                 return;
             }
 
             if (parsedTokens > ListingDetails?.ListedTokens)
             {
-                ErrorMessage = $"Tokens must be less than {ListingDetails.ListedTokens}";
+                ErrorMessage = $"Shares must be less than {ListingDetails.ListedTokens}";
 
                 return;
             }

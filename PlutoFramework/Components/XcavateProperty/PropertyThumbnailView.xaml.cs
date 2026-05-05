@@ -87,7 +87,7 @@ public partial class PropertyThumbnailView : ContentView
         {
             var control = (PropertyThumbnailView)bindable;
 
-            control.tokensTitleLabel.Text = "Tokens owned";
+            control.tokensTitleLabel.Text = "Shares owned";
 
             var tokensOwned = (uint)newValue;
 
