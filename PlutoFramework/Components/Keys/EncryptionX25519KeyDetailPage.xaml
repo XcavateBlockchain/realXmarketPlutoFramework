@@ -16,9 +16,14 @@
             <mnemonics:MnemonicsView Title="Secret key:"
                          Mnemonics="{Binding SecretKey}" />
 
+            <buttons:ElevatedButton ButtonState="Enabled"
+                                    Text="Export json"
+                                    Command="{Binding ExportJsonCommand}"
+                                    x:Name="exportJsonButton" />
+
             <buttons:ElevatedButton ButtonState="Warning"
-                                Text="Delete"
-                                Command="{Binding DeleteKeyCommand}" />
+                                    Text="Delete"
+                                    Command="{Binding DeleteKeyCommand}" />
         </VerticalStackLayout>
     </ScrollView>
 </template:PageTemplate>

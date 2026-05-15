@@ -50,6 +50,10 @@
             <buttons:ElevatedButton Text="Continue"
                                     Command="{Binding ContinueCommand}" />
 
+            <buttons:ElevatedButton ButtonState="Enabled"
+                                    Text="Import json"
+                                    Command="{Binding ImportJsonCommand}"/>
+
             <buttons:BasicGrayButton Text="Forgot key"
                                      Command="{Binding ForgotKeyCommand}"/>
         </VerticalStackLayout>
