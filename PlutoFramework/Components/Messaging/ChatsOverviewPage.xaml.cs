@@ -1,11 +1,20 @@
 ﻿using System.Collections.ObjectModel;
 using PlutoFramework.Templates.PageTemplate;
+using PlutoFramework.Model;
+using PlutoFramework.Model.Messaging;
+using System.Threading.Tasks;
 
 namespace PlutoFramework.Components.Messaging;
 
 public partial class ChatsOverviewPage : PageTemplate
 {
     public ObservableCollection<ChatItem> Chats { get; } = new();
+
+    private int _currentOffset = 0;
+    private const int BATCH_SIZE = 10;
+    private bool _isLoading = false;
+    private bool _hasMoreData = true;
+    private readonly MessagingModel _messagingModel = new MessagingModel();
     
     private void AddChat(string title, string state, string time, bool isApproved)
     {
@@ -29,19 +38,53 @@ public partial class ChatsOverviewPage : PageTemplate
         InitializeComponent();
         
         BindingContext = this;
-        
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", true);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", false);
-        
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", true);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", false);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", true);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", false);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", true);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", false);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", true);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", false);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", true);
-        AddChat("Monthly performance reports", "Pending Legal Sign-off", "5:02 AM", false);
+
+        LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        if (_isLoading || !_hasMoreData) return;
+
+        _isLoading = true;
+
+        var address = KeysModel.GetSubstrateKey();
+
+        try
+        {
+            var result = await _messagingModel.ReadBucketBatchAsync(address, BATCH_SIZE, _currentOffset);
+
+            if (result != null)
+            {
+                if (result.Count < BATCH_SIZE)
+                {
+                    _hasMoreData = false;
+                }
+
+                foreach (var bucket in result)
+                {
+                    AddChat(bucket.Name ?? "Unknown", "", "", true); // Use empty string for state
+                }
+
+                _currentOffset += result.Count;
+            }
+            else
+            {
+                _hasMoreData = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OnRemainingItemsThresholdReached(object sender, EventArgs e)
+    {
+        _ = LoadDataAsync();
     }
 }

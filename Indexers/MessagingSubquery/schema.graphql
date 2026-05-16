@@ -1,0 +1,1319 @@
+schema {
+  query: Query
+}
+
+"The root query type which gives access points into the data universe."
+type Query implements Node {
+  "Exposes the root query type nested one level down. This is helpful for Relay 1\nwhich can only query top level fields if they are in a particular form."
+  query: Query!
+  "The root query type must be a `Node` to work well with Relay 1 mutations. This just resolves to `query`."
+  nodeId: ID!
+  "Fetches an object given its globally unique `ID`."
+  node("The globally unique `ID`." nodeId: ID!): Node
+  "Reads and enables pagination through a set of `BucketAdmin`."
+  bucketAdmins("Only read the first `n` values of the set." first: Int "Only read the last `n` values of the set." last: Int "Skip the first `n` values from our `after` cursor, an alternative to cursor\nbased pagination. May not be used with `last`." offset: Int "Read all values in the set before (above) this cursor." before: Cursor "Read all values in the set after (below) this cursor." after: Cursor "The method to use when ordering `BucketAdmin`." orderBy: [BucketAdminsOrderBy!] "Specify ordering of null values (NULLS_FIRST or NULLS_LAST)." orderByNull: NullOrder "A filter to be used in determining which values should be returned by the collection." filter: BucketAdminFilter "Fields to be distinct" distinct: [bucket_admins_distinct_enum]): BucketAdminsConnection
+  "Reads and enables pagination through a set of `BucketContributor`."
+  bucketContributors("Only read the first `n` values of the set." first: Int "Only read the last `n` values of the set." last: Int "Skip the first `n` values from our `after` cursor, an alternative to cursor\nbased pagination. May not be used with `last`." offset: Int "Read all values in the set before (above) this cursor." before: Cursor "Read all values in the set after (below) this cursor." after: Cursor "The method to use when ordering `BucketContributor`." orderBy: [BucketContributorsOrderBy!] "Specify ordering of null values (NULLS_FIRST or NULLS_LAST)." orderByNull: NullOrder "A filter to be used in determining which values should be returned by the collection." filter: BucketContributorFilter "Fields to be distinct" distinct: [bucket_contributors_distinct_enum]): BucketContributorsConnection
+  "Reads and enables pagination through a set of `Bucket`."
+  buckets("Only read the first `n` values of the set." first: Int "Only read the last `n` values of the set." last: Int "Skip the first `n` values from our `after` cursor, an alternative to cursor\nbased pagination. May not be used with `last`." offset: Int "Read all values in the set before (above) this cursor." before: Cursor "Read all values in the set after (below) this cursor." after: Cursor "The method to use when ordering `Bucket`." orderBy: [BucketsOrderBy!] "Specify ordering of null values (NULLS_FIRST or NULLS_LAST)." orderByNull: NullOrder "A filter to be used in determining which values should be returned by the collection." filter: BucketFilter "Fields to be distinct" distinct: [buckets_distinct_enum]): BucketsConnection
+  "Reads and enables pagination through a set of `Did`."
+  dids("Only read the first `n` values of the set." first: Int "Only read the last `n` values of the set." last: Int "Skip the first `n` values from our `after` cursor, an alternative to cursor\nbased pagination. May not be used with `last`." offset: Int "Read all values in the set before (above) this cursor." before: Cursor "Read all values in the set after (below) this cursor." after: Cursor "The method to use when ordering `Did`." orderBy: [DidsOrderBy!] "Specify ordering of null values (NULLS_FIRST or NULLS_LAST)." orderByNull: NullOrder "A filter to be used in determining which values should be returned by the collection." filter: DidFilter "Fields to be distinct" distinct: [dids_distinct_enum]): DidsConnection
+  "Reads and enables pagination through a set of `Message`."
+  messages("Only read the first `n` values of the set." first: Int "Only read the last `n` values of the set." last: Int "Skip the first `n` values from our `after` cursor, an alternative to cursor\nbased pagination. May not be used with `last`." offset: Int "Read all values in the set before (above) this cursor." before: Cursor "Read all values in the set after (below) this cursor." after: Cursor "The method to use when ordering `Message`." orderBy: [MessagesOrderBy!] "Specify ordering of null values (NULLS_FIRST or NULLS_LAST)." orderByNull: NullOrder "A filter to be used in determining which values should be returned by the collection." filter: MessageFilter "Fields to be distinct" distinct: [messages_distinct_enum]): MessagesConnection
+  "Reads and enables pagination through a set of `Property`."
+  properties("Only read the first `n` values of the set." first: Int "Only read the last `n` values of the set." last: Int "Skip the first `n` values from our `after` cursor, an alternative to cursor\nbased pagination. May not be used with `last`." offset: Int "Read all values in the set before (above) this cursor." before: Cursor "Read all values in the set after (below) this cursor." after: Cursor "The method to use when ordering `Property`." orderBy: [PropertiesOrderBy!] "Specify ordering of null values (NULLS_FIRST or NULLS_LAST)." orderByNull: NullOrder "A filter to be used in determining which values should be returned by the collection." filter: PropertyFilter "Fields to be distinct" distinct: [properties_distinct_enum]): PropertiesConnection
+  bucketAdmin(id: String!): BucketAdmin
+  bucketContributor(id: String!): BucketContributor
+  bucket(id: String!): Bucket
+  did(id: String!): Did
+  message(id: String!): Message
+  property(id: String!): Property
+  "Reads a single `BucketAdmin` using its globally unique `ID`."
+  bucketAdminByNodeId("The globally unique `ID` to be used in selecting a single `BucketAdmin`." nodeId: ID! "Fields to be distinct" distinct: [bucket_admins_distinct_enum]): BucketAdmin
+  "Reads a single `BucketContributor` using its globally unique `ID`."
+  bucketContributorByNodeId("The globally unique `ID` to be used in selecting a single `BucketContributor`." nodeId: ID! "Fields to be distinct" distinct: [bucket_contributors_distinct_enum]): BucketContributor
+  "Reads a single `Bucket` using its globally unique `ID`."
+  bucketByNodeId("The globally unique `ID` to be used in selecting a single `Bucket`." nodeId: ID! "Fields to be distinct" distinct: [buckets_distinct_enum]): Bucket
+  "Reads a single `Did` using its globally unique `ID`."
+  didByNodeId("The globally unique `ID` to be used in selecting a single `Did`." nodeId: ID! "Fields to be distinct" distinct: [dids_distinct_enum]): Did
+  "Reads a single `Message` using its globally unique `ID`."
+  messageByNodeId("The globally unique `ID` to be used in selecting a single `Message`." nodeId: ID! "Fields to be distinct" distinct: [messages_distinct_enum]): Message
+  "Reads a single `Property` using its globally unique `ID`."
+  propertyByNodeId("The globally unique `ID` to be used in selecting a single `Property`." nodeId: ID! "Fields to be distinct" distinct: [properties_distinct_enum]): Property
+  _metadata(chainId: String): _Metadata
+  _metadatas(after: Cursor before: Cursor): _Metadatas
+}
+
+"An object with a globally unique `ID`."
+interface Node {
+  "A globally unique identifier. Can be used in various places throughout the system to identify this single value."
+  nodeId: ID!
+}
+
+"A connection to a list of `BucketAdmin` values."
+type BucketAdminsConnection {
+  "A list of `BucketAdmin` objects."
+  nodes: [BucketAdmin]!
+  "A list of edges which contains the `BucketAdmin` and cursor to aid in pagination."
+  edges: [BucketAdminsEdge!]!
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "The count of *all* `BucketAdmin` you could get from the connection."
+  totalCount: Int!
+  "Aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  aggregates: BucketAdminAggregates
+  "Grouped aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  groupedAggregates("The method to use when grouping `BucketAdmin` for these aggregates." groupBy: [BucketAdminsGroupBy!]! "Conditions on the grouped aggregates." having: BucketAdminsHavingInput): [BucketAdminAggregates!]
+}
+
+type BucketAdmin implements Node {
+  "A globally unique identifier. Can be used in various places throughout the system to identify this single value."
+  nodeId: ID!
+  id: String!
+  bucketId: String!
+  subjectId: String!
+  addedBlock: Int!
+  "Reads a single `Bucket` that is related to this `BucketAdmin`."
+  bucket: Bucket
+}
+
+type Bucket implements Node {
+  "A globally unique identifier. Can be used in various places throughout the system to identify this single value."
+  nodeId: ID!
+  id: String!
+  namespaceId: Int!
+  bucketId: Int!
+  creator: String
+  name: String
+  category: String
+  isWritable: Boolean!
+  encryptionKey: String
+  createdBlock: Int!
+  "Reads and enables pagination through a set of `BucketContributor`."
+  contributors("Only read the first `n` values of the set." first: Int "Only read the last `n` values of the set." last: Int "Skip the first `n` values from our `after` cursor, an alternative to cursor\nbased pagination. May not be used with `last`." offset: Int "Read all values in the set before (above) this cursor." before: Cursor "Read all values in the set after (below) this cursor." after: Cursor "The method to use when ordering `BucketContributor`." orderBy: [BucketContributorsOrderBy!] "Specify ordering of null values (NULLS_FIRST or NULLS_LAST)." orderByNull: NullOrder "A filter to be used in determining which values should be returned by the collection." filter: BucketContributorFilter "Fields to be distinct" distinct: [bucket_contributors_distinct_enum]): BucketContributorsConnection!
+  "Reads and enables pagination through a set of `BucketAdmin`."
+  admins("Only read the first `n` values of the set." first: Int "Only read the last `n` values of the set." last: Int "Skip the first `n` values from our `after` cursor, an alternative to cursor\nbased pagination. May not be used with `last`." offset: Int "Read all values in the set before (above) this cursor." before: Cursor "Read all values in the set after (below) this cursor." after: Cursor "The method to use when ordering `BucketAdmin`." orderBy: [BucketAdminsOrderBy!] "Specify ordering of null values (NULLS_FIRST or NULLS_LAST)." orderByNull: NullOrder "A filter to be used in determining which values should be returned by the collection." filter: BucketAdminFilter "Fields to be distinct" distinct: [bucket_admins_distinct_enum]): BucketAdminsConnection!
+  "Reads and enables pagination through a set of `Message`."
+  messages("Only read the first `n` values of the set." first: Int "Only read the last `n` values of the set." last: Int "Skip the first `n` values from our `after` cursor, an alternative to cursor\nbased pagination. May not be used with `last`." offset: Int "Read all values in the set before (above) this cursor." before: Cursor "Read all values in the set after (below) this cursor." after: Cursor "The method to use when ordering `Message`." orderBy: [MessagesOrderBy!] "Specify ordering of null values (NULLS_FIRST or NULLS_LAST)." orderByNull: NullOrder "A filter to be used in determining which values should be returned by the collection." filter: MessageFilter "Fields to be distinct" distinct: [messages_distinct_enum]): MessagesConnection!
+}
+
+"A connection to a list of `BucketContributor` values."
+type BucketContributorsConnection {
+  "A list of `BucketContributor` objects."
+  nodes: [BucketContributor]!
+  "A list of edges which contains the `BucketContributor` and cursor to aid in pagination."
+  edges: [BucketContributorsEdge!]!
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "The count of *all* `BucketContributor` you could get from the connection."
+  totalCount: Int!
+  "Aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  aggregates: BucketContributorAggregates
+  "Grouped aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  groupedAggregates("The method to use when grouping `BucketContributor` for these aggregates." groupBy: [BucketContributorsGroupBy!]! "Conditions on the grouped aggregates." having: BucketContributorsHavingInput): [BucketContributorAggregates!]
+}
+
+type BucketContributor implements Node {
+  "A globally unique identifier. Can be used in various places throughout the system to identify this single value."
+  nodeId: ID!
+  id: String!
+  bucketId: String!
+  subjectId: String!
+  addedBlock: Int!
+  "Reads a single `Bucket` that is related to this `BucketContributor`."
+  bucket: Bucket
+}
+
+"A `BucketContributor` edge in the connection."
+type BucketContributorsEdge {
+  "A cursor for use in pagination."
+  cursor: Cursor
+  "The `BucketContributor` at the end of the edge."
+  node: BucketContributor
+}
+
+"A location in a connection that can be used for resuming pagination."
+scalar Cursor
+
+"Information about pagination in a connection."
+type PageInfo {
+  "When paginating forwards, are there more items?"
+  hasNextPage: Boolean!
+  "When paginating backwards, are there more items?"
+  hasPreviousPage: Boolean!
+  "When paginating backwards, the cursor to continue."
+  startCursor: Cursor
+  "When paginating forwards, the cursor to continue."
+  endCursor: Cursor
+}
+
+type BucketContributorAggregates {
+  keys: [String!]
+}
+
+"Grouping methods for `BucketContributor` for usage during aggregation."
+enum BucketContributorsGroupBy {
+  BUCKET_ID
+  SUBJECT_ID
+  ADDED_BLOCK
+}
+
+"Conditions for `BucketContributor` aggregates."
+input BucketContributorsHavingInput {
+  AND: [BucketContributorsHavingInput!]
+  OR: [BucketContributorsHavingInput!]
+}
+
+"Methods to use when ordering `BucketContributor`."
+enum BucketContributorsOrderBy {
+  NATURAL
+  ID_ASC
+  ID_DESC
+  BUCKET_ID_ASC
+  BUCKET_ID_DESC
+  SUBJECT_ID_ASC
+  SUBJECT_ID_DESC
+  ADDED_BLOCK_ASC
+  ADDED_BLOCK_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  BUCKET_BY_BUCKET_ID__ID_ASC
+  BUCKET_BY_BUCKET_ID__ID_DESC
+  BUCKET_BY_BUCKET_ID__NAMESPACE_ID_ASC
+  BUCKET_BY_BUCKET_ID__NAMESPACE_ID_DESC
+  BUCKET_BY_BUCKET_ID__BUCKET_ID_ASC
+  BUCKET_BY_BUCKET_ID__BUCKET_ID_DESC
+  BUCKET_BY_BUCKET_ID__CREATOR_ASC
+  BUCKET_BY_BUCKET_ID__CREATOR_DESC
+  BUCKET_BY_BUCKET_ID__NAME_ASC
+  BUCKET_BY_BUCKET_ID__NAME_DESC
+  BUCKET_BY_BUCKET_ID__CATEGORY_ASC
+  BUCKET_BY_BUCKET_ID__CATEGORY_DESC
+  BUCKET_BY_BUCKET_ID__IS_WRITABLE_ASC
+  BUCKET_BY_BUCKET_ID__IS_WRITABLE_DESC
+  BUCKET_BY_BUCKET_ID__ENCRYPTION_KEY_ASC
+  BUCKET_BY_BUCKET_ID__ENCRYPTION_KEY_DESC
+  BUCKET_BY_BUCKET_ID__CREATED_BLOCK_ASC
+  BUCKET_BY_BUCKET_ID__CREATED_BLOCK_DESC
+}
+
+"Options for ordering null values in a specific direction."
+enum NullOrder {
+  "Order null values first."
+  NULLS_FIRST
+  "Order null values last."
+  NULLS_LAST
+}
+
+"A filter to be used against `BucketContributor` object types. All fields are combined with a logical ‘and.’"
+input BucketContributorFilter {
+  "Filter by the object’s `bucket` relation."
+  bucket: BucketFilter
+  "Filter by the object’s `id` field."
+  id: StringFilter
+  "Filter by the object’s `bucketId` field."
+  bucketId: StringFilter
+  "Filter by the object’s `subjectId` field."
+  subjectId: StringFilter
+  "Filter by the object’s `addedBlock` field."
+  addedBlock: IntFilter
+  "Checks for all expressions in this list."
+  and: [BucketContributorFilter!]
+  "Checks for any expressions in this list."
+  or: [BucketContributorFilter!]
+  "Negates the expression."
+  not: BucketContributorFilter
+}
+
+"A filter to be used against `Bucket` object types. All fields are combined with a logical ‘and.’"
+input BucketFilter {
+  "Filter by the object’s `contributors` relation."
+  contributors: BucketToManyBucketContributorFilter
+  "Some related `contributors` exist."
+  contributorsExist: Boolean
+  "Filter by the object’s `admins` relation."
+  admins: BucketToManyBucketAdminFilter
+  "Some related `admins` exist."
+  adminsExist: Boolean
+  "Filter by the object’s `messages` relation."
+  messages: BucketToManyMessageFilter
+  "Some related `messages` exist."
+  messagesExist: Boolean
+  "Filter by the object’s `id` field."
+  id: StringFilter
+  "Filter by the object’s `namespaceId` field."
+  namespaceId: IntFilter
+  "Filter by the object’s `bucketId` field."
+  bucketId: IntFilter
+  "Filter by the object’s `creator` field."
+  creator: StringFilter
+  "Filter by the object’s `name` field."
+  name: StringFilter
+  "Filter by the object’s `category` field."
+  category: StringFilter
+  "Filter by the object’s `isWritable` field."
+  isWritable: BooleanFilter
+  "Filter by the object’s `encryptionKey` field."
+  encryptionKey: StringFilter
+  "Filter by the object’s `createdBlock` field."
+  createdBlock: IntFilter
+  "Checks for all expressions in this list."
+  and: [BucketFilter!]
+  "Checks for any expressions in this list."
+  or: [BucketFilter!]
+  "Negates the expression."
+  not: BucketFilter
+}
+
+"A filter to be used against many `BucketContributor` object types. All fields are combined with a logical ‘and.’"
+input BucketToManyBucketContributorFilter {
+  "Every related `BucketContributor` matches the filter criteria. All fields are combined with a logical ‘and.’"
+  every: BucketContributorFilter
+  "Some related `BucketContributor` matches the filter criteria. All fields are combined with a logical ‘and.’"
+  some: BucketContributorFilter
+  "No related `BucketContributor` matches the filter criteria. All fields are combined with a logical ‘and.’"
+  none: BucketContributorFilter
+  "Aggregates across related `BucketContributor` match the filter criteria."
+  aggregates: BucketContributorAggregatesFilter
+}
+
+"A filter to be used against aggregates of `BucketContributor` object types."
+input BucketContributorAggregatesFilter {
+  "A filter that must pass for the relevant `BucketContributor` object to be included within the aggregate."
+  filter: BucketContributorFilter
+}
+
+"A filter to be used against many `BucketAdmin` object types. All fields are combined with a logical ‘and.’"
+input BucketToManyBucketAdminFilter {
+  "Every related `BucketAdmin` matches the filter criteria. All fields are combined with a logical ‘and.’"
+  every: BucketAdminFilter
+  "Some related `BucketAdmin` matches the filter criteria. All fields are combined with a logical ‘and.’"
+  some: BucketAdminFilter
+  "No related `BucketAdmin` matches the filter criteria. All fields are combined with a logical ‘and.’"
+  none: BucketAdminFilter
+  "Aggregates across related `BucketAdmin` match the filter criteria."
+  aggregates: BucketAdminAggregatesFilter
+}
+
+"A filter to be used against `BucketAdmin` object types. All fields are combined with a logical ‘and.’"
+input BucketAdminFilter {
+  "Filter by the object’s `bucket` relation."
+  bucket: BucketFilter
+  "Filter by the object’s `id` field."
+  id: StringFilter
+  "Filter by the object’s `bucketId` field."
+  bucketId: StringFilter
+  "Filter by the object’s `subjectId` field."
+  subjectId: StringFilter
+  "Filter by the object’s `addedBlock` field."
+  addedBlock: IntFilter
+  "Checks for all expressions in this list."
+  and: [BucketAdminFilter!]
+  "Checks for any expressions in this list."
+  or: [BucketAdminFilter!]
+  "Negates the expression."
+  not: BucketAdminFilter
+}
+
+"A filter to be used against String fields. All fields are combined with a logical ‘and.’"
+input StringFilter {
+  "Is null (if `true` is specified) or is not null (if `false` is specified)."
+  isNull: Boolean
+  "Equal to the specified value."
+  equalTo: String
+  "Not equal to the specified value."
+  notEqualTo: String
+  "Not equal to the specified value, treating null like an ordinary value."
+  distinctFrom: String
+  "Equal to the specified value, treating null like an ordinary value."
+  notDistinctFrom: String
+  "Included in the specified list."
+  in: [String!]
+  "Not included in the specified list."
+  notIn: [String!]
+  "Less than the specified value."
+  lessThan: String
+  "Less than or equal to the specified value."
+  lessThanOrEqualTo: String
+  "Greater than the specified value."
+  greaterThan: String
+  "Greater than or equal to the specified value."
+  greaterThanOrEqualTo: String
+  "Contains the specified string (case-sensitive)."
+  includes: String
+  "Does not contain the specified string (case-sensitive)."
+  notIncludes: String
+  "Contains the specified string (case-insensitive)."
+  includesInsensitive: String
+  "Does not contain the specified string (case-insensitive)."
+  notIncludesInsensitive: String
+  "Starts with the specified string (case-sensitive)."
+  startsWith: String
+  "Does not start with the specified string (case-sensitive)."
+  notStartsWith: String
+  "Starts with the specified string (case-insensitive)."
+  startsWithInsensitive: String
+  "Does not start with the specified string (case-insensitive)."
+  notStartsWithInsensitive: String
+  "Ends with the specified string (case-sensitive)."
+  endsWith: String
+  "Does not end with the specified string (case-sensitive)."
+  notEndsWith: String
+  "Ends with the specified string (case-insensitive)."
+  endsWithInsensitive: String
+  "Does not end with the specified string (case-insensitive)."
+  notEndsWithInsensitive: String
+  "Matches the specified pattern (case-sensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters."
+  like: String
+  "Does not match the specified pattern (case-sensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters."
+  notLike: String
+  "Matches the specified pattern (case-insensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters."
+  likeInsensitive: String
+  "Does not match the specified pattern (case-insensitive). An underscore (_) matches any single character; a percent sign (%) matches any sequence of zero or more characters."
+  notLikeInsensitive: String
+  "Equal to the specified value (case-insensitive)."
+  equalToInsensitive: String
+  "Not equal to the specified value (case-insensitive)."
+  notEqualToInsensitive: String
+  "Not equal to the specified value, treating null like an ordinary value (case-insensitive)."
+  distinctFromInsensitive: String
+  "Equal to the specified value, treating null like an ordinary value (case-insensitive)."
+  notDistinctFromInsensitive: String
+  "Included in the specified list (case-insensitive)."
+  inInsensitive: [String!]
+  "Not included in the specified list (case-insensitive)."
+  notInInsensitive: [String!]
+  "Less than the specified value (case-insensitive)."
+  lessThanInsensitive: String
+  "Less than or equal to the specified value (case-insensitive)."
+  lessThanOrEqualToInsensitive: String
+  "Greater than the specified value (case-insensitive)."
+  greaterThanInsensitive: String
+  "Greater than or equal to the specified value (case-insensitive)."
+  greaterThanOrEqualToInsensitive: String
+}
+
+"A filter to be used against Int fields. All fields are combined with a logical ‘and.’"
+input IntFilter {
+  "Is null (if `true` is specified) or is not null (if `false` is specified)."
+  isNull: Boolean
+  "Equal to the specified value."
+  equalTo: Int
+  "Not equal to the specified value."
+  notEqualTo: Int
+  "Not equal to the specified value, treating null like an ordinary value."
+  distinctFrom: Int
+  "Equal to the specified value, treating null like an ordinary value."
+  notDistinctFrom: Int
+  "Included in the specified list."
+  in: [Int!]
+  "Not included in the specified list."
+  notIn: [Int!]
+  "Less than the specified value."
+  lessThan: Int
+  "Less than or equal to the specified value."
+  lessThanOrEqualTo: Int
+  "Greater than the specified value."
+  greaterThan: Int
+  "Greater than or equal to the specified value."
+  greaterThanOrEqualTo: Int
+}
+
+"A filter to be used against aggregates of `BucketAdmin` object types."
+input BucketAdminAggregatesFilter {
+  "A filter that must pass for the relevant `BucketAdmin` object to be included within the aggregate."
+  filter: BucketAdminFilter
+}
+
+"A filter to be used against many `Message` object types. All fields are combined with a logical ‘and.’"
+input BucketToManyMessageFilter {
+  "Every related `Message` matches the filter criteria. All fields are combined with a logical ‘and.’"
+  every: MessageFilter
+  "Some related `Message` matches the filter criteria. All fields are combined with a logical ‘and.’"
+  some: MessageFilter
+  "No related `Message` matches the filter criteria. All fields are combined with a logical ‘and.’"
+  none: MessageFilter
+  "Aggregates across related `Message` match the filter criteria."
+  aggregates: MessageAggregatesFilter
+}
+
+"A filter to be used against `Message` object types. All fields are combined with a logical ‘and.’"
+input MessageFilter {
+  "Filter by the object’s `bucket` relation."
+  bucket: BucketFilter
+  "Filter by the object’s `id` field."
+  id: StringFilter
+  "Filter by the object’s `bucketId` field."
+  bucketId: StringFilter
+  "Filter by the object’s `messageId` field."
+  messageId: IntFilter
+  "Filter by the object’s `contributor` field."
+  contributor: StringFilter
+  "Filter by the object’s `reference` field."
+  reference: StringFilter
+  "Filter by the object’s `tag` field."
+  tag: StringFilter
+  "Filter by the object’s `description` field."
+  description: StringFilter
+  "Filter by the object’s `contentType` field."
+  contentType: StringFilter
+  "Filter by the object’s `contentHash` field."
+  contentHash: StringFilter
+  "Filter by the object’s `createdBlock` field."
+  createdBlock: IntFilter
+  "Filter by the object’s `ipfsContent` field."
+  ipfsContent: StringFilter
+  "Checks for all expressions in this list."
+  and: [MessageFilter!]
+  "Checks for any expressions in this list."
+  or: [MessageFilter!]
+  "Negates the expression."
+  not: MessageFilter
+}
+
+"A filter to be used against aggregates of `Message` object types."
+input MessageAggregatesFilter {
+  "A filter that must pass for the relevant `Message` object to be included within the aggregate."
+  filter: MessageFilter
+}
+
+"A filter to be used against Boolean fields. All fields are combined with a logical ‘and.’"
+input BooleanFilter {
+  "Is null (if `true` is specified) or is not null (if `false` is specified)."
+  isNull: Boolean
+  "Equal to the specified value."
+  equalTo: Boolean
+  "Not equal to the specified value."
+  notEqualTo: Boolean
+  "Not equal to the specified value, treating null like an ordinary value."
+  distinctFrom: Boolean
+  "Equal to the specified value, treating null like an ordinary value."
+  notDistinctFrom: Boolean
+  "Included in the specified list."
+  in: [Boolean!]
+  "Not included in the specified list."
+  notIn: [Boolean!]
+  "Less than the specified value."
+  lessThan: Boolean
+  "Less than or equal to the specified value."
+  lessThanOrEqualTo: Boolean
+  "Greater than the specified value."
+  greaterThan: Boolean
+  "Greater than or equal to the specified value."
+  greaterThanOrEqualTo: Boolean
+}
+
+enum bucket_contributors_distinct_enum {
+  ID
+  BUCKET_ID
+  SUBJECT_ID
+  ADDED_BLOCK
+}
+
+"Methods to use when ordering `BucketAdmin`."
+enum BucketAdminsOrderBy {
+  NATURAL
+  ID_ASC
+  ID_DESC
+  BUCKET_ID_ASC
+  BUCKET_ID_DESC
+  SUBJECT_ID_ASC
+  SUBJECT_ID_DESC
+  ADDED_BLOCK_ASC
+  ADDED_BLOCK_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  BUCKET_BY_BUCKET_ID__ID_ASC
+  BUCKET_BY_BUCKET_ID__ID_DESC
+  BUCKET_BY_BUCKET_ID__NAMESPACE_ID_ASC
+  BUCKET_BY_BUCKET_ID__NAMESPACE_ID_DESC
+  BUCKET_BY_BUCKET_ID__BUCKET_ID_ASC
+  BUCKET_BY_BUCKET_ID__BUCKET_ID_DESC
+  BUCKET_BY_BUCKET_ID__CREATOR_ASC
+  BUCKET_BY_BUCKET_ID__CREATOR_DESC
+  BUCKET_BY_BUCKET_ID__NAME_ASC
+  BUCKET_BY_BUCKET_ID__NAME_DESC
+  BUCKET_BY_BUCKET_ID__CATEGORY_ASC
+  BUCKET_BY_BUCKET_ID__CATEGORY_DESC
+  BUCKET_BY_BUCKET_ID__IS_WRITABLE_ASC
+  BUCKET_BY_BUCKET_ID__IS_WRITABLE_DESC
+  BUCKET_BY_BUCKET_ID__ENCRYPTION_KEY_ASC
+  BUCKET_BY_BUCKET_ID__ENCRYPTION_KEY_DESC
+  BUCKET_BY_BUCKET_ID__CREATED_BLOCK_ASC
+  BUCKET_BY_BUCKET_ID__CREATED_BLOCK_DESC
+}
+
+enum bucket_admins_distinct_enum {
+  ID
+  BUCKET_ID
+  SUBJECT_ID
+  ADDED_BLOCK
+}
+
+"A connection to a list of `Message` values."
+type MessagesConnection {
+  "A list of `Message` objects."
+  nodes: [Message]!
+  "A list of edges which contains the `Message` and cursor to aid in pagination."
+  edges: [MessagesEdge!]!
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "The count of *all* `Message` you could get from the connection."
+  totalCount: Int!
+  "Aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  aggregates: MessageAggregates
+  "Grouped aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  groupedAggregates("The method to use when grouping `Message` for these aggregates." groupBy: [MessagesGroupBy!]! "Conditions on the grouped aggregates." having: MessagesHavingInput): [MessageAggregates!]
+}
+
+type Message implements Node {
+  "A globally unique identifier. Can be used in various places throughout the system to identify this single value."
+  nodeId: ID!
+  id: String!
+  bucketId: String!
+  messageId: Int!
+  contributor: String!
+  reference: String
+  tag: String
+  description: String
+  contentType: String
+  contentHash: String
+  createdBlock: Int!
+  ipfsContent: String
+  "Reads a single `Bucket` that is related to this `Message`."
+  bucket: Bucket
+}
+
+"A `Message` edge in the connection."
+type MessagesEdge {
+  "A cursor for use in pagination."
+  cursor: Cursor
+  "The `Message` at the end of the edge."
+  node: Message
+}
+
+type MessageAggregates {
+  keys: [String!]
+}
+
+"Grouping methods for `Message` for usage during aggregation."
+enum MessagesGroupBy {
+  BUCKET_ID
+  MESSAGE_ID
+  CONTRIBUTOR
+  REFERENCE
+  TAG
+  DESCRIPTION
+  CONTENT_TYPE
+  CONTENT_HASH
+  CREATED_BLOCK
+  IPFS_CONTENT
+}
+
+"Conditions for `Message` aggregates."
+input MessagesHavingInput {
+  AND: [MessagesHavingInput!]
+  OR: [MessagesHavingInput!]
+}
+
+"Methods to use when ordering `Message`."
+enum MessagesOrderBy {
+  NATURAL
+  ID_ASC
+  ID_DESC
+  BUCKET_ID_ASC
+  BUCKET_ID_DESC
+  MESSAGE_ID_ASC
+  MESSAGE_ID_DESC
+  CONTRIBUTOR_ASC
+  CONTRIBUTOR_DESC
+  REFERENCE_ASC
+  REFERENCE_DESC
+  TAG_ASC
+  TAG_DESC
+  DESCRIPTION_ASC
+  DESCRIPTION_DESC
+  CONTENT_TYPE_ASC
+  CONTENT_TYPE_DESC
+  CONTENT_HASH_ASC
+  CONTENT_HASH_DESC
+  CREATED_BLOCK_ASC
+  CREATED_BLOCK_DESC
+  IPFS_CONTENT_ASC
+  IPFS_CONTENT_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  BUCKET_BY_BUCKET_ID__ID_ASC
+  BUCKET_BY_BUCKET_ID__ID_DESC
+  BUCKET_BY_BUCKET_ID__NAMESPACE_ID_ASC
+  BUCKET_BY_BUCKET_ID__NAMESPACE_ID_DESC
+  BUCKET_BY_BUCKET_ID__BUCKET_ID_ASC
+  BUCKET_BY_BUCKET_ID__BUCKET_ID_DESC
+  BUCKET_BY_BUCKET_ID__CREATOR_ASC
+  BUCKET_BY_BUCKET_ID__CREATOR_DESC
+  BUCKET_BY_BUCKET_ID__NAME_ASC
+  BUCKET_BY_BUCKET_ID__NAME_DESC
+  BUCKET_BY_BUCKET_ID__CATEGORY_ASC
+  BUCKET_BY_BUCKET_ID__CATEGORY_DESC
+  BUCKET_BY_BUCKET_ID__IS_WRITABLE_ASC
+  BUCKET_BY_BUCKET_ID__IS_WRITABLE_DESC
+  BUCKET_BY_BUCKET_ID__ENCRYPTION_KEY_ASC
+  BUCKET_BY_BUCKET_ID__ENCRYPTION_KEY_DESC
+  BUCKET_BY_BUCKET_ID__CREATED_BLOCK_ASC
+  BUCKET_BY_BUCKET_ID__CREATED_BLOCK_DESC
+}
+
+enum messages_distinct_enum {
+  ID
+  BUCKET_ID
+  MESSAGE_ID
+  CONTRIBUTOR
+  REFERENCE
+  TAG
+  DESCRIPTION
+  CONTENT_TYPE
+  CONTENT_HASH
+  CREATED_BLOCK
+  IPFS_CONTENT
+}
+
+"A `BucketAdmin` edge in the connection."
+type BucketAdminsEdge {
+  "A cursor for use in pagination."
+  cursor: Cursor
+  "The `BucketAdmin` at the end of the edge."
+  node: BucketAdmin
+}
+
+type BucketAdminAggregates {
+  keys: [String!]
+}
+
+"Grouping methods for `BucketAdmin` for usage during aggregation."
+enum BucketAdminsGroupBy {
+  BUCKET_ID
+  SUBJECT_ID
+  ADDED_BLOCK
+}
+
+"Conditions for `BucketAdmin` aggregates."
+input BucketAdminsHavingInput {
+  AND: [BucketAdminsHavingInput!]
+  OR: [BucketAdminsHavingInput!]
+}
+
+"A connection to a list of `Bucket` values."
+type BucketsConnection {
+  "A list of `Bucket` objects."
+  nodes: [Bucket]!
+  "A list of edges which contains the `Bucket` and cursor to aid in pagination."
+  edges: [BucketsEdge!]!
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "The count of *all* `Bucket` you could get from the connection."
+  totalCount: Int!
+  "Aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  aggregates: BucketAggregates
+  "Grouped aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  groupedAggregates("The method to use when grouping `Bucket` for these aggregates." groupBy: [BucketsGroupBy!]! "Conditions on the grouped aggregates." having: BucketsHavingInput): [BucketAggregates!]
+}
+
+"A `Bucket` edge in the connection."
+type BucketsEdge {
+  "A cursor for use in pagination."
+  cursor: Cursor
+  "The `Bucket` at the end of the edge."
+  node: Bucket
+}
+
+type BucketAggregates {
+  keys: [String!]
+}
+
+"Grouping methods for `Bucket` for usage during aggregation."
+enum BucketsGroupBy {
+  NAMESPACE_ID
+  BUCKET_ID
+  CREATOR
+  NAME
+  CATEGORY
+  IS_WRITABLE
+  ENCRYPTION_KEY
+  CREATED_BLOCK
+}
+
+"Conditions for `Bucket` aggregates."
+input BucketsHavingInput {
+  AND: [BucketsHavingInput!]
+  OR: [BucketsHavingInput!]
+}
+
+"Methods to use when ordering `Bucket`."
+enum BucketsOrderBy {
+  NATURAL
+  ID_ASC
+  ID_DESC
+  NAMESPACE_ID_ASC
+  NAMESPACE_ID_DESC
+  BUCKET_ID_ASC
+  BUCKET_ID_DESC
+  CREATOR_ASC
+  CREATOR_DESC
+  NAME_ASC
+  NAME_DESC
+  CATEGORY_ASC
+  CATEGORY_DESC
+  IS_WRITABLE_ASC
+  IS_WRITABLE_DESC
+  ENCRYPTION_KEY_ASC
+  ENCRYPTION_KEY_DESC
+  CREATED_BLOCK_ASC
+  CREATED_BLOCK_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+  CONTRIBUTORS_COUNT_ASC
+  CONTRIBUTORS_COUNT_DESC
+  ADMINS_COUNT_ASC
+  ADMINS_COUNT_DESC
+  MESSAGES_COUNT_ASC
+  MESSAGES_COUNT_DESC
+  BUCKET_CONTRIBUTORS_BY_BUCKET_ID__COUNT_ASC
+  BUCKET_CONTRIBUTORS_BY_BUCKET_ID__COUNT_DESC
+  BUCKET_ADMINS_BY_BUCKET_ID__COUNT_ASC
+  BUCKET_ADMINS_BY_BUCKET_ID__COUNT_DESC
+  MESSAGES_BY_BUCKET_ID__COUNT_ASC
+  MESSAGES_BY_BUCKET_ID__COUNT_DESC
+}
+
+enum buckets_distinct_enum {
+  ID
+  NAMESPACE_ID
+  BUCKET_ID
+  CREATOR
+  NAME
+  CATEGORY
+  IS_WRITABLE
+  ENCRYPTION_KEY
+  CREATED_BLOCK
+}
+
+"A connection to a list of `Did` values."
+type DidsConnection {
+  "A list of `Did` objects."
+  nodes: [Did]!
+  "A list of edges which contains the `Did` and cursor to aid in pagination."
+  edges: [DidsEdge!]!
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "The count of *all* `Did` you could get from the connection."
+  totalCount: Int!
+  "Aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  aggregates: DidAggregates
+  "Grouped aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  groupedAggregates("The method to use when grouping `Did` for these aggregates." groupBy: [DidsGroupBy!]! "Conditions on the grouped aggregates." having: DidsHavingInput): [DidAggregates!]
+}
+
+type Did implements Node {
+  "A globally unique identifier. Can be used in various places throughout the system to identify this single value."
+  nodeId: ID!
+  id: String!
+  authenticationKey: String
+  keyAgreementKeys: String
+  depositOwner: String
+  depositAmount: Int
+  blockNumber: Int
+}
+
+"A `Did` edge in the connection."
+type DidsEdge {
+  "A cursor for use in pagination."
+  cursor: Cursor
+  "The `Did` at the end of the edge."
+  node: Did
+}
+
+type DidAggregates {
+  keys: [String!]
+}
+
+"Grouping methods for `Did` for usage during aggregation."
+enum DidsGroupBy {
+  AUTHENTICATION_KEY
+  KEY_AGREEMENT_KEYS
+  DEPOSIT_OWNER
+  DEPOSIT_AMOUNT
+  BLOCK_NUMBER
+}
+
+"Conditions for `Did` aggregates."
+input DidsHavingInput {
+  AND: [DidsHavingInput!]
+  OR: [DidsHavingInput!]
+}
+
+"Methods to use when ordering `Did`."
+enum DidsOrderBy {
+  NATURAL
+  ID_ASC
+  ID_DESC
+  AUTHENTICATION_KEY_ASC
+  AUTHENTICATION_KEY_DESC
+  KEY_AGREEMENT_KEYS_ASC
+  KEY_AGREEMENT_KEYS_DESC
+  DEPOSIT_OWNER_ASC
+  DEPOSIT_OWNER_DESC
+  DEPOSIT_AMOUNT_ASC
+  DEPOSIT_AMOUNT_DESC
+  BLOCK_NUMBER_ASC
+  BLOCK_NUMBER_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+"A filter to be used against `Did` object types. All fields are combined with a logical ‘and.’"
+input DidFilter {
+  "Filter by the object’s `id` field."
+  id: StringFilter
+  "Filter by the object’s `authenticationKey` field."
+  authenticationKey: StringFilter
+  "Filter by the object’s `keyAgreementKeys` field."
+  keyAgreementKeys: StringFilter
+  "Filter by the object’s `depositOwner` field."
+  depositOwner: StringFilter
+  "Filter by the object’s `depositAmount` field."
+  depositAmount: IntFilter
+  "Filter by the object’s `blockNumber` field."
+  blockNumber: IntFilter
+  "Checks for all expressions in this list."
+  and: [DidFilter!]
+  "Checks for any expressions in this list."
+  or: [DidFilter!]
+  "Negates the expression."
+  not: DidFilter
+}
+
+enum dids_distinct_enum {
+  ID
+  AUTHENTICATION_KEY
+  KEY_AGREEMENT_KEYS
+  DEPOSIT_OWNER
+  DEPOSIT_AMOUNT
+  BLOCK_NUMBER
+}
+
+"A connection to a list of `Property` values."
+type PropertiesConnection {
+  "A list of `Property` objects."
+  nodes: [Property]!
+  "A list of edges which contains the `Property` and cursor to aid in pagination."
+  edges: [PropertiesEdge!]!
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+  "The count of *all* `Property` you could get from the connection."
+  totalCount: Int!
+  "Aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  aggregates: PropertyAggregates
+  "Grouped aggregates across the matching connection (ignoring before\/after\/first\/last\/offset)"
+  groupedAggregates("The method to use when grouping `Property` for these aggregates." groupBy: [PropertiesGroupBy!]! "Conditions on the grouped aggregates." having: PropertiesHavingInput): [PropertyAggregates!]
+}
+
+type Property implements Node {
+  "A globally unique identifier. Can be used in various places throughout the system to identify this single value."
+  nodeId: ID!
+  id: String!
+  collection: Int
+  item: Int
+  propertyId: String
+  propertyName: String
+  propertyType: String
+  status: String
+  propertyDescription: String
+  developerAddress: String
+  accountAddress: String
+  legalRepresentative: String
+  planningCode: String
+  buildingControlCode: String
+  map: String
+  createdAt: String
+  updatedAt: String
+  companyName: String
+  companyLogo: String
+  street: String
+  townCity: String
+  postCode: String
+  flatOrUnit: String
+  localAuthority: String
+  propertyPrice: Int
+  pricePerToken: Int
+  numberOfTokens: Int
+  estimatedRentalIncome: Int
+  stampDutyTax: Int
+  annualServiceCharge: Int
+  isStampDutyPaid: Boolean
+  isAnnualServiceChargePaid: Boolean
+  numberOfBedrooms: Int
+  numberOfBathrooms: Int
+  area: String
+  outdoorSpace: String
+  offStreetParking: String
+  quality: String
+  constructionDate: String
+  files: JSON
+}
+
+"The `JSON` scalar type represents JSON values as specified by [ECMA-404](http:\/\/www.ecma-international.org\/publications\/files\/ECMA-ST\/ECMA-404.pdf)."
+scalar JSON
+
+"A `Property` edge in the connection."
+type PropertiesEdge {
+  "A cursor for use in pagination."
+  cursor: Cursor
+  "The `Property` at the end of the edge."
+  node: Property
+}
+
+type PropertyAggregates {
+  keys: [String!]
+}
+
+"Grouping methods for `Property` for usage during aggregation."
+enum PropertiesGroupBy {
+  COLLECTION
+  ITEM
+  PROPERTY_ID
+  PROPERTY_NAME
+  PROPERTY_TYPE
+  STATUS
+  PROPERTY_DESCRIPTION
+  DEVELOPER_ADDRESS
+  ACCOUNT_ADDRESS
+  LEGAL_REPRESENTATIVE
+  PLANNING_CODE
+  BUILDING_CONTROL_CODE
+  MAP
+  CREATED_AT
+  UPDATED_AT
+  COMPANY_NAME
+  COMPANY_LOGO
+  STREET
+  TOWN_CITY
+  POST_CODE
+  FLAT_OR_UNIT
+  LOCAL_AUTHORITY
+  PROPERTY_PRICE
+  PRICE_PER_TOKEN
+  NUMBER_OF_TOKENS
+  ESTIMATED_RENTAL_INCOME
+  STAMP_DUTY_TAX
+  ANNUAL_SERVICE_CHARGE
+  IS_STAMP_DUTY_PAID
+  IS_ANNUAL_SERVICE_CHARGE_PAID
+  NUMBER_OF_BEDROOMS
+  NUMBER_OF_BATHROOMS
+  AREA
+  OUTDOOR_SPACE
+  OFF_STREET_PARKING
+  QUALITY
+  CONSTRUCTION_DATE
+  FILES
+}
+
+"Conditions for `Property` aggregates."
+input PropertiesHavingInput {
+  AND: [PropertiesHavingInput!]
+  OR: [PropertiesHavingInput!]
+}
+
+"Methods to use when ordering `Property`."
+enum PropertiesOrderBy {
+  NATURAL
+  ID_ASC
+  ID_DESC
+  COLLECTION_ASC
+  COLLECTION_DESC
+  ITEM_ASC
+  ITEM_DESC
+  PROPERTY_ID_ASC
+  PROPERTY_ID_DESC
+  PROPERTY_NAME_ASC
+  PROPERTY_NAME_DESC
+  PROPERTY_TYPE_ASC
+  PROPERTY_TYPE_DESC
+  STATUS_ASC
+  STATUS_DESC
+  PROPERTY_DESCRIPTION_ASC
+  PROPERTY_DESCRIPTION_DESC
+  DEVELOPER_ADDRESS_ASC
+  DEVELOPER_ADDRESS_DESC
+  ACCOUNT_ADDRESS_ASC
+  ACCOUNT_ADDRESS_DESC
+  LEGAL_REPRESENTATIVE_ASC
+  LEGAL_REPRESENTATIVE_DESC
+  PLANNING_CODE_ASC
+  PLANNING_CODE_DESC
+  BUILDING_CONTROL_CODE_ASC
+  BUILDING_CONTROL_CODE_DESC
+  MAP_ASC
+  MAP_DESC
+  CREATED_AT_ASC
+  CREATED_AT_DESC
+  UPDATED_AT_ASC
+  UPDATED_AT_DESC
+  COMPANY_NAME_ASC
+  COMPANY_NAME_DESC
+  COMPANY_LOGO_ASC
+  COMPANY_LOGO_DESC
+  STREET_ASC
+  STREET_DESC
+  TOWN_CITY_ASC
+  TOWN_CITY_DESC
+  POST_CODE_ASC
+  POST_CODE_DESC
+  FLAT_OR_UNIT_ASC
+  FLAT_OR_UNIT_DESC
+  LOCAL_AUTHORITY_ASC
+  LOCAL_AUTHORITY_DESC
+  PROPERTY_PRICE_ASC
+  PROPERTY_PRICE_DESC
+  PRICE_PER_TOKEN_ASC
+  PRICE_PER_TOKEN_DESC
+  NUMBER_OF_TOKENS_ASC
+  NUMBER_OF_TOKENS_DESC
+  ESTIMATED_RENTAL_INCOME_ASC
+  ESTIMATED_RENTAL_INCOME_DESC
+  STAMP_DUTY_TAX_ASC
+  STAMP_DUTY_TAX_DESC
+  ANNUAL_SERVICE_CHARGE_ASC
+  ANNUAL_SERVICE_CHARGE_DESC
+  IS_STAMP_DUTY_PAID_ASC
+  IS_STAMP_DUTY_PAID_DESC
+  IS_ANNUAL_SERVICE_CHARGE_PAID_ASC
+  IS_ANNUAL_SERVICE_CHARGE_PAID_DESC
+  NUMBER_OF_BEDROOMS_ASC
+  NUMBER_OF_BEDROOMS_DESC
+  NUMBER_OF_BATHROOMS_ASC
+  NUMBER_OF_BATHROOMS_DESC
+  AREA_ASC
+  AREA_DESC
+  OUTDOOR_SPACE_ASC
+  OUTDOOR_SPACE_DESC
+  OFF_STREET_PARKING_ASC
+  OFF_STREET_PARKING_DESC
+  QUALITY_ASC
+  QUALITY_DESC
+  CONSTRUCTION_DATE_ASC
+  CONSTRUCTION_DATE_DESC
+  FILES_ASC
+  FILES_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+"A filter to be used against `Property` object types. All fields are combined with a logical ‘and.’"
+input PropertyFilter {
+  "Filter by the object’s `id` field."
+  id: StringFilter
+  "Filter by the object’s `collection` field."
+  collection: IntFilter
+  "Filter by the object’s `item` field."
+  item: IntFilter
+  "Filter by the object’s `propertyId` field."
+  propertyId: StringFilter
+  "Filter by the object’s `propertyName` field."
+  propertyName: StringFilter
+  "Filter by the object’s `propertyType` field."
+  propertyType: StringFilter
+  "Filter by the object’s `status` field."
+  status: StringFilter
+  "Filter by the object’s `propertyDescription` field."
+  propertyDescription: StringFilter
+  "Filter by the object’s `developerAddress` field."
+  developerAddress: StringFilter
+  "Filter by the object’s `accountAddress` field."
+  accountAddress: StringFilter
+  "Filter by the object’s `legalRepresentative` field."
+  legalRepresentative: StringFilter
+  "Filter by the object’s `planningCode` field."
+  planningCode: StringFilter
+  "Filter by the object’s `buildingControlCode` field."
+  buildingControlCode: StringFilter
+  "Filter by the object’s `map` field."
+  map: StringFilter
+  "Filter by the object’s `createdAt` field."
+  createdAt: StringFilter
+  "Filter by the object’s `updatedAt` field."
+  updatedAt: StringFilter
+  "Filter by the object’s `companyName` field."
+  companyName: StringFilter
+  "Filter by the object’s `companyLogo` field."
+  companyLogo: StringFilter
+  "Filter by the object’s `street` field."
+  street: StringFilter
+  "Filter by the object’s `townCity` field."
+  townCity: StringFilter
+  "Filter by the object’s `postCode` field."
+  postCode: StringFilter
+  "Filter by the object’s `flatOrUnit` field."
+  flatOrUnit: StringFilter
+  "Filter by the object’s `localAuthority` field."
+  localAuthority: StringFilter
+  "Filter by the object’s `propertyPrice` field."
+  propertyPrice: IntFilter
+  "Filter by the object’s `pricePerToken` field."
+  pricePerToken: IntFilter
+  "Filter by the object’s `numberOfTokens` field."
+  numberOfTokens: IntFilter
+  "Filter by the object’s `estimatedRentalIncome` field."
+  estimatedRentalIncome: IntFilter
+  "Filter by the object’s `stampDutyTax` field."
+  stampDutyTax: IntFilter
+  "Filter by the object’s `annualServiceCharge` field."
+  annualServiceCharge: IntFilter
+  "Filter by the object’s `isStampDutyPaid` field."
+  isStampDutyPaid: BooleanFilter
+  "Filter by the object’s `isAnnualServiceChargePaid` field."
+  isAnnualServiceChargePaid: BooleanFilter
+  "Filter by the object’s `numberOfBedrooms` field."
+  numberOfBedrooms: IntFilter
+  "Filter by the object’s `numberOfBathrooms` field."
+  numberOfBathrooms: IntFilter
+  "Filter by the object’s `area` field."
+  area: StringFilter
+  "Filter by the object’s `outdoorSpace` field."
+  outdoorSpace: StringFilter
+  "Filter by the object’s `offStreetParking` field."
+  offStreetParking: StringFilter
+  "Filter by the object’s `quality` field."
+  quality: StringFilter
+  "Filter by the object’s `constructionDate` field."
+  constructionDate: StringFilter
+  "Filter by the object’s `files` field."
+  files: JSONFilter
+  "Checks for all expressions in this list."
+  and: [PropertyFilter!]
+  "Checks for any expressions in this list."
+  or: [PropertyFilter!]
+  "Negates the expression."
+  not: PropertyFilter
+}
+
+"A filter to be used against JSON fields. All fields are combined with a logical ‘and.’"
+input JSONFilter {
+  "Is null (if `true` is specified) or is not null (if `false` is specified)."
+  isNull: Boolean
+  "Equal to the specified value."
+  equalTo: JSON
+  "Not equal to the specified value."
+  notEqualTo: JSON
+  "Not equal to the specified value, treating null like an ordinary value."
+  distinctFrom: JSON
+  "Equal to the specified value, treating null like an ordinary value."
+  notDistinctFrom: JSON
+  "Included in the specified list."
+  in: [JSON!]
+  "Not included in the specified list."
+  notIn: [JSON!]
+  "Less than the specified value."
+  lessThan: JSON
+  "Less than or equal to the specified value."
+  lessThanOrEqualTo: JSON
+  "Greater than the specified value."
+  greaterThan: JSON
+  "Greater than or equal to the specified value."
+  greaterThanOrEqualTo: JSON
+  "Contains the specified JSON."
+  contains: JSON
+  "Contains the specified key."
+  containsKey: String
+  "Contains all of the specified keys."
+  containsAllKeys: [String!]
+  "Contains any of the specified keys."
+  containsAnyKeys: [String!]
+  "Contained by the specified JSON."
+  containedBy: JSON
+}
+
+enum properties_distinct_enum {
+  ID
+  COLLECTION
+  ITEM
+  PROPERTY_ID
+  PROPERTY_NAME
+  PROPERTY_TYPE
+  STATUS
+  PROPERTY_DESCRIPTION
+  DEVELOPER_ADDRESS
+  ACCOUNT_ADDRESS
+  LEGAL_REPRESENTATIVE
+  PLANNING_CODE
+  BUILDING_CONTROL_CODE
+  MAP
+  CREATED_AT
+  UPDATED_AT
+  COMPANY_NAME
+  COMPANY_LOGO
+  STREET
+  TOWN_CITY
+  POST_CODE
+  FLAT_OR_UNIT
+  LOCAL_AUTHORITY
+  PROPERTY_PRICE
+  PRICE_PER_TOKEN
+  NUMBER_OF_TOKENS
+  ESTIMATED_RENTAL_INCOME
+  STAMP_DUTY_TAX
+  ANNUAL_SERVICE_CHARGE
+  IS_STAMP_DUTY_PAID
+  IS_ANNUAL_SERVICE_CHARGE_PAID
+  NUMBER_OF_BEDROOMS
+  NUMBER_OF_BATHROOMS
+  AREA
+  OUTDOOR_SPACE
+  OFF_STREET_PARKING
+  QUALITY
+  CONSTRUCTION_DATE
+  FILES
+}
+
+type TableEstimate {
+  table: String
+  estimate: Int
+}
+
+type _Metadata {
+  lastProcessedHeight: Int
+  lastProcessedTimestamp: Date
+  targetHeight: Int
+  chain: String
+  specName: String
+  genesisHash: String
+  startHeight: Int
+  indexerHealthy: Boolean
+  indexerNodeVersion: String
+  queryNodeVersion: String
+  rowCountEstimate: [TableEstimate]
+  dynamicDatasources: [JSON]
+  evmChainId: String
+  deployments: JSON
+  lastFinalizedVerifiedHeight: Int
+  unfinalizedBlocks: String
+  lastCreatedPoiHeight: Int
+  latestSyncedPoiHeight: Int
+  dbSize: BigInt
+}
+
+"The day, does not include a time."
+scalar Date
+
+"A signed eight-byte integer. The upper big integer values are greater than the\nmax value for a JavaScript number. Therefore all big integers will be output as\nstrings and not numbers."
+scalar BigInt
+
+type _MetadatasEdge {
+  cursor: Cursor
+  node: _Metadata
+}
+
+type _Metadatas {
+  totalCount: Int!
+  nodes: [_Metadata]!
+}

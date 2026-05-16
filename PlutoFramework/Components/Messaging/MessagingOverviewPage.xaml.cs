@@ -1,4 +1,6 @@
 using PlutoFramework.Templates.PageTemplate;
+using PlutoFramework.Model;
+using PlutoFramework.Model.Messaging;
 using System.Collections.ObjectModel;
 
 namespace PlutoFramework.Components.Messaging;
@@ -7,48 +9,70 @@ public partial class MessagingOverviewPage : PageTemplate
 {
     public ObservableCollection<Message> Messages { get; } = new();
 
-    public MessagingOverviewPage()
+    private readonly string _bucketId;
+    private byte[]? _bucketEncryptionKey;
+    private string? _currentCursor;
+    private bool _hasMoreData = true;
+    private bool _isLoading = false;
+    private readonly MessagingModel _messagingModel = new MessagingModel();
+
+    public MessagingOverviewPage(string bucketId, byte[] bucketEncryptionKey)
     {
         InitializeComponent();
+
+        _bucketId = bucketId;
+        _bucketEncryptionKey = bucketEncryptionKey;
 
         scrollView.Padding = new Thickness(scrollView.Padding.Right, scrollView.Padding.Bottom,
             scrollView.Padding.Left, scrollView.Padding.Top);
 
         BindingContext = this;
 
-        // Temporary mock msgs
-        AddIncoming("Lorem ipsum", "dolor sit amet, consectetur adipiscing elit. Donec luctus ligula eu" +
-                                   " erat malesuada, vitae scelerisque libero fermentum. Nunc pellentesque ac enim a" +
-                                   " semper. Ut malesuada, eros quis malesuada efficitur, lectus ante euismod neque," +
-                                   " eget ultricies augue augue in nulla. Interdum et malesuada fames ac ante ipsum" +
-                                   " primis in faucibus. Pellentesque eleifend turpis sit amet mi sollicitudin" +
-                                   " sagittis ac eget nisi. Sed lectus augue, iaculis id congue eleifend, vulputate" +
-                                   " quis eros. Nunc porttitor diam congue, rutrum odio a, vehicula felis. Suspendisse" +
-                                   " commodo congue enim. Phasellus auctor neque vitae lorem ornare, vitae consequat" +
-                                   " sem convallis. Vestibulum in erat sit amet tortor condimentum mattis id quis ex." +
-                                   " Donec vel rhoncus odio. Aenean nunc ex, iaculis sed nunc at, scelerisque imperdiet" +
-                                   " ex. Pellentesque sed augue viverra, fermentum arcu eu, placerat orci." +
-                                   " Pellentesque ullamcorper auctor tortor a tristique.",
-                                   "Aug 5, 2025, 10:16 AM", null);
-        AddStatus("A new document has been added");
-        AddOutgoing("qwdadwa awdawd aa dw gaawfd awd dawrfaw", "Aug 5, 2025, 12:34 PM");
-        AddIncoming("Short", "in", "Aug 5, 2025, 12:34 PM", null);
-        AddStatus("Short");
-        AddOutgoing("out", "Aug 5, 2025, 12:34 PM");
-        AddStatus("Super super super super super super super super super long");
-        AddIncoming("Lorem ipsum", "dolor sit amet, consectetur adipiscing elit. Donec luctus ligula eu" +
-                                   " erat malesuada, vitae scelerisque libero fermentum. Nunc pellentesque ac enim a" +
-                                   " semper. Ut malesuada, eros quis malesuada efficitur, lectus ante euismod neque," +
-                                   " eget ultricies augue augue in nulla. Interdum et malesuada fames ac ante ipsum" +
-                                   " primis in faucibus. Pellentesque eleifend turpis sit amet mi sollicitudin" +
-                                   " sagittis ac eget nisi. Sed lectus augue, iaculis id congue eleifend, vulputate" +
-                                   " quis eros. Nunc porttitor diam congue, rutrum odio a, vehicula felis. Suspendisse" +
-                                   " commodo congue enim. Phasellus auctor neque vitae lorem ornare, vitae consequat" +
-                                   " sem convallis. Vestibulum in erat sit amet tortor condimentum mattis id quis ex." +
-                                   " Donec vel rhoncus odio. Aenean nunc ex, iaculis sed nunc at, scelerisque imperdiet" +
-                                   " ex. Pellentesque sed augue viverra, fermentum arcu eu, placerat orci." +
-                                   " Pellentesque ullamcorper auctor tortor a tristique.",
-            "Aug 5, 2025, 10:16 AM", null);
+        LoadMessagesAsync();
+    }
+
+    private async Task LoadMessagesAsync()
+    {
+        if (_isLoading || !_hasMoreData) return;
+
+        _isLoading = true;
+
+        try
+        {
+            var userAddress = KeysModel.GetSubstrateKey();
+            var page = await _messagingModel.GetDecryptedBucketMessagesAsync(
+                _bucketId,
+                _bucketEncryptionKey!,
+                _currentCursor
+            );
+
+            foreach (var msg in page.Messages)
+            {
+                var messageType = msg.Contributor == userAddress
+                    ? Message.MessageType.Outgoing
+                    : Message.MessageType.Incoming;
+
+                AddMessage(
+                    msg.DecryptedContent ?? "[Unable to decrypt]",
+                    messageType,
+                    messageType == Message.MessageType.Incoming ? msg.Contributor : null,
+                    msg.CreatedBlock.ToString(),
+                    null
+                );
+            }
+
+            _hasMoreData = page.HasNextPage;
+            _currentCursor = page.EndCursor;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading messages: {ex}");
+            AddStatus($"Error loading messages: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private void AddMessage(string text, Message.MessageType type, string? sender, string? timestamp, Color? msgColor)
@@ -63,18 +87,23 @@ public partial class MessagingOverviewPage : PageTemplate
         });
     }
 
-    public void AddIncoming(string sender, string text, string timestamp, Color? msgColor)
+    private void AddIncoming(string sender, string text, string timestamp, Color? msgColor)
     {
         AddMessage(text, Message.MessageType.Incoming, sender, timestamp, msgColor);
     }
 
-    public void AddOutgoing(string text, string timestamp)
+    private void AddOutgoing(string text, string timestamp)
     {
         AddMessage(text, Message.MessageType.Outgoing, null, timestamp, null);
     }
 
-    public void AddStatus(string text)
+    private void AddStatus(string text)
     {
         AddMessage(text, Message.MessageType.Status, null, null, null);
+    }
+
+    private void OnRemainingItemsThresholdReached(object sender, EventArgs e)
+    {
+        _ = LoadMessagesAsync();
     }
 }

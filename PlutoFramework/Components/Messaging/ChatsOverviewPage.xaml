@@ -19,10 +19,17 @@
     </ContentPage.Resources>
     
     <template:PageTemplate.MainContent>
-        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Chats}"
-                             BindableLayout.ItemTemplate="{StaticResource ChatItem}"
-                             Padding="15, 15, 15, 168"
-                             Spacing="15"/>
+        <CollectionView ItemsSource="{Binding Chats}"
+                        Margin="15, 15, 15, 168"
+                        RemainingItemsThreshold="2"
+                        RemainingItemsThresholdReached="OnRemainingItemsThresholdReached">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="15" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <StaticResource Key="ChatItem" />
+            </CollectionView.ItemTemplate>
+        </CollectionView>
     </template:PageTemplate.MainContent>
     
     <template:PageTemplate.PopupContent>

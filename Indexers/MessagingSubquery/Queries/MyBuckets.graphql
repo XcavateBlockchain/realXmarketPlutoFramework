@@ -1,0 +1,32 @@
+query MyBuckets($address: String!, $first: Int!, $offset: Int!) {
+  buckets(
+    first: $first
+    offset: $offset
+    orderBy: [NAME_ASC]
+    filter: {
+      or: [
+        { admins: { some: { subjectId: { equalToInsensitive: $address } } } }
+        { contributors: { some: { subjectId: { equalToInsensitive: $address } } } }
+      ]
+    }
+  ) {
+    totalCount
+    nodes {
+      id
+      bucketId
+      namespaceId
+      name
+      admins(filter: { subjectId: { equalToInsensitive: $address } }) {
+        totalCount
+      }
+      contributors(filter: { subjectId: { equalToInsensitive: $address } }) {
+        totalCount
+      }
+      messages(first: 1, orderBy: [CREATED_BLOCK_DESC]) {
+        nodes {
+          createdBlock
+        }
+      }
+    }
+  }
+}
