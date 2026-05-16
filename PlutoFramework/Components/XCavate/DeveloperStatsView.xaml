@@ -25,7 +25,7 @@
                                              Value="{Binding ActiveListedProperties}" />
         <table:TableCurrencyCell Grid.Column="1"
                                              Grid.Row="0"
-                                          Title="Tokens sold"
+                                          Title="Shares sold"
                                           Value="{Binding PropertyTokensSold}" />
         <table:TableCurrencyCell Grid.Column="0"
                                              Grid.Row="1"

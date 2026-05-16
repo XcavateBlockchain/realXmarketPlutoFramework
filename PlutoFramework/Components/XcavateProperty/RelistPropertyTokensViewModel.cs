@@ -162,21 +162,21 @@ namespace PlutoFramework.Components.XcavateProperty
             if (!uint.TryParse(Tokens, out parsedTokens))
             {
 
-                ErrorMessage = "Tokens is not valid number";
+                ErrorMessage = "Shares is not valid number";
 
                 return;
             }
 
             if (parsedTokens < 1)
             {
-                ErrorMessage = "Tokens must be greater than 0";
+                ErrorMessage = "Shares must be greater than 0";
 
                 return;
             }
 
             if (parsedTokens > ListingDetails?.ListedTokens)
             {
-                ErrorMessage = $"Tokens must be less than {ListingDetails.ListedTokens}";
+                ErrorMessage = $"Shares must be less than {ListingDetails.ListedTokens}";
 
                 return;
             }
@@ -184,14 +184,14 @@ namespace PlutoFramework.Components.XcavateProperty
             uint pricePerToken;
             if (!uint.TryParse(PricePerToken, out pricePerToken))
             {
-                ErrorMessage = "Price per token is not valid number";
+                ErrorMessage = "Price per share is not valid number";
 
                 return;
             }
 
             if (pricePerToken < 1)
             {
-                ErrorMessage = "Price per token must be greater than 0";
+                ErrorMessage = "Price per share must be greater than 0";
                 return;
             }
 

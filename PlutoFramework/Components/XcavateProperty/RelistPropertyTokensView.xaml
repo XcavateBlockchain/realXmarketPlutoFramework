@@ -18,7 +18,8 @@
                 <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
                          AbsoluteLayout.LayoutFlags="WidthProportional"
                          x:Name="verticalStackLayout"
-                         Spacing="20">
+                         Spacing="20"
+                                     Padding="10, 10, 10, 10">
 
                     <!-- Add your content here -->
 
@@ -33,14 +34,14 @@
                     </AbsoluteLayout>
                     
                     <form:FormInputView KeyboardType="Numeric"
-                                        Placeholder="Tokens"
+                                        Placeholder="Shares"
                                         Text="{Binding Tokens}"
                                         MaxValue="{Binding MaxValue}"
                                         UpdateCommand="{Binding FormChangedCommand}"
                                         CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}"
                                         />
                     <form:FormAssetInputView KeyboardType="Numeric"
-                                        Placeholder="Price per token"
+                                        Placeholder="Price per share"
                                         Text="{Binding PricePerToken}"
                                         UpdateCommand="{Binding FormChangedCommand}"
                                         CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}"/>
@@ -75,7 +76,7 @@
                     <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
                       AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
                       ColumnSpacing="15"
-                      Margin="0, 0, 0, 10">
+                      Margin="10, 0, 10, 10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
