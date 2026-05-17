@@ -57,7 +57,9 @@ public partial class MessagingOverviewPage : PageTemplate
 
         try
         {
-            var userAddress = KeysModel.GetSubstrateKey(); // TODO: get ss58 address instead
+            var userAddress = Substrate.NetApi.Utils.GetAddressFrom(Substrate.NetApi.Utils.GetPublicKeyFrom(KeysModel.GetSubstrateKey()), 0);
+            if (userAddress == null) return;
+
             var page = await _messagingModel.GetDecryptedBucketMessagesAsync(
                 _bucketId,
                 _bucketEncryptionKey!,

@@ -1,16 +1,16 @@
 ﻿using MessagingSubquery;
-using NBitcoin.Secp256k1;
 using NSec.Cryptography;
+using PlutoFramework.Components.TransactionAnalyzer;
+using PlutoFramework.Constants;
 using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Keys;
+using PolkadotAssetHub.NetApi.Generated.Model.sp_core.crypto;
 using StrawberryShake;
-using XcavatePaseo.NetApi.Generated.Storage;
-using Substrate.NetApi.Model.Types.Primitive;
 using Substrate.NetApi.Model.Types.Base;
-using XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types;
+using Substrate.NetApi.Model.Types.Primitive;
 using XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec;
-using XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_map;
-using XcavatePaseo.NetApi.Generated.Types.Base;
+using XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types;
+using XcavatePaseo.NetApi.Generated.Storage;
 
 namespace PlutoFramework.Model.Messaging;
 
@@ -240,14 +240,19 @@ public class MessagingModel
         var nsId = new U128(namespaceId);
         var bId = new U128(bucketId);
 
-        BucketsCalls.Write(nsId, bId, messageInput);
+        var method = BucketsCalls.Write(nsId, bId, messageInput);
 
-        // TODO: Create and sign the extrinsic with the pallet bucket write call
-        // The actual extrinsic creation and signing would depend on the chain connection setup
-        // This would typically involve:
-        // 1. Creating the Call object with write parameters (nsId, bId, messageInput)
-        // 2. Wrapping it in an extrinsic
-        // 3. Signing with the user's account
-        // 4. Submitting to the chain via RPC
+        var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(
+            EndpointEnum.XcavatePaseo,
+            CancellationToken.None
+        );
+
+        var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
+        await transactionAnalyzerConfirmationViewModel.LoadAsync(
+            client,
+            method,
+            showDAppView: false,
+            token: CancellationToken.None
+        );
     }
 }

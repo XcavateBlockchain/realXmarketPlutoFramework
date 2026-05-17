@@ -76,7 +76,8 @@ public partial class ChatsOverviewPage : PageTemplate
 
         _isLoading = true;
 
-        var address = KeysModel.GetSubstrateKey(); //TODO: get ss58 address instead
+        var address = Substrate.NetApi.Utils.GetAddressFrom(Substrate.NetApi.Utils.GetPublicKeyFrom(KeysModel.GetSubstrateKey()), 0);
+        if (address == null) return;
 
         try
         {
@@ -92,7 +93,7 @@ public partial class ChatsOverviewPage : PageTemplate
                 foreach (var bucket in result)
                 {
                     if (bucket == null) continue;
-                    AddChat(bucket.NamespaceId, bucket.BucketId, bucket.Name ?? "Unknown", "", "", true);
+                    AddChat(bucket.NamespaceId, bucket.BucketId, bucket.Name ?? "Unknown", "ID: " + bucket.BucketId.ToString(), "", true);
                 }
 
                 _currentOffset += result.Count;
