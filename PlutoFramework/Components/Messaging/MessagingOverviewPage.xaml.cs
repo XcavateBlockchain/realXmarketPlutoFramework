@@ -14,12 +14,13 @@ public partial class MessagingOverviewPage : PageTemplate
     private string? _currentCursor;
     private bool _hasMoreData = true;
     private bool _isLoading = false;
-    private readonly MessagingModel _messagingModel = new MessagingModel();
+    private readonly MessagingModel _messagingModel;
 
-    public MessagingOverviewPage(string bucketId, byte[] bucketEncryptionKey)
+    public MessagingOverviewPage(MessagingModel model, string bucketId, byte[] bucketEncryptionKey)
     {
         InitializeComponent();
 
+        _messagingModel = model;
         _bucketId = bucketId;
         _bucketEncryptionKey = bucketEncryptionKey;
 

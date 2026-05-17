@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace PlutoFramework.Model.Messaging
 {
@@ -9,40 +9,15 @@ namespace PlutoFramework.Model.Messaging
         Task<byte[]> DownloadAsync(string identifier);
     }
 
-    public class PinataAdapterOptions
-    {
-        public string? UploadEndpoint { get; set; } = "https://uploads.pinata.cloud/v3/files";
-        public string? PublicGateway { get; set; } = "https://gateway.pinata.cloud/ipfs";
-        public string Network { get; set; } = "public";
-        public string? Jwt { get; set; }
-        public string? ApiKey { get; set; }
-        public string? ApiSecret { get; set; }
-    }
-
     public class PinataStorageAdapter : IStorageAdapter
     {
-        private readonly PinataAdapterOptions _options;
+        private readonly PinataSecretData _secrets;
         private readonly HttpClient _httpClient;
+        private const string UploadEndpoint = "https://uploads.pinata.cloud/v3/files";
 
-        public PinataStorageAdapter(PinataAdapterOptions? options = null)
+        public PinataStorageAdapter()
         {
-            _options = options ?? new PinataAdapterOptions();
-
-            _options.UploadEndpoint = _options.UploadEndpoint?.Trim() ?? "https://uploads.pinata.cloud/v3/files";
-            _options.PublicGateway = _options.PublicGateway?.Trim() ?? "https://gateway.pinata.cloud/ipfs";
-            _options.Network = _options.Network?.Trim() ?? "public";
-            _options.Jwt = _options.Jwt?.Trim();
-            _options.ApiKey = _options.ApiKey?.Trim();
-            _options.ApiSecret = _options.ApiSecret?.Trim();
-
-            var hasJwt = !string.IsNullOrEmpty(_options.Jwt);
-            var hasApiPair = !string.IsNullOrEmpty(_options.ApiKey) && !string.IsNullOrEmpty(_options.ApiSecret);
-
-            if (!hasJwt && !hasApiPair)
-            {
-                throw new InvalidOperationException("Pinata credentials are missing. Set Jwt or both ApiKey and ApiSecret.");
-            }
-
+            _secrets = PinataSecretModel.GetSecrets();
             _httpClient = new HttpClient();
         }
 
@@ -53,9 +28,9 @@ namespace PlutoFramework.Model.Messaging
             var blob = new ByteArrayContent(data);
             using var formData = new MultipartFormDataContent();
             formData.Add(blob, "file", "assetdidcomm-message.jwe");
-            formData.Add(new StringContent(_options.Network), "network");
+            formData.Add(new StringContent("public"), "network");
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, _options.UploadEndpoint);
+            using var request = new HttpRequestMessage(HttpMethod.Post, UploadEndpoint);
             request.Headers.Add("Authorization", CreateAuthHeaders());
             request.Content = formData;
 
@@ -88,7 +63,7 @@ namespace PlutoFramework.Model.Messaging
         public async Task<byte[]> DownloadAsync(string identifier)
         {
             var trimmed = identifier.Trim();
-            var url = $"{_options.PublicGateway}/{trimmed}";
+            var url = $"{_secrets.Gateway}ipfs/{trimmed}";
             System.Diagnostics.Debug.WriteLine($"PinataAdapter: Downloading from {url}");
 
             var response = await _httpClient.GetAsync(url);
@@ -103,12 +78,12 @@ namespace PlutoFramework.Model.Messaging
 
         private string CreateAuthHeaders()
         {
-            if (!string.IsNullOrEmpty(_options.Jwt))
+            if (!string.IsNullOrEmpty(_secrets.Jwt))
             {
-                return $"Bearer {_options.Jwt}";
+                return $"Bearer {_secrets.Jwt}";
             }
 
-            return _options.ApiKey ?? string.Empty;
+            return _secrets.ApiKey;
         }
 
         private class PinataUploadResponse

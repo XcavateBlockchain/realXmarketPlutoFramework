@@ -10,7 +10,7 @@ namespace PlutoFramework.Model.Messaging
         public required string Gateway { get; set; }
     }
 
-    public class SumsubSecretModel
+    public class PinataSecretModel
     {
         public static PinataSecretData GetSecrets()
         {

@@ -2,7 +2,6 @@
 using PlutoFramework.Templates.PageTemplate;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Messaging;
-using System.Threading.Tasks;
 
 namespace PlutoFramework.Components.Messaging;
 
@@ -14,7 +13,7 @@ public partial class ChatsOverviewPage : PageTemplate
     private const int BATCH_SIZE = 10;
     private bool _isLoading = false;
     private bool _hasMoreData = true;
-    private readonly MessagingModel _messagingModel = new MessagingModel();
+    private readonly MessagingModel _messagingModel = new(new PinataStorageAdapter());
     
     private void AddChat(string title, string state, string time, bool isApproved)
     {
