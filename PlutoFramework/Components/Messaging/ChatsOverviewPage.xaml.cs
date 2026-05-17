@@ -50,10 +50,9 @@ public partial class ChatsOverviewPage : PageTemplate
 
         try
         {
-            var encryptionKey = await _messagingModel.GetBucketEncryptionKeyAsync(chat.BucketId);
-            if (encryptionKey != null)
+            var encKeyBytes = await _messagingModel.GetBucketEncryptionKeyAsync(chat.BucketId);
+            if (encKeyBytes != null)
             {
-                var encKeyBytes = System.Text.Encoding.UTF8.GetBytes(encryptionKey);
                 await Shell.Current.Navigation.PushAsync(new MessagingOverviewPage(_messagingModel, chat.NamespaceId, chat.BucketId, encKeyBytes));
             }
             else

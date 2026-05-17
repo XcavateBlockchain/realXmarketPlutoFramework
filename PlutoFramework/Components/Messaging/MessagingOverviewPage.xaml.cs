@@ -26,9 +26,6 @@ public partial class MessagingOverviewPage : PageTemplate
         _bucketId = bucketId;
         _bucketEncryptionKey = bucketEncryptionKey;
 
-        scrollView.Padding = new Thickness(scrollView.Padding.Right, scrollView.Padding.Bottom,
-            scrollView.Padding.Left, scrollView.Padding.Top);
-
         BindingContext = this;
 
         LoadMessagesAsync();
@@ -72,17 +69,32 @@ public partial class MessagingOverviewPage : PageTemplate
                     ? Message.MessageType.Outgoing
                     : Message.MessageType.Incoming;
 
-                AddMessage(
-                    msg.DecryptedContent ?? "[Unable to decrypt]",
-                    messageType,
-                    messageType == Message.MessageType.Incoming ? msg.Contributor : null,
-                    msg.CreatedBlock.ToString(),
-                    null
-                );
-            }
+                Console.WriteLine($"Loaded message: {msg.Id}, Type: {messageType}, ContentType: {msg.ContentType}");
 
-            _hasMoreData = page.HasNextPage;
-            _currentCursor = page.EndCursor;
+                if (msg.ContentType == "text/plain;charset=utf-8")
+                {
+                    AddMessage(
+                        msg.DecryptedContent ?? "[Unable to decrypt]",
+                        messageType,
+                        messageType == Message.MessageType.Incoming ? msg.Contributor : null,
+                        msg.CreatedBlock.ToString(),
+                        null
+                    );
+                }
+                else
+                {
+                    AddMessage(
+                        msg.ContentType == null ? $"[Unsupported content type: {msg.ContentType}]" : "No content type",
+                        messageType,
+                        messageType == Message.MessageType.Incoming ? msg.Contributor : null,
+                        msg.CreatedBlock.ToString(),
+                        Colors.Red
+                    );
+                }
+
+                _hasMoreData = page.HasNextPage;
+                _currentCursor = page.EndCursor;
+            }
         }
         catch (Exception ex)
         {
@@ -97,13 +109,23 @@ public partial class MessagingOverviewPage : PageTemplate
 
     private void AddMessage(string text, Message.MessageType type, string? sender, string? timestamp, Color? msgColor)
     {
-        Messages.Add(new Message
+        const int MaxLength = 500;
+
+        if (!string.IsNullOrEmpty(text) && text.Length > MaxLength)
         {
-            Text = text,
-            Type = type,
-            Sender = sender,
-            Timestamp = timestamp,
-            MsgColor = msgColor ?? Application.Current.Resources["Primary"] as Color
+            text = text.Substring(0, MaxLength) + "...";
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Messages.Add(new Message
+            {
+                Text = text,
+                Type = type,
+                Sender = sender,
+                Timestamp = timestamp,
+                MsgColor = msgColor ?? Application.Current.Resources["Primary"] as Color
+            });
         });
     }
 

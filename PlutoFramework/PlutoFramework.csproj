@@ -60,6 +60,8 @@
 
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="3.7.412.1" />
+    <PackageReference Include="libsodium" Version="1.0.22" />
+    <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.10" />
     <PackageReference Include="Plugin.Fingerprint" Version="3.0.0-beta.1" />

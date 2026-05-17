@@ -1,4 +1,6 @@
 ﻿using MessagingSubquery;
+using Microsoft.AspNetCore.WebUtilities;
+using NBitcoin.Secp256k1;
 using NSec.Cryptography;
 using PlutoFramework.Components.TransactionAnalyzer;
 using PlutoFramework.Constants;
@@ -8,6 +10,10 @@ using PolkadotAssetHub.NetApi.Generated.Model.sp_core.crypto;
 using StrawberryShake;
 using Substrate.NetApi.Model.Types.Base;
 using Substrate.NetApi.Model.Types.Primitive;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_map;
 using XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec;
 using XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types;
 using XcavatePaseo.NetApi.Generated.Storage;
@@ -20,6 +26,7 @@ public class DecryptedMessage
     public required string BucketId { get; init; }
     public int MessageId { get; init; }
     public required string Contributor { get; init; }
+    public string? ContentType { get; init; }
     public string? DecryptedContent { get; init; }
     public int CreatedBlock { get; init; }
 }
@@ -96,7 +103,7 @@ public class MessagingModel
     /// <summary>
     /// Gets the bucket encryption key by fetching the Pinata CID from indexer via didncomm tag and decoding the message using x25519 KeysModel.
     /// </summary>
-    public async Task<string?> GetBucketEncryptionKeyAsync(int bucketId, CancellationToken cancellationToken = default)
+    public async Task<byte[]?> GetBucketEncryptionKeyAsync(int bucketId, CancellationToken cancellationToken = default)
     {
         var result = await _client.BucketMessagesByTag.ExecuteAsync(bucketId.ToString(), "didcomm/key-sharing-v1", null, cancellationToken);
         result.EnsureNoErrors();
@@ -106,25 +113,29 @@ public class MessagingModel
 
         var cid = message.Reference;
         if (string.IsNullOrWhiteSpace(cid)) return null;
-
-        var genericKey = await KeysModel.GetKeyOfTypeAsync(KeyTypeEnum.EncryptionX25519);
-        if (genericKey == null) return null;
-
-        var x25519Key = await genericKey.ToEncryptionX25519KeyAsync();
-        using var privKey = Key.Import(
-            KeyAgreementAlgorithm.X25519,
-            x25519Key.SecretKey,
-            KeyBlobFormat.RawPrivateKey,
-            new KeyCreationParameters
-            {
-                ExportPolicy = KeyExportPolicies.AllowPlaintextExport
-            }
-        );
+        var x25519Key = await KeysModel.GetX25519KeyAsync();
+        if (x25519Key == null) return null;
+        using var privKey = X25519Model.ToKey(x25519Key.SecretKey);
 
         var data = await _storageAdapter.DownloadAsync(cid);
         if (data == null) return null;
 
-        return JweModel.DecryptForRecipient(data.ToString()!, privKey);
+        string? decryptedJson = JweModel.DecryptForRecipient(Encoding.UTF8.GetString(data), privKey);
+        if (string.IsNullOrWhiteSpace(decryptedJson)) return null;
+
+        try
+        {
+            var jsonNode = JsonNode.Parse(decryptedJson);
+
+            var encKey = jsonNode?["keys"]?[0]?["d"]?.ToString();
+            if (string.IsNullOrWhiteSpace(encKey)) return null;
+
+            return WebEncoders.Base64UrlDecode(encKey);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -139,11 +150,13 @@ public class MessagingModel
         var pageInfo = result.Data?.Messages?.PageInfo;
 
         var decryptedMessages = new List<DecryptedMessage>();
+        using var encKey = X25519Model.ToKey(bucketEncryptionKey);
         foreach (var node in nodes)
         {
-            if (node == null) continue;
+            if (node == null || node.Tag == "didcomm/key-sharing-v1" || node.IpfsContent == null) continue;
 
-            var decryptedContent = await GetDecryptedMessageAsync(node, bucketEncryptionKey);
+            var decryptedContent = JweModel.DecryptCompact(node.IpfsContent, encKey);
+            Console.WriteLine($"Decrypted content for message {node.Id}: {decryptedContent}");
 
             decryptedMessages.Add(new DecryptedMessage
             {
@@ -151,6 +164,7 @@ public class MessagingModel
                 BucketId = node.BucketId,
                 MessageId = node.MessageId,
                 Contributor = node.Contributor,
+                ContentType = node.ContentType,
                 DecryptedContent = decryptedContent,
                 CreatedBlock = node.CreatedBlock
             });
@@ -164,43 +178,9 @@ public class MessagingModel
         };
     }
 
-    /// <summary>
-    /// Gets and decrypts a bucket message node using the bucket encryption key.
-    /// </summary>
-    public async Task<string?> GetDecryptedMessageAsync(IBucketMessages_Messages_Nodes message, byte[] bucketEncryptionKey)
-    {
-        if (message == null) return null;
-
-        var cid = message.Reference;
-        if (cid == null) return null;
-
-        using var privKey = Key.Import(
-            KeyAgreementAlgorithm.X25519,
-            bucketEncryptionKey,
-            KeyBlobFormat.RawPrivateKey,
-            new KeyCreationParameters
-            {
-                ExportPolicy = KeyExportPolicies.AllowPlaintextExport
-            }
-        );
-
-        var data = await _storageAdapter.DownloadAsync(cid);
-        if (data == null) return null;
-
-        return JweModel.DecryptCompact(data.ToString()!, privKey);
-    }
-
     public async Task UploadMessageAsync(int namespaceId, int bucketId, string messageContent, byte[] bucketEncryptionKey)
     {
-        using var privKey = Key.Import(
-            KeyAgreementAlgorithm.X25519,
-            bucketEncryptionKey,
-            KeyBlobFormat.RawPrivateKey,
-            new KeyCreationParameters
-            {
-                ExportPolicy = KeyExportPolicies.AllowPlaintextExport
-            }
-        );
+        using var privKey = X25519Model.ToKey(bucketEncryptionKey);
 
         var encryptedMessage = JweModel.EncryptCompact(messageContent, privKey);
         var cid = await _storageAdapter.UploadAsync(encryptedMessage);
@@ -214,27 +194,27 @@ public class MessagingModel
         }
         var cidVec = new BaseVec<U8>(cidU8Array);
 
-        //// Create empty metadata for the message
-        //var emptyVec = new BaseVec<U8>();
-        //var emptyBTreeMap = new BTreeMapT4();
-        //var emptyMap = new BoundedBTreeMapT3 { Value = emptyBTreeMap };
-        //var contentHashArray = new U8[32];
-        //for (int i = 0; i < 32; i++)
-        //{
-        //    contentHashArray[i] = new U8(0);
-        //}
+        // Create empty metadata for the message
+        var emptyVec = new BaseVec<U8>();
+        var emptyBTreeMap = new XcavatePaseo.NetApi.Generated.Types.Base.BTreeMapT4();
+        var emptyMap = new BoundedBTreeMapT3 { Value = emptyBTreeMap };
+        var contentHashArray = new U8[32];
+        for (int i = 0; i < 32; i++)
+        {
+            contentHashArray[i] = new U8(0);
+        }
 
         var messageInput = new MessageInput
         {
             Reference = new BoundedVecT17 { Value = cidVec },
-            //Tag = new BaseOpt<BoundedVecT17>(),
-            //MetadataInput = new MessageMetadataInput
-            //{
-            //    Description = new BoundedVecT12 { Value = emptyVec },
-            //    ContentType = new BoundedVecT16 { Value = emptyVec },
-            //    ContentHash = new Arr32U8 { Value = contentHashArray },
-            //    Properties = emptyMap
-            //}
+            Tag = new BaseOpt<BoundedVecT17>(),
+            MetadataInput = new MessageMetadataInput
+            {
+                Description = new BoundedVecT12 { Value = emptyVec },
+                ContentType = new BoundedVecT16 { Value = emptyVec },
+                ContentHash = new XcavatePaseo.NetApi.Generated.Types.Base.Arr32U8 { Value = contentHashArray },
+                Properties = emptyMap
+            }
         };
 
         var nsId = new U128(namespaceId);

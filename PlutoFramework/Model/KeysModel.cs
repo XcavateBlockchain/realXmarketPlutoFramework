@@ -401,7 +401,7 @@ namespace PlutoFramework.Model
 
         public static async Task<EncryptionX25519Key?> GetX25519KeyAsync()
         {
-            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Did);
+            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519);
 
             if (!accounts.Any())
             {

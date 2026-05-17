@@ -8,20 +8,20 @@
     <ContentPage.Resources>
         <DataTemplate x:Key="IncomingMessageTemplate">
             <messaging:IncomingMessageView Sender="{Binding Sender}"
-                                           Text="{Binding Message}" 
+                                           Text="{Binding Text}" 
                                            Timestamp="{Binding Timestamp}"
                                            MsgColor="{Binding MsgColor}"
                                            Rotation="180"/>
         </DataTemplate>
 
         <DataTemplate x:Key="OutgoingMessageTemplate">
-            <messaging:OutgoingMessageView Text="{Binding Message}" 
+            <messaging:OutgoingMessageView Text="{Binding Text}" 
                                            Timestamp="{Binding Timestamp}"
                                            Rotation="180"/>
         </DataTemplate>
         
         <DataTemplate x:Key="StatusMessageTemplate">
-            <messaging:StatusMessageView Text="{Binding Message}"
+            <messaging:StatusMessageView Text="{Binding Text}"
                                          Rotation="180"/>
         </DataTemplate>
 
@@ -31,18 +31,31 @@
                                            StatusTemplate="{StaticResource StatusMessageTemplate}"/>
     </ContentPage.Resources>
 
-    <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-                AbsoluteLayout.LayoutFlags="All"
-                x:Name="scrollView"
-                Rotation="180"
-                VerticalScrollBarVisibility="Never">
-        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Messages}"
-                             BindableLayout.ItemTemplateSelector="{StaticResource MessageSelector}"
-                             Padding="10"
-                             Spacing="5"
-                             Margin="0,60,0,0"/>
-    </ScrollView>
-  
+    <CollectionView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                    AbsoluteLayout.LayoutFlags="All"
+                    x:Name="MessagesCollectionView"
+                    Rotation="180"
+                    ItemsSource="{Binding Messages}"
+                    ItemTemplate="{StaticResource MessageSelector}"
+                    RemainingItemsThreshold="2"
+                    RemainingItemsThresholdReached="OnRemainingItemsThresholdReached"
+                    VerticalScrollBarVisibility="Never"
+                    Margin="10, 0, 10, 0">
+
+        <CollectionView.Header>
+            <BoxView HeightRequest="60" Color="Transparent" />
+        </CollectionView.Header>
+
+        <CollectionView.ItemsLayout>
+            <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+        </CollectionView.ItemsLayout>
+        
+        <CollectionView.Footer>
+            <BoxView HeightRequest="65" Color="Transparent" />
+        </CollectionView.Footer>
+
+    </CollectionView>
+
     <template:PageTemplate.PopupContent>
         <messaging:MessageInputBarView AbsoluteLayout.LayoutBounds="0,1,1,65"
                                        AbsoluteLayout.LayoutFlags="WidthProportional, YProportional"

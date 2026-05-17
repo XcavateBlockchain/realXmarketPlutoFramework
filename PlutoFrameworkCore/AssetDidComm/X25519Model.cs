@@ -6,10 +6,11 @@ using bc26::Org.BouncyCastle.Crypto.Generators;
 using bc26::Org.BouncyCastle.Crypto.Modes;
 using bc26::Org.BouncyCastle.Crypto.Parameters;
 using bc26::Org.BouncyCastle.Crypto.Prng;
-using bc26::Org.BouncyCastle.Math.EC.Rfc7748;
 using bc26::Org.BouncyCastle.Security;
+using NSec.Cryptography;
 using Substrate.NetApi.Extensions;
 using System.Security.Cryptography;
+using X25519 = bc26::Org.BouncyCastle.Math.EC.Rfc7748.X25519;
 
 namespace PlutoFrameworkCore.AssetDidComm
 {
@@ -35,11 +36,10 @@ namespace PlutoFrameworkCore.AssetDidComm
             };
         }
 
-        /*public static Key ToKey(byte[] privateKey) => Key.Import(KeyAgreementAlgorithm.X25519, privateKey, KeyBlobFormat.RawPrivateKey, new KeyCreationParameters
+        public static Key ToKey(byte[] privateKey) => Key.Import(KeyAgreementAlgorithm.X25519, privateKey, KeyBlobFormat.RawPrivateKey, new KeyCreationParameters
         {
             ExportPolicy = KeyExportPolicies.AllowPlaintextExport
         });
-        */
 
         public static byte[] Encrypt(ReadOnlySpan<byte> recipientPublicKeyRaw,
                                  ReadOnlySpan<byte> plaintext,
