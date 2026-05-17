@@ -46,6 +46,7 @@
     <template:PageTemplate.PopupContent>
         <messaging:MessageInputBarView AbsoluteLayout.LayoutBounds="0,1,1,65"
                                        AbsoluteLayout.LayoutFlags="WidthProportional, YProportional"
-                                       Margin="10"/>
+                                       Margin="10"
+                                       x:Name="MessageInputBar"/>
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>

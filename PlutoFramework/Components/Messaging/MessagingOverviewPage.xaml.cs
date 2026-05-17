@@ -32,6 +32,21 @@ public partial class MessagingOverviewPage : PageTemplate
         BindingContext = this;
 
         LoadMessagesAsync();
+
+        // Set the MessageInputBarView properties after InitializeComponent
+        SetupMessageInputBar();
+    }
+
+    private void SetupMessageInputBar()
+    {
+        var messageInputBar = this.FindByName<MessageInputBarView>("MessageInputBar");
+        if (messageInputBar != null)
+        {
+            messageInputBar.MessagingModel = _messagingModel;
+            messageInputBar.NamespaceId = _namespaceId;
+            messageInputBar.BucketId = _bucketId;
+            messageInputBar.BucketEncryptionKey = _bucketEncryptionKey;
+        }
     }
 
     private async Task LoadMessagesAsync()
