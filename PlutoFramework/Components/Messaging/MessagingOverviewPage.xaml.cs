@@ -9,18 +9,20 @@ public partial class MessagingOverviewPage : PageTemplate
 {
     public ObservableCollection<Message> Messages { get; } = new();
 
-    private readonly string _bucketId;
+    private readonly int _namespaceId;
+    private readonly int _bucketId;
     private byte[]? _bucketEncryptionKey;
     private string? _currentCursor;
     private bool _hasMoreData = true;
     private bool _isLoading = false;
     private readonly MessagingModel _messagingModel;
 
-    public MessagingOverviewPage(MessagingModel model, string bucketId, byte[] bucketEncryptionKey)
+    public MessagingOverviewPage(MessagingModel model, int namespaceId, int bucketId, byte[] bucketEncryptionKey)
     {
         InitializeComponent();
 
         _messagingModel = model;
+        _namespaceId = namespaceId;
         _bucketId = bucketId;
         _bucketEncryptionKey = bucketEncryptionKey;
 
@@ -40,7 +42,7 @@ public partial class MessagingOverviewPage : PageTemplate
 
         try
         {
-            var userAddress = KeysModel.GetSubstrateKey();
+            var userAddress = KeysModel.GetSubstrateKey(); // TODO: get ss58 address instead
             var page = await _messagingModel.GetDecryptedBucketMessagesAsync(
                 _bucketId,
                 _bucketEncryptionKey!,

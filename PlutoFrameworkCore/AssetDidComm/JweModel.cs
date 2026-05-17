@@ -314,5 +314,70 @@ namespace PlutoFrameworkCore.AssetDidComm
             Buffer.BlockCopy(suppPubInfo, 0, otherInfo, off, suppPubInfo.Length);
             return otherInfo;
         }
+
+        public static string EncryptCompact(string messageContent, Key recipientSecretKey)
+        {
+            // Extract recipient's public key from their private key
+            var recipientPublicKey = recipientSecretKey.PublicKey;
+
+            // Generate a random CEK for A256GCM (32 bytes)
+            var cek = new byte[32].Populate();
+
+            // Generate ephemeral X25519 keypair
+            using var eph = Key.Create(
+                KeyAgreementAlgorithm.X25519,
+                new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
+
+            var epkPub = eph.PublicKey.Export(KeyBlobFormat.RawPublicKey); // 32 bytes
+
+            // Create header with ephemeral public key
+            var headerJson = JsonSerializer.Serialize(new Dictionary<string, object>
+            {
+                { "enc", "A256GCM" },
+                { "alg", "ECDH-ES+A256KW" },
+                { "epk", new Dictionary<string, object>
+                    {
+                        { "kty", "OKP" },
+                        { "crv", "X25519" },
+                        { "x", WebEncoders.Base64UrlEncode(epkPub) }
+                    }
+                }
+            });
+
+            var headerB64 = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(headerJson));
+            var aad = Encoding.ASCII.GetBytes(headerB64); // AAD is the base64url(header)
+
+            // ECDH -> Z (32 bytes) using ephemeral private key and recipient's public key
+            using var z = KeyAgreementAlgorithm.X25519.Agree(eph, recipientPublicKey, new SharedSecretCreationParameters
+            {
+                ExportPolicy = KeyExportPolicies.AllowPlaintextExport
+            });
+            var zBytes = z.Export(SharedSecretBlobFormat.RawSharedSecret);
+
+            // Concat KDF (SHA-256) to derive KEK for A256KW (256-bit)
+            byte[] otherInfo = BuildOtherInfo(alg: "ECDH-ES+A256KW", apu: null, apv: null, keyDataLenBits: 256);
+            var kdf = new ConcatenationKdfGenerator(new Sha256Digest());
+            kdf.Init(new KdfParameters(zBytes, otherInfo));
+
+            var kek = new byte[32]; // 256-bit KEK
+            kdf.GenerateBytes(kek, 0, kek.Length);
+
+            // Wrap CEK with KEK using AES Key Wrap (RFC3394)
+            var wrap = new Rfc3394WrapEngine(new AesEngine());
+            wrap.Init(true, new Org.BouncyCastle.Crypto.Parameters.KeyParameter(kek));
+            var encryptedKey = wrap.Wrap(cek, 0, cek.Length);
+
+            // Encrypt plaintext with AES-GCM (A256GCM)
+            byte[] iv = new byte[12].Populate();
+            var encrypted = AesGcm.Encrypt(cek, iv, aad, Encoding.UTF8.GetBytes(messageContent));
+
+            var ciphertext = encrypted[0];
+            var tag = encrypted[1];
+
+            // Build compact serialization: header.encryptedKey.iv.ciphertext.tag
+            var compact = $"{headerB64}.{WebEncoders.Base64UrlEncode(encryptedKey)}.{WebEncoders.Base64UrlEncode(iv)}.{WebEncoders.Base64UrlEncode(ciphertext)}.{WebEncoders.Base64UrlEncode(tag)}";
+
+            return compact;
+        }
     }
 }

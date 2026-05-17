@@ -16,14 +16,15 @@ public partial class ChatsOverviewPage : PageTemplate
     private bool _hasMoreData = true;
     private readonly MessagingModel _messagingModel = new(new PinataStorageAdapter());
     
-    private void AddChat(string bucketId, string title, string state, string time, bool isApproved)
+    private void AddChat(int namespaceId, int bucketId, string title, string state, string time, bool isApproved)
     {
         var resources = Application.Current?.Resources;
         var positive = resources?["Positive"] as Color ?? Colors.Green;
         var negative = resources?["Negative"] as Color ?? Colors.Red;
-        
+
         Chats.Add(new ChatItem
         {
+            NamespaceId = namespaceId,
             BucketId = bucketId,
             Title = title,
             State = state,
@@ -53,7 +54,7 @@ public partial class ChatsOverviewPage : PageTemplate
             if (encryptionKey != null)
             {
                 var encKeyBytes = System.Text.Encoding.UTF8.GetBytes(encryptionKey);
-                await Shell.Current.Navigation.PushAsync(new MessagingOverviewPage(_messagingModel, chat.BucketId, encKeyBytes));
+                await Shell.Current.Navigation.PushAsync(new MessagingOverviewPage(_messagingModel, chat.NamespaceId, chat.BucketId, encKeyBytes));
             }
             else
             {
@@ -75,7 +76,7 @@ public partial class ChatsOverviewPage : PageTemplate
 
         _isLoading = true;
 
-        var address = KeysModel.GetSubstrateKey();
+        var address = KeysModel.GetSubstrateKey(); //TODO: get ss58 address instead
 
         try
         {
@@ -90,7 +91,8 @@ public partial class ChatsOverviewPage : PageTemplate
 
                 foreach (var bucket in result)
                 {
-                    AddChat(bucket.Id ?? "", bucket.Name ?? "Unknown", "", "", true);
+                    if (bucket == null) continue;
+                    AddChat(bucket.NamespaceId, bucket.BucketId, bucket.Name ?? "Unknown", "", "", true);
                 }
 
                 _currentOffset += result.Count;
