@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
+using CommunityToolkit.Maui.Alerts;
 using PlutoFramework.Templates.PageTemplate;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Messaging;
@@ -15,7 +16,7 @@ public partial class ChatsOverviewPage : PageTemplate
     private bool _hasMoreData = true;
     private readonly MessagingModel _messagingModel = new(new PinataStorageAdapter());
     
-    private void AddChat(string title, string state, string time, bool isApproved)
+    private void AddChat(string bucketId, string title, string state, string time, bool isApproved)
     {
         var resources = Application.Current?.Resources;
         var positive = resources?["Positive"] as Color ?? Colors.Green;
@@ -23,6 +24,7 @@ public partial class ChatsOverviewPage : PageTemplate
         
         Chats.Add(new ChatItem
         {
+            BucketId = bucketId,
             Title = title,
             State = state,
             Time = time,
@@ -39,6 +41,32 @@ public partial class ChatsOverviewPage : PageTemplate
         BindingContext = this;
 
         LoadDataAsync();
+    }
+
+    private async Task OnChatTappedAsync(ChatItem chat)
+    {
+        if (chat == null) return;
+
+        try
+        {
+            var encryptionKey = await _messagingModel.GetBucketEncryptionKeyAsync(chat.BucketId);
+            if (encryptionKey != null)
+            {
+                var encKeyBytes = System.Text.Encoding.UTF8.GetBytes(encryptionKey);
+                await Shell.Current.Navigation.PushAsync(new MessagingOverviewPage(_messagingModel, chat.BucketId, encKeyBytes));
+            }
+            else
+            {
+                var toast = Toast.Make("Could not retrieve encryption key for this bucket");
+                await toast.Show();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error opening chat: {ex}");
+            var toast = Toast.Make($"Failed to open chat: {ex.Message}");
+            await toast.Show();
+        }
     }
 
     private async Task LoadDataAsync()
@@ -62,7 +90,7 @@ public partial class ChatsOverviewPage : PageTemplate
 
                 foreach (var bucket in result)
                 {
-                    AddChat(bucket.Name ?? "Unknown", "", "", true); // Use empty string for state
+                    AddChat(bucket.Id ?? "", bucket.Name ?? "Unknown", "", "", true);
                 }
 
                 _currentOffset += result.Count;
@@ -85,5 +113,13 @@ public partial class ChatsOverviewPage : PageTemplate
     private void OnRemainingItemsThresholdReached(object sender, EventArgs e)
     {
         _ = LoadDataAsync();
+    }
+
+    private void OnChatItemTapped(object sender, TappedEventArgs e)
+    {
+        if (sender is Grid grid && grid.BindingContext is ChatItem chat)
+        {
+            _ = OnChatTappedAsync(chat);
+        }
     }
 }
