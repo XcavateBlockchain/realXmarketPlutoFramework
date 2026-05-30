@@ -70,6 +70,25 @@ public partial class PropertyThumbnailView : ContentView
             };
         });
 
+    public static readonly BindableProperty StatusTextProperty = BindableProperty.Create(
+        nameof(StatusText), typeof(string), typeof(PropertyThumbnailView),
+        defaultBindingMode: BindingMode.OneWay,
+        propertyChanging: (bindable, oldValue, newValue) =>
+        {
+            var control = (PropertyThumbnailView)bindable;
+            var status = (string)newValue;
+
+            if (string.IsNullOrEmpty(status))
+            {
+                control.status.IsVisible = false;
+            }
+            else
+            {
+                control.status.IsVisible = true;
+                control.statusLabel.Text = status;
+            }
+        });
+
     public static readonly BindableProperty FavouriteProperty = BindableProperty.Create(
         nameof(Favourite), typeof(bool), typeof(PropertyThumbnailView),
         defaultBindingMode: BindingMode.TwoWay,
@@ -154,6 +173,12 @@ public partial class PropertyThumbnailView : ContentView
     {
         get => (INftBase)GetValue(NftBaseProperty);
         set => SetValue(NftBaseProperty, value);
+    }
+
+    public string StatusText
+    {
+        get => (string)GetValue(StatusTextProperty);
+        set => SetValue(StatusTextProperty, value);
     }
 
     public uint TokensOwned

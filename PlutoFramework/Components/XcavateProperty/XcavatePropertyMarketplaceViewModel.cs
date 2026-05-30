@@ -130,7 +130,7 @@ namespace PlutoFramework.Components.XcavateProperty
             Clear();
 
             await InitialLoadAsync(CancellationToken.None);
-            
+
             IsRefreshing = false;
         }
 

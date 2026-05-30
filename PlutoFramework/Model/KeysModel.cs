@@ -251,8 +251,11 @@ namespace PlutoFramework.Model
                 var toast = Toast.Make($"JSON key imported successfully.");
                 await toast.Show();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine("JSON import exception: ");
+                Console.WriteLine(ex);
+
                 var toast = Toast.Make($"Failed to import JSON key.");
                 await toast.Show();
             }

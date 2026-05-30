@@ -6,6 +6,7 @@ using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
+using PlutoFrameworkCore;
 using UniqueryPlus.Nfts;
 
 namespace PlutoFramework.Components.XcavateProperty
@@ -14,6 +15,13 @@ namespace PlutoFramework.Components.XcavateProperty
     {
         public required XcavateRegion? Region { get; set; }
         public required bool ListingHasExpired { get; set; }
+
+        public TimeSpan? TimeLeftToBuy = null;
+        public string Status => TimeLeftToBuy switch
+        {
+            null => "Unknown",
+            TimeSpan timeLeft => TimeModel.GetTimeLeftText(timeLeft),
+        };
     }
 
     public class XcavatePropertyModel
@@ -72,12 +80,15 @@ namespace PlutoFramework.Components.XcavateProperty
 
             uint blockNumber = (uint)await BlockModel.GetCachedBlockNumberAsync(substrateClient, token).ConfigureAwait(false);
 
+            uint listingExpiry = ((INftXcavateOngoingObjectListing)nft).OngoingObjectListingDetails?.ListingExpiry ?? 0;
+
             return new XcavateNftWrapper
             {
                 Favourite = await XcavatePropertyDatabase.IsPropertyFavouriteAsync(nft.Type, nft.CollectionId, nft.Id).ConfigureAwait(false),
                 NftBase = nft,
-                Region = ((INftXcavateNftMarketplace)nft).NftMarketplaceDetails != null ? await RegionModel.GetCachedRegionAsync(substrateClient, ((INftXcavateNftMarketplace)nft).NftMarketplaceDetails.Region, token) : null,
-                ListingHasExpired = blockNumber > (((INftXcavateOngoingObjectListing)nft).OngoingObjectListingDetails?.ListingExpiry ?? 0),
+                Region = ((INftXcavateNftMarketplace)nft).NftMarketplaceDetails != null ? await RegionModel.GetCachedRegionAsync(substrateClient, ((INftXcavateNftMarketplace)nft).NftMarketplaceDetails!.Region, token) : null,
+                ListingHasExpired = blockNumber > listingExpiry,
+                TimeLeftToBuy = blockNumber <= listingExpiry ? TimeSpan.FromSeconds(6 * (listingExpiry - blockNumber)) : null,
                 Endpoint = Endpoints.GetEndpointDictionary[PlutoFrameworkCore.NftModel.GetEndpointKey(nft.Type)]
             };
         }
@@ -105,6 +116,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 ListingDetails = ((INftXcavateOngoingObjectListing)nft.NftBase).OngoingObjectListingDetails,
                 Region = nft.Region,
                 ListingHasExpired = nft.ListingHasExpired,
+                TimeLeftToBuy = nft.TimeLeftToBuy,
             };
 
             if (nft.Key is not null && XcavateOwnedPropertiesModel.ItemsDict.TryGetValue(nft.Key.Value, out PropertyTokenOwnershipInfo tokenInfo))

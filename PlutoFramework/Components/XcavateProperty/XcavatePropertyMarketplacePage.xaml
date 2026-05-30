@@ -61,6 +61,7 @@
                                                                 NftBase="{Binding NftBase}"
                                                                 Padding="20, 5, 20, 10"
                                                                Region="{Binding Region}"
+                                                               StatusText="{Binding Status}"
                                                                ListingHasExpired="{Binding ListingHasExpired}"
                                                                ShowHasExpired="True" />
                     </DataTemplate>

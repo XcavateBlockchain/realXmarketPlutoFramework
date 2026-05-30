@@ -7,6 +7,7 @@ using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
+using PlutoFrameworkCore;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
 using PropertyModel = PlutoFramework.Model.Xcavate.XcavatePropertyModel;
@@ -124,6 +125,19 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
         private bool listingHasExpired = false;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TimeLeftText))]
+        [NotifyPropertyChangedFor(nameof(TimeLeftIsVisible))]
+        private TimeSpan? timeLeftToBuy = null;
+
+        public string TimeLeftText => TimeLeftToBuy switch
+        {
+            null => "Unknown",
+            TimeSpan timeLeft => TimeModel.GetTimeLeftText(timeLeft),
+        };
+
+        public bool TimeLeftIsVisible => TimeLeftToBuy is not null;
 
         [RelayCommand]
         public Task MainActionAsync()

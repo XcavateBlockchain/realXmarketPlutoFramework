@@ -37,10 +37,45 @@
                         <Label AbsoluteLayout.LayoutBounds="0.5, 0.5, AutoSize, AutoSize"
                                AbsoluteLayout.LayoutFlags="PositionProportional"
                                IsVisible="False"
-                                 x:Name="expiredLabel"
-                                 Text="Expired"
+                               x:Name="expiredLabel"
+                               Text="Expired"
                                TextColor="Gray"
                                FontSize="30" />
+
+                        <Image AbsoluteLayout.LayoutBounds="1, 0, 20, 20"
+                               AbsoluteLayout.LayoutFlags="PositionProportional"
+                               Margin="10"
+                                Aspect="AspectFit"
+                                IsVisible="{Binding Favourite}"
+                                x:Name="filledFavouriteIcon">
+
+                            <Image.Source>
+                                <FontImageSource Color="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                                                 Glyph="&#xf004;"
+                                                 FontFamily="FontAwesome"
+                                                 Size="50" />
+                            </Image.Source>
+                        </Image>
+
+
+
+                        <Image AbsoluteLayout.LayoutBounds="1, 0, 20, 20"
+                               AbsoluteLayout.LayoutFlags="PositionProportional"
+                               Margin="10"
+                                Aspect="AspectFit"
+                                x:Name="favouriteIcon">
+
+                            <Image.Source>
+                                <FontImageSource Color="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                                                  Glyph="&#xf08a;"
+                                                  FontFamily="FontAwesome"
+                                                  Size="50" />
+                            </Image.Source>
+
+                            <Image.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnFavouriteClicked"/>
+                            </Image.GestureRecognizers>
+                        </Image>
                     </AbsoluteLayout>
                     
                     <Grid ColumnSpacing="5"
@@ -55,45 +90,21 @@
                                                       VerticalOptions="Center"
                                                       x:Name="locationView"
                                                       Grid.Column="0" />
-                        
-                        <Image WidthRequest="20"
-                            HeightRequest="20"
-                            VerticalOptions="Center" 
-                            HorizontalOptions="Center"
-                            Aspect="AspectFit"
-                            IsVisible="{Binding Favourite}"
-                            x:Name="filledFavouriteIcon"
-                            Grid.Column="1">
 
-                            <Image.Source>
-                                <FontImageSource Color="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                                                  Glyph="&#xf004;"
-                                                  FontFamily="FontAwesome"
-                                                  Size="50" />
-                            </Image.Source>
-                        </Image>
-                        
-                       
+                        <Border BackgroundColor="#22888888"
+                                x:Name="status"
+                                IsVisible="False"
+                                StrokeThickness="0">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="1" />
+                            </Border.StrokeShape>
 
-                        <Image WidthRequest="20"
-                            HeightRequest="20"
-                            VerticalOptions="Center" 
-                            HorizontalOptions="Center"
-                            Aspect="AspectFit"
-                            x:Name="favouriteIcon"
-                            Grid.Column="1">
-
-                            <Image.Source>
-                                <FontImageSource Color="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                                              Glyph="&#xf08a;"
-                                              FontFamily="FontAwesome"
-                                              Size="50" />
-                            </Image.Source>
-
-                            <Image.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnFavouriteClicked"/>
-                            </Image.GestureRecognizers>
-                        </Image>
+                            <Label x:Name="statusLabel"
+                                   Margin="5,0,5,0"
+                                    HorizontalTextAlignment="Center"
+                                    VerticalOptions="Center"
+                                    VerticalTextAlignment="Center"/>
+                        </Border>
                     </Grid>
 
                     <Grid ColumnSpacing="5"

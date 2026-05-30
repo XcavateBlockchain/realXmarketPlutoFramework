@@ -1,8 +1,8 @@
 ﻿using PlutoFramework.Constants;
+using PlutoFramework.Types;
 using System.ComponentModel;
 using UniqueryPlus.Nfts;
 using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
-using PlutoFramework.Types;
 
 namespace PlutoFramework.Model
 {
