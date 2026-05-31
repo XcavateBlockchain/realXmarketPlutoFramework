@@ -21,7 +21,7 @@ namespace PlutoFramework.Components.Xcavate
         private bool privacyPolicyAgreed = false;
 
         public ButtonStateEnum ContinueButtonState =>
-            termsAgreed && agreementAgreed && privacyPolicyAgreed ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
+            TermsAgreed && AgreementAgreed && PrivacyPolicyAgreed ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
 
         [ObservableProperty]
         private string text = "";
@@ -36,6 +36,6 @@ namespace PlutoFramework.Components.Xcavate
 
             await Navigation.Invoke();
         }
-       
+
     }
 }
