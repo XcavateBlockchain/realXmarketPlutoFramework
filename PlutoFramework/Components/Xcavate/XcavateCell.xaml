@@ -47,6 +47,7 @@
                        AbsoluteLayout.LayoutBounds="1, 0, 20, 20"
                        AbsoluteLayout.LayoutFlags="PositionProportional"
                        x:Name="arrow"
+                       InputTransparent="True"
                        IsVisible="False"/>
             </AbsoluteLayout>
         </card:ClickableCard.View>
