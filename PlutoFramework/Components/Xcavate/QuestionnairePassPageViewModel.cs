@@ -10,9 +10,18 @@ namespace PlutoFramework.Components.Xcavate
     {
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
-        private bool agreed = false;
+        private bool termsAgreed = false;
 
-        public ButtonStateEnum ContinueButtonState => Agreed ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
+        private bool agreementAgreed = false;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
+        private bool privacyPolicyAgreed = false;
+
+        public ButtonStateEnum ContinueButtonState =>
+            termsAgreed && agreementAgreed && privacyPolicyAgreed ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
 
         [ObservableProperty]
         private string text = "";

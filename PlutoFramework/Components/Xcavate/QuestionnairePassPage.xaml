@@ -60,12 +60,38 @@
 
             <HorizontalStackLayout HorizontalOptions="Center"
                                Spacing="5"
-                               Margin="30, 0, 30, 20">
+                               Margin="30, 0, 30, 10">
 
-                <CheckBox IsChecked="{Binding Agreed}"
+                <CheckBox IsChecked="{Binding TermsAgreed}"
                       VerticalOptions="Center" />
 
-                <Label Text="I accept the privacy, terms and agreement"
+                <Label Text="I have read Terms and Conditions"
+                   TextColor="Gray"
+                   VerticalOptions="Center"/>
+
+            </HorizontalStackLayout>
+
+            <HorizontalStackLayout HorizontalOptions="Center"
+                               Spacing="5"
+                               Margin="30, 0, 30, 10">
+
+                <CheckBox IsChecked="{Binding AgreementAgreed}"
+                      VerticalOptions="Center" />
+
+                <Label Text="I have read Agreement"
+                   TextColor="Gray"
+                   VerticalOptions="Center"/>
+
+            </HorizontalStackLayout>
+
+            <HorizontalStackLayout HorizontalOptions="Center"
+                               Spacing="5"
+                               Margin="30, 0, 30, 20">
+
+                <CheckBox IsChecked="{Binding PrivacyPolicyAgreed}"
+                      VerticalOptions="Center" />
+
+                <Label Text="I have read Privacy policy"
                    TextColor="Gray"
                    VerticalOptions="Center"/>
 
