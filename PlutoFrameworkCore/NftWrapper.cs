@@ -14,9 +14,9 @@ namespace PlutoFramework.Model
 
     public class NftWrapper : INotifyPropertyChanged
     {
-        public NftKey? Key => NftBase is not null ? (NftBase.Type, NftBase.CollectionId, NftBase.Id) : null;
-        public INftBase? NftBase { get; set; }
-        public Endpoint? Endpoint { get; set; }
+        public NftKey Key => (NftBase.Type, NftBase.CollectionId, NftBase.Id);
+        public required INftBase NftBase { get; set; }
+        public required Endpoint Endpoint { get; set; }
 
         private bool favourite = false;
         public bool Favourite
@@ -32,7 +32,7 @@ namespace PlutoFramework.Model
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 

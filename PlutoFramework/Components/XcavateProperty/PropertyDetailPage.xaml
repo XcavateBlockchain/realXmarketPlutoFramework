@@ -19,21 +19,18 @@
     <template:PageTemplate.MainContent>
         <ScrollView>
             <VerticalStackLayout Spacing="15"
-                                 Padding="20, 80, 20, 100">
+                                 Padding="20, 80, 20, 90">
+                
                 <xcavate:RiskWarningView />
 
                 <nft:NftMultiImageView ImageSources="{Binding PropertyImages}" />
 
-                <xcavateproperty:CompanyThumbnailView />
-
-                <xcavateproperty:LocationView LocationName="{Binding PropertyAddressLine}" />
-
-                <Label Text="{Binding PropertyStatus}"
+                <!--<Label Text="{Binding PropertyStatus}"
                        FontSize="14"
                        TextColor="#888888"
-                       HorizontalTextAlignment="Start" />
+                       HorizontalTextAlignment="Start" />-->
 
-                <Label FontSize="20"
+                <Label FontSize="30"
                    FontAttributes="Bold"
                    HorizontalTextAlignment="Start">
                     <Label.FormattedText>
@@ -44,6 +41,8 @@
                     </Label.FormattedText>
                 </Label>
 
+                <xcavateproperty:LocationView LocationName="{Binding PropertyAddressLine}" />
+
                 <Label Text="Price per token"
                    Margin="0,10,0,-10"
                    HorizontalTextAlignment="Start" />
@@ -53,7 +52,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    
+
                     <Label FontSize="20"
                            FontAttributes="Bold"
                            HorizontalOptions="Start"
@@ -69,9 +68,10 @@
                     <Border BackgroundColor="#22888888"
                             x:Name="status"
                             IsVisible="{Binding TimeLeftIsVisible}"
-                            StrokeThickness="0">
+                            StrokeThickness="0"
+                            Grid.Column="2">
                         <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="1" />
+                            <RoundRectangle CornerRadius="5" />
                         </Border.StrokeShape>
 
                         <Label Text="{Binding TimeLeftText}"
@@ -81,7 +81,12 @@
                                VerticalTextAlignment="Center"/>
                     </Border>
                 </Grid>
+
+                <Label Text="Developer"
+                       Margin="0,10,0,0"
+                       HorizontalTextAlignment="Start" />
                 
+                <xcavateproperty:CompanyThumbnailView />
 
                 <Grid AbsoluteLayout.LayoutBounds="0.5, 25, 1, 185"
                   AbsoluteLayout.LayoutFlags="XProportional,WidthProportional"
@@ -155,7 +160,7 @@
 
                 <StackLayout BackgroundColor="#22888888"
                             Padding="20,30,20,30"
-                            Margin="-20,20,-20,20"
+                            Margin="-20,20,-20,0"
                             Spacing="15">
                     <Label FontAttributes="Bold"
                         HorizontalTextAlignment="Start">
@@ -176,51 +181,63 @@
 
                     <nft:NftAttributeView AttributeName="Post code"
                                       Value="{Binding Metadata.Address.PostCode}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Flat / unit"
                                       Value="{Binding Metadata.Address.FlatOrUnit}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Local authority"
                                       Value="{Binding Metadata.Address.LocalAuthority}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Town / city"
                                       Value="{Binding Metadata.Address.TownCity}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Location"
                                       Value="{Binding LocationShortName}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Area"
                                       Value="{Binding PropertyArea}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Off street parking"
                                       Value="{Binding OffStreetParking}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Outdoor space"
                                       Value="{Binding OutdoorSpace}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Bedrooms"
                                       Value="{Binding NumberOfBedrooms}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Construction date"
                                       Value="{Binding ConstructionDate}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Bathrooms"
                                       Value="{Binding NumberOfBathrooms}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
 
                     <nft:NftAttributeView AttributeName="Quality"
                                       Value="{Binding Quality}"
-                                      CardBackgroundColor="#11888888" />
+                                      HasShadow="False"
+                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
                 </StackLayout>
             </VerticalStackLayout>
         </ScrollView>

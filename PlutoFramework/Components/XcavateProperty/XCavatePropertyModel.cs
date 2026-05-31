@@ -99,9 +99,10 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 nft.NftBase = await nft.NftBase.GetFullAsync(token);
             }
+
             if (nft.NftBase is not INftXcavateMetadata || ((INftXcavateMetadata)nft.NftBase).XcavateMetadata is null || nft.NftBase is not INftXcavateNftMarketplace)
             {
-                var toast = Toast.Make($"Could not navigate to property id: {nft.Key?.Item3.ToString() ?? "Unknown"}");
+                var toast = Toast.Make($"Could not navigate to property id: {nft.Key.Item3.ToString() ?? "Unknown"}");
                 await toast.Show();
 
                 return;
@@ -109,7 +110,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             var viewModel = new PropertyDetailViewModel
             {
-                Endpoint = nft.Endpoint,
+                Endpoint = nft.Endpoint!,
                 Favourite = nft.Favourite,
                 NftBase = nft.NftBase,
                 Metadata = ((INftXcavateMetadata)nft.NftBase).XcavateMetadata,
@@ -119,9 +120,9 @@ namespace PlutoFramework.Components.XcavateProperty
                 TimeLeftToBuy = nft.TimeLeftToBuy,
             };
 
-            if (nft.Key is not null && XcavateOwnedPropertiesModel.ItemsDict.TryGetValue(nft.Key.Value, out PropertyTokenOwnershipInfo tokenInfo))
+            if (XcavateOwnedPropertiesModel.ItemsDict.TryGetValue(nft.Key, out PropertyTokenOwnershipInfo? tokenInfo))
             {
-                viewModel.TokensOwned = tokenInfo.Amount;
+                viewModel.TokensOwned = tokenInfo?.Amount ?? 0;
             }
 
             await NavigationModel.PushAsync(new PropertyDetailPage(viewModel));
