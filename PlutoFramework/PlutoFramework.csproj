@@ -1854,7 +1854,6 @@
     <None Remove="Resources\Images\xcavatelettingagent.png" />
     <None Remove="Resources\Images\xcavateloanevaluator.png" />
     <None Remove="Resources\Images\xcavatemappin.png" />
-    <None Remove="Resources\Images\xcavatemarketplace.png" />
     <None Remove="Resources\Images\xcavatemenu.png" />
     <None Remove="Resources\Images\xcavateqr.png" />
     <None Remove="Resources\Images\xcavatergb.png" />
@@ -1993,7 +1992,6 @@
     <MauiImage Include="Resources\Images\xcavatelettingagent.png" />
     <MauiImage Include="Resources\Images\xcavateloanevaluator.png" />
     <MauiImage Include="Resources\Images\xcavatemappin.png" />
-    <MauiImage Include="Resources\Images\xcavatemarketplace.png" />
     <MauiImage Include="Resources\Images\xcavatemenu.png" />
     <MauiImage Include="Resources\Images\xcavateqr.png" />
     <MauiImage Include="Resources\Images\xcavatergb.png" />
