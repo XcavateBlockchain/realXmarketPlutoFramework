@@ -455,7 +455,7 @@ namespace UniqueryPlus.Nfts
                     {
                         Name = propertyMetadata.PropertyName,
                         Description = propertyMetadata.PropertyDescription,
-                        Image = propertyMetadata.FileUrls.Count() > 0 ? propertyMetadata.FileUrls[0] : null,
+                        Image = propertyMetadata.Files.Count() > 0 ? propertyMetadata.Files[0] : null,
                     };
 
                     metadatas.Add((metadata, propertyMetadata));

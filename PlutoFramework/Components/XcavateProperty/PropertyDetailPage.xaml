@@ -22,11 +22,16 @@
                                  Padding="20, 80, 20, 100">
                 <xcavate:RiskWarningView />
 
-                <nft:NftMultiImageView ImageSources="{Binding Metadata.Images}" />
+                <nft:NftMultiImageView ImageSources="{Binding PropertyImages}" />
 
                 <xcavateproperty:CompanyThumbnailView />
 
-                <xcavateproperty:LocationView LocationName="{Binding Metadata.LocationName}" />
+                <xcavateproperty:LocationView LocationName="{Binding PropertyAddressLine}" />
+
+                <Label Text="{Binding PropertyStatus}"
+                       FontSize="14"
+                       TextColor="#888888"
+                       HorizontalTextAlignment="Start" />
 
                 <Label FontSize="20"
                    FontAttributes="Bold"
@@ -169,24 +174,52 @@
                        Text="Details"
                        HorizontalTextAlignment="Start" />
 
-                    <nft:NftAttributeView AttributeName="Size"
-                                      Value="{Binding Metadata.Area}"
+                    <nft:NftAttributeView AttributeName="Post code"
+                                      Value="{Binding Metadata.Address.PostCode}"
                                       CardBackgroundColor="#11888888" />
 
-                    <nft:NftAttributeView AttributeName="Bedrooms"
-                                      Value="{Binding Metadata.NoOfBedrooms}"
+                    <nft:NftAttributeView AttributeName="Flat / unit"
+                                      Value="{Binding Metadata.Address.FlatOrUnit}"
                                       CardBackgroundColor="#11888888" />
 
-                    <nft:NftAttributeView AttributeName="Bathrooms"
-                                      Value="{Binding Metadata.NoOfBathrooms}"
+                    <nft:NftAttributeView AttributeName="Local authority"
+                                      Value="{Binding Metadata.Address.LocalAuthority}"
                                       CardBackgroundColor="#11888888" />
 
-                    <nft:NftAttributeView AttributeName="Type"
-                                      Value="{Binding Metadata.PropertyType}"
+                    <nft:NftAttributeView AttributeName="Town / city"
+                                      Value="{Binding Metadata.Address.TownCity}"
                                       CardBackgroundColor="#11888888" />
 
                     <nft:NftAttributeView AttributeName="Location"
                                       Value="{Binding LocationShortName}"
+                                      CardBackgroundColor="#11888888" />
+
+                    <nft:NftAttributeView AttributeName="Area"
+                                      Value="{Binding PropertyArea}"
+                                      CardBackgroundColor="#11888888" />
+
+                    <nft:NftAttributeView AttributeName="Off street parking"
+                                      Value="{Binding OffStreetParking}"
+                                      CardBackgroundColor="#11888888" />
+
+                    <nft:NftAttributeView AttributeName="Outdoor space"
+                                      Value="{Binding OutdoorSpace}"
+                                      CardBackgroundColor="#11888888" />
+
+                    <nft:NftAttributeView AttributeName="Bedrooms"
+                                      Value="{Binding NumberOfBedrooms}"
+                                      CardBackgroundColor="#11888888" />
+
+                    <nft:NftAttributeView AttributeName="Construction date"
+                                      Value="{Binding ConstructionDate}"
+                                      CardBackgroundColor="#11888888" />
+
+                    <nft:NftAttributeView AttributeName="Bathrooms"
+                                      Value="{Binding NumberOfBathrooms}"
+                                      CardBackgroundColor="#11888888" />
+
+                    <nft:NftAttributeView AttributeName="Quality"
+                                      Value="{Binding Quality}"
                                       CardBackgroundColor="#11888888" />
                 </StackLayout>
             </VerticalStackLayout>

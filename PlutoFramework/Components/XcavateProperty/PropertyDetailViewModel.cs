@@ -48,6 +48,9 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(AreaPricesPercentage))]
         [NotifyPropertyChangedFor(nameof(RentalDemandPercentage))]
         [NotifyPropertyChangedFor(nameof(LocationShortName))]
+        [NotifyPropertyChangedFor(nameof(PropertyImages))]
+        [NotifyPropertyChangedFor(nameof(PropertyStatus))]
+        [NotifyPropertyChangedFor(nameof(PropertyAddressLine))]
         [NotifyPropertyChangedFor(nameof(ListingPrice))]
         [NotifyPropertyChangedFor(nameof(PricePerTokenText))]
         [NotifyPropertyChangedFor(nameof(Apy))]
@@ -68,6 +71,14 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public string LocationShortName => $"{Metadata?.Address.Street}, {Metadata?.Address.TownCity}";
 
+        public string PropertyAddressLine => Metadata is null
+            ? "Unknown address"
+            : $"{Metadata.Address.FlatOrUnit}, {Metadata.Address.Street}, {Metadata.Address.TownCity}, {Metadata.Address.PostCode}";
+
+        public IReadOnlyList<string> PropertyImages => Metadata?.Files ?? [];
+
+        public string PropertyStatus => Metadata?.Status ?? "Unknown";
+
         public string ListingPrice => ((decimal)(Metadata?.Financials.PropertyPrice ?? 0)).ToCurrencyString();
 
         public string PricePerTokenText => $"{((decimal)(Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString()} [{String.Format((string)Application.Current.Resources["CurrencyFormat"], Metadata?.Financials.PricePerToken)} USDT]";
@@ -85,6 +96,22 @@ namespace PlutoFramework.Components.XcavateProperty
         public string CompanyName => Metadata?.Company?.Name ?? "Unknown company";
 
         public string CompanyImage => Metadata?.Company?.Logo ?? "xcavate.png";
+
+        public string PropertyArea => Metadata?.Attributes?.Area ?? "Unknown";
+
+        public string OffStreetParking => Metadata?.Attributes?.OffStreetParking ?? "Unknown";
+
+        public string OutdoorSpace => Metadata?.Attributes?.OutdoorSpace ?? "Unknown";
+
+        public string NumberOfBedrooms => Metadata?.Attributes?.NumberOfBedrooms?.ToString() ?? "Unknown";
+
+        public string ConstructionDate => DateTime.TryParse(Metadata?.Attributes?.ConstructionDate, out var constructionDate)
+            ? constructionDate.ToString("yyyy-MM-dd")
+            : Metadata?.Attributes?.ConstructionDate ?? "Unknown";
+
+        public string NumberOfBathrooms => Metadata?.Attributes?.NumberOfBathrooms?.ToString() ?? "Unknown";
+
+        public string Quality => Metadata?.Attributes?.Quality ?? "Unknown";
 
 
         [RelayCommand]

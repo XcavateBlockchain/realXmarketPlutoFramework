@@ -52,20 +52,20 @@ public partial class PropertyThumbnailView : ContentView
 
             control.priceLabelText.Text = ((double)nftBase.XcavateMetadata.Financials.PropertyPrice).ToCurrencyString();
 
-            control.locationView.LocationName = nftBase.XcavateMetadata.LocationName;
+            control.locationView.LocationName = $"{nftBase.XcavateMetadata.Address.Street}, {nftBase.XcavateMetadata.Address.TownCity}";
 
-            control.image.Source = (nftBase.XcavateMetadata is not null && nftBase.XcavateMetadata.Images.Count() > 0) switch
+            control.image.Source = (nftBase.XcavateMetadata is not null && nftBase.XcavateMetadata.Files.Count() > 0) switch
             {
                 // Default image
                 false => "noimage.png",
-                true => nftBase.XcavateMetadata.Images[0][0..4] switch
+                true => nftBase.XcavateMetadata.Files[0][0..4] switch
                 {
                     "http" => new UriImageSource
                     {
-                        Uri = new Uri(nftBase.XcavateMetadata.Images[0]),
+                        Uri = new Uri(nftBase.XcavateMetadata.Files[0]),
                         CacheValidity = new TimeSpan(1, 0, 0),
                     },
-                    _ => nftBase.XcavateMetadata.Images[0]
+                    _ => nftBase.XcavateMetadata.Files[0]
                 },
             };
         });

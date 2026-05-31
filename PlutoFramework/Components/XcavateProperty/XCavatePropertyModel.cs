@@ -54,7 +54,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
                         images.Add(presignedUrl);
                     }
-                    nft.XcavateMetadata.Images = images;
+                    nft.XcavateMetadata.Files = images;
                 }
                 else
                 {

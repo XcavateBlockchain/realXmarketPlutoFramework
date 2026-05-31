@@ -22,7 +22,7 @@ public partial class PropertyLittleThumbnailView : ContentView
             control.nameLabelText.Text = metadata.PropertyName;
             control.locationView.LocationName = $"{metadata.Address.Street}, {metadata.Address.TownCity}";
 
-            var images = metadata.FileUrls;
+            var images = metadata.Files;
 
             if (images.Count() > 0)
             {
