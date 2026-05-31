@@ -18,8 +18,8 @@
         <xcavate:XcavateNavigationBarButtonView
             Grid.Column="0"
              Title="My account"
-            IconUnselected="xcavateaccountunselected.png"
-            IconSelected="xcavateaccountselected.png"
+            IconUnselected="xcavateuser.png"
+            IconSelected="xcavateuserselected.png"
              IsSelected="{Binding AccountIsSelected}"
              Command="{Binding SelectAccountCommand}"
             >
@@ -28,7 +28,7 @@
         <xcavate:XcavateNavigationBarButtonView
             Grid.Column="1"
             Title="Help"
-            IconUnselected="xcavatehelpunselected.png"
+            IconUnselected="xcavatehelp.png"
             IconSelected="xcavatehelpselected.png"
             IsSelected="{Binding HelpIsSelected}"
             Command="{Binding SelectHelpCommand}"
@@ -37,7 +37,7 @@
         <xcavate:XcavateNavigationBarButtonView
             Grid.Column="2"
             Title="Marketplace"
-            IconUnselected="xcavatemarketplaceunselected.png"
+            IconUnselected="xcavatemarketplace.png"
             IconSelected="xcavatemarketplaceselected.png"
             IsSelected="{Binding MarketplaceIsSelected}"
             Command="{Binding SelectMarketplaceCommand}"

@@ -1842,14 +1842,10 @@
     <None Remove="Resources\Images\uniqueblack.svg" />
     <None Remove="Resources\Images\uniquewhite.svg" />
     <None Remove="Resources\Images\xblack.png" />
-    <None Remove="Resources\Images\xcavateaccountselected.png" />
-    <None Remove="Resources\Images\xcavateaccountunselected.png" />
     <None Remove="Resources\Images\xcavatebackarrow.png" />
     <None Remove="Resources\Images\xcavatecellarrow.png" />
     <None Remove="Resources\Images\xcavatedeveloper.png" />
     <None Remove="Resources\Images\xcavateemail.png" />
-    <None Remove="Resources\Images\xcavatehelpselected.png" />
-    <None Remove="Resources\Images\xcavatehelpunselected.png" />
     <None Remove="Resources\Images\xcavateiconwhite.png" />
     <None Remove="Resources\Images\xcavateinvestor.png" />
     <None Remove="Resources\Images\xcavatelaunchbg1.jpg" />
@@ -1859,8 +1855,6 @@
     <None Remove="Resources\Images\xcavateloanevaluator.png" />
     <None Remove="Resources\Images\xcavatemappin.png" />
     <None Remove="Resources\Images\xcavatemarketplace.png" />
-    <None Remove="Resources\Images\xcavatemarketplaceselected.png" />
-    <None Remove="Resources\Images\xcavatemarketplaceunselected.png" />
     <None Remove="Resources\Images\xcavatemenu.png" />
     <None Remove="Resources\Images\xcavateqr.png" />
     <None Remove="Resources\Images\xcavatergb.png" />
@@ -1987,14 +1981,10 @@
     <MauiImage Include="Resources\Images\uniqueblack.svg" />
     <MauiImage Include="Resources\Images\uniquewhite.svg" />
     <MauiImage Include="Resources\Images\xblack.png" />
-    <MauiImage Include="Resources\Images\xcavateaccountselected.png" />
-    <MauiImage Include="Resources\Images\xcavateaccountunselected.png" />
     <MauiImage Include="Resources\Images\xcavatebackarrow.png" />
     <MauiImage Include="Resources\Images\xcavatecellarrow.png" />
     <MauiImage Include="Resources\Images\xcavatedeveloper.png" />
     <MauiImage Include="Resources\Images\xcavateemail.png" />
-    <MauiImage Include="Resources\Images\xcavatehelpselected.png" />
-    <MauiImage Include="Resources\Images\xcavatehelpunselected.png" />
     <MauiImage Include="Resources\Images\xcavateiconwhite.png" />
     <MauiImage Include="Resources\Images\xcavateinvestor.png" />
     <MauiImage Include="Resources\Images\xcavatelaunchbg1.jpg" />
@@ -2004,8 +1994,6 @@
     <MauiImage Include="Resources\Images\xcavateloanevaluator.png" />
     <MauiImage Include="Resources\Images\xcavatemappin.png" />
     <MauiImage Include="Resources\Images\xcavatemarketplace.png" />
-    <MauiImage Include="Resources\Images\xcavatemarketplaceselected.png" />
-    <MauiImage Include="Resources\Images\xcavatemarketplaceunselected.png" />
     <MauiImage Include="Resources\Images\xcavatemenu.png" />
     <MauiImage Include="Resources\Images\xcavateqr.png" />
     <MauiImage Include="Resources\Images\xcavatergb.png" />
