@@ -83,7 +83,7 @@
                           Grid.Row="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="Auto" />
 
                         </Grid.ColumnDefinitions>
                         <xcavateproperty:LocationView HorizontalOptions="Start"
@@ -94,9 +94,10 @@
                         <Border BackgroundColor="#22888888"
                                 x:Name="status"
                                 IsVisible="False"
-                                StrokeThickness="0">
+                                StrokeThickness="0"
+                                Grid.Column="1">
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="1" />
+                                <RoundRectangle CornerRadius="5" />
                             </Border.StrokeShape>
 
                             <Label x:Name="statusLabel"
