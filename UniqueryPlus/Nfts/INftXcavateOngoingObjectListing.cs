@@ -10,9 +10,13 @@ namespace UniqueryPlus.Nfts
         /// <summary>
         /// Listing expiry in Block numbers
         /// </summary>
-        public required uint ListingExpiry { get; set; } 
-
+        public required uint ListingExpiry { get; set; }
+        /// <summary>
+        /// Claim expiry in Block numbers
+        /// </summary>
+        public required uint ClaimExpiry { get; set; }
         public required uint ListedTokens { get; set; }
+        public required uint UnclaimedTokens { get; set; }
 
         public required U32 AssetId { get; set; }
 

@@ -6,24 +6,12 @@ using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
-using PlutoFrameworkCore;
+using PlutoFrameworkCore.Xcavate;
+using Substrate.NetApi.Model.Types.Primitive;
 using UniqueryPlus.Nfts;
 
 namespace PlutoFramework.Components.XcavateProperty
 {
-    public class XcavateNftWrapper : NftWrapper
-    {
-        public required XcavateRegion? Region { get; set; }
-        public required bool ListingHasExpired { get; set; }
-
-        public TimeSpan? TimeLeftToBuy = null;
-        public string Status => TimeLeftToBuy switch
-        {
-            null => "Unknown",
-            TimeSpan timeLeft => TimeModel.GetTimeLeftText(timeLeft),
-        };
-    }
-
     public class XcavatePropertyModel
     {
         public static async Task<XcavateNftWrapper> ToXcavateNftWrapperAsync(INftXcavateBase nft, CancellationToken token)
@@ -81,14 +69,19 @@ namespace PlutoFramework.Components.XcavateProperty
             uint blockNumber = (uint)await BlockModel.GetCachedBlockNumberAsync(substrateClient, token).ConfigureAwait(false);
 
             uint listingExpiry = ((INftXcavateOngoingObjectListing)nft).OngoingObjectListingDetails?.ListingExpiry ?? 0;
+            uint claimExpiry = ((INftXcavateOngoingObjectListing)nft).OngoingObjectListingDetails?.ClaimExpiry ?? 0;
 
             return new XcavateNftWrapper
             {
+                TokensBought = 0,
+                TokensOwned = 0,
                 Favourite = await XcavatePropertyDatabase.IsPropertyFavouriteAsync(nft.Type, nft.CollectionId, nft.Id).ConfigureAwait(false),
                 NftBase = nft,
                 Region = ((INftXcavateNftMarketplace)nft).NftMarketplaceDetails != null ? await RegionModel.GetCachedRegionAsync(substrateClient, ((INftXcavateNftMarketplace)nft).NftMarketplaceDetails!.Region, token) : null,
                 ListingHasExpired = blockNumber > listingExpiry,
                 TimeLeftToBuy = blockNumber <= listingExpiry ? TimeSpan.FromSeconds(6 * (listingExpiry - blockNumber)) : null,
+                TimeLeftToClaim = blockNumber <= claimExpiry ? TimeSpan.FromSeconds(6 * (claimExpiry - blockNumber)) : null,
+                SpvCreated = ((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails?.SpvCreated ?? true,
                 Endpoint = Endpoints.GetEndpointDictionary[PlutoFrameworkCore.NftModel.GetEndpointKey(nft.Type)]
             };
         }
@@ -120,12 +113,19 @@ namespace PlutoFramework.Components.XcavateProperty
                 TimeLeftToBuy = nft.TimeLeftToBuy,
             };
 
-            if (XcavateOwnedPropertiesModel.ItemsDict.TryGetValue(nft.Key, out PropertyTokenOwnershipInfo? tokenInfo))
+            if (XcavateOwnedPropertiesModel.ItemsDict.TryGetValue(nft.Key, out PropertyOwnership? tokenInfo))
             {
-                viewModel.TokensOwned = tokenInfo?.Amount ?? 0;
+                viewModel.TokensOwned = tokenInfo?.TokensOwned ?? 0;
+                viewModel.TokensBought = tokenInfo?.TokensBought ?? 0;
             }
 
             await NavigationModel.PushAsync(new PropertyDetailPage(viewModel));
+
+            // Loads after the push
+            var substrateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(nft.Endpoint.Key, token);
+            var tokensOwned = await RealWorldAssetsModel.GetRealWorldAssetTokensOwnedAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)substrateClient.SubstrateClient, new U32((uint)nft.Key.Item3), KeysModel.GetSubstrateKey(), token);
+
+            viewModel.TokensOwned = tokensOwned;
         }
     }
 }

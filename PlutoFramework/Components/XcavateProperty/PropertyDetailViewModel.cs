@@ -118,16 +118,22 @@ namespace PlutoFramework.Components.XcavateProperty
         public Task OpenMapAsync() => Task.FromResult(0); //Browser.Default.OpenAsync(<location url>, BrowserLaunchMode.SystemPreferred);
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TokensBoughtWorth))]
+        [NotifyPropertyChangedFor(nameof(BoughtPropertyTokensViewIsVisible))]
+        [NotifyPropertyChangedFor(nameof(RelistPropertyTokensButtonIsVisible))]
+        private uint tokensBought = 0;
+        public string TokensBoughtWorth => ((decimal)(TokensBought * Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString();
+
+        public bool BoughtPropertyTokensViewIsVisible => TokensBought > 0;
+        public bool RelistPropertyTokensButtonIsVisible => TokensOwned > 0;
+
+        [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TokensOwnedWorth))]
         [NotifyPropertyChangedFor(nameof(OwnedPropertyTokensViewIsVisible))]
-        [NotifyPropertyChangedFor(nameof(RelistPropertyTokensButtonIsVisible))]
         private uint tokensOwned = 0;
-
         public string TokensOwnedWorth => ((decimal)(TokensOwned * Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString();
 
-        public bool OwnedPropertyTokensViewIsVisible => TokensOwned > 0;
-
-        public bool RelistPropertyTokensButtonIsVisible => TokensOwned > 0;
+        public bool OwnedPropertyTokensViewIsVisible => TokensBought > 0;
 
         public string MainActionText => getMainActionState switch
         {
@@ -154,17 +160,17 @@ namespace PlutoFramework.Components.XcavateProperty
         private bool listingHasExpired = false;
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(TimeLeftText))]
-        [NotifyPropertyChangedFor(nameof(TimeLeftIsVisible))]
+        [NotifyPropertyChangedFor(nameof(StatusText))]
+        [NotifyPropertyChangedFor(nameof(StatusIsVisible))]
         private TimeSpan? timeLeftToBuy = null;
 
-        public string TimeLeftText => TimeLeftToBuy switch
+        public string StatusText => TimeLeftToBuy switch
         {
             null => "Unknown",
             TimeSpan timeLeft => TimeModel.GetTimeLeftText(timeLeft),
         };
 
-        public bool TimeLeftIsVisible => TimeLeftToBuy is not null;
+        public bool StatusIsVisible => TimeLeftToBuy is not null;
 
         [RelayCommand]
         public Task MainActionAsync()

@@ -1,11 +1,12 @@
 ﻿using PlutoFramework.Components.Nft;
 using PlutoFramework.Model.Xcavate;
-using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
+using PlutoFrameworkCore.Xcavate;
 using UniqueryPlus.Nfts;
+using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 
 namespace PlutoFramework.Components.XcavateProperty
 {
-    public partial class OwnedPropertiesListViewModel : BaseListViewModel<NftKey, PropertyTokenOwnershipInfo>
+    public partial class OwnedPropertiesListViewModel : BaseListViewModel<NftKey, XcavateNftWrapper>
     {
         public void UpdateFavourite(INftXcavateBase nftBase, bool newValue)
         {
@@ -35,16 +36,14 @@ namespace PlutoFramework.Components.XcavateProperty
 
             foreach (var property in XcavateOwnedPropertiesModel.ItemsDict.Values)
             {
-                Console.WriteLine(property.Amount + " - " + property.NftBase.Metadata.Name);
+                var newProperty = await XcavatePropertyModel.ToXcavateNftWrapperAsync((XcavatePaseoNftsPalletNft)property.NftBase, token);
 
-                var newProperty = await ToWrappedButUnwrappedAsync(property, token);
-
-                if (newProperty.Key is not null && !ItemsDict.ContainsKey((NftKey)newProperty.Key))
+                if (!ItemsDict.ContainsKey(newProperty.Key))
                 {
-                    ItemsDict.Add((NftKey)newProperty.Key, newProperty);
+                    ItemsDict.Add(newProperty.Key, newProperty);
 
                     // Save to DB
-                    //await NftDatabase.SaveItemAsync(newNft).ConfigureAwait(false);
+                    // await NftDatabase.SaveItemAsync(newNft).ConfigureAwait(false);
 
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
@@ -75,15 +74,11 @@ namespace PlutoFramework.Components.XcavateProperty
             }*/
         }
 
-        private async Task<PropertyTokenOwnershipInfo> ToWrappedButUnwrappedAsync(PropertyTokenOwnershipInfo info, CancellationToken token)
+        private async Task<XcavateNftWrapper> ToWrappedButUnwrappedAsync(XcavateNftWrapper info, CancellationToken token)
         {
             var wrapped = await XcavatePropertyModel.ToXcavateNftWrapperAsync((XcavatePaseoNftsPalletNft)info.NftBase, token);
-            return new PropertyTokenOwnershipInfo
-            {
-                Amount = info.Amount,
-                NftBase = wrapped.NftBase,
-                Favourite = wrapped.Favourite
-            };
+
+            return wrapped;
         }
     }
 }

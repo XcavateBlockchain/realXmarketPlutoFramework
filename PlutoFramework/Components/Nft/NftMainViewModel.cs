@@ -1,15 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.VisualStudio.Threading;
+using PlutoFramework.Components.Nft.NftList;
 using PlutoFramework.Model;
+using PlutoFramework.Model.SQLite;
 using System.Collections.ObjectModel;
 using UniqueryPlus;
-using Microsoft.VisualStudio.Threading;
-using PlutoFramework.Model.SQLite;
-using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 using CollectionKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger);
+using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 using SubstrateClientExt = PlutoFramework.Model.AjunaExt.SubstrateClientExt;
-using CommunityToolkit.Mvvm.Input;
-using PlutoFramework.Components.Nft.NftList;
-using CommunityToolkit.Maui.Core.Platform;
 
 namespace PlutoFramework.Components.Nft
 {
@@ -159,16 +158,17 @@ namespace PlutoFramework.Components.Nft
         {
             try
             {
-                foreach (var nftType in RecursionHelper.GetNftTypeForClient(client.SubstrateClient)) { 
+                foreach (var nftType in RecursionHelper.GetNftTypeForClient(client.SubstrateClient))
+                {
                     if (featuredNftsToQuery.ContainsKey(nftType))
                     {
                         foreach (var nftId in featuredNftsToQuery[nftType])
                         {
                             var newNft = PlutoFrameworkCore.NftModel.ToNftWrapper(await UniqueryPlus.Nfts.NftModel.GetNftByIdAsync(client.SubstrateClient, nftId.NftType, nftId.CollectionId, nftId.Id, token).ConfigureAwait(false));
 
-                            if (newNft.Key is not null && !featuredNftsDict.ContainsKey((NftKey)newNft.Key))
+                            if (!featuredNftsDict.ContainsKey(newNft.Key))
                             {
-                                featuredNftsDict.Add((NftKey)newNft.Key, newNft);
+                                featuredNftsDict.Add(newNft.Key, newNft);
                             }
                             else
                             {
@@ -181,7 +181,7 @@ namespace PlutoFramework.Components.Nft
 
                 FeaturedNfts = new ObservableCollection<NftWrapper>(featuredNftsDict.Values);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Featured nfts error:");
                 Console.WriteLine(ex);
@@ -204,9 +204,9 @@ namespace PlutoFramework.Components.Nft
             {
                 var newNft = PlutoFrameworkCore.NftModel.ToNftWrapper(uniqueryNftEnumerator.Current);
 
-                if (newNft.Key is not null && !ownedNftsDict.ContainsKey((NftKey)newNft.Key) && !favouriteNftsDict.ContainsKey((NftKey)newNft.Key))
+                if (!ownedNftsDict.ContainsKey(newNft.Key) && !favouriteNftsDict.ContainsKey(newNft.Key))
                 {
-                    ownedNftsDict.Add((NftKey)newNft.Key, newNft);
+                    ownedNftsDict.Add(newNft.Key, newNft);
                     await NftDatabase.SaveItemAsync(newNft).ConfigureAwait(false);
 
                     if (ownedNftsDict.Count() <= displayLimit)
@@ -269,9 +269,9 @@ namespace PlutoFramework.Components.Nft
                 // Favourite Nfts
                 foreach (var savedNft in await NftDatabase.GetFavouriteNftsAsync().ConfigureAwait(false))
                 {
-                    if (savedNft.Key is not null && !favouriteNftsDict.ContainsKey((NftKey)savedNft.Key))
+                    if (!favouriteNftsDict.ContainsKey(savedNft.Key))
                     {
-                        favouriteNftsDict.Add((NftKey)savedNft.Key, savedNft);
+                        favouriteNftsDict.Add(savedNft.Key, savedNft);
 
                         if (favouriteNftsDict.Count() <= displayLimit)
                         {
@@ -287,9 +287,9 @@ namespace PlutoFramework.Components.Nft
                 // Not favourite, owned Nfts
                 foreach (var savedNft in await NftDatabase.GetNotFavouriteNftsOwnedByAsync(KeysModel.GetSubstrateKey()).ConfigureAwait(false))
                 {
-                    if (savedNft.Key is not null && !ownedNftsDict.ContainsKey((NftKey)savedNft.Key))
+                    if (!ownedNftsDict.ContainsKey(savedNft.Key))
                     {
-                        ownedNftsDict.Add((NftKey)savedNft.Key, savedNft);
+                        ownedNftsDict.Add(savedNft.Key, savedNft);
 
                         if (ownedNftsDict.Count() <= displayLimit)
                         {
@@ -303,7 +303,7 @@ namespace PlutoFramework.Components.Nft
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex);
             }

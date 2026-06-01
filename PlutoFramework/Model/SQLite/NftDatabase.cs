@@ -1,9 +1,9 @@
-﻿using SQLite;
+﻿using PlutoFramework.Constants;
 using PlutoFramework.Model.Constants;
-using UniqueryPlus;
+using SQLite;
 using System.Numerics;
 using System.Text.Json;
-using PlutoFramework.Constants;
+using UniqueryPlus;
 using UniqueryPlus.Collections;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
@@ -76,7 +76,7 @@ namespace PlutoFramework.Model.SQLite
     {
         private static NftDatabaseItem ToNftDatabaseItem(this NftWrapper wrapper) => new NftDatabaseItem
         {
-            Key = $"{wrapper.Key.Value.Item1}-{wrapper.Key.Value.Item2}-{wrapper.Key.Value.Item3}",
+            Key = $"{wrapper.Key.Item1}-{wrapper.Key.Item2}-{wrapper.Key.Item3}",
             SerializedNftBase = JsonSerializer.Serialize(wrapper.NftBase),
             SerializedEndpoint = JsonSerializer.Serialize(wrapper.Endpoint),
             Favourite = wrapper.Favourite

@@ -1,10 +1,10 @@
 ﻿using PlutoFramework.Constants;
 using PlutoFramework.Types;
+using PlutoFrameworkCore.Xcavate;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Extrinsics;
 using Substrate.NetApi.Model.Types.Base;
 using Substrate.NetApi.Model.Types.Primitive;
-using System.ComponentModel;
 using System.Numerics;
 using UniqueryPlus;
 using UniqueryPlus.Nfts;
@@ -17,31 +17,13 @@ using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Num
 
 namespace PlutoFramework.Model.Xcavate
 {
-    public record PropertyTokenOwnershipInfo : INotifyPropertyChanged
+    public record PropertyOwnership
     {
-        public NftKey? Key => NftBase is not null ? (NftBase.Type, NftBase.CollectionId, NftBase.Id) : null;
-        public required uint Amount { get; set; }
+        public required uint TokensBought { get; set; }
+        public required uint TokensOwned { get; set; }
+        public required INftXcavateBase NftBase { get; set; }
 
-        private bool favourite = false;
-        public bool Favourite
-        {
-            get => favourite;
-            set
-            {
-                if (favourite != value)
-                {
-                    favourite = value;
-                    OnPropertyChanged(nameof(Favourite));
-                }
-            }
-        }
-
-        public required INftBase NftBase { get; set; }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string propertyName) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-
+        public NftKey Key => (NftBase.Type, NftBase.CollectionId, NftBase.Id);
     }
 
     public enum XcavatePropertyOperation
@@ -52,7 +34,7 @@ namespace PlutoFramework.Model.Xcavate
         Buy
     }
 
-    public record PropertyTokenOwnershipChangeInfo : PropertyTokenOwnershipInfo
+    public record PropertyTokenOwnershipChangeInfo : XcavateNftWrapper
     {
         public required XcavatePropertyOperation Operation { get; set; }
     }
@@ -79,7 +61,7 @@ namespace PlutoFramework.Model.Xcavate
             _ => throw new NotImplementedException($"RelistPropertyTokens not implemented for {endpointKey}"),
         };
 
-        public static async Task<RecursiveReturn<PropertyTokenOwnershipInfo>> GetPropertiesOwnedByAsync(SubstrateClientExt client, string address, uint limit, byte[]? lastKey, CancellationToken token)
+        public static async Task<RecursiveReturn<PropertyOwnership>> GetPropertiesOwnedByAsync(SubstrateClientExt client, string address, uint limit, byte[]? lastKey, CancellationToken token)
         {
             Console.WriteLine($"Finding properties owned by {address}.");
 
@@ -96,7 +78,7 @@ namespace PlutoFramework.Model.Xcavate
             // No more nfts found
             if (fullKeys == null || !fullKeys.Any())
             {
-                return new RecursiveReturn<PropertyTokenOwnershipInfo>
+                return new RecursiveReturn<PropertyOwnership>
                 {
                     Items = [],
                     LastKey = lastKey,
@@ -123,23 +105,22 @@ namespace PlutoFramework.Model.Xcavate
 
                 // Combine the amount owned with the rest of the property details
             }
-            ;
 
             var propertyAssetDetails = await GetPropertyAssetDetailsAsync(client, idKeys, lastKey, token);
 
-            return new RecursiveReturn<PropertyTokenOwnershipInfo>
+            return new RecursiveReturn<PropertyOwnership>
             {
-                Items = propertyAssetDetails.Items.Zip(tokenOwnerDetails, (propertyDetails, ownerDetails) => new PropertyTokenOwnershipInfo
+                Items = propertyAssetDetails.Items.Zip(tokenOwnerDetails, (propertyDetails, ownerDetails) => new PropertyOwnership
                 {
-                    Amount = ownerDetails.TokenAmount,
+                    TokensBought = ownerDetails.TokenAmount,
+                    TokensOwned = 0,
                     NftBase = propertyDetails,
-                    Favourite = false, // Is filled later
                 }),
                 LastKey = Utils.HexToByteArray(fullKeys.Last().ToString())
             };
         }
 
-        public static async Task<RecursiveReturn<INftBase>> GetPropertiesAsync(SubstrateClientExt client, uint limit, byte[]? lastKey, CancellationToken token)
+        public static async Task<RecursiveReturn<INftXcavateBase>> GetPropertiesAsync(SubstrateClientExt client, uint limit, byte[]? lastKey, CancellationToken token)
         {
             // 0x + Twox64 pallet + Twox64 storage + Blake2_128Concat U32
             var keyPrefixLength = 66;
@@ -153,7 +134,7 @@ namespace PlutoFramework.Model.Xcavate
             // No more nfts found
             if (fullKeys == null || !fullKeys.Any())
             {
-                return new RecursiveReturn<INftBase>
+                return new RecursiveReturn<INftXcavateBase>
                 {
                     Items = [],
                     LastKey = lastKey,
@@ -165,7 +146,7 @@ namespace PlutoFramework.Model.Xcavate
             return await GetPropertyAssetDetailsAsync(client, idKeys, lastKey, token);
         }
 
-        public static async Task<RecursiveReturn<INftBase>> GetPropertyAssetDetailsAsync(SubstrateClientExt client, IEnumerable<string> propertyIds, byte[]? lastKey, CancellationToken token)
+        public static async Task<RecursiveReturn<INftXcavateBase>> GetPropertyAssetDetailsAsync(SubstrateClientExt client, IEnumerable<string> propertyIds, byte[]? lastKey, CancellationToken token)
         {
             const int keyPrefixLength = 66;
 
@@ -227,7 +208,7 @@ namespace PlutoFramework.Model.Xcavate
             );
         }
 
-        public static IAsyncEnumerable<PropertyTokenOwnershipInfo> GetPropertiesOwnedByAsync(
+        public static IAsyncEnumerable<PropertyOwnership> GetPropertiesOwnedByAsync(
             SubstrateClientExt client,
             string owner,
             uint limit = 25

@@ -47,9 +47,9 @@ namespace PlutoFramework.Components.Nft.NftList
                     {
                         var newNft = PlutoFrameworkCore.NftModel.ToNftWrapper(uniqueryNftEnumerator.Current);
 
-                        if (newNft.Key is not null && !ItemsDict.ContainsKey((NftKey)newNft.Key))
-                        {
-                            ItemsDict.Add((NftKey)newNft.Key, newNft);
+                        if (!ItemsDict.ContainsKey(newNft.Key))
+                        {       
+                            ItemsDict.Add(newNft.Key, newNft);
 
                             await NftDatabase.SaveItemAsync(newNft).ConfigureAwait(false);
 

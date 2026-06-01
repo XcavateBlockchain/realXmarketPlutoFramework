@@ -60,9 +60,9 @@ namespace PlutoFramework.Components.XcavateProperty
                     {
                         var newNft = await XcavatePropertyModel.ToXcavateNftWrapperAsync((INftXcavateBase)uniqueryNftEnumerator.Current, token);
 
-                        if (newNft.Key is not null && !ItemsDict.ContainsKey((NftKey)newNft.Key))
+                        if (!ItemsDict.ContainsKey(newNft.Key))
                         {
-                            ItemsDict.Add((NftKey)newNft.Key, newNft);
+                            ItemsDict.Add(newNft.Key, newNft);
 
                             // Save to DB
                             try
@@ -147,9 +147,9 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             foreach (var savedNft in await XcavatePropertyDatabase.GetPropertiesAsync().ConfigureAwait(false))
             {
-                if (savedNft.Key is not null && !ItemsDict.ContainsKey((NftKey)savedNft.Key))
+                if (!ItemsDict.ContainsKey(savedNft.Key))
                 {
-                    ItemsDict.Add((NftKey)savedNft.Key, savedNft);
+                    ItemsDict.Add(savedNft.Key, savedNft);
 
                     MainThread.BeginInvokeOnMainThread(() =>
                     {

@@ -32,9 +32,9 @@ namespace PlutoFramework.Components.Nft
             // Not favourite, owned Nfts
             foreach (var savedNft in await NftDatabase.GetFavouriteNftsAsync().ConfigureAwait(false))
             {
-                if (savedNft.Key is not null && !ItemsDict.ContainsKey((NftKey)savedNft.Key))
+                if (!ItemsDict.ContainsKey(savedNft.Key))
                 {
-                    ItemsDict.Add((NftKey)savedNft.Key, savedNft);
+                    ItemsDict.Add(savedNft.Key, savedNft);
 
                     MainThread.BeginInvokeOnMainThread(() =>
                     {

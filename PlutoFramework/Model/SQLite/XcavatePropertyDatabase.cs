@@ -77,7 +77,7 @@ namespace PlutoFramework.Model.SQLite
     {
         private static XcavatePropertyDatabaseItem ToDatabaseItem(this NftWrapper wrapper) => new XcavatePropertyDatabaseItem
         {
-            Key = $"{wrapper.Key.Value.Item1}-{wrapper.Key.Value.Item2}-{wrapper.Key.Value.Item3}",
+            Key = $"{wrapper.Key.Item1}-{wrapper.Key.Item2}-{wrapper.Key.Item3}",
             SerializedNftBase = JsonSerializer.Serialize(((INftXcavateBase)wrapper.NftBase)),
             SerializedEndpoint = JsonSerializer.Serialize(wrapper.Endpoint),
             Favourite = wrapper.Favourite

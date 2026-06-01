@@ -10,12 +10,7 @@
                              Spacing="15">
             <BindableLayout.ItemTemplate>
                 <DataTemplate>
-                    <xcavateproperty:PropertyThumbnailView NftBase="{Binding NftBase}"
-                                                           TokensOwned="{Binding Amount}"
-                                                           Favourite="{Binding Favourite}"
-                                                           Region="{Binding Region}"
-                                                           ListingHasExpired="{Binding ListingHasExpired}"
-                                                           ShowHasExpired="False"
+                    <xcavateproperty:PropertyThumbnailView XcavateNftWrapper="{Binding .}"
                                                            />
 
                 </DataTemplate>

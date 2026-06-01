@@ -42,7 +42,7 @@
                                TextColor="Gray"
                                FontSize="30" />
 
-                        <Image AbsoluteLayout.LayoutBounds="1, 0, 20, 20"
+                        <Image AbsoluteLayout.LayoutBounds="1, 0, 40, 40"
                                AbsoluteLayout.LayoutFlags="PositionProportional"
                                Margin="10"
                                 Aspect="AspectFit"
@@ -59,7 +59,7 @@
 
 
 
-                        <Image AbsoluteLayout.LayoutBounds="1, 0, 20, 20"
+                        <Image AbsoluteLayout.LayoutBounds="1, 0, 40, 40"
                                AbsoluteLayout.LayoutFlags="PositionProportional"
                                Margin="10"
                                 Aspect="AspectFit"

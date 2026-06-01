@@ -1,8 +1,8 @@
 ﻿
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
-using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 using UniqueryPlus.Nfts;
+using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 
 
 namespace PlutoFramework.Components.Nft
@@ -39,9 +39,9 @@ namespace PlutoFramework.Components.Nft
                     {
                         var newNft = PlutoFrameworkCore.NftModel.ToNftWrapper(uniqueryNftEnumerator.Current);
 
-                        if (newNft.Key is not null && !ItemsDict.ContainsKey((NftKey)newNft.Key))
+                        if (!ItemsDict.ContainsKey(newNft.Key))
                         {
-                            ItemsDict.Add((NftKey)newNft.Key, newNft);
+                            ItemsDict.Add(newNft.Key, newNft);
 
                             await NftDatabase.SaveItemAsync(newNft).ConfigureAwait(false);
 
@@ -99,10 +99,10 @@ namespace PlutoFramework.Components.Nft
             {
                 Console.WriteLine("Maybe added, length = " + Items.Count());
 
-                if (savedNft.Key is not null && !ItemsDict.ContainsKey((NftKey)savedNft.Key))
+                if (!ItemsDict.ContainsKey(savedNft.Key))
                 {
                     Console.WriteLine("Added something");
-                    ItemsDict.Add((NftKey)savedNft.Key, savedNft);
+                    ItemsDict.Add(savedNft.Key, savedNft);
 
                     MainThread.BeginInvokeOnMainThread(() =>
                     {

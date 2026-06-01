@@ -1,14 +1,13 @@
-﻿using PlutoFramework.Model;
-using PlutoFramework.Model.SQLite;
-using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
-using UniqueryPlus.Nfts;
+﻿using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Components.TransactionAnalyzer;
 using PlutoFramework.Constants;
+using PlutoFramework.Model;
+using PlutoFramework.Model.SQLite;
+using Substrate.NetApi.Model.Extrinsics;
 using System.Numerics;
 using UniqueryPlus;
-using Substrate.NetApi;
-using CommunityToolkit.Mvvm.Input;
-using Substrate.NetApi.Model.Extrinsics;
-using PlutoFramework.Components.TransactionAnalyzer;
+using UniqueryPlus.Nfts;
+using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 
 #nullable enable
 
@@ -23,7 +22,7 @@ namespace PlutoFramework.Components.Nft
         private NftTypeEnum nftTypeToSelect;
         private Queue<BigInteger>? collectionIdsToSelect = null;
         private BigInteger nftIdToIgnore;
-        
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         private PlutoFrameworkSubstrateClient client;
         private INftBase nftBase;
@@ -71,9 +70,9 @@ namespace PlutoFramework.Components.Nft
                     {
                         var newNft = PlutoFrameworkCore.NftModel.ToNftWrapper(uniqueryNftEnumerator.Current);
 
-                        if (newNft.Key is not null && !ItemsDict.ContainsKey((NftKey)newNft.Key) && newNft.NftBase?.Id != nftIdToIgnore)
+                        if (!ItemsDict.ContainsKey(newNft.Key) && newNft.NftBase.Id != nftIdToIgnore)
                         {
-                            ItemsDict.Add((NftKey)newNft.Key, newNft);
+                            ItemsDict.Add(newNft.Key, newNft);
                             await NftDatabase.SaveItemAsync(newNft).ConfigureAwait(false);
 
                             MainThread.BeginInvokeOnMainThread(() =>
@@ -194,9 +193,9 @@ namespace PlutoFramework.Components.Nft
 
             foreach (var savedNft in savedNfts)
             {
-                if (savedNft.Key is not null && !ItemsDict.ContainsKey((NftKey)savedNft.Key))
+                if (!ItemsDict.ContainsKey(savedNft.Key))
                 {
-                    ItemsDict.Add((NftKey)savedNft.Key, savedNft);
+                    ItemsDict.Add(savedNft.Key, savedNft);
 
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
@@ -218,7 +217,7 @@ namespace PlutoFramework.Components.Nft
                 var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
 
                 await transactionAnalyzerConfirmationViewModel.LoadAsync(client, nest, false, token: token);
-                
+
                 this.IsVisible = false;
             }
             catch (Exception ex)

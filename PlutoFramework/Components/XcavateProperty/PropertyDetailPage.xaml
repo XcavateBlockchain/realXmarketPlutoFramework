@@ -13,6 +13,7 @@
                        xmlns:sumsub="clr-namespace:PlutoFramework.Components.Sumsub"
                        xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
                        xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+                       xmlns:map="clr-namespace:PlutoFramework.Components.Map"
                        x:Class="PlutoFramework.Components.XcavateProperty.PropertyDetailPage"
                        Title="PropertyDetailPage"
                        NavigationBarIsVisible="False">
@@ -67,14 +68,14 @@
 
                     <Border BackgroundColor="#22888888"
                             x:Name="status"
-                            IsVisible="{Binding TimeLeftIsVisible}"
+                            IsVisible="{Binding StatusIsVisible}"
                             StrokeThickness="0"
-                            Grid.Column="2">
+                            Grid.Column="1">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="5" />
                         </Border.StrokeShape>
 
-                        <Label Text="{Binding TimeLeftText}"
+                        <Label Text="{Binding StatusText}"
                                Margin="5,0,5,0"
                                HorizontalTextAlignment="Center"
                                VerticalOptions="Center"
@@ -158,6 +159,8 @@
 
                 <xcavateproperty:OwnedPropertyTokensView IsVisible="{Binding OwnedPropertyTokensViewIsVisible}" />
 
+                <xcavateproperty:BoughtPropertyTokensView IsVisible="{Binding BoughtPropertyTokensViewIsVisible}" />
+
                 <StackLayout BackgroundColor="#22888888"
                             Padding="20,30,20,30"
                             Margin="-20,20,-20,0"
@@ -239,6 +242,11 @@
                                       HasShadow="False"
                                       CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
                 </StackLayout>
+
+                <map:PropertyMapView x:Name="propertyMapView"
+                                     HeightRequest="350"
+                                     LocationName="{Binding PropertyAddressLine}"
+                                     MapUrl="{Binding Metadata.Map}" />
             </VerticalStackLayout>
         </ScrollView>
     </template:PageTemplate.MainContent>
