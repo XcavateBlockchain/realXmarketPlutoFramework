@@ -36,6 +36,7 @@ namespace PlutoFramework.Model.Xcavate
 
     public record PropertyTokenOwnershipChangeInfo : XcavateNftWrapper
     {
+        public required uint Amount { get; set; }
         public required XcavatePropertyOperation Operation { get; set; }
     }
 
@@ -196,7 +197,7 @@ namespace PlutoFramework.Model.Xcavate
             return propertyDetails.Items.First();
         }
 
-        public static IAsyncEnumerable<INftBase> GetPropertiesAsync(
+        public static IAsyncEnumerable<INftXcavateBase> GetPropertiesAsync(
             SubstrateClientExt client,
             uint limit = 25
         )

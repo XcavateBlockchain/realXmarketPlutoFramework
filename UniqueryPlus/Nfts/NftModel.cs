@@ -1,6 +1,5 @@
 ﻿using Substrate.NetApi;
 using System.Numerics;
-using UniqueryPlus.Collections;
 
 namespace UniqueryPlus.Nfts
 {
@@ -15,7 +14,7 @@ namespace UniqueryPlus.Nfts
                 NftTypeEnum.Unique => UniqueNftModel.GetNftsOwnedByOnChainAsync((Unique.NetApi.Generated.SubstrateClientExt)client, owner, limit, lastKey, token),
                 NftTypeEnum.Opal => OpalNftModel.GetNftsOwnedByOnChainAsync((Opal.NetApi.Generated.SubstrateClientExt)client, owner, limit, lastKey, token),
                 NftTypeEnum.Mythos => MythosNftModel.GetNftsOwnedByAsync((Mythos.NetApi.Generated.SubstrateClientExt)client, owner, limit, lastKey, token),
-                NftTypeEnum.XcavatePaseo => XcavatePaseoNftModel.GetNftsNftsPalletOwnedByAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)client, owner, limit, lastKey, token),
+                NftTypeEnum.XcavatePaseo => XcavatePaseoNftModel.GetNftsNftsPalletOwnedByAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)client, owner, limit, lastKey, token).ToBaseAsync(),
                 _ => throw new NotImplementedException()
             };
         }
@@ -53,8 +52,8 @@ namespace UniqueryPlus.Nfts
                 NftTypeEnum.Unique => UniqueNftModel.GetNftsInCollectionOwnedByAsync((Unique.NetApi.Generated.SubstrateClientExt)client, (uint)collectionId, owner, limit, lastKey, token),
                 NftTypeEnum.Opal => OpalNftModel.GetNftsInCollectionOwnedByAsync((Opal.NetApi.Generated.SubstrateClientExt)client, (uint)collectionId, owner, limit, lastKey, token),
                 NftTypeEnum.Mythos => MythosNftModel.GetNftsInCollectionOwnedByAsync((Mythos.NetApi.Generated.SubstrateClientExt)client, collectionId, owner, limit, lastKey, token),
-                NftTypeEnum.XcavatePaseo => XcavatePaseoNftModel.GetNftsNftsPalletInCollectionOwnedByAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)client, (uint)collectionId, owner, limit, lastKey, token),
-                _ => throw new NotImplementedException()
+                NftTypeEnum.XcavatePaseo => XcavatePaseoNftModel.GetNftsNftsPalletInCollectionOwnedByAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)client, (uint)collectionId, owner, limit, lastKey, token).ToBaseAsync(),
+                _ => throw new NotImplementedException(),
             };
         }
 
@@ -67,7 +66,7 @@ namespace UniqueryPlus.Nfts
                 NftTypeEnum.Unique => UniqueNftModel.GetNftsInCollectionAsync((Unique.NetApi.Generated.SubstrateClientExt)client, (uint)collectionId, limit, lastKey, token),
                 NftTypeEnum.Opal => OpalNftModel.GetNftsInCollectionAsync((Opal.NetApi.Generated.SubstrateClientExt)client, (uint)collectionId, limit, lastKey, token),
                 NftTypeEnum.Mythos => MythosNftModel.GetNftsInCollectionAsync((Mythos.NetApi.Generated.SubstrateClientExt)client, collectionId, limit, lastKey, token),
-                NftTypeEnum.XcavatePaseo => XcavatePaseoNftModel.GetNftsNftsPalletInCollectionAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)client, (uint)collectionId, limit, lastKey, token),
+                NftTypeEnum.XcavatePaseo => XcavatePaseoNftModel.GetNftsNftsPalletInCollectionAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)client, (uint)collectionId, limit, lastKey, token).ToBaseAsync(),
                 _ => throw new NotImplementedException()
             };
         }
@@ -76,7 +75,8 @@ namespace UniqueryPlus.Nfts
             IEnumerable<SubstrateClient> clients,
             string owner,
             uint limit = 25
-        ) {
+        )
+        {
             return RecursionHelper.ToIAsyncEnumerableAsync(
                 clients,
                 (SubstrateClient client, NftTypeEnum type, int limit, int offset, CancellationToken token) => GetNftsOwnedByAsync(client, type, owner, limit, offset, token),

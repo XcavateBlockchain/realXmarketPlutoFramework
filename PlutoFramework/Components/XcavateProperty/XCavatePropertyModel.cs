@@ -2,6 +2,7 @@
 using Amazon.S3;
 using CommunityToolkit.Maui.Alerts;
 using Microsoft.Extensions.Configuration;
+using PlutoFramework.Components.Loading;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
@@ -16,6 +17,7 @@ namespace PlutoFramework.Components.XcavateProperty
     {
         public static async Task<XcavateNftWrapper> ToXcavateNftWrapperAsync(INftXcavateBase nft, CancellationToken token)
         {
+            Console.WriteLine("Wrapping property");
             try
             {
                 var configuration = MauiAppBuilderExtensions.Services.GetService<IConfiguration>();
@@ -80,6 +82,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 Region = ((INftXcavateNftMarketplace)nft).NftMarketplaceDetails != null ? await RegionModel.GetCachedRegionAsync(substrateClient, ((INftXcavateNftMarketplace)nft).NftMarketplaceDetails!.Region, token) : null,
                 ListingHasExpired = blockNumber > listingExpiry,
                 TimeLeftToBuy = blockNumber <= listingExpiry ? TimeSpan.FromSeconds(6 * (listingExpiry - blockNumber)) : null,
+                ClaimHasExpired = blockNumber > claimExpiry,
                 TimeLeftToClaim = blockNumber <= claimExpiry ? TimeSpan.FromSeconds(6 * (claimExpiry - blockNumber)) : null,
                 SpvCreated = ((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails?.SpvCreated ?? true,
                 Endpoint = Endpoints.GetEndpointDictionary[PlutoFrameworkCore.NftModel.GetEndpointKey(nft.Type)]
@@ -88,6 +91,12 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public static async Task NavigateToPropertyDetailPageAsync(XcavateNftWrapper nft, CancellationToken token)
         {
+            var loadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            loadingViewModel.IsVisible = true;
+
+            loadingViewModel.Message = "Gathering property details";
+
             if (nft.NftBase is SavedXcavatePropertyBase)
             {
                 nft.NftBase = await nft.NftBase.GetFullAsync(token);
@@ -98,6 +107,8 @@ namespace PlutoFramework.Components.XcavateProperty
                 var toast = Toast.Make($"Could not navigate to property id: {nft.Key.Item3.ToString() ?? "Unknown"}");
                 await toast.Show();
 
+                loadingViewModel.IsVisible = false;
+
                 return;
             }
 
@@ -105,12 +116,10 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 Endpoint = nft.Endpoint!,
                 Favourite = nft.Favourite,
-                NftBase = nft.NftBase,
+                NftWrapper = nft,
                 Metadata = ((INftXcavateMetadata)nft.NftBase).XcavateMetadata,
                 ListingDetails = ((INftXcavateOngoingObjectListing)nft.NftBase).OngoingObjectListingDetails,
                 Region = nft.Region,
-                ListingHasExpired = nft.ListingHasExpired,
-                TimeLeftToBuy = nft.TimeLeftToBuy,
             };
 
             if (XcavateOwnedPropertiesModel.ItemsDict.TryGetValue(nft.Key, out PropertyOwnership? tokenInfo))
@@ -119,13 +128,26 @@ namespace PlutoFramework.Components.XcavateProperty
                 viewModel.TokensBought = tokenInfo?.TokensBought ?? 0;
             }
 
+            loadingViewModel.IsVisible = false;
+
             await NavigationModel.PushAsync(new PropertyDetailPage(viewModel));
 
             // Loads after the push
             var substrateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(nft.Endpoint.Key, token);
+
+            Console.WriteLine("Getting RealWorldAssets");
+
             var tokensOwned = await RealWorldAssetsModel.GetRealWorldAssetTokensOwnedAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)substrateClient.SubstrateClient, new U32((uint)nft.Key.Item3), KeysModel.GetSubstrateKey(), token);
 
             viewModel.TokensOwned = tokensOwned;
+
+            Console.WriteLine("Getting Roles");
+
+            var roles = await WhitelistModel.GetRolesAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)substrateClient.SubstrateClient, KeysModel.GetSubstrateKey(), token);
+
+            viewModel.Roles = roles;
+
+            Console.WriteLine("Getting Roles finished");
         }
     }
 }

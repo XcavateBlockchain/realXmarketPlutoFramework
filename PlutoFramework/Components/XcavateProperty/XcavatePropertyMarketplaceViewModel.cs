@@ -5,6 +5,7 @@ using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
+using PlutoFrameworkCore.Xcavate;
 using System.Collections.ObjectModel;
 using UniqueryPlus.Nfts;
 using XcavatePaseo.NetApi.Generated;
@@ -12,7 +13,7 @@ using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Num
 
 namespace PlutoFramework.Components.XcavateProperty
 {
-    public partial class XcavatePropertyMarketplaceViewModel : BaseListViewModel<NftKey, NftWrapper>
+    public partial class XcavatePropertyMarketplaceViewModel : BaseListViewModel<NftKey, XcavateNftWrapper>
     {
         [ObservableProperty]
         private bool isRefreshing = false;
@@ -21,7 +22,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
         //private List<Task<PlutoFrameworkSubstrateClient>> clientTasks;
 
-        private IAsyncEnumerator<INftBase> uniqueryNftEnumerator = null;
+        private IAsyncEnumerator<INftXcavateBase>? uniqueryNftEnumerator = null;
 
         public void UpdateFavourite(INftXcavateBase nftBase, bool newValue)
         {
@@ -49,16 +50,10 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 for (uint i = 0; i < LIMIT; i++)
                 {
-                    Console.WriteLine("Loading more");
-
-                    if (token.IsCancellationRequested)
-                    {
-                        break;
-                    }
 
                     if (uniqueryNftEnumerator != null && await uniqueryNftEnumerator.MoveNextAsync().ConfigureAwait(false))
                     {
-                        var newNft = await XcavatePropertyModel.ToXcavateNftWrapperAsync((INftXcavateBase)uniqueryNftEnumerator.Current, token);
+                        XcavateNftWrapper newNft = await XcavatePropertyModel.ToXcavateNftWrapperAsync((INftXcavateBase)uniqueryNftEnumerator.Current, token);
 
                         if (!ItemsDict.ContainsKey(newNft.Key))
                         {
@@ -77,24 +72,17 @@ namespace PlutoFramework.Components.XcavateProperty
                                 await XcavatePropertyDatabase.DropAsync().ConfigureAwait(false);
                             }
 
-                            if (!newNft.ListingHasExpired)
+                            MainThread.BeginInvokeOnMainThread(() =>
                             {
-                                MainThread.BeginInvokeOnMainThread(() =>
-                                {
-                                    Items.Add(newNft);
-                                });
-                            }
-                            else
-                            {
-                                i--;
-                            }
+                                Items.Add(newNft);
+                            });
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Nft owned list error: ");
+                Console.WriteLine("Nft list error: ");
                 Console.WriteLine(ex);
             }
 
@@ -119,6 +107,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
             await LoadMoreAsync(token).ConfigureAwait(false);
 
+
+
             Console.WriteLine("initial load done");
         }
 
@@ -138,12 +128,12 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             uniqueryNftEnumerator = null;
 
-            ItemsDict = new Dictionary<NftKey, NftWrapper>();
+            ItemsDict = new Dictionary<NftKey, XcavateNftWrapper>();
 
-            Items = new ObservableCollection<NftWrapper>();
+            Items = new ObservableCollection<XcavateNftWrapper>();
         }
 
-        private async Task LoadSavedPropertiesAsync()
+        /*private async Task LoadSavedPropertiesAsync()
         {
             foreach (var savedNft in await XcavatePropertyDatabase.GetPropertiesAsync().ConfigureAwait(false))
             {
@@ -157,6 +147,6 @@ namespace PlutoFramework.Components.XcavateProperty
                     });
                 }
             }
-        }
+        }*/
     }
 }

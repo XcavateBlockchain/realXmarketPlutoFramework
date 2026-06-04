@@ -29,8 +29,13 @@ public partial class UserTypeBadgeView : ContentView
 
                     control.roleLabel.Text = "Letting agent";
                     break;
+                case UserRoleEnum.Lawyer:
+                    control.border.BackgroundColor = Color.FromArgb("#1A4E7DDC");
+                    control.roleLabel.TextColor = Color.FromArgb("#4E7DDC");
+                    break;
                 default:
                     control.border.BackgroundColor = Color.FromArgb("#1A888888");
+                    control.roleLabel.TextColor = Color.FromArgb("#888888");
                     break;
             }
         });

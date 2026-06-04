@@ -14,7 +14,7 @@ namespace UniqueryPlus.Nfts
         /// <summary>
         /// Claim expiry in Block numbers
         /// </summary>
-        public required uint ClaimExpiry { get; set; }
+        public required uint? ClaimExpiry { get; set; }
         public required uint ListedTokens { get; set; }
         public required uint UnclaimedTokens { get; set; }
 

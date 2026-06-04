@@ -2,6 +2,8 @@ namespace PlutoFramework.Components.XcavateProperty;
 
 public partial class XcavatePropertyMarketplacePage : ContentPage
 {
+    private readonly XcavatePropertyMarketplaceViewModel viewModel;
+
     public XcavatePropertyMarketplacePage()
     {
         NavigationPage.SetHasNavigationBar(this, false);
@@ -9,14 +11,14 @@ public partial class XcavatePropertyMarketplacePage : ContentPage
 
         InitializeComponent();
 
-        var viewModel = DependencyService.Get<XcavatePropertyMarketplaceViewModel>();
+        viewModel = DependencyService.Get<XcavatePropertyMarketplaceViewModel>();
         BindingContext = viewModel;
-
-        viewModel.InitialLoadAsync(CancellationToken.None);
     }
 
     protected override async void OnNavigatedTo(NavigatedToEventArgs args)
     {
+        base.OnNavigatedTo(args);
 
+        await viewModel.InitialLoadAsync(CancellationToken.None);
     }
 }

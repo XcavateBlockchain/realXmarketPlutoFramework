@@ -17,6 +17,7 @@ namespace PlutoFramework.Model
 
             // Models
             AssetsModel.Clear();
+            WhitelistModel.Clear();
 
             // Files
             XcavateFileModel.DeleteAll();

@@ -31,7 +31,8 @@ namespace PlutoFramework.Model
 
     public class TransactionAnalyzerModel
     {
-        public static ExtrinsicResult GetExtrinsicResult(IEnumerable<ExtrinsicEvent> events) {
+        public static ExtrinsicResult GetExtrinsicResult(IEnumerable<ExtrinsicEvent> events)
+        {
             if (events.Count() == 0)
                 return ExtrinsicResult.Unknown;
             else
@@ -281,9 +282,16 @@ namespace PlutoFramework.Model
 
                     result[address][key] = new PropertyTokenOwnershipChangeInfo
                     {
+                        Endpoint = endpoint,
+                        Region = null,
+                        ListingHasExpired = false,
+                        ClaimHasExpired = false,
                         NftBase = cache[key],
                         Operation = operation,
                         Amount = amount,
+                        TokensBought = 0,
+                        TokensOwned = 0,
+                        SpvCreated = false,
                         Favourite = false
                     };
                 }

@@ -6,5 +6,8 @@ namespace PlutoFramework.Components.Loading
     {
         [ObservableProperty]
         private bool isVisible = false;
+
+        [ObservableProperty]
+        private string message = string.Empty;
     }
 }

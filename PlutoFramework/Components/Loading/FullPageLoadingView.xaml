@@ -8,8 +8,15 @@
     <AbsoluteLayout BackgroundColor="#66000000"
                     AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
                     AbsoluteLayout.LayoutFlags="All">
-        <ActivityIndicator IsRunning="{Binding IsVisible}"
-                           AbsoluteLayout.LayoutBounds="0.5, 0.5, AutoSize, AutoSize"
-                           AbsoluteLayout.LayoutFlags="PositionProportional" />
+        <VerticalStackLayout Spacing="12"
+                             AbsoluteLayout.LayoutBounds="0.5, 0.5, AutoSize, AutoSize"
+                             AbsoluteLayout.LayoutFlags="PositionProportional">
+            <ActivityIndicator IsRunning="{Binding IsVisible}"
+                               HorizontalOptions="Center" />
+            <Label Text="{Binding Message}"
+                   TextColor="White"
+                   HorizontalTextAlignment="Center"
+                   HorizontalOptions="Center"/>
+        </VerticalStackLayout>
     </AbsoluteLayout>
 </ContentView>

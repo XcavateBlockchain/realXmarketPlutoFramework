@@ -40,12 +40,18 @@
                     </FormattedString>
                 </Label.FormattedText>
             </Label>
-            <HorizontalStackLayout Spacing="10">
-                <xcavate:UserTypeBadgeView UserRole="{Binding UserRole}" />
-
-                <xcavate:VerificationBadgeView Value="{Binding Verification}" />
-
-            </HorizontalStackLayout>
+            <FlexLayout BindableLayout.ItemsSource="{Binding Roles}"
+                        Direction="Row"
+                        Wrap="Wrap"
+                        AlignItems="Start"
+                        JustifyContent="Start">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <xcavate:XcavateRoleBadgeView Role="{Binding .}"
+                                                      Margin="0, 0, 10, 5" />
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </FlexLayout>
         </VerticalStackLayout>
 
         <Image VerticalOptions="Center"

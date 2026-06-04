@@ -97,9 +97,8 @@ namespace UniqueryPlus.Nfts
             };
         }
     }
-    public class XcavatePaseoNftModel
+    public static class XcavatePaseoNftModel
     {
-
         public static Task<RecursiveReturn<INftXcavateBase>> GetNftsNftsPalletAsync(SubstrateClientExt client, List<(U32, U32)> nftIds, string lastKey, CancellationToken token)
         {
             var keyPrefixLength = 66;
@@ -152,6 +151,19 @@ namespace UniqueryPlus.Nfts
             return await GetNftsNftsPalletByIdKeysAsync(client, idKeys, fullKeys.Last().ToString(), token).ConfigureAwait(false);
         }
 
+
+        public static async Task<RecursiveReturn<INftBase>> ToBaseAsync(this Task<RecursiveReturn<INftXcavateBase>> task)
+        {
+            Console.WriteLine("To base being called");
+
+            var recursiveReturn = await task;
+
+            return new RecursiveReturn<INftBase>
+            {
+                Items = recursiveReturn.Items.Cast<INftBase>(),
+                LastKey = recursiveReturn.LastKey,
+            };
+        }
         internal static async Task<RecursiveReturn<INftXcavateBase>> GetNftsNftsPalletOwnedByAsync(SubstrateClientExt client, string owner, uint limit, byte[]? lastKey, CancellationToken token)
         {
             var accountId32 = new AccountId32();
@@ -397,18 +409,37 @@ namespace UniqueryPlus.Nfts
                 var propertyDetails = new XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.PropertyListingDetails();
                 propertyDetails.Create(change[1]);
 
-                details.Add(new XcavateOngoingObjectListingDetails
+                try
                 {
-                    RealEstateDeveloper = Utils.GetAddressFrom(propertyDetails.RealEstateDeveloper.Encode()),
-                    TaxPaidByDeveloper = propertyDetails.TaxPaidByDeveloper,
-                    ListingExpiry = propertyDetails.ListingExpiry.Value,
-                    ClaimExpiry = propertyDetails.ClaimExpiry.Value,
-                    ListedTokens = propertyDetails.ListedTokenAmount,
-                    UnclaimedTokens = propertyDetails.UnclaimedTokenAmount,
-                    AssetId = propertyDetails.AssetId,
-                    CollectionId = propertyDetails.CollectionId,
-                    ItemId = propertyDetails.ItemId,
-                });
+                    string realEstateDeveloper = Utils.GetAddressFrom(propertyDetails.RealEstateDeveloper.Encode());
+                    bool taxPaidByDeveloper = propertyDetails.TaxPaidByDeveloper;
+                    uint listingExpiry = propertyDetails.ListingExpiry;
+                    uint? claimExpiry = propertyDetails.ClaimExpiry.OptionFlag && propertyDetails.ClaimExpiry.Value != null
+                        ? propertyDetails.ClaimExpiry.Value.Value
+                        : null;
+                    uint listedTokens = propertyDetails.ListedTokenAmount;
+                    uint unclaimedTokens = propertyDetails.UnclaimedTokenAmount;
+
+                    details.Add(new XcavateOngoingObjectListingDetails
+                    {
+                        RealEstateDeveloper = realEstateDeveloper,
+                        TaxPaidByDeveloper = taxPaidByDeveloper,
+                        ListingExpiry = listingExpiry,
+                        ClaimExpiry = claimExpiry,
+                        ListedTokens = listedTokens,
+                        UnclaimedTokens = unclaimedTokens,
+                        AssetId = propertyDetails.AssetId,
+                        CollectionId = propertyDetails.CollectionId,
+                        ItemId = propertyDetails.ItemId,
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception: ");
+                    Console.WriteLine(ex);
+
+                    details.Add(null);
+                }
             }
 
             return details;

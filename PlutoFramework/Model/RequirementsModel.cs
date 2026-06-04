@@ -2,14 +2,13 @@
 using Plugin.Fingerprint.Abstractions;
 using PlutoFramework.Components.Account;
 using PlutoFramework.Components.Kilt;
+using PlutoFramework.Components.Loading;
 using PlutoFramework.Components.Password;
 using PlutoFramework.Components.Xcavate;
 using PlutoFramework.Constants;
-using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Sumsub;
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Keys;
-using PlutoFrameworkCore.Xcavate;
 using XcavatePaseo.NetApi.Generated;
 
 namespace PlutoFramework.Model
@@ -29,17 +28,27 @@ namespace PlutoFramework.Model
 
         public static async Task<bool> CheckRequirementsAsync(CancellationToken token)
         {
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.Message = "Getting Account";
+
             if (!CheckAccountExists())
             {
                 return false;
             }
+
+            fullPageLoadingViewModel.Message = "Checking DID";
 
             if (!CheckDidExists())
             {
                 return false;
             }
 
+
+
             #region Sumsub
+            fullPageLoadingViewModel.Message = "Verifying on Sumsub";
+
             var address = KeysModel.GetSubstrateKey();
 
             Console.WriteLine("REAL WALLET Address: " + address);
@@ -55,7 +64,6 @@ namespace PlutoFramework.Model
 
             if (applicantData is null)
             {
-
                 Console.WriteLine("applicantData was null");
                 var userProfileNotCreatedPopupViewModel = DependencyService.Get<UserProfileNotCreatedPopupViewModel>();
 
@@ -67,40 +75,31 @@ namespace PlutoFramework.Model
             Console.WriteLine("applicantData was good");
             #endregion
 
-            #region Whitelist
+            return true;
+        }
+
+        public static async Task<bool> CheckXcavateRoleAsync(XcavateRole role, CancellationToken token)
+        {
+            var address = KeysModel.GetSubstrateKey();
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.Message = "Connecting to Substrate";
+
             var xcavateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, token);
 
-            var user = await XcavateUserDatabase.GetUserInformationAsync();
+            fullPageLoadingViewModel.Message = "Querying roles";
 
-            if (user is null)
+            var roles = await WhitelistModel.GetRolesAsync((SubstrateClientExt)xcavateClient.SubstrateClient, address, token);
+
+            if (!roles.Contains(role))
             {
-                Console.WriteLine("user was null");
+                var notWhitelistedPopupViewModel = DependencyService.Get<NotWhitelistedPopupViewModel>();
 
-                var userProfileNotCreatedPopupViewModel = DependencyService.Get<UserProfileNotCreatedPopupViewModel>();
-
-                userProfileNotCreatedPopupViewModel.IsVisible = true;
+                notWhitelistedPopupViewModel.IsVisible = true;
 
                 return false;
             }
-
-            var verification = await WhitelistModel.IsWhitelistedAsync((SubstrateClientExt)xcavateClient.SubstrateClient, user.Role.ToWhitelistRole(), address, CancellationToken.None);
-
-            switch (verification)
-            {
-                case VerificationEnum.Verified:
-
-                    break;
-
-                default:
-
-                    var notWhitelistedPopupViewModel = DependencyService.Get<NotWhitelistedPopupViewModel>();
-
-                    notWhitelistedPopupViewModel.IsVisible = true;
-
-                    return false;
-            }
-
-            #endregion
 
             return true;
         }

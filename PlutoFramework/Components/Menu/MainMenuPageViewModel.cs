@@ -1,14 +1,14 @@
 ﻿
-using XcavatePaseo.NetApi.Generated;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Components.Keys;
+using PlutoFramework.Components.Xcavate;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Xcavate;
-using PlutoFramework.Components.Xcavate;
-using PlutoFramework.Components.Keys;
+using XcavatePaseo.NetApi.Generated;
 
 namespace PlutoFramework.Components.Menu
 {
@@ -16,21 +16,22 @@ namespace PlutoFramework.Components.Menu
     {
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(FullName))]
-        [NotifyPropertyChangedFor(nameof(UserRole))]
         private XcavateUser? user;
 
         public string FullName => User is not null ? $"{User.FirstName} {User.LastName}" : "None";
 
-        public UserRoleEnum UserRole => User is not null ? User.Role : UserRoleEnum.None;
+        private IReadOnlyList<XcavateRole> roles = [];
+        public IReadOnlyList<XcavateRole> Roles
+        {
+            get => roles;
+            set => SetProperty(ref roles, value);
+        }
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsLoggedIn))]
         private string? address = null;
         public bool IsLoggedIn => Address is not null;
 
-        [ObservableProperty]
-        private VerificationEnum verification = VerificationEnum.Loading;
-        
         public MainMenuPageViewModel()
         {
             if (Preferences.ContainsKey(PreferencesModel.PUBLIC_KEY))
@@ -45,21 +46,15 @@ namespace PlutoFramework.Components.Menu
         {
             User = await XcavateUserDatabase.GetUserInformationAsync();
 
-            if (!Preferences.ContainsKey(PreferencesModel.PUBLIC_KEY)
-                || User is null)
+            if (!Preferences.ContainsKey(PreferencesModel.PUBLIC_KEY))
             {
-                Verification = VerificationEnum.None;
-
                 return;
             }
 
             var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, CancellationToken.None);
-
             var address = KeysModel.GetSubstrateKey();
 
-            var verification = await WhitelistModel.IsWhitelistedAsync((SubstrateClientExt)client.SubstrateClient, User.Role.ToWhitelistRole(), address, CancellationToken.None);
-
-            Verification = verification;
+            Roles = [.. await WhitelistModel.GetRolesCachedAsync((SubstrateClientExt)client.SubstrateClient, address, CancellationToken.None)];
         }
 
         [RelayCommand]

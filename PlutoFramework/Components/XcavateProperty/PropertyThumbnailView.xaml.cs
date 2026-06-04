@@ -1,4 +1,3 @@
-using PlutoFramework.Components.Loading;
 using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.SQLite;
 using PlutoFrameworkCore.Xcavate;
@@ -12,13 +11,15 @@ public partial class PropertyThumbnailView : ContentView
     public static readonly BindableProperty XcavateNftWrapperProperty = BindableProperty.Create(
         nameof(XcavateNftWrapper), typeof(XcavateNftWrapper), typeof(PropertyThumbnailView),
         defaultBindingMode: BindingMode.OneWay,
-        propertyChanging: (bindable, oldValue, newValue) =>
+        propertyChanged: (bindable, oldValue, newValue) =>
         {
+            Console.WriteLine("Beginning to load property info");
             var control = (PropertyThumbnailView)bindable;
 
-            var nftWrapper = (XcavateNftWrapper)newValue;
-
-            var nftBase = (INftXcavateBase)nftWrapper.NftBase;
+            if (newValue is not XcavateNftWrapper nftWrapper || nftWrapper.NftBase is not INftXcavateBase nftBase)
+            {
+                return;
+            }
 
             if (nftBase.XcavateMetadata is null)
             {
@@ -67,7 +68,7 @@ public partial class PropertyThumbnailView : ContentView
             {
                 control.tokensTitleLabel.Text = "Tokens owned";
 
-                var tokensOwned = (uint)newValue;
+                var tokensOwned = nftWrapper.TokensOwned;
 
                 if (nftBase.XcavateMetadata is not null)
                 {
@@ -82,7 +83,7 @@ public partial class PropertyThumbnailView : ContentView
             else if (nftWrapper.TokensBought > 0)
             {
                 control.tokensTitleLabel.Text = "Tokens bought";
-                var tokensBought = (uint)newValue;
+                var tokensBought = nftWrapper.TokensBought;
                 if (nftBase.XcavateMetadata is not null)
                 {
                     control.tokensLabel.Text = $"{tokensBought} / {nftBase.XcavateMetadata.Financials.NumberOfTokens}";
@@ -103,6 +104,8 @@ public partial class PropertyThumbnailView : ContentView
                     control.tokensLabel.Text = "-";
                 }
             }
+
+            Console.WriteLine("Property info loaded");
         });
 
     public PropertyThumbnailView()
@@ -124,23 +127,15 @@ public partial class PropertyThumbnailView : ContentView
         UpdateFavouritePropertiesModel.UpdateFavourite((INftXcavateBase)XcavateNftWrapper.NftBase, XcavateNftWrapper.Favourite);
     }
 
-    async void OnMoreClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)
+    private async void OnMoreClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)
     {
         try
         {
-            var loadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
-
-            loadingViewModel.IsVisible = true;
-
             await XcavatePropertyModel.NavigateToPropertyDetailPageAsync(XcavateNftWrapper, CancellationToken.None);
-
-            loadingViewModel.IsVisible = false;
         }
         catch (Exception ex)
         {
             Console.WriteLine("Error navigating to property detail page: " + ex);
-
-            throw;
         }
     }
 }

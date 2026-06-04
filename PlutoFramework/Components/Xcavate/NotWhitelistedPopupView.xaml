@@ -20,7 +20,7 @@
                                      Padding="10, 10, 10, 10"
                          Spacing="20">
 
-                    <Label Text="You are not verified yet. Please wait a few minutes before Your identity is verified." />
+                    <Label Text="You do not have permission for this action yet. If you think you should have the permission, please wait a few minutes or try to contact the support." />
 
                 </VerticalStackLayout>
                 <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
