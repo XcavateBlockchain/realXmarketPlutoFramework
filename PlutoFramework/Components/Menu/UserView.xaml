@@ -29,6 +29,7 @@
                     </FormattedString>
                 </Label.FormattedText>
             </Label>
+            
             <Label HorizontalOptions="Start"
                     HorizontalTextAlignment="Start"
                     TextColor="#804E4E4E"
@@ -40,6 +41,7 @@
                     </FormattedString>
                 </Label.FormattedText>
             </Label>
+            
             <FlexLayout BindableLayout.ItemsSource="{Binding Roles}"
                         Direction="Row"
                         Wrap="Wrap"
