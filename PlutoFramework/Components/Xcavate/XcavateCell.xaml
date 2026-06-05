@@ -30,7 +30,8 @@
                            TextColor="{StaticResource Primary}"
                            HorizontalOptions="Start"
                            Margin="10, 0, 0, 0"
-                           FontSize="20">
+                           FontSize="20"
+                           FontFamily="XcavateFont">
                         <Label.FormattedText>
                             <FormattedString>
                                 <Span x:Name="valueText"
