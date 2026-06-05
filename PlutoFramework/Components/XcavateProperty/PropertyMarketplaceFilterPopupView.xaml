@@ -10,10 +10,14 @@
          IsVisible="{Binding IsVisible}"
          AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
          AbsoluteLayout.LayoutFlags="All">
-    <card:BottomPopupCard Title="Filter"
-                        IsShown="{Binding IsVisible}">
-        <card:BottomPopupCard.View>
-            <AbsoluteLayout>
+    <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                    AbsoluteLayout.LayoutFlags="All">
+        <card:BottomPopupCard Title="Filter"
+                            IsShown="{Binding IsVisible}"
+                            AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                            AbsoluteLayout.LayoutFlags="All">
+            <card:BottomPopupCard.View>
+                <AbsoluteLayout>
 
                 <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
                                      AbsoluteLayout.LayoutFlags="WidthProportional"
@@ -35,14 +39,60 @@
 
                         <VerticalStackLayout Grid.Column="0" Spacing="8">
                             <Label Text="Town City" />
-                            <Picker ItemsSource="{Binding TownCities}"
-                                    SelectedItem="{Binding SelectedTownCity}" />
+                            <Border StrokeThickness="0"
+                                    Padding="12,10"
+                                    BackgroundColor="{AppThemeBinding Light=#fdfdfd, Dark={StaticResource Black}}">
+                                <Border.Shadow>
+                                    <Shadow Brush="Black"
+                                            Offset="0,2"
+                                            Radius="3"
+                                            Opacity="0.1" />
+                                </Border.Shadow>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="14" />
+                                </Border.StrokeShape>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding SelectedTownCity}"
+                                           VerticalTextAlignment="Center" />
+                                    <Label Grid.Column="1"
+                                           Text=">"
+                                           Rotation="90"
+                                           VerticalTextAlignment="Center"
+                                           TextColor="#888888" />
+                                </Grid>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenTownCitySelectorCommand}" />
+                                </Border.GestureRecognizers>
+                            </Border>
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Grid.Column="1" Spacing="8">
                             <Label Text="Property Type" />
-                            <Picker ItemsSource="{Binding PropertyTypes}"
-                                    SelectedItem="{Binding SelectedPropertyType}" />
+                            <Border StrokeThickness="0"
+                                    Padding="12,10"
+                                    BackgroundColor="{AppThemeBinding Light=#fdfdfd, Dark={StaticResource Black}}">
+                                <Border.Shadow>
+                                    <Shadow Brush="Black"
+                                            Offset="0,2"
+                                            Radius="3"
+                                            Opacity="0.1" />
+                                </Border.Shadow>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="14" />
+                                </Border.StrokeShape>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding SelectedPropertyType}"
+                                           VerticalTextAlignment="Center" />
+                                    <Label Grid.Column="1"
+                                           Text=">"
+                                           Rotation="90"
+                                           VerticalTextAlignment="Center"
+                                           TextColor="#888888" />
+                                </Grid>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenPropertyTypeSelectorCommand}" />
+                                </Border.GestureRecognizers>
+                            </Border>
                         </VerticalStackLayout>
                     </Grid>
 
@@ -69,8 +119,11 @@
                     </Grid>
                 </AbsoluteLayout>
 
-            </AbsoluteLayout>
+                </AbsoluteLayout>
 
-        </card:BottomPopupCard.View>
-    </card:BottomPopupCard>
+            </card:BottomPopupCard.View>
+        </card:BottomPopupCard>
+
+        <xcavateproperty:PropertyMarketplaceSelectionPopupView />
+    </AbsoluteLayout>
 </ContentView>

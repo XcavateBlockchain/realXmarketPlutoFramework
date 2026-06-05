@@ -4,9 +4,7 @@ using PlutoFramework.Components.Nft;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
-using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Xcavate;
-using System;
 using System.Collections.ObjectModel;
 using UniqueryPlus.Nfts;
 using XcavatePaseo.NetApi.Generated;
@@ -16,8 +14,13 @@ namespace PlutoFramework.Components.XcavateProperty
 {
     public partial class XcavateIndexedPropertyMarketplaceViewModel : BaseListViewModel<NftKey, XcavateNftWrapper>
     {
+        public event Action? AutoSearchCompleted;
+
         [ObservableProperty]
         private bool isRefreshing = false;
+
+        [ObservableProperty]
+        private string searchText = string.Empty;
 
         private readonly PropertyMarketplaceFilterPopupViewModel filterPopupViewModel;
         private SubstrateClientExt? substrateClient;
@@ -27,6 +30,13 @@ namespace PlutoFramework.Components.XcavateProperty
         private string includesTownCity = string.Empty;
         private string includesPropertyType = string.Empty;
         private string includesPropertyName = string.Empty;
+        private string lastLoadedSearchText = string.Empty;
+        private string lastLoadedTownCity = string.Empty;
+        private string lastLoadedPropertyType = string.Empty;
+        private bool hasLoadedQuery;
+        private readonly object searchDebounceLock = new();
+        private readonly SemaphoreSlim searchExecutionSemaphore = new(1, 1);
+        private CancellationTokenSource? searchDebounceCts;
 
         public override string Title => "Property Marketplace";
 
@@ -34,6 +44,7 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             filterPopupViewModel = DependencyService.Get<PropertyMarketplaceFilterPopupViewModel>();
             filterPopupViewModel.ApplyRequested = ApplyFiltersAsync;
+            searchText = filterPopupViewModel.SearchText;
         }
 
         public override async Task LoadMoreAsync(CancellationToken token)
@@ -103,6 +114,11 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public override async Task InitialLoadAsync(CancellationToken token)
         {
+            if (Items.Count > 0 && IsSameLoadedQuery(includesPropertyName, includesTownCity, includesPropertyType))
+            {
+                return;
+            }
+
             Loading = true;
 
             if (substrateClient is null)
@@ -121,13 +137,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [RelayCommand]
         public async Task RefreshAsync()
         {
-            IsRefreshing = true;
-
-            Clear();
-
-            await InitialLoadAsync(CancellationToken.None);
-
-            IsRefreshing = false;
+            await RefreshInternalAsync(showRefreshIndicator: true).ConfigureAwait(false);
         }
 
         [RelayCommand]
@@ -136,15 +146,129 @@ namespace PlutoFramework.Components.XcavateProperty
             filterPopupViewModel.IsVisible = true;
         }
 
+        [RelayCommand]
+        private async Task SearchAsync()
+        {
+            CancelPendingDebouncedSearch();
+            await ExecuteSearchAsync(SearchText, CancellationToken.None, force: false).ConfigureAwait(false);
+        }
+
         private async Task ApplyFiltersAsync()
         {
             includesTownCity = NormalizeFilterValue(filterPopupViewModel.SelectedTownCity);
             includesPropertyType = NormalizeFilterValue(filterPopupViewModel.SelectedPropertyType);
-            includesPropertyName = filterPopupViewModel.SearchText?.Trim() ?? string.Empty;
+            SearchText = filterPopupViewModel.SearchText?.Trim() ?? string.Empty;
+            includesPropertyName = SearchText;
 
-            await RefreshAsync().ConfigureAwait(false);
+            if (!IsSameLoadedQuery(includesPropertyName, includesTownCity, includesPropertyType))
+            {
+                await RefreshAsync().ConfigureAwait(false);
+            }
 
             filterPopupViewModel.IsVisible = false;
+        }
+
+        partial void OnSearchTextChanged(string value)
+        {
+            filterPopupViewModel.SearchText = value ?? string.Empty;
+            _ = DebouncedSearchAsync(value ?? string.Empty);
+        }
+
+        private async Task DebouncedSearchAsync(string currentSearchText)
+        {
+            var token = CreateDebounceToken();
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
+                await ExecuteSearchAsync(currentSearchText, token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when the user keeps typing.
+            }
+        }
+
+        private async Task ExecuteSearchAsync(string currentSearchText, CancellationToken token, bool force = false)
+        {
+            var normalizedSearchText = currentSearchText?.Trim() ?? string.Empty;
+
+            if (IsSameLoadedQuery(normalizedSearchText, includesTownCity, includesPropertyType))
+            {
+                return;
+            }
+
+            await searchExecutionSemaphore.WaitAsync(token).ConfigureAwait(false);
+
+            try
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                includesPropertyName = normalizedSearchText;
+                filterPopupViewModel.SearchText = normalizedSearchText;
+
+                await RefreshInternalAsync(showRefreshIndicator: false).ConfigureAwait(false);
+
+                if (!force)
+                {
+                    AutoSearchCompleted?.Invoke();
+                }
+            }
+            finally
+            {
+                searchExecutionSemaphore.Release();
+            }
+        }
+
+        private async Task RefreshInternalAsync(bool showRefreshIndicator)
+        {
+            if (showRefreshIndicator)
+            {
+                IsRefreshing = true;
+            }
+
+            try
+            {
+                Clear();
+                await InitialLoadAsync(CancellationToken.None).ConfigureAwait(false);
+                RememberLoadedQuery();
+            }
+            finally
+            {
+                if (showRefreshIndicator)
+                {
+                    IsRefreshing = false;
+                }
+            }
+        }
+
+        private CancellationToken CreateDebounceToken()
+        {
+            CancellationTokenSource newDebounceCts;
+
+            lock (searchDebounceLock)
+            {
+                searchDebounceCts?.Cancel();
+                searchDebounceCts?.Dispose();
+
+                newDebounceCts = new CancellationTokenSource();
+                searchDebounceCts = newDebounceCts;
+            }
+
+            return newDebounceCts.Token;
+        }
+
+        private void CancelPendingDebouncedSearch()
+        {
+            lock (searchDebounceLock)
+            {
+                searchDebounceCts?.Cancel();
+                searchDebounceCts?.Dispose();
+                searchDebounceCts = null;
+            }
         }
 
         private static string NormalizeFilterValue(string value)
@@ -152,10 +276,26 @@ namespace PlutoFramework.Components.XcavateProperty
             return string.Equals(value, "All", StringComparison.OrdinalIgnoreCase) ? string.Empty : value;
         }
 
+        private bool IsSameLoadedQuery(string searchText, string townCity, string propertyType)
+        {
+            return hasLoadedQuery
+                && string.Equals(lastLoadedSearchText, searchText ?? string.Empty, StringComparison.Ordinal)
+                && string.Equals(lastLoadedTownCity, townCity ?? string.Empty, StringComparison.Ordinal)
+                && string.Equals(lastLoadedPropertyType, propertyType ?? string.Empty, StringComparison.Ordinal);
+        }
+
+        private void RememberLoadedQuery()
+        {
+            lastLoadedSearchText = includesPropertyName;
+            lastLoadedTownCity = includesTownCity;
+            lastLoadedPropertyType = includesPropertyType;
+            hasLoadedQuery = true;
+        }
+
         private void Clear()
         {
-            ItemsDict = new Dictionary<NftKey, XcavateNftWrapper>();
-            Items = new ObservableCollection<XcavateNftWrapper>();
+            ItemsDict.Clear();
+            Items.Clear();
             offset = 0;
             hasMore = true;
         }

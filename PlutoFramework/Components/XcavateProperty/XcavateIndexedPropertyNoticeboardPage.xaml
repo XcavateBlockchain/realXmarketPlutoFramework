@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.XcavateProperty.XcavateIndexedPropertyNoticeboardPage"
+             xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
+             xmlns:extrinsic="clr-namespace:PlutoFramework.Components.Extrinsic"
+             xmlns:transfer="clr-namespace:PlutoFramework.Components.TransferView"
+             xmlns:txanalyzer="clr-namespace:PlutoFramework.Components.TransactionAnalyzer"
+             xmlns:transactionrequest="clr-namespace:PlutoFramework.Components.TransactionRequest"
+             xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             Shell.PresentationMode="ModalNotAnimated"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}">
+    <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All">
+
+        <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
+              RowDefinitions="Auto,*"
+              Padding="20,20,20,120">
+            <Border Grid.Row="0"
+                    Stroke="#C9CDD8"
+                    StrokeThickness="1"
+                    Padding="4"
+                    HorizontalOptions="Center"
+                    StrokeShape="RoundRectangle 26">
+                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4">
+                    <Border Grid.Column="0"
+                            Padding="16,10"
+                            BackgroundColor="Transparent"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 22">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnMarketplaceTapped" />
+                        </Border.GestureRecognizers>
+                        <Label Text="Marketplace"
+                               FontSize="14"
+                               TextColor="#555555"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center" />
+                    </Border>
+                    <Border Grid.Column="1"
+                            Padding="16,10"
+                            BackgroundColor="#3C4A74"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 22">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNoticeboardTapped" />
+                        </Border.GestureRecognizers>
+                        <Label Text="Notice Board"
+                               FontSize="14"
+                               TextColor="White"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Label Grid.Row="1"
+                   Text="Not implemented yet."
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   FontSize="20"
+                   TextColor="{AppThemeBinding Light=#1F2430, Dark=White}" />
+        </Grid>
+
+        <extrinsic:ExtrinsicStatusStackLayout />
+
+        <xcavate:XcavateNavigationBarView />
+
+        <transfer:TransferView />
+
+        <txanalyzer:TransactionAnalyzerConfirmationView />
+
+        <transactionrequest:MessageSignRequestView />
+
+        <assetselect:AssetSelectView />
+
+        <card:BottomPillBackgroundView />
+    </AbsoluteLayout>
+</ContentPage>

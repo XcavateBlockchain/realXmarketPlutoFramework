@@ -9,6 +9,8 @@ namespace PlutoFramework.Components.XcavateProperty
 {
     public partial class PropertyMarketplaceFilterPopupViewModel : ObservableObject, IPopup, ISetToDefault
     {
+        private readonly PropertyMarketplaceSelectionPopupViewModel selectionPopupViewModel;
+
         [ObservableProperty]
         private bool isVisible = false;
 
@@ -29,6 +31,11 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public ButtonStateEnum ContinueButtonState => ButtonStateEnum.Enabled;
 
+        public PropertyMarketplaceFilterPopupViewModel()
+        {
+            selectionPopupViewModel = DependencyService.Get<PropertyMarketplaceSelectionPopupViewModel>();
+        }
+
         public void SetToDefault()
         {
             IsVisible = false;
@@ -47,6 +54,26 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 await ApplyRequested().ConfigureAwait(false);
             }
+        }
+
+        [RelayCommand]
+        private void OpenTownCitySelector()
+        {
+            selectionPopupViewModel.Open(
+                title: "Town City",
+                options: TownCities,
+                selectedOption: SelectedTownCity,
+                onOptionSelectedAction: option => SelectedTownCity = option);
+        }
+
+        [RelayCommand]
+        private void OpenPropertyTypeSelector()
+        {
+            selectionPopupViewModel.Open(
+                title: "Property Type",
+                options: PropertyTypes,
+                selectedOption: SelectedPropertyType,
+                onOptionSelectedAction: option => SelectedPropertyType = option);
         }
     }
 }

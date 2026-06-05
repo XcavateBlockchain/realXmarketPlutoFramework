@@ -219,6 +219,8 @@ namespace PlutoFramework
             DependencyService.Register<DAppWebViewConnectionRequestPopupViewModel>();
 
             DependencyService.Register<PropertyMarketplaceFilterPopupViewModel>();
+
+            DependencyService.Register<PropertyMarketplaceSelectionPopupViewModel>();
         }
 
         /// <summary>

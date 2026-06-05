@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             x:Class="PlutoFramework.Components.XcavateProperty.PropertyMarketplaceSelectionPopupView"
+             x:Name="SelectionPopupView"
+             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+             AbsoluteLayout.LayoutFlags="All"
+             IsVisible="{Binding IsVisible}">
+    <card:BottomPopupCard Title="{Binding Title}"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
+            <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                        AbsoluteLayout.LayoutFlags="All"
+                        Orientation="Vertical">
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Options}"
+                                     Padding="10,10,10,20"
+                                     Spacing="10">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border StrokeThickness="0"
+                                    Padding="16,14"
+                                    BackgroundColor="{AppThemeBinding Light=#fdfdfd, Dark={StaticResource Black}}">
+                                <Border.Shadow>
+                                    <Shadow Brush="Black"
+                                            Offset="0,2"
+                                            Radius="3"
+                                            Opacity="0.1" />
+                                </Border.Shadow>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="20" />
+                                </Border.StrokeShape>
+
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding Text}"
+                                           VerticalTextAlignment="Center"
+                                           FontAttributes="Bold" />
+                                    <Label Grid.Column="1"
+                                           Text="Selected"
+                                           VerticalTextAlignment="Center"
+                                           TextColor="{AppThemeBinding Light=#3C4A74, Dark=White}"
+                                           IsVisible="{Binding IsSelected}" />
+                                </Grid>
+
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border"
+                                                 Binding="{Binding IsSelected}"
+                                                 Value="True">
+                                        <Setter Property="BackgroundColor" Value="#E7ECFF" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={x:Reference SelectionPopupView}, Path=BindingContext.SelectOptionCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </ScrollView>
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+</ContentView>
