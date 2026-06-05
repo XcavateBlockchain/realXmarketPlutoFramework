@@ -2479,6 +2479,9 @@
     <MauiXaml Update="Components\XcavateProperty\PropertyLittleThumbnailView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Components\XcavateProperty\PropertyMarketplaceFilterPopupView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Components\XcavateProperty\PropertyThumbnailView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>

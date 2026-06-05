@@ -32,8 +32,8 @@ using PlutoFramework.Components.XcavateProperty;
 using PlutoFramework.Components.Xcm;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
-using PlutoFrameworkCore.PushNotificationServices.Core.Utils;
 using PlutoFrameworkCore;
+using PlutoFrameworkCore.PushNotificationServices.Core.Utils;
 using Xe.AcrylicView;
 using ZXing.Net.Maui.Controls;
 
@@ -215,6 +215,8 @@ namespace PlutoFramework
             DependencyService.Register<WebSignRawPopupViewModel>();
 
             DependencyService.Register<DAppWebViewConnectionRequestPopupViewModel>();
+
+            DependencyService.Register<PropertyMarketplaceFilterPopupViewModel>();
         }
 
         /// <summary>
