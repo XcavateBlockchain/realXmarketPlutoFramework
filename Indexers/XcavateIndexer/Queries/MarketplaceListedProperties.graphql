@@ -1,0 +1,91 @@
+query MarketplaceListedProperties(
+  $first: Int = 10
+  $offset: Int = 0
+  $includesTownCity: String = ""
+  $includesPropertyType: String = ""
+  $includesPropertyName: String = ""
+) {
+  marketplaceOngoingObjectListings(
+    first: $first
+    offset: $offset
+    filter: {
+      realEstateNft: {townCity: {includesInsensitive: $includesTownCity}}
+      and: {
+        realEstateNft: {
+          propertyType: {includesInsensitive: $includesPropertyType}
+        }
+        and: {
+          realEstateNft: {
+            propertyName: {includesInsensitive: $includesPropertyName}
+          }
+        }
+      }
+    }
+  ) {
+    nodes {
+      assetId
+      claimExpiry
+      collectedFees
+      collectedFunds
+      collectedTax
+      collectionId
+      id
+      investorFunds
+      itemId
+      listedTokenAmount
+      listingExpiry
+      listingId
+      realEstateDeveloper
+      realEstateNftId
+      realWorldAssetId
+      relistCount
+      tax
+      taxPaidByDeveloper
+      tokenAmount
+      tokenPrice
+      unclaimedTokenAmount
+      updatedBlock
+      realEstateNft {
+        accountAddress
+        annualServiceCharge
+        area
+        buildingControlCode
+        collection
+        companyLogo
+        companyName
+        constructionDate
+        createdAt
+        developerAddress
+        estimatedRentalIncome
+        files
+        flatOrUnit
+        id
+        isAnnualServiceChargePaid
+        isStampDutyPaid
+        item
+        legalRepresentative
+        localAuthority
+        map
+        numberOfBathrooms
+        numberOfBedrooms
+        numberOfTokens
+        offStreetParking
+        outdoorSpace
+        planningCode
+        postCode
+        propertyDescription
+        propertyId
+        pricePerToken
+        propertyName
+        propertyPrice
+        propertyType
+        quality
+        stampDutyTax
+        status
+        street
+        townCity
+        updatedAt
+      }
+    }
+  }
+}
