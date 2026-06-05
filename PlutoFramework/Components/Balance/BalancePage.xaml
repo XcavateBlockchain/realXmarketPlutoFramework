@@ -16,25 +16,6 @@
             AbsoluteLayout.LayoutFlags="All">
         <VerticalStackLayout Spacing="15">
 
-            <Label HorizontalOptions="Start"
-                   HorizontalTextAlignment="Start"
-                   FontSize="25"
-                   Margin="20, 20, 20, 0"
-                   >
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="Hey, "
-                              FontAttributes="Bold" />
-
-                        <Span Text="{Binding FirstName}"
-                              FontAttributes="Bold" />
-
-                        <Span Text=" 👋"
-                              FontAttributes="Bold" />
-                    </FormattedString>
-                </Label.FormattedText>
-            </Label>
-
             <balance:BalanceOverviewView Margin="20, 0, 20, 0" />
 
             <Label HorizontalOptions="Start"
