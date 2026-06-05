@@ -1,4 +1,6 @@
-﻿using PlutoFramework.Model;
+﻿using Microsoft.AspNetCore.WebUtilities;
+using NSec.Cryptography;
+using PlutoFramework.Model;
 using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Extrinsics;
@@ -292,8 +294,8 @@ namespace PlutoFrameworkCore.AssetDidComm
                     {
                         Kty = "OKP",
                         Crv = "X25519",
-                        X = Convert.ToBase64String(keyPair.PublicKey),
-                        D = Convert.ToBase64String(keyPair.PrivateKey),
+                        X = WebEncoders.Base64UrlEncode(keyPair.PublicKey),
+                        D = WebEncoders.Base64UrlEncode(keyPair.PrivateKey),
                         Use = "enc"
                     }
                 ]
@@ -311,7 +313,7 @@ namespace PlutoFrameworkCore.AssetDidComm
 
         public static Task<Method> WriteMessageAsync(U128 namespaceId, U128 bucketId, string message, string tag, CancellationToken token = default)
         {
-            var base64message = Convert.ToBase64String(Encoding.UTF8.GetBytes(message));
+            var base64message = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(message));
 
             var upload = new StorageUploadRequest
             {
@@ -409,7 +411,7 @@ namespace PlutoFrameworkCore.AssetDidComm
 
             Console.WriteLine(response);
 
-            // TODO
+            // TODO: use GetMessageEncryptionPublicKeyFromUrlAsync after obtaining msg with keyshare tag
             return [];
         }
 
@@ -472,6 +474,40 @@ namespace PlutoFrameworkCore.AssetDidComm
                 Items = buckets,
                 LastKey = Utils.HexToByteArray(fullKeys.Last().ToString())
             };
+        }
+
+        /// <summary>
+        /// Get decoded contents of a message from a URI, given the recipient's private key. Used by recipients of messages to obtain the plaintext.
+        /// </summary>
+        /// <param name="pinataMsgUri">The URI of the Pinata message.</param>
+        /// <param name="privKeyBytes">The recipient's private key bytes.</param>
+        /// <param name="compact">Whether the JWE is in compact format.</param>
+        /// <returns>The plaintext message as a string. Propagates exceptions on fail</returns>
+        public static async Task<string?> GetMessageFromUriAsync(string pinataMsgUri, byte[] privKeyBytes, bool compact = false)
+        {
+            var client = new HttpClient();
+            var res = await client.GetAsync(pinataMsgUri);
+            res.EnsureSuccessStatusCode();
+
+            var jweObj = await res.Content.ReadAsStringAsync();
+            if (jweObj == null) return null;
+
+            using var privKey = Key.Import(
+                KeyAgreementAlgorithm.X25519,
+                privKeyBytes,
+                KeyBlobFormat.RawPrivateKey,
+                new KeyCreationParameters
+                {
+                    ExportPolicy = KeyExportPolicies.AllowPlaintextExport
+                }
+            );
+
+            if (compact)
+            {
+                return JweModel.DecryptCompact(jweObj, privKey);
+            }
+
+            return JweModel.DecryptForRecipient(jweObj, privKey);
         }
     }
 }

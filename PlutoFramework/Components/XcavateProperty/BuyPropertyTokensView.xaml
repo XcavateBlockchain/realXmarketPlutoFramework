@@ -12,7 +12,7 @@
              AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
              AbsoluteLayout.LayoutFlags="All">
 
-    <card:BottomPopupCard Title="Buy Property Tokens"
+    <card:BottomPopupCard Title="Buy Property Shares"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
             <AbsoluteLayout>
@@ -30,7 +30,7 @@
                     <xcavateproperty:PropertyLittleThumbnailView XcavateMetadata="{Binding Metadata}" />
 
                     <AbsoluteLayout Margin="10, 0, 10, -10">
-                        <Label Text="Tokens available:"
+                        <Label Text="Shares available:"
                                AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
                         <Label Text="{Binding MaxValue}"
                                AbsoluteLayout.LayoutBounds="1,0,AutoSize, AutoSize"
@@ -38,7 +38,7 @@
                     </AbsoluteLayout>
 
                     <form:FormInputView KeyboardType="Numeric"
-                                        Placeholder="Tokens"
+                                        Placeholder="Shares"
                                         Text="{Binding Tokens}"
                                         MaxValue="{Binding MaxValue}"
                                         UpdateCommand="{Binding FormChangedCommand}"

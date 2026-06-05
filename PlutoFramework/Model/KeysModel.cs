@@ -13,6 +13,8 @@ using Polkadot.NetApi.Generated.Model.sp_core.crypto;
 using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
+using System.Text.Json;
+﻿using Microsoft.AspNetCore.WebUtilities;
 
 namespace PlutoFramework.Model
 {
@@ -257,6 +259,56 @@ namespace PlutoFramework.Model
                 Console.WriteLine(ex);
 
                 var toast = Toast.Make($"Failed to import JSON key.");
+                await toast.Show();
+            }
+        }
+
+        public static async Task ImportJsonX25519KeyAsync()
+        {
+            var jsonType = new FilePickerFileType(
+                new Dictionary<DevicePlatform, IEnumerable<string>>
+                {
+                { DevicePlatform.iOS, new[] { "public.json" } }, // UTType values
+                { DevicePlatform.Android, new[] { "application/json" } }, // MIME type
+                { DevicePlatform.WinUI, new[] { ".json" } }, // file extension
+                { DevicePlatform.Tizen, new[] { "*/*" } },
+                { DevicePlatform.macOS, new[] { "public.json" } }, // UTType values
+                });
+
+            var result = await FilePicker.PickAsync(new PickOptions
+            {
+                PickerTitle = "Import X25519 key",
+                FileTypes = jsonType,
+            });
+
+            if (result is null || !result.FileName.Contains(".json"))
+                return;
+
+            using var jsonStream = await result.OpenReadAsync();
+
+            string json = StreamToString(jsonStream);
+
+            try
+            {
+                var document = JsonDocument.Parse(json);
+                var privateJwk = document.RootElement.GetProperty("privateJwk");
+                var dValue = privateJwk.GetProperty("d").GetString();
+
+                if (string.IsNullOrEmpty(dValue))
+                {
+                    throw new InvalidOperationException("Private key 'd' value not found in JSON");
+                }
+
+                var privateKeyBytes = WebEncoders.Base64UrlDecode(dValue);
+
+                await SaveEncryptionX25519KeyAsync(privateKeyBytes);
+
+                var toast = Toast.Make($"X25519 key JSON imported successfully.");
+                await toast.Show();
+            }
+            catch
+            {
+                var toast = Toast.Make($"Failed to import X25519 key JSON.");
                 await toast.Show();
             }
         }

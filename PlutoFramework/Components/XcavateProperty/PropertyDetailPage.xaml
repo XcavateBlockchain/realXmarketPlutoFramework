@@ -44,7 +44,7 @@
 
                 <xcavateproperty:LocationView LocationName="{Binding PropertyAddressLine}" />
 
-                <Label Text="Price per token"
+                <Label Text="Price per share"
                    Margin="0,10,0,-10"
                    HorizontalTextAlignment="Start" />
 
@@ -118,7 +118,7 @@
 
                     <xcavate:XcavateCell Grid.Column="0"
                                      Grid.Row="1"
-                                     Title="Tokens"
+                                     Title="Shares"
                                      InfoCommand="{Binding NavigateToFeesCommand}"
                                      Value="{Binding TokensAvailable}" />
 
