@@ -198,6 +198,8 @@ namespace PlutoFramework
 
             DependencyService.Register<XcavatePropertyMarketplaceViewModel>();
 
+            DependencyService.Register<XcavateIndexedPropertyMarketplaceViewModel>();
+
             DependencyService.Register<FullPageLoadingViewModel>();
 
             DependencyService.Register<OwnedPropertiesListViewModel>();

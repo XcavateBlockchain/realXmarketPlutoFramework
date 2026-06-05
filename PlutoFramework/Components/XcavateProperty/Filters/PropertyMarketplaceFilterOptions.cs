@@ -4,12 +4,6 @@ namespace PlutoFramework.Components.XcavateProperty.Filters;
 
 public static class PropertyMarketplaceFilterOptions
 {
-    public static readonly IReadOnlyList<string> Countries = new[]
-    {
-        "All",
-        "United Kingdom"
-    };
-
     public static readonly IReadOnlyList<string> TownCities = new[]
     {
         "All"
@@ -26,10 +20,4 @@ public static class PropertyMarketplaceFilterOptions
         "Terraced"
     };
 
-    public static readonly IReadOnlyList<string> PriceSortOptions = new[]
-    {
-        "Any",
-        "Lowest",
-        "Highest"
-    };
 }

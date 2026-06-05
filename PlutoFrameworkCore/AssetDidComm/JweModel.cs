@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+﻿extern alias bc26;
+
+using Microsoft.AspNetCore.WebUtilities;
 using NSec.Cryptography;
-using Org.BouncyCastle.Crypto.Agreement.Kdf;
-using Org.BouncyCastle.Crypto.Digests;
-using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Modes;
-using Org.BouncyCastle.Crypto.Parameters;
+using bc26::Org.BouncyCastle.Crypto.Agreement.Kdf;
+using bc26::Org.BouncyCastle.Crypto.Digests;
+using bc26::Org.BouncyCastle.Crypto.Engines;
+using bc26::Org.BouncyCastle.Crypto.Modes;
+using bc26::Org.BouncyCastle.Crypto.Parameters;
 using Substrate.NetApi.Extensions;
 using System.Security.Cryptography;
 using System.Text;
@@ -76,7 +78,7 @@ namespace PlutoFrameworkCore.AssetDidComm
 
                 // Wrap CEK with KEK using AES Key Wrap (RFC3394)
                 var wrap = new Rfc3394WrapEngine(new AesEngine());
-                wrap.Init(true, new Org.BouncyCastle.Crypto.Parameters.KeyParameter(kek));
+                wrap.Init(true, new bc26::Org.BouncyCastle.Crypto.Parameters.KeyParameter(kek));
 
                 var encryptedKey = wrap.Wrap(cek, 0, cek.Length);
 
@@ -194,12 +196,12 @@ namespace PlutoFrameworkCore.AssetDidComm
                 byte[] cekCandidate;
 
                 var wrap = new Rfc3394WrapEngine(new AesEngine());
-                wrap.Init(false, new Org.BouncyCastle.Crypto.Parameters.KeyParameter(kek));
+                wrap.Init(false, new bc26::Org.BouncyCastle.Crypto.Parameters.KeyParameter(kek));
                 try
                 {
                     cekCandidate = wrap.Unwrap(encryptedKey, 0, encryptedKey.Length);
                 }
-                catch (Org.BouncyCastle.Crypto.InvalidCipherTextException)
+                catch (bc26::Org.BouncyCastle.Crypto.InvalidCipherTextException)
                 {
                     // Try next recipient
                     continue;
@@ -267,7 +269,7 @@ namespace PlutoFrameworkCore.AssetDidComm
             kdf.GenerateBytes(kek, 0, kek.Length);
 
             var wrap = new Rfc3394WrapEngine(new AesEngine());
-            wrap.Init(false, new KeyParameter(kek));
+            wrap.Init(false, new bc26::Org.BouncyCastle.Crypto.Parameters.KeyParameter(kek));
             byte[] cek = wrap.Unwrap(encryptedKey, 0, encryptedKey.Length);
 
             byte[] input = new byte[ciphertext.Length + tag.Length];

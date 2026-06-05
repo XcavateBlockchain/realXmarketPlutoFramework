@@ -31,33 +31,20 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
                         <VerticalStackLayout Grid.Column="0" Spacing="8">
-                            <Label Text="Country" />
-                            <Picker ItemsSource="{Binding Countries}"
-                                    SelectedItem="{Binding SelectedCountry}" />
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Grid.Column="1" Spacing="8">
                             <Label Text="Town City" />
                             <Picker ItemsSource="{Binding TownCities}"
                                     SelectedItem="{Binding SelectedTownCity}" />
                         </VerticalStackLayout>
 
-                        <VerticalStackLayout Grid.Column="2" Spacing="8">
+                        <VerticalStackLayout Grid.Column="1" Spacing="8">
                             <Label Text="Property Type" />
                             <Picker ItemsSource="{Binding PropertyTypes}"
                                     SelectedItem="{Binding SelectedPropertyType}" />
                         </VerticalStackLayout>
                     </Grid>
-
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="Sort by Price" />
-                        <Picker ItemsSource="{Binding PriceSortOptions}"
-                                SelectedItem="{Binding SelectedPriceSort}" />
-                    </VerticalStackLayout>
 
                 </VerticalStackLayout>
                 <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"

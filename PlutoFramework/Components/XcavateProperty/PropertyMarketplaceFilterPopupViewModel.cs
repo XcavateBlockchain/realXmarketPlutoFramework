@@ -16,24 +16,16 @@ namespace PlutoFramework.Components.XcavateProperty
         private string searchText = string.Empty;
 
         [ObservableProperty]
-        private string selectedCountry = PropertyMarketplaceFilterOptions.Countries[0];
-
-        [ObservableProperty]
         private string selectedTownCity = PropertyMarketplaceFilterOptions.TownCities[0];
 
         [ObservableProperty]
         private string selectedPropertyType = PropertyMarketplaceFilterOptions.PropertyTypes[0];
 
-        [ObservableProperty]
-        private string selectedPriceSort = PropertyMarketplaceFilterOptions.PriceSortOptions[0];
-
-        public ObservableCollection<string> Countries { get; } = new(PropertyMarketplaceFilterOptions.Countries);
-
         public ObservableCollection<string> TownCities { get; } = new(PropertyMarketplaceFilterOptions.TownCities);
 
         public ObservableCollection<string> PropertyTypes { get; } = new(PropertyMarketplaceFilterOptions.PropertyTypes);
 
-        public ObservableCollection<string> PriceSortOptions { get; } = new(PropertyMarketplaceFilterOptions.PriceSortOptions);
+        public Func<Task>? ApplyRequested { get; set; }
 
         public ButtonStateEnum ContinueButtonState => ButtonStateEnum.Enabled;
 
@@ -41,10 +33,8 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             IsVisible = false;
             SearchText = string.Empty;
-            SelectedCountry = PropertyMarketplaceFilterOptions.Countries[0];
             SelectedTownCity = PropertyMarketplaceFilterOptions.TownCities[0];
             SelectedPropertyType = PropertyMarketplaceFilterOptions.PropertyTypes[0];
-            SelectedPriceSort = PropertyMarketplaceFilterOptions.PriceSortOptions[0];
         }
 
         [RelayCommand]
@@ -53,7 +43,10 @@ namespace PlutoFramework.Components.XcavateProperty
         [RelayCommand]
         public async Task ContinueAsync()
         {
-            // TODO
+            if (ApplyRequested != null)
+            {
+                await ApplyRequested().ConfigureAwait(false);
+            }
         }
     }
 }

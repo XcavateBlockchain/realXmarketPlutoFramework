@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.XcavateProperty.XcavateIndexedPropertyMarketplacePage"
+             xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
+             xmlns:nft="clr-namespace:PlutoFramework.Components.Nft"
+             xmlns:unique="clr-namespace:PlutoFramework.Components.Unique"
+             xmlns:koda="clr-namespace:PlutoFramework.Components.Koda"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+             xmlns:txanalyzer="clr-namespace:PlutoFramework.Components.TransactionAnalyzer"
+             xmlns:customlayouts="clr-namespace:PlutoFramework.Components.CustomLayouts"
+             xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
+             xmlns:transfer="clr-namespace:PlutoFramework.Components.TransferView"
+             xmlns:account="clr-namespace:PlutoFramework.Components.Account"
+             xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
+             HideSoftInputOnTapped="True"
+             xmlns:extrinsic="clr-namespace:PlutoFramework.Components.Extrinsic"
+             xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
+             xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
+             xmlns:transactionrequest="clr-namespace:PlutoFramework.Components.TransactionRequest"
+             Shell.PresentationMode="ModalNotAnimated"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}">
+    <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All">
+
+        <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
+            Command="{Binding RefreshCommand}"
+            IsRefreshing="{Binding IsRefreshing}">
+
+            <CollectionView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
+                    ItemSizingStrategy="MeasureAllItems"
+                    ItemsSource="{Binding Items}"
+                    RemainingItemsThreshold="0"
+                    RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+
+                <CollectionView.Header>
+                    <VerticalStackLayout Spacing="10">
+                        <HorizontalStackLayout Margin="20,10,20,0">
+                            <Label Text="Marketplace"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center" />
+                            <buttons:BasicGrayButton Text="Filter"
+                                                     Command="{Binding OpenFilterCommand}"
+                                                     HorizontalOptions="EndAndExpand" />
+                        </HorizontalStackLayout>
+                        <xcavate:RiskWarningView Margin="20,0,20,10" />
+                    </VerticalStackLayout>
+                </CollectionView.Header>
+                <CollectionView.Footer>
+                    <StackLayout HeightRequest="200" >
+                        <customlayouts:LoadingItemView HeightRequest="80"
+                                               Margin="20, 0, 20, 0"
+                                                IsVisible="{Binding Loading}"/>
+                        <customlayouts:TransparentItemView Text="No Properties"
+                                                       HeightRequest="80"
+                                                   Margin="20, 0, 20, 0"
+                                                   IsVisible="{Binding NoItems}" />
+                    </StackLayout>
+                </CollectionView.Footer>
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical"
+                                   ItemSpacing="0"
+                                   />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <xcavateproperty:PropertyThumbnailView XcavateNftWrapper="{Binding .}"
+                                                               Padding="20, 5, 20, 10" />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </RefreshView>
+
+        <extrinsic:ExtrinsicStatusStackLayout />
+
+        <xcavate:XcavateNavigationBarView />
+
+        <transfer:TransferView />
+
+        <txanalyzer:TransactionAnalyzerConfirmationView />
+
+        <transactionrequest:MessageSignRequestView />
+
+        <assetselect:AssetSelectView />
+
+        <xcavateproperty:PropertyMarketplaceFilterPopupView />
+
+        <card:BottomPillBackgroundView />
+    </AbsoluteLayout>
+</ContentPage>
