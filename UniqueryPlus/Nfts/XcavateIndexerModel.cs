@@ -11,6 +11,8 @@ namespace UniqueryPlus.Nfts
 {
     public static class XcavateIndexerModel
     {
+        public const string DefaultOwnerAddress = "14XAmaujtAthi7KdWsJrKh1QEjiNXwabW1YdYUCbAM6TeGk";
+
         public static async Task<IReadOnlyList<XcavatePaseoNftsPalletNft>> GetMarketplaceListedPropertiesAsync(
             SubstrateClientExt client,
             int first = 10,
@@ -35,6 +37,33 @@ namespace UniqueryPlus.Nfts
 
             return listings
                 .Select(listing => MapListing(client, listing))
+                .Where(nft => nft is not null)
+                .Cast<XcavatePaseoNftsPalletNft>()
+                .ToList();
+        }
+
+        public static async Task<IReadOnlyList<XcavatePaseoNftsPalletNft>> GetOwnedAndBoughtPropertiesAsync(
+            SubstrateClientExt client,
+            int first = 10,
+            int offset = 0,
+            string tokenOwner = DefaultOwnerAddress)
+        {
+            var indexerClient = Indexers.GetXcavateIndexerClient();
+
+            var result = await indexerClient.OwnedAndBoughtProperties
+                .ExecuteAsync(first, offset, tokenOwner)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            var properties = result.Data?.RealEstateNfts?.Nodes;
+            if (properties is null)
+            {
+                return [];
+            }
+
+            return properties
+                .Select(property => MapOwnedAndBoughtProperty(client, property, tokenOwner))
                 .Where(nft => nft is not null)
                 .Cast<XcavatePaseoNftsPalletNft>()
                 .ToList();
@@ -132,6 +161,124 @@ namespace UniqueryPlus.Nfts
             };
         }
 
+        private static XcavatePaseoNftsPalletNft? MapOwnedAndBoughtProperty(
+            SubstrateClientExt client,
+            IOwnedAndBoughtProperties_RealEstateNfts_Nodes? property,
+            string tokenOwner)
+        {
+            if (property is null)
+            {
+                return null;
+            }
+
+            var listing = property.MarketplaceOngoingObjectListings?.Nodes?.FirstOrDefault();
+            var realWorldAsset = property.RealWorldAssets?.Nodes?.FirstOrDefault();
+
+            var files = ParseFiles(property.Files);
+            var firstImage = files.FirstOrDefault();
+
+            var metadata = new MetadataBase
+            {
+                Name = property.PropertyName ?? "Unknown",
+                Description = property.PropertyDescription ?? string.Empty,
+                Image = firstImage
+            };
+
+            var propertyMetadata = new PropertyMetadata
+            {
+                Status = property.Status,
+                PropertyName = property.PropertyName,
+                Financials = new PropertyFinancials
+                {
+                    StampDutyTax = ToDecimal(property.StampDutyTax),
+                    IsAnnualServiceChargePaid = property.IsAnnualServiceChargePaid ?? false,
+                    EstimatedRentalIncome = ToDecimal(property.EstimatedRentalIncome),
+                    PricePerToken = ToDecimal(property.PricePerToken),
+                    NumberOfTokens = property.NumberOfTokens ?? 0,
+                    IsStampDutyPaid = property.IsStampDutyPaid ?? false,
+                    PropertyPrice = ToDecimal(property.PropertyPrice),
+                    AnnualServiceCharge = ToDecimal(property.AnnualServiceCharge),
+                },
+                Files = files,
+                CreatedAt = ParseDateTimeOffset(property.CreatedAt),
+                Address = new PropertyAddress
+                {
+                    PostCode = property.PostCode,
+                    FlatOrUnit = property.FlatOrUnit,
+                    LocalAuthority = property.LocalAuthority,
+                    Street = property.Street,
+                    TownCity = property.TownCity,
+                },
+                Company = new PropertyCompany
+                {
+                    Name = property.CompanyName,
+                    Logo = property.CompanyLogo,
+                },
+                PropertyDescription = property.PropertyDescription,
+                PropertyType = property.PropertyType,
+                Map = property.Map,
+                DeveloperAddress = property.DeveloperAddress,
+                PlanningCode = property.PlanningCode,
+                PropertyId = property.PropertyId,
+                Id = ParseGuid(property.Id),
+                AccountAddress = property.AccountAddress,
+                UpdatedAt = ParseDateTimeOffset(property.UpdatedAt),
+                LegalRepresentative = property.LegalRepresentative,
+                Attributes = new PropertyAttributes
+                {
+                    Area = property.Area,
+                    OffStreetParking = property.OffStreetParking,
+                    OutdoorSpace = property.OutdoorSpace,
+                    NumberOfBedrooms = property.NumberOfBedrooms,
+                    ConstructionDate = property.ConstructionDate,
+                    NumberOfBathrooms = property.NumberOfBathrooms,
+                    Quality = property.Quality,
+                }
+            };
+
+            return new XcavatePaseoNftsPalletNft(client)
+            {
+                CollectionId = new BigInteger(property.Collection ?? listing?.CollectionId ?? realWorldAsset?.CollectionId ?? 0),
+                Id = new BigInteger(property.Item ?? listing?.ItemId ?? realWorldAsset?.ItemId ?? 0),
+                Owner = property.AccountAddress ?? tokenOwner,
+                Metadata = metadata,
+                XcavateMetadata = propertyMetadata,
+                NftMarketplaceDetails = realWorldAsset is null
+                    ? null
+                    : new NftMarketplaceDetails
+                    {
+                        SpvCreated = realWorldAsset.SpvCreated ?? false,
+                        AssetId = ToUInt32(realWorldAsset.AssetId),
+                        Region = ToUInt32(realWorldAsset.Region),
+                        Location = realWorldAsset.Location ?? string.Empty,
+                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                    },
+                OngoingObjectListingDetails = listing is null
+                    ? null
+                    : new XcavateOngoingObjectListingDetails
+                    {
+                        RealEstateDeveloper = listing.RealEstateDeveloper ?? string.Empty,
+                        TaxPaidByDeveloper = listing.TaxPaidByDeveloper ?? false,
+                        ListingExpiry = ToUInt32(listing.ListingExpiry),
+                        ClaimExpiry = listing.ClaimExpiry is null ? null : ToUInt32Nullable(listing.ClaimExpiry),
+                        ListedTokens = ToUInt32(listing.ListedTokenAmount),
+                        UnclaimedTokens = ToUInt32(listing.UnclaimedTokenAmount),
+                        AssetId = new U32(ToUInt32(listing.AssetId)),
+                        CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
+                        ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
+                    },
+                RealWorldAssetDetails = realWorldAsset is null
+                    ? null
+                    : new XcavateRealWorldAssetDetails
+                    {
+                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                        Price = ParseBigInteger(realWorldAsset.Price),
+                        SpvCreated = realWorldAsset.SpvCreated ?? false,
+                        Finalized = realWorldAsset.Finalized ?? false,
+                    },
+            };
+        }
+
         private static List<string> ParseFiles(object? filesValue)
         {
             if (filesValue is null)
@@ -224,6 +371,16 @@ namespace UniqueryPlus.Nfts
             }
 
             return (uint)value.Value;
+        }
+
+        private static BigInteger ParseBigInteger(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return BigInteger.Zero;
+            }
+
+            return BigInteger.TryParse(value, out var parsed) ? parsed : BigInteger.Zero;
         }
     }
 }
