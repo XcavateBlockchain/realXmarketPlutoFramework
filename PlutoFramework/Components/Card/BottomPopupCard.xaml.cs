@@ -43,7 +43,25 @@ public partial class BottomPopupCard : AbsoluteLayout
 
     public Microsoft.Maui.Controls.View View { set { contentView.Content = value; } }
 
-    public string Title { set { titleText.Text = value; } }
+    public static readonly BindableProperty TitleProperty = BindableProperty.Create(
+        nameof(Title), typeof(string), typeof(BottomPopupCard), default(string),
+        propertyChanged: (bindable, oldValue, newValue) =>
+        {
+            try
+            {
+                var control = (BottomPopupCard)bindable;
+                control.titleText.Text = (string)newValue ?? string.Empty;
+            }
+            catch
+            {
+            }
+        });
+
+    public string Title
+    {
+        get => (string)GetValue(TitleProperty);
+        set => SetValue(TitleProperty, value);
+    }
 
     private async Task ShowCardAsync()
     {
