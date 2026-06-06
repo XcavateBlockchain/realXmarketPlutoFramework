@@ -9,7 +9,7 @@
              xmlns:transactionrequest="clr-namespace:PlutoFramework.Components.TransactionRequest"
              xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
-             Shell.PresentationMode="ModalNotAnimated"
+             Shell.PresentationMode="NotAnimated"
              BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}">
     <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All">
 

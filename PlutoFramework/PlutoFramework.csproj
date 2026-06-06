@@ -1895,8 +1895,7 @@
   <ItemGroup>
     <MauiFont Include="Resources\Fonts\OpenSans-Regular.ttf" />
     <MauiFont Include="Resources\Fonts\OpenSans-Semibold.ttf" />
-    <MauiFont Include="Resources\Fonts\xcavatefont.ttf" />
-    <MauiFont Include="Resources\Fonts\dmsans.ttf" Alias="XcavateFont" />
+    <MauiFont Include="Resources\Fonts\xcavatefont.ttf" Alias="XcavateFont" />
   </ItemGroup>
 
   <ItemGroup>

@@ -35,6 +35,8 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
     {
         base.OnNavigatedTo(args);
 
+        await Task.Delay(100);
+
         navigationBarViewModel.Selected = PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel.XcavateNavigationBarSelection.Marketplace;
 
         await viewModel.InitialLoadAsync(CancellationToken.None);
