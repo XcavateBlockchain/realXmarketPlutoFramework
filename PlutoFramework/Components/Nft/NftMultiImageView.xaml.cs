@@ -4,55 +4,60 @@ namespace PlutoFramework.Components.Nft;
 
 public partial class NftMultiImageView : ContentView
 {
+    private readonly ObservableCollection<string> thumbnailSources = [];
+
     public static readonly BindableProperty ImageSourcesProperty = BindableProperty.Create(
         nameof(ImageSources), typeof(List<string>), typeof(NftMultiImageView),
+        default(List<string>),
         defaultBindingMode: BindingMode.TwoWay,
-        propertyChanging: (bindable, oldValue, newValue) => {
+        propertyChanged: (bindable, oldValue, newValue) => {
             var control = (NftMultiImageView)bindable;
-
-            Console.WriteLine("Images received");
-
-            var imageSources = (List<string>)newValue;
-
-            if (imageSources == null || imageSources.Count() == 0)
-            {
-                Console.WriteLine("Null");
-
-                control.mainImage.ImageSource = "noimage.png";
-                return;
-            }
-
-            control.mainImage.ImageSource = imageSources[0];
-
-
-            foreach(string imageSource in imageSources)
-            {
-                NftImageView imageView = new NftImageView(false)
-                {
-                    ImageSource = imageSource,
-                    HeightRequest = 60,
-                    WidthRequest = 60,
-                };
-
-                TapGestureRecognizer tapGestureRecognizer = new TapGestureRecognizer();
-                tapGestureRecognizer.Tapped += (s, e) =>
-                {
-                    control.mainImage.ImageSource = ((NftImageView)s).ImageSource;
-                };
-
-                imageView.GestureRecognizers.Add(tapGestureRecognizer);
-
-                control.imagesStackLayout.Children.Add(imageView);
-            }
+            control.UpdateImages(newValue as List<string>);
         });
+
     public NftMultiImageView()
 	{
 		InitializeComponent();
+
+        thumbnailsCollectionView.ItemsSource = thumbnailSources;
     }
 
     public List<string> ImageSources
     {
         get => (List<string>)GetValue(ImageSourcesProperty);
         set => SetValue(ImageSourcesProperty, value);
+    }
+
+    private void UpdateImages(List<string> imageSources)
+    {
+        thumbnailSources.Clear();
+
+        if (imageSources is null || imageSources.Count == 0)
+        {
+            mainImage.ImageSource = "noimage.png";
+            return;
+        }
+
+        foreach (string imageSource in imageSources)
+        {
+            if (string.IsNullOrWhiteSpace(imageSource))
+            {
+                continue;
+            }
+
+            thumbnailSources.Add(imageSource);
+        }
+
+        mainImage.ImageSource = thumbnailSources.Count > 0 ? thumbnailSources[0] : "noimage.png";
+    }
+
+    private void OnThumbnailSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.Count > 0 && e.CurrentSelection[0] is string selectedSource)
+        {
+            mainImage.ImageSource = selectedSource;
+        }
+
+        ((CollectionView)sender).SelectedItem = null;
     }
 }

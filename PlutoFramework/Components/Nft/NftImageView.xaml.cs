@@ -4,22 +4,23 @@ public partial class NftImageView : ContentView
 {
     public static readonly BindableProperty ImageSourceProperty = BindableProperty.Create(
         nameof(ImageSource), typeof(string), typeof(NftImageView),
+        default(string),
         defaultBindingMode: BindingMode.TwoWay,
-        propertyChanging: (bindable, oldValue, newValue) => {
+        propertyChanged: (bindable, oldValue, newValue) => {
             var control = (NftImageView)bindable;
+            var imageSource = newValue as string;
 
-            control.image.Source = (string)newValue;
-
-            if (((string)newValue).Length <= 4 || ((string)newValue)[0..4] != "http")
-            {
-                control.downloadButton.Opacity = 0.5;
-            }
+            control.image.Source = string.IsNullOrWhiteSpace(imageSource) ? "noimage.png" : imageSource;
+            control.downloadButton.Opacity = !string.IsNullOrWhiteSpace(imageSource) && imageSource.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? 1
+                : 0.5;
         });
 
     public static readonly BindableProperty ExtraButtonsVisibleProperty = BindableProperty.Create(
         nameof(ExtraButtonsVisible), typeof(bool), typeof(NftImageView),
+        true,
         defaultBindingMode: BindingMode.TwoWay,
-        propertyChanging: (bindable, oldValue, newValue) => {
+        propertyChanged: (bindable, oldValue, newValue) => {
             var control = (NftImageView)bindable;
 
             control.extraButtonsBorder.IsVisible = (bool)newValue;
@@ -46,6 +47,28 @@ public partial class NftImageView : ContentView
         get => (bool)GetValue(ExtraButtonsVisibleProperty);
         set => SetValue(ExtraButtonsVisibleProperty, value);
     }
+
+    // Backwards-compatible alias property for naming preference.
+    public bool ExtraButtonsIsVisible
+    {
+        get => ExtraButtonsVisible;
+        set => ExtraButtonsVisible = value;
+    }
+
+    private void OnSquareSizeChanged(object sender, EventArgs e)
+    {
+        if (sender is not Border squareBorder || squareBorder.Width <= 0)
+        {
+            return;
+        }
+
+        // Guard against layout loops by only updating when the value actually changed.
+        if (Math.Abs(squareBorder.HeightRequest - squareBorder.Width) > 0.5)
+        {
+            squareBorder.HeightRequest = squareBorder.Width;
+        }
+    }
+
     private async void OnDownloadClicked(object sender, TappedEventArgs e)
     {
         if (downloadButton.Opacity == 0.5)

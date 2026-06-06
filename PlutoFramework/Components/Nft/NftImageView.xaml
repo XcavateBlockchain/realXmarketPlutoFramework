@@ -4,7 +4,7 @@
              xmlns:ffimageloading="clr-namespace:FFImageLoading.Maui;assembly=FFImageLoading.Maui"
              x:Class="PlutoFramework.Components.Nft.NftImageView">
     <Border Padding="0"
-            HeightRequest="{Binding Source={x:Reference border}, Path=Width}"
+            SizeChanged="OnSquareSizeChanged"
             x:Name="border"
             Grid.Column="0"
             StrokeThickness="0"
@@ -16,7 +16,7 @@
 
         </Border.StrokeShape>
         <AbsoluteLayout>
-            <ffimageloading:CachedImage AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
+            <Image AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
                                         x:Name="image" Aspect="AspectFill" />
             <Border BackgroundColor="{AppThemeBinding Light=White, Dark=Black}"
                     StrokeThickness="0"
