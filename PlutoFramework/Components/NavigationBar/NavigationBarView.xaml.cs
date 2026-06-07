@@ -53,7 +53,7 @@ public partial class NavigationBarView : ContentView
             return;
         }
 
-        await Shell.Current.GoToAsync("//MainPage");
+        await Shell.Current.GoToAsync("//Account");
     }
 
     async void OnNFTsClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)

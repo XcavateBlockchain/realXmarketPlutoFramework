@@ -3,20 +3,39 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
              xmlns:customlayouts="clr-namespace:PlutoFramework.Components.CustomLayouts"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
              x:Class="PlutoFramework.Components.XcavateProperty.OwnedPropertiesListView"
              MinimumHeightRequest="80">
     <VerticalStackLayout Spacing="5">
-        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Items}"
-                             Spacing="15">
-            <BindableLayout.ItemTemplate>
+        <HorizontalStackLayout Spacing="10"
+                               Margin="0,0,0,5">
+            <buttons:BasicGrayButton Text="All"
+                                     IsEnabled="False"
+                                     HorizontalOptions="FillAndExpand" />
+            <buttons:BasicGrayButton Text="Owned"
+                                     IsEnabled="False"
+                                     HorizontalOptions="FillAndExpand" />
+            <buttons:BasicGrayButton Text="Bought"
+                                     IsEnabled="False"
+                                     HorizontalOptions="FillAndExpand" />
+        </HorizontalStackLayout>
+
+        <CollectionView ItemsSource="{Binding Items}"
+                        RemainingItemsThreshold="4"
+                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}"
+                        HeightRequest="560"
+                        ItemSizingStrategy="MeasureAllItems"
+                        VerticalOptions="Start">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical"
+                                   ItemSpacing="15" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <xcavateproperty:PropertyThumbnailView XcavateNftWrapper="{Binding .}"
-                                                           />
-
+                    <xcavateproperty:PropertyThumbnailView XcavateNftWrapper="{Binding .}" />
                 </DataTemplate>
-
-            </BindableLayout.ItemTemplate>
-        </VerticalStackLayout>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
 
         <customlayouts:LoadingItemView HeightRequest="80" 
                                Margin="0, 0, 0, 0"
