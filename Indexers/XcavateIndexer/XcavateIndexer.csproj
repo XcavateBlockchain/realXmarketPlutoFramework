@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <GraphQL Remove="Queries\BoughtProperties.graphql" />
     <GraphQL Remove="Queries\OwnedAndBoughtProperties.graphql" />
     <GraphQL Remove="Queries\MarketplaceListedProperties.graphql" />
+    <GraphQL Remove="Queries\OwnedAndBoughtPropertiesWithFilter.graphql" />
+    <GraphQL Remove="Queries\OwnedProperties.graphql" />
   </ItemGroup>
 
   <ItemGroup>

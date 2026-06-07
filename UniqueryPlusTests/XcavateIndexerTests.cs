@@ -71,5 +71,40 @@ namespace UniqueryPlusTests
 
             Assert.That(results, Is.Not.Null);
         }
+
+        [Test]
+        public async Task GetOwnedAndBoughtPropertiesWithFilterAsync()
+        {
+            var client = CreateXcavateClient();
+
+            var results = await XcavateIndexerModel.GetOwnedAndBoughtPropertiesWithFilterAsync(
+                client,
+                first: 5,
+                includesTownCity: "lon",
+                includesPropertyType: "",
+                includesPropertyName: "");
+
+            Assert.That(results, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task GetOwnedPropertiesAsync()
+        {
+            var client = CreateXcavateClient();
+
+            var results = await XcavateIndexerModel.GetOwnedPropertiesAsync(client, first: 5, tokenOwner: OwnerAddress);
+
+            Assert.That(results, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task GetBoughtPropertiesAsync()
+        {
+            var client = CreateXcavateClient();
+
+            var results = await XcavateIndexerModel.GetBoughtPropertiesAsync(client, first: 5, tokenOwner: OwnerAddress);
+
+            Assert.That(results, Is.Not.Null);
+        }
     }
 }

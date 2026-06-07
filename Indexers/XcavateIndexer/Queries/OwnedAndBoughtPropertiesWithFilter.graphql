@@ -1,12 +1,24 @@
-﻿query OwnedAndBoughtProperties($first: Int = 10, $offset: Int = 0, $tokenOwner: String = "14XAmaujtAthi7KdWsJrKh1QEjiNXwabW1YdYUCbAM6TeGk") {
+﻿query OwnedAndBoughtPropertiesWithFilter(
+  $first: Int = 10, 
+  $offset: Int = 0, 
+  $tokenOwner: String = "14XAmaujtAthi7KdWsJrKh1QEjiNXwabW1YdYUCbAM6TeGk",
+  $includesTownCity: String = "",
+  $includesPropertyType: String = "",
+  $includesPropertyName: String = ""
+) {
   realEstateNfts(
     offset: $offset
     first: $first
     filter: {
+      # The explicit OR block for ownership
       or: [
         { marketplaceOngoingObjectListings: { some: { tokenOwners: { some: { account: { equalTo: $tokenOwner } } } } } },
         { realWorldAssets: { some: { owners: { some: { account: { equalTo: $tokenOwner } } } } } }
-      ]
+      ],
+      # The implicit AND block for text search
+      townCity: { includesInsensitive: $includesTownCity }
+      propertyType: { includesInsensitive: $includesPropertyType }
+      propertyName: { includesInsensitive: $includesPropertyName }
     }
   ) {
     nodes {
