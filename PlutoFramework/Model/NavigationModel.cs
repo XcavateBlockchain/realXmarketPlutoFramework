@@ -1,4 +1,5 @@
-﻿using PlutoFramework.Components.Balance;
+﻿using PlutoFramework.Components.Account;
+using PlutoFramework.Components.Balance;
 using PlutoFramework.Components.MessagePopup;
 using PlutoFramework.Components.TransferView;
 using PlutoFramework.Components.UniversalScannerView;
@@ -11,6 +12,7 @@ namespace PlutoFramework.Model
     {
         public static Func<Task> NavigateToKYC { get; set; } = () => Task.FromResult(0);
         public static Func<Task> NavigateAfterAccountCreation { get; set; } = NavigateToKYC;
+        public static Func<ImportAccountFlowMode, Task> StartImportAccount { get; set; } = (flowMode) => Task.FromResult(0);
         public static Func<Task> NavigateToUserPageAsync { get; set; } = () => Task.FromResult(0);
         public static async Task NavigateToBalancesPageAsync()
         {

@@ -140,8 +140,7 @@
                 </CollectionView.Footer>
                 <CollectionView.ItemsLayout>
                     <LinearItemsLayout Orientation="Vertical"
-                                   ItemSpacing="0"
-                                   />
+                                       ItemSpacing="0" />
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
                     <DataTemplate>

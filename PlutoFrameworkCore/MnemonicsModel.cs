@@ -46,7 +46,16 @@ namespace PlutoFramework.Model
         {
             var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
 
-            Wallet wallet = keyring.AddFromMnemonic(mnemonics, META, Substrate.NetApi.Model.Types.KeyType.Sr25519);
+                Wallet wallet = keyring.AddFromMnemonic(mnemonics, META, Substrate.NetApi.Model.Types.KeyType.Sr25519);
+
+            return wallet.Account;
+        }
+
+        public static Account GetAccountFromMnemonics(string mnemonics, Substrate.NetApi.Model.Types.KeyType keyType)
+        {
+            var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
+
+            Wallet wallet = keyring.AddFromMnemonic(mnemonics, META, keyType);
 
             return wallet.Account;
         }

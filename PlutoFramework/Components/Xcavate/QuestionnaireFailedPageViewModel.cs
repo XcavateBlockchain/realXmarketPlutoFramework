@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using PlutoFramework.Model.SQLite;
 namespace PlutoFramework.Components.Xcavate
 {
     public partial class QuestionnaireFailedPageViewModel : ObservableObject
@@ -9,11 +8,9 @@ namespace PlutoFramework.Components.Xcavate
         private string text = "";
 
         [RelayCommand]
-        public async Task CancelAsync()
+        public Task CancelAsync()
         {
-            await SQLiteModel.DeleteAllDatabasesAsync();
-
-            await Shell.Current.Navigation.PopToRootAsync();
+            return Shell.Current.Navigation.PopToRootAsync();
         }
     }
 }

@@ -6,7 +6,6 @@ using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.Keys;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
-using PlutoFrameworkCore;
 using PlutoFrameworkCore.Keys;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi.Model.Types;
@@ -132,7 +131,8 @@ public partial class MnemonicsPageViewModel : ObservableObject
 
         await Model.KeysModel.GenerateNewAccountAsync();
 
-        await PlutoConfigurationModel.AfterAccountImportAsync();
+        // TODO 
+        //await PlutoConfigurationModel.AfterAccountImportAsync();
     }
 }
 

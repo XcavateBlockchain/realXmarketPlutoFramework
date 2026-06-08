@@ -25,7 +25,5 @@
         public const string SETTINGS_DISPLAY_NETWORKS = "settingsDisplayNetworks";
 
         public const string SETTINGS_ALLOW_PRIVATE_KEY = "settingsAllowPrivateKey";
-
-        public const string SHOW_WELCOME_SCREEN = "showWelcomeScreen";
     }
 }

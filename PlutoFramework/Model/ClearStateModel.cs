@@ -13,7 +13,7 @@ namespace PlutoFramework.Model
             // Other
             SecureStorage.Default.Remove(PreferencesModel.PASSWORD);
             Preferences.Remove(PreferencesModel.BIOMETRICS_ENABLED);
-            Preferences.Remove(PreferencesModel.SHOW_WELCOME_SCREEN);
+            OnboardingModel.Clear();
 
             // Models
             AssetsModel.Clear();

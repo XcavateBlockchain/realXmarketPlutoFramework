@@ -109,6 +109,10 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
+    <Compile Update="Components\Onboarding\OnboardingInProgressPopup.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
     <Compile Update="Components\AddressView\AddressQrCodeView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
@@ -1025,6 +1029,9 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Account\NoAccountPopup.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Components\Onboarding\OnboardingInProgressPopup.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\AddressView\AddressQrCodeView.xaml">
@@ -2022,6 +2029,9 @@
     <MauiXaml Update="Components\Account\NoAccountPopup.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Components\Onboarding\OnboardingInProgressPopup.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Components\AddressView\AddressQrCodeView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
@@ -2592,5 +2602,9 @@
     <MauiXaml Update="Components\XcavateProperty\PropertyActionsPage.xaml">
       <SubType>Designer</SubType>
     </MauiXaml>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\Onboarding\" />
   </ItemGroup>
 </Project>

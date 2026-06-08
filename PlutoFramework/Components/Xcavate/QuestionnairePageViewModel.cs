@@ -3,6 +3,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Error;
+using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Xcavate;
 
@@ -33,7 +34,7 @@ namespace PlutoFramework.Components.Xcavate
         [NotifyPropertyChangedFor(nameof(Answer2FontAttributes))]
         [NotifyPropertyChangedFor(nameof(Answer3FontAttributes))]
         private uint? selectedAnswer = null;
-        
+
         public FontAttributes Answer0FontAttributes => SelectedAnswer == 0 ? FontAttributes.Bold : FontAttributes.None;
         public FontAttributes Answer1FontAttributes => SelectedAnswer == 1 ? FontAttributes.Bold : FontAttributes.None;
         public FontAttributes Answer2FontAttributes => SelectedAnswer == 2 ? FontAttributes.Bold : FontAttributes.None;
@@ -49,7 +50,7 @@ namespace PlutoFramework.Components.Xcavate
         {
             uint selected;
 
-            if(!uint.TryParse(selectedString, out selected))
+            if (!uint.TryParse(selectedString, out selected))
             {
                 return;
             }
@@ -87,9 +88,10 @@ namespace PlutoFramework.Components.Xcavate
             else
             {
                 var address = KeysModel.GetPublicKey();
-                var answers = new QuestionnaireAnswers {
+                var answers = new QuestionnaireAnswers
+                {
                     AccountAddress = address,
-                    UserId = "User_TODO",
+                    UserId = $"User_{address}",
                     Questions = Info.Questions
                 };
 
@@ -98,34 +100,35 @@ namespace PlutoFramework.Components.Xcavate
                 await Task.Delay(DELAY);
 
                 var evaluation = await QuestionnaireModel.EvaluateAnswersAsync(address);
+                var result = evaluation?.Evaluation?.Result;
 
-                Page nextPage = evaluation?.Evaluation?.Result switch
+                if (result == "Pass")
                 {
-                    "Fail" => 
-                        new QuestionnaireFailedPage(
-                            evaluation.Evaluation
+                    var onboardingAgreementCoordinator = new OnboardingAgreementCoordinator();
+                    await onboardingAgreementCoordinator.StartAsync(Info.Navigation);
+                }
+                else
+                {
+                    Page nextPage = result switch
+                    {
+                        "Fail" => new QuestionnaireFailedPage(
+                            evaluation?.Evaluation ?? new QuestionnaireEvaluationDetail()
                         ),
-                    "Warning" => new QuestionnaireWarningPage(
-                        new QuestionnaireWarningPageViewModel
-                        {
-                            Text = evaluation?.Evaluation?.Message ?? "",
-                            Navigation = Info.Navigation
-                        }
-                    ),
-                    "Pass" => new QuestionnairePassPage(
-                        new QuestionnairePassPageViewModel
-                        {
-                            Text = evaluation?.Evaluation?.Message ?? "",
-                            Navigation = Info.Navigation
-                        }
-                    ),
-                    _ => new BadInternetConnectionPage()
-                };
-                
-                await Shell.Current.Navigation.PushAsync(
-                    nextPage
-                );
-                
+                        "Warning" => new QuestionnaireWarningPage(
+                            new QuestionnaireWarningPageViewModel
+                            {
+                                Text = evaluation?.Evaluation?.Message ?? "",
+                                Navigation = Info.Navigation
+                            }
+                        ),
+                        _ => new BadInternetConnectionPage()
+                    };
+
+                    await Shell.Current.Navigation.PushAsync(
+                        nextPage
+                    );
+                }
+
             }
 
             SelectedAnswer = null;

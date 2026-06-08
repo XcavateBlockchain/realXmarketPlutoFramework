@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using PlutoFramework.Model.SQLite;
+using PlutoFramework.Components.Onboarding;
 
 namespace PlutoFramework.Components.Xcavate
 {
@@ -15,23 +15,14 @@ namespace PlutoFramework.Components.Xcavate
         [RelayCommand]
         public async Task ContinueAsync()
         {
-            await Shell.Current.Navigation.PushAsync(
-                new QuestionnairePassPage(
-                    new QuestionnairePassPageViewModel
-                    {
-                        Text = "Thanks for passing our questionnaire, please accept our privacy, terms & agreement to start investing.",
-                        Navigation = Navigation,
-                    }
-                )
-            );
+            var onboardingAgreementCoordinator = new OnboardingAgreementCoordinator();
+            await onboardingAgreementCoordinator.StartAsync(Navigation);
         }
 
         [RelayCommand]
-        public async Task CancelAsync()
+        public Task CancelAsync()
         {
-            await SQLiteModel.DeleteAllDatabasesAsync();
-
-            await Shell.Current.Navigation.PopToRootAsync();
+            return Shell.Current.Navigation.PopToRootAsync();
         }
     }
 }

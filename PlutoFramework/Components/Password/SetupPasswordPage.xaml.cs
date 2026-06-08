@@ -40,7 +40,6 @@ public partial class SetupPasswordPage : PageTemplate
         }
 
         await SecureStorage.Default.SetAsync(PreferencesModel.PASSWORD, passwordEntry.Text);
-        Preferences.Set(PreferencesModel.SHOW_WELCOME_SCREEN, false);
         await KeysModel.RegisterBiometricAuthenticationAsync();
         await Navigation.Invoke();
 

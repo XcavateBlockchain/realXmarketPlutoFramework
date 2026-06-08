@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Model;
-using PlutoFrameworkCore;
 
 namespace PlutoFramework.Components.Mnemonics
 {
@@ -25,11 +24,13 @@ namespace PlutoFramework.Components.Mnemonics
         {
             try
             {
-                await Model.KeysModel.SaveSr25519KeyAsync(
-                    Mnemonics
-                );
+                string mnemonics = Mnemonics;
+                string didMnemonics = $"{mnemonics}//did";
+                string x25519Mnemonics = $"{mnemonics}//x25519";
 
-                await PlutoConfigurationModel.AfterAccountImportAsync();
+                await KeysModel.SaveSr25519KeyAsync(mnemonics);
+                await KeysModel.SaveDidKeyAsync(didMnemonics);
+                await KeysModel.SaveEncryptionX25519KeyAsync(x25519Mnemonics);
 
                 await Navigation.Invoke();
             }
@@ -44,8 +45,6 @@ namespace PlutoFramework.Components.Mnemonics
         {
             await Model.KeysModel.GenerateNewAccountFromPrivateKeyAsync(PrivateKey);
 
-            await PlutoConfigurationModel.AfterAccountImportAsync();
-
             await Navigation.Invoke();
         }
 
@@ -53,6 +52,15 @@ namespace PlutoFramework.Components.Mnemonics
         public async Task ImportJsonAsync()
         {
             await KeysModel.ImportJsonKeyAsync();
+
+            string mnemonics = MnemonicsModel.GenerateMnemonics();
+            string didMnemonics = $"{mnemonics}//did";
+            string x25519Mnemonics = $"{mnemonics}//x25519";
+
+            await Task.WhenAll(
+                KeysModel.SaveDidKeyAsync(didMnemonics),
+                KeysModel.SaveEncryptionX25519KeyAsync(x25519Mnemonics)
+            );
 
             await Navigation.Invoke();
         }

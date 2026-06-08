@@ -2,11 +2,11 @@
 using bc26::Org.BouncyCastle.Crypto.Parameters;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Storage;
+using Microsoft.AspNetCore.WebUtilities;
 using Plugin.Fingerprint;
 using Plugin.Fingerprint.Abstractions;
 using PlutoFramework.Components.Password;
 using PlutoFramework.Model.SQLite;
-using PlutoFrameworkCore;
 using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Keys;
 using PlutoFrameworkCore.PushNotificationServices.Core;
@@ -15,7 +15,6 @@ using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using System.Text.Json;
-﻿using Microsoft.AspNetCore.WebUtilities;
 
 namespace PlutoFramework.Model
 {
@@ -203,6 +202,41 @@ namespace PlutoFramework.Model
             );
         }
 
+        public static Task SaveEncryptionX25519KeyAsync(string mnemonics)
+        {
+            // Derive X25519 private key from mnemonic via Ed25519 seed conversion.
+            var account = MnemonicsModel.GetAccountFromMnemonics(mnemonics, Substrate.NetApi.Model.Types.KeyType.Ed25519);
+
+            byte[] seed = account.PrivateKey;
+
+            if (seed is null || seed.Length < 32)
+            {
+                throw new ArgumentException("Derived private key seed is too short to derive X25519 key");
+            }
+
+            if (seed.Length > 32)
+            {
+                // If representation contains extra data, take the first 32 bytes as seed
+                var tmp = new byte[32];
+                Array.Copy(seed, 0, tmp, 0, 32);
+                seed = tmp;
+            }
+
+            // Hash the seed with SHA-512 and clamp to produce X25519 private scalar per RFC7748
+            using var sha512 = System.Security.Cryptography.SHA512.Create();
+            var hashed = sha512.ComputeHash(seed);
+
+            var x25519 = new byte[32];
+            Array.Copy(hashed, 0, x25519, 0, 32);
+
+            // Clamp
+            x25519[0] &= 248;
+            x25519[31] &= 127;
+            x25519[31] |= 64;
+
+            return SaveEncryptionX25519KeyAsync(x25519);
+        }
+
         public static async Task SaveEncryptionX25519KeyAsync(byte[] privateKey)
         {
             var key = new X25519PrivateKeyParameters(privateKey);
@@ -248,8 +282,6 @@ namespace PlutoFramework.Model
             try
             {
                 await KeysModel.SaveJsonKeyAsync(json);
-
-                await PlutoConfigurationModel.AfterAccountImportAsync();
 
                 var toast = Toast.Make($"JSON key imported successfully.");
                 await toast.Show();
@@ -493,6 +525,14 @@ namespace PlutoFramework.Model
                 SecureStorage.SetAsync(passwordStorageKey, password),
                 KeysDatabase.SaveKeyAsync(lockedKey)
             );
+        }
+
+        public static Task ClearAsync()
+        {
+            Preferences.Remove(PreferencesModel.PUBLIC_KEY);
+
+            return KeysDatabase.DeleteAllAsync();
+
         }
 
         public static async Task TempConvertMainKeysIntoDbAsync()
