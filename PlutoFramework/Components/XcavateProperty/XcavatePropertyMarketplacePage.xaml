@@ -13,14 +13,14 @@
              xmlns:transfer="clr-namespace:PlutoFramework.Components.TransferView"
              xmlns:account="clr-namespace:PlutoFramework.Components.Account"
                 xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
-             HideSoftInputOnTapped="True"
              xmlns:extrinsic="clr-namespace:PlutoFramework.Components.Extrinsic"
              xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
              xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
              xmlns:transactionrequest="clr-namespace:PlutoFramework.Components.TransactionRequest"
              Shell.PresentationMode="ModalNotAnimated"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
-                BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}">
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}"
+             HideSoftInputOnTapped="True">
     <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All">
 
         <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"

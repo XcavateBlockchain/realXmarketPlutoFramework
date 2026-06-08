@@ -10,14 +10,12 @@
          IsVisible="{Binding IsVisible}"
          AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
          AbsoluteLayout.LayoutFlags="All">
-    <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-                    AbsoluteLayout.LayoutFlags="All">
-        <card:BottomPopupCard Title="Filter"
+    <card:BottomPopupCard Title="Filter"
                             IsShown="{Binding IsVisible}"
                             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
                             AbsoluteLayout.LayoutFlags="All">
-            <card:BottomPopupCard.View>
-                <AbsoluteLayout>
+        <card:BottomPopupCard.View>
+            <AbsoluteLayout>
 
                 <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
                                      AbsoluteLayout.LayoutFlags="WidthProportional"
@@ -110,7 +108,7 @@
                         </Grid.ColumnDefinitions>
 
                         <buttons:BasicGrayButton Text="Cancel" Grid.Column="0"
-                                             Command="{Binding CancelCommand}"/>
+                                                 Command="{Binding CancelCommand}"/>
 
                         <buttons:PlutoFrameworkElevatedButton Text="Continue"
                                                            Grid.Column="1"
@@ -119,11 +117,8 @@
                     </Grid>
                 </AbsoluteLayout>
 
-                </AbsoluteLayout>
+            </AbsoluteLayout>
 
-            </card:BottomPopupCard.View>
-        </card:BottomPopupCard>
-
-        <xcavateproperty:PropertyMarketplaceSelectionPopupView />
-    </AbsoluteLayout>
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
 </ContentView>

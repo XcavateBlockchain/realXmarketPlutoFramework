@@ -11,6 +11,8 @@ public partial class ElevatedButton : Button
 
             control.IsVisible = (ButtonStateEnum)newValue != ButtonStateEnum.Invisible;
 
+            control.BorderWidth = 0;
+
             switch ((ButtonStateEnum)newValue)
             {
                 case ButtonStateEnum.Enabled:
@@ -21,6 +23,15 @@ public partial class ElevatedButton : Button
 
                     control.TextColor = Colors.White;
 
+                    control.IsEnabled = true;
+                    break;
+                case ButtonStateEnum.GrayEnabled:
+                    control.SetAppThemeColor(Button.BackgroundColorProperty, Colors.White, Colors.Black);
+
+                    control.BorderWidth = (double)Application.Current.Resources["GrayButtonBorderWidth"];
+                    control.BorderColor = Color.FromArgb("#88A6A6A6");
+
+                    control.SetAppThemeColor(Button.TextColorProperty, Color.FromArgb("#A6A6A6"), Colors.White);
                     control.IsEnabled = true;
                     break;
                 case ButtonStateEnum.Disabled:
@@ -41,8 +52,8 @@ public partial class ElevatedButton : Button
         defaultValue: ButtonStateEnum.Enabled);
 
     public ElevatedButton()
-	{
-		InitializeComponent();
+    {
+        InitializeComponent();
     }
 
     public ButtonStateEnum ButtonState
