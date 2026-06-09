@@ -15,26 +15,6 @@ public partial class AgreementPage : ContentPage
             Url = url,
             AcceptFunction = acceptFunction ?? DefaultAcceptAsync,
         };
-
-        // Ensure the WebView content is positioned below the top navigation
-        // and above the bottom accept button so it's not covered.
-        try
-        {
-            double topNavHeight = 0;
-            if (Application.Current?.Resources != null && Application.Current.Resources.ContainsKey("TopNavigationBarHeight"))
-            {
-                topNavHeight = (double)Application.Current.Resources["TopNavigationBarHeight"];
-            }
-
-            // PageBottomBarButtonView uses an AbsoluteLayout height of 90 in XAML.
-            const double bottomPopupHeight = 90;
-
-            webView.Margin = new Microsoft.Maui.Thickness(0, topNavHeight, 0, bottomPopupHeight);
-        }
-        catch
-        {
-            // If anything goes wrong, leave default layout.
-        }
     }
 
     private async void OnWebViewNavigated(object sender, WebNavigatedEventArgs e)

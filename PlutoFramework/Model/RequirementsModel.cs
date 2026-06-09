@@ -44,8 +44,6 @@ namespace PlutoFramework.Model
                 return false;
             }
 
-
-
             #region Sumsub
             fullPageLoadingViewModel.Message = "Verifying on Sumsub";
 
@@ -106,7 +104,9 @@ namespace PlutoFramework.Model
 
         public static bool CheckAccountExists()
         {
-            if (!KeysModel.HasSubstrateKey())
+            var onboardingCompleted = OnboardingModel.IsOnboardingCompleted();
+
+            if (!KeysModel.HasSubstrateKey() || !onboardingCompleted)
             {
                 var noAccountPopupViewModel = DependencyService.Get<NoAccountPopupViewModel>();
 
