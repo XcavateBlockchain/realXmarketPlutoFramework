@@ -58,45 +58,6 @@
                                     AutomationId="ContinueMnemonics"
                                     Command="{Binding ContinueWithMnemonicsCommand}" />
 
-            <ContentView HeightRequest="120"
-                         Margin="0, 40, 0, 0"
-                         IsVisible="{Binding UsePrivateKeyIsVisible}">
-                <card:Card>
-                    <card:Card.View>
-                        <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-                                        AbsoluteLayout.LayoutFlags="All"
-                                        Margin="0, 10, 0, 10">
-                            <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, 1"
-                                                 AbsoluteLayout.LayoutFlags="SizeProportional">
-                                <VerticalStackLayout>
-                                    <Label FontAttributes="Bold"
-                                           HorizontalOptions="Center"
-                                           VerticalTextAlignment="End">
-                                        <Label.FormattedText>
-                                            <FormattedString>
-                                                <Span FontAttributes="Bold"
-                                                      Text="Your private key: "/>
-                                            </FormattedString>
-                                        </Label.FormattedText>
-                                    </Label>
-
-                                    <Editor HeightRequest="80"
-                                            x:Name="privateKeyEntry"
-                                            Placeholder="Start entering here.."
-                                            Text="{Binding PrivateKey}" />
-                                </VerticalStackLayout>
-
-                            </VerticalStackLayout>
-                        </AbsoluteLayout>
-                    </card:Card.View>
-                </card:Card>
-            </ContentView>
-
-            <buttons:ElevatedButton ButtonState="Enabled"
-                                    Text="Continue"
-                                    Command="{Binding ContinueWithPrivateKeyCommand}"
-                                    IsVisible="{Binding UsePrivateKeyIsVisible}" />
-
             <buttons:ElevatedButton ButtonState="Enabled"
                                     Text="Import json"
                                     Command="{Binding ImportJsonCommand}"/>

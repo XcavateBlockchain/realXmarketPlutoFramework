@@ -53,29 +53,10 @@ public partial class NoAccountPopupViewModel : ObservableObject, IPopup, ISetToD
 
 
     [RelayCommand]
-    public async Task ImportAccountAsync()
+    public Task ImportAccountAsync()
     {
         SetToDefault();
 
-        if (NavigationModel.StartImportAccount is not null)
-        {
-            await NavigationModel.StartImportAccount(ImportAccountFlowMode.Import);
-            return;
-        }
-
-        // Fallback: try to navigate directly if the delegate was not registered
-        await Shell.Current.Navigation.PushAsync(new SetupPasswordPage()
-        {
-            Navigation = () => Shell.Current.Navigation.PushAsync(
-               new EnterMnemonicsPage(
-                   new EnterMnemonicsViewModel
-                   {
-                       Navigation = () => Shell.Current.Navigation.PushAsync(
-                           new NoDidPage()
-                       )
-                   }
-               )
-            )
-        });
+        return NavigationModel.StartImportAccount(ImportAccountFlowMode.Import);
     }
 }

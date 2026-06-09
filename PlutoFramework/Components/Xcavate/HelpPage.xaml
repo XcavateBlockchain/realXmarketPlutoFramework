@@ -9,13 +9,11 @@
                        Shell.PresentationMode="NotAnimated"
                        NavigationBarIsVisible="False">
     <template:PageTemplate.MainContent>
-        <Image AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-                             AbsoluteLayout.LayoutFlags="All"
-        
-                   VerticalOptions="Center" 
-                   HorizontalOptions="Center"
-               Aspect="AspectFit"
-               Source="aiscreenshot.png" />
+        <WebView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                 AbsoluteLayout.LayoutFlags="All"
+                 VerticalOptions="Center"
+                 HorizontalOptions="Center"
+                 Source="https://support.realxmarket.io/" />
     </template:PageTemplate.MainContent>
 
     <template:PageTemplate.PopupContent>

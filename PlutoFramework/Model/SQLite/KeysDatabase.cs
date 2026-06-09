@@ -76,6 +76,17 @@ namespace PlutoFramework.Model.SQLite
             }
         }
 
+        public static async Task DeleteKeysOfTypeAsync(KeyTypeEnum type)
+        {
+            await InitAsync().ConfigureAwait(false);
+            var items = await Database.Table<KeysDatabaseItem>().ToListAsync().ConfigureAwait(false);
+            var keysToDelete = items.Where(p => ((GenericLockedKey)p).Type == type).Select(p => p.Key).ToList();
+            foreach (var key in keysToDelete)
+            {
+                await Database.DeleteAsync<KeysDatabaseItem>(key).ConfigureAwait(false);
+            }
+        }
+
         public static async Task DeleteKeyAsync(GenericLockedKey item)
         {
             var databaseItem = item.ToDatabaseItem();

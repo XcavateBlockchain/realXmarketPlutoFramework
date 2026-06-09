@@ -114,7 +114,7 @@
                                         VerticalOptions="Center"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 28">
-                                    <ImageButton Source="xcavatesettings.svg"
+                                    <ImageButton Source="xcavatesettings.png"
                                                  Command="{Binding OpenFilterCommand}"
                                                  BackgroundColor="Transparent"
                                                  HeightRequest="56"

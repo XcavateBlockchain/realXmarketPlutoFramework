@@ -83,6 +83,9 @@ namespace PlutoFramework.Model
 
         public static async Task SaveSr25519KeyAsync(string mnemonics)
         {
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.Sr25519);
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.PolkadotJson);
+
             Account account = MnemonicsModel.GetAccountFromMnemonics(mnemonics);
 
             Preferences.Set(
@@ -103,6 +106,8 @@ namespace PlutoFramework.Model
 
         public static async Task SaveDidKeyAsync(string mnemonics)
         {
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.Did);
+
             Account account = MnemonicsModel.GetAccountFromMnemonics(mnemonics);
 
             // Just get and use the same main password without asking the user again
@@ -140,6 +145,9 @@ namespace PlutoFramework.Model
 
         public static async Task SaveJsonKeyAsync(string json)
         {
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.Sr25519);
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.PolkadotJson);
+
             var viewModel = DependencyService.Get<EnterPasswordPopupViewModel>();
 
             viewModel.IsVisible = true;
@@ -204,6 +212,7 @@ namespace PlutoFramework.Model
 
         public static Task SaveEncryptionX25519KeyAsync(string mnemonics)
         {
+
             // Derive X25519 private key from mnemonic via Ed25519 seed conversion.
             var account = MnemonicsModel.GetAccountFromMnemonics(mnemonics, Substrate.NetApi.Model.Types.KeyType.Ed25519);
 
@@ -239,6 +248,8 @@ namespace PlutoFramework.Model
 
         public static async Task SaveEncryptionX25519KeyAsync(byte[] privateKey)
         {
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519);
+
             var key = new X25519PrivateKeyParameters(privateKey);
 
             var publicKey = key.GeneratePublicKey();
