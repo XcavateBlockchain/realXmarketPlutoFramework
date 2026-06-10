@@ -475,39 +475,5 @@ namespace PlutoFrameworkCore.AssetDidComm
                 LastKey = Utils.HexToByteArray(fullKeys.Last().ToString())
             };
         }
-
-        /// <summary>
-        /// Get decoded contents of a message from a URI, given the recipient's private key. Used by recipients of messages to obtain the plaintext.
-        /// </summary>
-        /// <param name="pinataMsgUri">The URI of the Pinata message.</param>
-        /// <param name="privKeyBytes">The recipient's private key bytes.</param>
-        /// <param name="compact">Whether the JWE is in compact format.</param>
-        /// <returns>The plaintext message as a string. Propagates exceptions on fail</returns>
-        public static async Task<string?> GetMessageFromUriAsync(string pinataMsgUri, byte[] privKeyBytes, bool compact = false)
-        {
-            var client = new HttpClient();
-            var res = await client.GetAsync(pinataMsgUri);
-            res.EnsureSuccessStatusCode();
-
-            var jweObj = await res.Content.ReadAsStringAsync();
-            if (jweObj == null) return null;
-
-            using var privKey = Key.Import(
-                KeyAgreementAlgorithm.X25519,
-                privKeyBytes,
-                KeyBlobFormat.RawPrivateKey,
-                new KeyCreationParameters
-                {
-                    ExportPolicy = KeyExportPolicies.AllowPlaintextExport
-                }
-            );
-
-            if (compact)
-            {
-                return JweModel.DecryptCompact(jweObj, privKey);
-            }
-
-            return JweModel.DecryptForRecipient(jweObj, privKey);
-        }
     }
 }

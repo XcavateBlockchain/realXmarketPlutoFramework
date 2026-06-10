@@ -1,0 +1,10 @@
+query BucketMessagesByTag($bucketId: String!, $tag: String!, $after: Cursor) {
+  messages(
+    filter: { bucketId: { equalTo: $bucketId }, tag: { equalTo: $tag } },
+    orderBy: CREATED_BLOCK_ASC,
+    after: $after
+  ) {
+    nodes { id bucketId messageId contributor reference tag description contentType contentHash createdBlock ipfsContent }
+    pageInfo { hasNextPage endCursor }
+  }
+}

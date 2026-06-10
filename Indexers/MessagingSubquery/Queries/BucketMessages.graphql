@@ -1,0 +1,6 @@
+query BucketMessages($bucketId: String!, $after: Cursor) {
+  messages(filter: { bucketId: { equalTo: $bucketId } }, orderBy: CREATED_BLOCK_ASC, after: $after) {
+    nodes { id bucketId messageId contributor reference tag description contentType contentHash createdBlock ipfsContent }
+    pageInfo { hasNextPage endCursor }
+  }
+}

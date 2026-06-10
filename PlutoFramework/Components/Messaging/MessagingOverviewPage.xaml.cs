@@ -1,4 +1,6 @@
 using PlutoFramework.Templates.PageTemplate;
+using PlutoFramework.Model;
+using PlutoFramework.Model.Messaging;
 using System.Collections.ObjectModel;
 
 namespace PlutoFramework.Components.Messaging;
@@ -7,74 +9,143 @@ public partial class MessagingOverviewPage : PageTemplate
 {
     public ObservableCollection<Message> Messages { get; } = new();
 
-    public MessagingOverviewPage()
+    private readonly int _namespaceId;
+    private readonly int _bucketId;
+    private byte[]? _bucketEncryptionKey;
+    private string? _currentCursor;
+    private bool _hasMoreData = true;
+    private bool _isLoading = false;
+    private readonly MessagingModel _messagingModel;
+
+    public MessagingOverviewPage(MessagingModel model, int namespaceId, int bucketId, byte[] bucketEncryptionKey)
     {
         InitializeComponent();
 
-        scrollView.Padding = new Thickness(scrollView.Padding.Right, scrollView.Padding.Bottom,
-            scrollView.Padding.Left, scrollView.Padding.Top);
+        _messagingModel = model;
+        _namespaceId = namespaceId;
+        _bucketId = bucketId;
+        _bucketEncryptionKey = bucketEncryptionKey;
 
         BindingContext = this;
 
-        // Temporary mock msgs
-        AddIncoming("Lorem ipsum", "dolor sit amet, consectetur adipiscing elit. Donec luctus ligula eu" +
-                                   " erat malesuada, vitae scelerisque libero fermentum. Nunc pellentesque ac enim a" +
-                                   " semper. Ut malesuada, eros quis malesuada efficitur, lectus ante euismod neque," +
-                                   " eget ultricies augue augue in nulla. Interdum et malesuada fames ac ante ipsum" +
-                                   " primis in faucibus. Pellentesque eleifend turpis sit amet mi sollicitudin" +
-                                   " sagittis ac eget nisi. Sed lectus augue, iaculis id congue eleifend, vulputate" +
-                                   " quis eros. Nunc porttitor diam congue, rutrum odio a, vehicula felis. Suspendisse" +
-                                   " commodo congue enim. Phasellus auctor neque vitae lorem ornare, vitae consequat" +
-                                   " sem convallis. Vestibulum in erat sit amet tortor condimentum mattis id quis ex." +
-                                   " Donec vel rhoncus odio. Aenean nunc ex, iaculis sed nunc at, scelerisque imperdiet" +
-                                   " ex. Pellentesque sed augue viverra, fermentum arcu eu, placerat orci." +
-                                   " Pellentesque ullamcorper auctor tortor a tristique.",
-                                   "Aug 5, 2025, 10:16 AM", null);
-        AddStatus("A new document has been added");
-        AddOutgoing("qwdadwa awdawd aa dw gaawfd awd dawrfaw", "Aug 5, 2025, 12:34 PM");
-        AddIncoming("Short", "in", "Aug 5, 2025, 12:34 PM", null);
-        AddStatus("Short");
-        AddOutgoing("out", "Aug 5, 2025, 12:34 PM");
-        AddStatus("Super super super super super super super super super long");
-        AddIncoming("Lorem ipsum", "dolor sit amet, consectetur adipiscing elit. Donec luctus ligula eu" +
-                                   " erat malesuada, vitae scelerisque libero fermentum. Nunc pellentesque ac enim a" +
-                                   " semper. Ut malesuada, eros quis malesuada efficitur, lectus ante euismod neque," +
-                                   " eget ultricies augue augue in nulla. Interdum et malesuada fames ac ante ipsum" +
-                                   " primis in faucibus. Pellentesque eleifend turpis sit amet mi sollicitudin" +
-                                   " sagittis ac eget nisi. Sed lectus augue, iaculis id congue eleifend, vulputate" +
-                                   " quis eros. Nunc porttitor diam congue, rutrum odio a, vehicula felis. Suspendisse" +
-                                   " commodo congue enim. Phasellus auctor neque vitae lorem ornare, vitae consequat" +
-                                   " sem convallis. Vestibulum in erat sit amet tortor condimentum mattis id quis ex." +
-                                   " Donec vel rhoncus odio. Aenean nunc ex, iaculis sed nunc at, scelerisque imperdiet" +
-                                   " ex. Pellentesque sed augue viverra, fermentum arcu eu, placerat orci." +
-                                   " Pellentesque ullamcorper auctor tortor a tristique.",
-            "Aug 5, 2025, 10:16 AM", null);
+        LoadMessagesAsync();
+
+        // Set the MessageInputBarView properties after InitializeComponent
+        SetupMessageInputBar();
+    }
+
+    private void SetupMessageInputBar()
+    {
+        var messageInputBar = this.FindByName<MessageInputBarView>("MessageInputBar");
+        if (messageInputBar != null)
+        {
+            messageInputBar.MessagingModel = _messagingModel;
+            messageInputBar.NamespaceId = _namespaceId;
+            messageInputBar.BucketId = _bucketId;
+            messageInputBar.BucketEncryptionKey = _bucketEncryptionKey;
+        }
+    }
+
+    private async Task LoadMessagesAsync()
+    {
+        if (_isLoading || !_hasMoreData) return;
+
+        _isLoading = true;
+
+        try
+        {
+            var userAddress = Substrate.NetApi.Utils.GetAddressFrom(Substrate.NetApi.Utils.GetPublicKeyFrom(KeysModel.GetSubstrateKey()), 0);
+            if (userAddress == null) return;
+
+            var page = await _messagingModel.GetDecryptedBucketMessagesAsync(
+                _bucketId,
+                _bucketEncryptionKey!,
+                _currentCursor
+            );
+
+            foreach (var msg in page.Messages)
+            {
+                var messageType = msg.Contributor == userAddress
+                    ? Message.MessageType.Outgoing
+                    : Message.MessageType.Incoming;
+
+                Console.WriteLine($"Loaded message: {msg.Id}, Type: {messageType}, ContentType: {msg.ContentType}");
+
+                if (msg.ContentType == "text/plain;charset=utf-8")
+                {
+                    AddMessage(
+                        msg.DecryptedContent ?? "[Unable to decrypt]",
+                        messageType,
+                        messageType == Message.MessageType.Incoming ? msg.Contributor : null,
+                        msg.CreatedBlock.ToString(),
+                        null
+                    );
+                }
+                else
+                {
+                    AddMessage(
+                        msg.ContentType == null ? $"[Unsupported content type: {msg.ContentType}]" : "No content type",
+                        messageType,
+                        messageType == Message.MessageType.Incoming ? msg.Contributor : null,
+                        msg.CreatedBlock.ToString(),
+                        Colors.Red
+                    );
+                }
+
+                _hasMoreData = page.HasNextPage;
+                _currentCursor = page.EndCursor;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading messages: {ex}");
+            AddStatus($"Error loading messages: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private void AddMessage(string text, Message.MessageType type, string? sender, string? timestamp, Color? msgColor)
     {
-        Messages.Add(new Message
+        const int MaxLength = 500;
+
+        if (!string.IsNullOrEmpty(text) && text.Length > MaxLength)
         {
-            Text = text,
-            Type = type,
-            Sender = sender,
-            Timestamp = timestamp,
-            MsgColor = msgColor ?? Application.Current.Resources["Primary"] as Color
+            text = text.Substring(0, MaxLength) + "...";
+        }
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Messages.Add(new Message
+            {
+                Text = text,
+                Type = type,
+                Sender = sender,
+                Timestamp = timestamp,
+                MsgColor = msgColor ?? Application.Current.Resources["Primary"] as Color
+            });
         });
     }
 
-    public void AddIncoming(string sender, string text, string timestamp, Color? msgColor)
+    private void AddIncoming(string sender, string text, string timestamp, Color? msgColor)
     {
         AddMessage(text, Message.MessageType.Incoming, sender, timestamp, msgColor);
     }
 
-    public void AddOutgoing(string text, string timestamp)
+    private void AddOutgoing(string text, string timestamp)
     {
         AddMessage(text, Message.MessageType.Outgoing, null, timestamp, null);
     }
 
-    public void AddStatus(string text)
+    private void AddStatus(string text)
     {
         AddMessage(text, Message.MessageType.Status, null, null, null);
+    }
+
+    private void OnRemainingItemsThresholdReached(object sender, EventArgs e)
+    {
+        _ = LoadMessagesAsync();
     }
 }

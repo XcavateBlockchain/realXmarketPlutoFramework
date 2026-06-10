@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Product>MessagingSubquery</Product>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <GraphQL Remove="queries\BucketDetail.graphql" />
+    <GraphQL Remove="queries\BucketMessages.graphql" />
+    <GraphQL Remove="queries\BucketMessagesByTag.graphql" />
+    <GraphQL Remove="queries\MyBuckets.graphql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StrawberryShake.Server" Version="14.0.0-rc.2" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,14 @@
+query BucketDetail($id: String!) {
+  bucket(id: $id) {
+    id namespaceId bucketId creator name category isWritable encryptionKey createdBlock
+    admins(orderBy: ADDED_BLOCK_ASC) {
+      nodes { id bucketId subjectId addedBlock }
+    }
+    contributors(orderBy: ADDED_BLOCK_ASC) {
+      nodes { id bucketId subjectId addedBlock }
+    }
+    messages(orderBy: CREATED_BLOCK_ASC) {
+      nodes { id bucketId messageId contributor reference tag description contentType contentHash createdBlock ipfsContent }
+    }
+  }
+}
