@@ -39,13 +39,8 @@
                             <Label Text="Town City" />
                             <Border StrokeThickness="0"
                                     Padding="12,10"
-                                    BackgroundColor="{AppThemeBinding Light=#fdfdfd, Dark={StaticResource Black}}">
-                                <Border.Shadow>
-                                    <Shadow Brush="Black"
-                                            Offset="0,2"
-                                            Radius="3"
-                                            Opacity="0.1" />
-                                </Border.Shadow>
+                                    BackgroundColor="{AppThemeBinding Light=#fdfdfd, Dark={StaticResource Black}}"
+                                    Shadow="{StaticResource Key=CardShadow}">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="14" />
                                 </Border.StrokeShape>
@@ -68,13 +63,8 @@
                             <Label Text="Property Type" />
                             <Border StrokeThickness="0"
                                     Padding="12,10"
-                                    BackgroundColor="{AppThemeBinding Light=#fdfdfd, Dark={StaticResource Black}}">
-                                <Border.Shadow>
-                                    <Shadow Brush="Black"
-                                            Offset="0,2"
-                                            Radius="3"
-                                            Opacity="0.1" />
-                                </Border.Shadow>
+                                    BackgroundColor="{AppThemeBinding Light=#fdfdfd, Dark={StaticResource Black}}"
+                                    Shadow="{StaticResource Key=CardShadow}">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="14" />
                                 </Border.StrokeShape>
@@ -110,10 +100,10 @@
                         <buttons:BasicGrayButton Text="Cancel" Grid.Column="0"
                                                  Command="{Binding CancelCommand}"/>
 
-                        <buttons:PlutoFrameworkElevatedButton Text="Continue"
-                                                           Grid.Column="1"
-                                                           Command="{Binding ContinueCommand}"
-                                                           ButtonState="{Binding ContinueButtonState}"/>
+                        <buttons:ElevatedButton Text="Continue"
+                                                Grid.Column="1"
+                                                Command="{Binding ContinueCommand}"
+                                                ButtonState="{Binding ContinueButtonState}"/>
                     </Grid>
                 </AbsoluteLayout>
 
