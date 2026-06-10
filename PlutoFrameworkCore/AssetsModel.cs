@@ -2,6 +2,7 @@
 using PlutoFramework.Constants;
 using PlutoFramework.Model.AjunaExt;
 using PlutoFramework.Types;
+using PlutoFrameworkCore;
 using Polkadot.NetApi.Generated.Model.sp_core.crypto;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types.Primitive;
@@ -31,6 +32,51 @@ namespace PlutoFramework.Model
 
         public static Dictionary<AssetKey, Asset> AssetsDict = new Dictionary<AssetKey, Asset>();
 
+        // Check whether the given asset is allowed by the whitelist.
+        public static bool IsAssetWhitelisted(Asset asset)
+        {
+            var whitelist = PlutoConfigurationModel.WhitelistedTokens;
+            if (whitelist == null || whitelist.Count == 0)
+            {
+                return true; // no whitelisting applied
+            }
+
+            var key = (asset.Endpoint.Key, asset.Pallet, asset.AssetId);
+            return whitelist.Contains(key);
+        }
+
+        // Add or update an asset only if it passes whitelist checks.
+        public static void AddOrUpdateAsset(Asset asset, bool overwrite = true)
+        {
+            if (!IsAssetWhitelisted(asset))
+            {
+                return;
+            }
+
+            var key = (asset.Endpoint.Key, asset.Pallet, asset.AssetId);
+
+            if (!AssetsDict.ContainsKey(key) || overwrite)
+            {
+                AssetsDict[key] = asset;
+            }
+        }
+
+        // Remove any assets that are not on the current whitelist.
+        public static void EnforceWhitelist()
+        {
+            var whitelist = PlutoConfigurationModel.WhitelistedTokens;
+            if (whitelist == null || whitelist.Count == 0)
+            {
+                return; // no whitelisting applied
+            }
+
+            var keysToRemove = AssetsDict.Where(kv => !IsAssetWhitelisted(kv.Value)).Select(kv => kv.Key).ToList();
+            foreach (var key in keysToRemove)
+            {
+                AssetsDict.Remove(key);
+            }
+        }
+
         public static IEnumerable<Asset> GetAssetsWithSymbol(string symbol)
         {
             return AssetsDict.Values
@@ -41,12 +87,7 @@ namespace PlutoFramework.Model
         {
             foreach (var asset in assets)
             {
-                var key = (asset.Endpoint.Key, asset.Pallet, asset.AssetId);
-
-                if (!AssetsDict.ContainsKey(key) || overwrite)
-                {
-                    AssetsDict[key] = asset;
-                }
+                AddOrUpdateAsset(asset, overwrite);
             }
 
             CalculateTotalUsdBalance();
@@ -75,7 +116,7 @@ namespace PlutoFramework.Model
         {
             async Task SaveAsync(Asset asset)
             {
-                AssetsDict[(asset.Endpoint.Key, asset.Pallet, asset.AssetId)] = asset;
+                AddOrUpdateAsset(asset, true);
 
                 /*if (DatabaseSaver is not null)
                 {
