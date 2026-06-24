@@ -9,7 +9,7 @@
              AbsoluteLayout.LayoutFlags="All"
              BackgroundColor="#66000000">
 
-    <card:BottomPopupCard Title="Not whitelisted"
+    <card:BottomPopupCard Title="Not authorised"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
             <AbsoluteLayout>
@@ -40,9 +40,7 @@
                                                                ButtonState="{Binding ContinueButtonState}"/>
                     </Grid>
                 </AbsoluteLayout>
-
             </AbsoluteLayout>
-
         </card:BottomPopupCard.View>
     </card:BottomPopupCard>
 </ContentView>
