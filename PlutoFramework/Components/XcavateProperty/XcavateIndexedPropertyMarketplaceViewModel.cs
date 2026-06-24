@@ -35,8 +35,10 @@ namespace PlutoFramework.Components.XcavateProperty
         private string lastLoadedPropertyType = string.Empty;
         private bool hasLoadedQuery;
         private readonly object searchDebounceLock = new();
+        private readonly object loadingCancellationLock = new();
         private readonly SemaphoreSlim searchExecutionSemaphore = new(1, 1);
         private CancellationTokenSource? searchDebounceCts;
+        private CancellationTokenSource? activeLoadingCts;
 
         public override string Title => "Property Marketplace";
 
@@ -49,6 +51,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public override async Task LoadMoreAsync(CancellationToken token)
         {
+            token.ThrowIfCancellationRequested();
+
             if (Loading || !hasMore || substrateClient is null)
             {
                 return;
@@ -67,6 +71,8 @@ namespace PlutoFramework.Components.XcavateProperty
                         includesPropertyName: includesPropertyName)
                     .ConfigureAwait(false);
 
+                token.ThrowIfCancellationRequested();
+
                 if (results.Count == 0)
                 {
                     hasMore = false;
@@ -78,6 +84,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 foreach (var result in results)
                 {
+                    token.ThrowIfCancellationRequested();
+
                     XcavateNftWrapper newNft = await XcavatePropertyModel.ToXcavateNftWrapperAsync(result, token);
 
                     if (!ItemsDict.ContainsKey(newNft.Key))
@@ -98,10 +106,19 @@ namespace PlutoFramework.Components.XcavateProperty
 
                         MainThread.BeginInvokeOnMainThread(() =>
                         {
+                            if (token.IsCancellationRequested)
+                            {
+                                return;
+                            }
+
                             Items.Add(newNft);
                         });
                     }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when a refresh/navigation starts a newer load operation.
             }
             catch (Exception ex)
             {
@@ -114,6 +131,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public override async Task InitialLoadAsync(CancellationToken token)
         {
+            token = StartNewLoadingOperation(token);
+
             if (Items.Count > 0 && IsSameLoadedQuery(includesPropertyName, includesTownCity, includesPropertyType))
             {
                 return;
@@ -121,15 +140,26 @@ namespace PlutoFramework.Components.XcavateProperty
 
             Loading = true;
 
-            if (substrateClient is null)
+            try
             {
-                substrateClient = (SubstrateClientExt)(await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, token).ConfigureAwait(false)).SubstrateClient;
+                if (substrateClient is null)
+                {
+                    substrateClient = (SubstrateClientExt)(await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, token).ConfigureAwait(false)).SubstrateClient;
+                }
+
+                token.ThrowIfCancellationRequested();
+
+                offset = 0;
+                hasMore = true;
             }
-
-            offset = 0;
-            hasMore = true;
-
-            Loading = false;
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            finally
+            {
+                Loading = false;
+            }
 
             await LoadMoreAsync(token).ConfigureAwait(false);
         }
@@ -234,7 +264,15 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 Clear();
                 await InitialLoadAsync(CancellationToken.None).ConfigureAwait(false);
-                RememberLoadedQuery();
+
+                if (!IsActiveLoadingCanceled())
+                {
+                    RememberLoadedQuery();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when replaced by a newer refresh or when page disappears.
             }
             finally
             {
@@ -268,6 +306,42 @@ namespace PlutoFramework.Components.XcavateProperty
                 searchDebounceCts?.Cancel();
                 searchDebounceCts?.Dispose();
                 searchDebounceCts = null;
+            }
+        }
+
+        public void CancelPendingOperations()
+        {
+            CancelPendingDebouncedSearch();
+            CancelActiveLoading();
+        }
+
+        private CancellationToken StartNewLoadingOperation(CancellationToken token)
+        {
+            lock (loadingCancellationLock)
+            {
+                activeLoadingCts?.Cancel();
+                activeLoadingCts?.Dispose();
+
+                activeLoadingCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                return activeLoadingCts.Token;
+            }
+        }
+
+        private void CancelActiveLoading()
+        {
+            lock (loadingCancellationLock)
+            {
+                activeLoadingCts?.Cancel();
+                activeLoadingCts?.Dispose();
+                activeLoadingCts = null;
+            }
+        }
+
+        private bool IsActiveLoadingCanceled()
+        {
+            lock (loadingCancellationLock)
+            {
+                return activeLoadingCts?.IsCancellationRequested ?? false;
             }
         }
 

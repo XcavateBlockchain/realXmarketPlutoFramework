@@ -375,6 +375,11 @@ namespace PlutoFramework.Model
             return Preferences.Get(PreferencesModel.PUBLIC_KEY, "Substrate key does not exist");
         }
 
+        public static string GetSubstrateKey(short ss58prefix)
+        {
+            return Utils.GetAddressFrom(Utils.GetPublicKeyFrom(KeysModel.GetSubstrateKey()), ss58prefix);
+        }
+
         public static async Task<string> GetDidAddressAsync(CancellationToken token)
         {
             var dids = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Did);

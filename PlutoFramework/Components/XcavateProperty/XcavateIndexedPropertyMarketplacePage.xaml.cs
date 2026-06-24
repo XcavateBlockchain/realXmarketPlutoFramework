@@ -28,6 +28,7 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
     protected override void OnDisappearing()
     {
         viewModel.AutoSearchCompleted -= OnAutoSearchCompleted;
+        viewModel.CancelPendingOperations();
         base.OnDisappearing();
     }
 

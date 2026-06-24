@@ -8,6 +8,7 @@ namespace PlutoFramework.Model
     public class SubstrateClientModel
     {
         public static Dictionary<EndpointEnum, Task<PlutoFrameworkSubstrateClient>> Clients = new Dictionary<EndpointEnum, Task<PlutoFrameworkSubstrateClient>>();
+        private static readonly object ClientsLock = new();
 
         /// <summary>
         /// Disconnects the endpoint efficiently
@@ -16,14 +17,19 @@ namespace PlutoFramework.Model
         /// <param name="token">Cancellation token</param>
         public static async Task RemoveAndDisconnectSubstrateClientAsync(EndpointEnum endpointKey, CancellationToken token)
         {
-            if (!Clients.ContainsKey(endpointKey))
+            Task<PlutoFrameworkSubstrateClient>? clientTask;
+
+            lock (ClientsLock)
             {
-                return;
+                if (!Clients.TryGetValue(endpointKey, out clientTask))
+                {
+                    return;
+                }
+
+                Clients.Remove(endpointKey);
             }
 
-           (await Clients[endpointKey].WithCancellation(token)).Disconnect();
-
-            Clients.Remove(endpointKey);
+            (await clientTask.WithCancellation(token).ConfigureAwait(false)).Disconnect();
         }
 
         /// <summary>
@@ -32,7 +38,7 @@ namespace PlutoFramework.Model
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Main Substrate Client</returns>
-        public static Task<PlutoFrameworkSubstrateClient> GetMainSubstrateClientAsync(CancellationToken token) => GetOrAddSubstrateClientAsync(DependencyService.Get<MultiNetworkSelectViewModel>().SelectedKey ?? EndpointEnum.None, CancellationToken.None);
+        public static Task<PlutoFrameworkSubstrateClient> GetMainSubstrateClientAsync(CancellationToken token) => GetOrAddSubstrateClientAsync(DependencyService.Get<MultiNetworkSelectViewModel>().SelectedKey ?? EndpointEnum.None, token);
 
         /// <summary>
         ///
@@ -48,34 +54,59 @@ namespace PlutoFramework.Model
                 throw new Exception("Endpoint was None");
             }
 
-            if (!Clients.ContainsKey(endpointKey))
+            Task<PlutoFrameworkSubstrateClient> clientTask;
+
+            lock (ClientsLock)
             {
-                Clients.Add(endpointKey, ConnectSubstrateClientAsync(endpointKey));
+                if (!Clients.TryGetValue(endpointKey, out clientTask))
+                {
+                    clientTask = ConnectSubstrateClientAsync(endpointKey, token);
+                    Clients[endpointKey] = clientTask;
+                }
             }
 
-            var client = await Clients[endpointKey];
+            PlutoFrameworkSubstrateClient client;
+
+            try
+            {
+                client = await clientTask.WithCancellation(token).ConfigureAwait(false);
+            }
+            catch
+            {
+                lock (ClientsLock)
+                {
+                    if (Clients.TryGetValue(endpointKey, out var cachedTask) && ReferenceEquals(cachedTask, clientTask))
+                    {
+                        Clients.Remove(endpointKey);
+                    }
+                }
+
+                throw;
+            }
 
             // Client is not connected, reconnect it
-            if (!await client.IsConnectedAsync())
+            if (!await client.IsConnectedAsync().WithCancellation(token).ConfigureAwait(false))
             {
-                await client.ConnectAndLoadMetadataAsync();
+                await client.ConnectAndLoadMetadataAsync().WithCancellation(token).ConfigureAwait(false);
             }
 
             return client;
         }
 
-        private static async Task<PlutoFrameworkSubstrateClient> ConnectSubstrateClientAsync(EndpointEnum endpointKey)
+        private static async Task<PlutoFrameworkSubstrateClient> ConnectSubstrateClientAsync(EndpointEnum endpointKey, CancellationToken token)
         {
+            token.ThrowIfCancellationRequested();
+
             Endpoint endpoint = EndpointsModel.GetEndpoint(endpointKey);
 
-            string bestWebSecket = await WebSocketModel.GetFastestWebSocketAsync(endpoint.URLs);
+            string bestWebSecket = await WebSocketModel.GetFastestWebSocketAsync(endpoint.URLs).WithCancellation(token).ConfigureAwait(false);
 
             var newClient = new PlutoFrameworkSubstrateClient(
                 endpoint,
                 new Uri(bestWebSecket),
                 Substrate.NetApi.Model.Extrinsics.ChargeTransactionPayment.Default());
 
-            await newClient.ConnectAndLoadMetadataAsync();
+            await newClient.ConnectAndLoadMetadataAsync().WithCancellation(token).ConfigureAwait(false);
 
             return newClient;
         }
@@ -90,23 +121,39 @@ namespace PlutoFramework.Model
         /// <param name="reload">Reload data?</param>
         public static async Task ChangeConnectedClientsAsync(IEnumerable<EndpointEnum> endpointKeys, CancellationToken token, bool reload = true)
         {
-            #region Remove clients that are not used anymore
-            foreach (var key in Clients.Keys)
+            var requestedKeys = new HashSet<EndpointEnum>();
+            foreach (var endpointKey in endpointKeys)
             {
-                if (!endpointKeys.Contains(key))
+                if (endpointKey != EndpointEnum.None)
                 {
-                    await RemoveAndDisconnectSubstrateClientAsync(key, token);
+                    requestedKeys.Add(endpointKey);
                 }
+            }
+
+            List<EndpointEnum> keysToRemove = [];
+
+            lock (ClientsLock)
+            {
+                foreach (var key in Clients.Keys)
+                {
+                    if (!requestedKeys.Contains(key))
+                    {
+                        keysToRemove.Add(key);
+                    }
+                }
+            }
+
+            #region Remove clients that are not used anymore
+            foreach (var key in keysToRemove)
+            {
+                await RemoveAndDisconnectSubstrateClientAsync(key, token).ConfigureAwait(false);
             }
             #endregion
 
             #region Connect new clients
-            foreach (var endpointKey in endpointKeys)
+            foreach (var endpointKey in requestedKeys)
             {
-                if (!Clients.ContainsKey(endpointKey))
-                {
-                    Clients.Add(endpointKey, ConnectSubstrateClientAsync(endpointKey));
-                }
+                await GetOrAddSubstrateClientAsync(endpointKey, token).ConfigureAwait(false);
             }
             #endregion
 
@@ -115,7 +162,7 @@ namespace PlutoFramework.Model
                 return;
             }
 
-            await MainPageLayoutUpdater.ReloadAsync(token);
+            await MainPageLayoutUpdater.ReloadAsync(token).ConfigureAwait(false);
         }
 
         /// <summary>

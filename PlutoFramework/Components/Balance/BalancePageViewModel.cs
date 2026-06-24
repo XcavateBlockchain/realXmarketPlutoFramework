@@ -55,7 +55,7 @@ namespace PlutoFramework.Components.Balance
 
             foreach (var a in Model.AssetsModel.AssetsDict.Values)
             {
-                if (a.Amount > 0 || a.Pallet == AssetPallet.Native)
+                if (a.Amount > 0 || a.Pallet == AssetPallet.Native || a.Pallet == AssetPallet.Assets || a.Pallet == AssetPallet.Tokens)
                 {
                     tempAssets.Add(new AssetInfo
                     {
