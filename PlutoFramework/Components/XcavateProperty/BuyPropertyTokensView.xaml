@@ -91,22 +91,9 @@
                         </Label>
                     </AbsoluteLayout>
 
-                    <Label Text="{Binding ErrorMessage}"
+                        <Label Text="{Binding ErrorMessage}"
                            IsVisible="{Binding ErrorIsVisible}"
                            TextColor="Red" />
-
-                    <card:TextCard Margin="20, 0, 20, 0">
-                        <card:TextCard.FormattedText>
-                            <FormattedString>
-                                <Span Text="Don’t invest unless you’re prepared to lose all the money you invest. This is a high-risk investment and you are unlikely to be protected if something goes wrong. "
-                  FontAttributes="Bold" />
-                                <hyperlink:Link Text="Take 2 mins to learn more."
-                            Url="https://app.realxmarket.io/risk-warning"
-                            TextColor="{StaticResource Primary}"
-                            FontAttributes="Bold"/>
-                            </FormattedString>
-                        </card:TextCard.FormattedText>
-                    </card:TextCard>
 
                     </VerticalStackLayout>
                 </ScrollView>
