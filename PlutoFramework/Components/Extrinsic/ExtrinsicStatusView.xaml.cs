@@ -2,6 +2,7 @@
 using Substrate.NetApi.Model.Types.Base;
 using PlutoFramework.Components.Events;
 using System.Numerics;
+using Microsoft.Maui.ApplicationModel;
 
 namespace PlutoFramework.Components.Extrinsic;
 
@@ -9,6 +10,8 @@ public partial class ExtrinsicStatusView : ContentView
 {
 
     private bool clicked = false;
+
+    private CancellationTokenSource? _autoDismissCancellationTokenSource;
 
     private Queue<(float x, float y)> _positions = new Queue<(float, float)>();
 
@@ -24,6 +27,7 @@ public partial class ExtrinsicStatusView : ContentView
         defaultBindingMode: BindingMode.TwoWay,
         propertyChanging: (bindable, oldValue, newValue) => {
             var control = (ExtrinsicStatusView)bindable;
+            control.HandleAutoDismissOnStatusChanged((ExtrinsicStatusEnum)newValue);
 
             switch ((ExtrinsicStatusEnum)newValue)
             {
@@ -61,6 +65,57 @@ public partial class ExtrinsicStatusView : ContentView
                     break;
             }
         });
+
+    private void HandleAutoDismissOnStatusChanged(ExtrinsicStatusEnum newStatus)
+    {
+        _autoDismissCancellationTokenSource?.Cancel();
+        _autoDismissCancellationTokenSource?.Dispose();
+        _autoDismissCancellationTokenSource = null;
+
+        if (newStatus != ExtrinsicStatusEnum.FinalizedSuccess)
+        {
+            return;
+        }
+
+        var currentExtrinsicId = ExtrinsicId;
+
+        if (string.IsNullOrWhiteSpace(currentExtrinsicId))
+        {
+            return;
+        }
+
+        var cancellationTokenSource = new CancellationTokenSource();
+        _autoDismissCancellationTokenSource = cancellationTokenSource;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationTokenSource.Token);
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    if (cancellationTokenSource.IsCancellationRequested ||
+                        Status != ExtrinsicStatusEnum.FinalizedSuccess ||
+                        ExtrinsicId != currentExtrinsicId)
+                    {
+                        return;
+                    }
+
+                    var extrinsicStackViewModel = DependencyService.Get<ExtrinsicStatusStackViewModel>();
+
+                    if (extrinsicStackViewModel.Extrinsics.ContainsKey(currentExtrinsicId))
+                    {
+                        extrinsicStackViewModel.Extrinsics.Remove(currentExtrinsicId);
+                        extrinsicStackViewModel.Update();
+                    }
+                });
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        });
+    }
 
     public static readonly BindableProperty HashProperty = BindableProperty.Create(
         nameof(Hash), typeof(Hash), typeof(ExtrinsicStatusView),
@@ -168,6 +223,8 @@ public partial class ExtrinsicStatusView : ContentView
 
     async void OnCloseClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)
     {
+        _autoDismissCancellationTokenSource?.Cancel();
+
         var extrinsicStackViewModel = DependencyService.Get<ExtrinsicStatusStackViewModel>();
 
         extrinsicStackViewModel.Extrinsics.Remove(ExtrinsicId);
@@ -216,6 +273,8 @@ public partial class ExtrinsicStatusView : ContentView
             }
 
             var extrinsicStackViewModel = DependencyService.Get<ExtrinsicStatusStackViewModel>();
+
+            _autoDismissCancellationTokenSource?.Cancel();
 
             extrinsicStackViewModel.Extrinsics.Remove(ExtrinsicId);
 
