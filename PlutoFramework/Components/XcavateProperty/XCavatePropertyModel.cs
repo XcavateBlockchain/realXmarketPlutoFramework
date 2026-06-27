@@ -15,27 +15,61 @@ namespace PlutoFramework.Components.XcavateProperty
 {
     public class XcavatePropertyModel
     {
+        private static readonly object S3ClientLock = new();
+        private static IAmazonS3? cachedS3Client;
+        private static bool s3ClientInitialized;
+
+        private static IAmazonS3? GetOrCreateS3Client()
+        {
+            lock (S3ClientLock)
+            {
+                if (s3ClientInitialized)
+                {
+                    return cachedS3Client;
+                }
+
+                s3ClientInitialized = true;
+
+                try
+                {
+                    var configuration = MauiAppBuilderExtensions.Services.GetService<IConfiguration>();
+                    var accessKey = configuration?.GetValue<string>("DYNAMO_ACCESS_KEY");
+                    var secretKey = configuration?.GetValue<string>("DYNAMO_SECRET_KEY");
+
+                    if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey))
+                    {
+                        return null;
+                    }
+
+                    cachedS3Client = new AmazonS3Client(accessKey, secretKey, RegionEndpoint.EUWest1);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+
+                return cachedS3Client;
+            }
+        }
+
         public static async Task<XcavateNftWrapper> ToXcavateNftWrapperAsync(INftXcavateBase nft, CancellationToken token)
         {
-            Console.WriteLine("Wrapping property");
             try
             {
-                var configuration = MauiAppBuilderExtensions.Services.GetService<IConfiguration>();
-
-                RegionEndpoint region = RegionEndpoint.EUWest1;
-
-                IAmazonS3 s3Client = new AmazonS3Client(
-                    configuration.GetValue<string>("DYNAMO_ACCESS_KEY"),
-                    configuration.GetValue<string>("DYNAMO_SECRET_KEY"),
-                    region);
+                var s3Client = GetOrCreateS3Client();
 
                 // Handle S3
-                if (nft?.XcavateMetadata?.Files is not null)
+                if (s3Client is not null && nft?.XcavateMetadata?.Files is not null)
                 {
                     var images = new List<string>();
 
                     foreach (var file in nft.XcavateMetadata.Files.Where(file =>
-                        file != null && file.Length > 5 && (file.Contains(".jpg") || file.Contains(".jpeg") || file.Contains(".png")) && file[0] == '5'
+                        !string.IsNullOrWhiteSpace(file)
+                        && file.Length > 5
+                        && (file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                            || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                            || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                        && file[0] == '5'
                     ))
                     {
                         const string bucketName = "real-marketplace-properties";
@@ -46,16 +80,8 @@ namespace PlutoFramework.Components.XcavateProperty
                     }
                     nft.XcavateMetadata.Files = images;
                 }
-                else
-                {
-                    Console.WriteLine("Nft was null: " + nft is null);
-                }
 
-                Console.WriteLine("Nft: ");
-
-                Console.WriteLine(nft);
-
-                if (nft.Metadata is not null && nft.Metadata.Image is null)
+                if (nft.Metadata is not null && string.IsNullOrWhiteSpace(nft.Metadata.Image))
                 {
                     nft.Metadata.Image = "noimage.png";
                 }
@@ -66,7 +92,8 @@ namespace PlutoFramework.Components.XcavateProperty
                 Console.WriteLine(ex);
             }
 
-            var substrateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(PlutoFrameworkCore.NftModel.GetEndpointKey(nft.Type), token);
+            var endpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(nft.Type);
+            var substrateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(endpointKey, token);
 
             uint blockNumber = (uint)await BlockModel.GetCachedBlockNumberAsync(substrateClient, token).ConfigureAwait(false);
 
@@ -85,7 +112,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 ClaimHasExpired = blockNumber > claimExpiry,
                 TimeLeftToClaim = blockNumber <= claimExpiry ? TimeSpan.FromSeconds(6 * (claimExpiry - blockNumber)) : null,
                 SpvCreated = ((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails?.SpvCreated ?? true,
-                Endpoint = Endpoints.GetEndpointDictionary[PlutoFrameworkCore.NftModel.GetEndpointKey(nft.Type)]
+                Endpoint = Endpoints.GetEndpointDictionary[endpointKey]
             };
         }
 
