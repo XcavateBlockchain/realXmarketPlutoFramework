@@ -6,6 +6,7 @@
                    xmlns:page="clr-namespace:PlutoFramework.Templates.PageTemplate"
                    xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                    xmlns:hyperlink="clr-namespace:PlutoFramework.Components.Hyperlink"
+                   xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
                    Title=""
                    NavigationBarHasShadow="False">
     <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
@@ -24,7 +25,7 @@
                    Grid.Column="0">
                     <Label.FormattedText>
                         <FormattedString>
-                            <Span FontAttributes="Bold" Text="Questionnaire" />
+                            <Span FontAttributes="Bold" Text="{Binding SectionTitle}" />
                         </FormattedString>
                     </Label.FormattedText>
                 </Label>
@@ -43,7 +44,7 @@
                 <Label.FormattedText>
                     <FormattedString>
                         <Span FontAttributes="Bold"
-                  Text="{Binding Question.Heading}"/>
+                  Text="{Binding SectionTitle}"/>
                     </FormattedString>
                 </Label.FormattedText>
             </Label>
@@ -55,7 +56,7 @@
                 <Label.FormattedText>
                     <FormattedString>
                         <Span FontAttributes="Bold"
-                          Text="{Binding Question.QuestionText}"/>
+                          Text="{Binding QuestionText}"/>
                     </FormattedString>
                 </Label.FormattedText>
             </Label>
@@ -67,75 +68,37 @@
                TextColor="#717171">
                 <Label.FormattedText>
                     <FormattedString>
-                        <Span Text="Please select a response" />
+                        <Span Text="{Binding PromptText}" />
                     </FormattedString>
                 </Label.FormattedText>
             </Label>
 
-            <!-- Answers -->
-            <Label HorizontalOptions="Start"
-               HorizontalTextAlignment="Start"
-               LineBreakMode="WordWrap"
-               Margin="20, 20, 20, 20"
-               FontSize="20">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="{Binding Answer0}" FontAttributes="{Binding Answer0FontAttributes}" />
-                    </FormattedString>
-                </Label.FormattedText>
+            <CollectionView ItemsSource="{Binding AnswerOptions}"
+                            IsVisible="{Binding IsOptionsVisible}"
+                            Margin="20, 0, 20, 20"
+                            SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <buttons:BasicGrayButton Text="{Binding .}"
+                                                 Margin="0, 8, 0, 8"
+                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type page:PageTemplate}}, Path=BindingContext.SelectAnswerCommand}"
+                                                 CommandParameter="{Binding .}" />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
-                <Label.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding SelectAnswerCommand}" CommandParameter="0" />
-                </Label.GestureRecognizers>
-            </Label>
+            <VerticalStackLayout IsVisible="{Binding IsTextInputVisible}"
+                                 Margin="20, 0, 20, 20"
+                                 Spacing="12">
+                <Entry Text="{Binding TextAnswer}"
+                       Placeholder="Enter your answer"
+                       ReturnType="Done"
+                       ClearButtonVisibility="WhileEditing" />
 
-            <Label HorizontalOptions="Start"
-               HorizontalTextAlignment="Start"
-               LineBreakMode="WordWrap"
-               Margin="20, 20, 20, 20"
-               FontSize="20">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="{Binding Answer1}" FontAttributes="{Binding Answer1FontAttributes}" />
-                    </FormattedString>
-                </Label.FormattedText>
-
-                <Label.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding SelectAnswerCommand}" CommandParameter="1" />
-                </Label.GestureRecognizers>
-            </Label>
-
-            <Label HorizontalOptions="Start"
-               HorizontalTextAlignment="Start"
-               LineBreakMode="WordWrap"
-               Margin="20, 20, 20, 20"
-               FontSize="20">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="{Binding Answer2}" FontAttributes="{Binding Answer2FontAttributes}" />
-                    </FormattedString>
-                </Label.FormattedText>
-
-                <Label.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding SelectAnswerCommand}" CommandParameter="2" />
-                </Label.GestureRecognizers>
-            </Label>
-
-            <Label HorizontalOptions="Start"
-               HorizontalTextAlignment="Start"
-               LineBreakMode="WordWrap"
-               Margin="20, 20, 20, 20"
-               FontSize="20">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="{Binding Answer3}" FontAttributes="{Binding Answer3FontAttributes}" />
-                    </FormattedString>
-                </Label.FormattedText>
-
-                <Label.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding SelectAnswerCommand}" CommandParameter="3" />
-                </Label.GestureRecognizers>
-            </Label>
+                <buttons:ElevatedButton Text="Continue"
+                                        Command="{Binding SubmitTextAnswerCommand}"
+                                        ButtonState="{Binding SubmitTextAnswerButtonState}" />
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
 </page:PageTemplate>
