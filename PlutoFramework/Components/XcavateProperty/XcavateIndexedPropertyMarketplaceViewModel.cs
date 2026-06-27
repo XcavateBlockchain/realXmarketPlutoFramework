@@ -37,8 +37,10 @@ namespace PlutoFramework.Components.XcavateProperty
         private readonly object searchDebounceLock = new();
         private readonly object loadingCancellationLock = new();
         private readonly SemaphoreSlim searchExecutionSemaphore = new(1, 1);
+        private readonly SemaphoreSlim loadMoreSemaphore = new(1, 1);
         private CancellationTokenSource? searchDebounceCts;
         private CancellationTokenSource? activeLoadingCts;
+        private bool isBackgroundHydrationRunning;
 
         public override string Title => "Property Marketplace";
 
@@ -53,15 +55,22 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             token.ThrowIfCancellationRequested();
 
-            if (Loading || !hasMore || substrateClient is null)
+            if (!hasMore || substrateClient is null)
             {
                 return;
             }
 
-            Loading = true;
+            await loadMoreSemaphore.WaitAsync(token).ConfigureAwait(false);
 
             try
             {
+                if (Loading || !hasMore || substrateClient is null)
+                {
+                    return;
+                }
+
+                Loading = true;
+
                 var results = await XcavateIndexerModel.GetMarketplaceListedPropertiesAsync(
                         substrateClient,
                         first: (int)LIMIT,
@@ -82,38 +91,43 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 offset += results.Count;
 
-                foreach (var result in results)
+                var wrappedResults = await Task.WhenAll(
+                    results.Select(result => XcavatePropertyModel.ToXcavateNftWrapperAsync(result, token)))
+                    .ConfigureAwait(false);
+
+                token.ThrowIfCancellationRequested();
+
+                var newItems = new List<XcavateNftWrapper>(wrappedResults.Length);
+                foreach (var newNft in wrappedResults)
                 {
-                    token.ThrowIfCancellationRequested();
-
-                    XcavateNftWrapper newNft = await XcavatePropertyModel.ToXcavateNftWrapperAsync(result, token);
-
                     if (!ItemsDict.ContainsKey(newNft.Key))
                     {
                         ItemsDict.Add(newNft.Key, newNft);
-
-                        try
-                        {
-                            await XcavatePropertyDatabase.SavePropertyAsync(newNft).ConfigureAwait(false);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("Error saving to DB: ");
-                            Console.WriteLine(ex);
-
-                            await XcavatePropertyDatabase.DropAsync().ConfigureAwait(false);
-                        }
-
-                        MainThread.BeginInvokeOnMainThread(() =>
-                        {
-                            if (token.IsCancellationRequested)
-                            {
-                                return;
-                            }
-
-                            Items.Add(newNft);
-                        });
+                        newItems.Add(newNft);
                     }
+                }
+
+                if (newItems.Count > 0)
+                {
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        if (token.IsCancellationRequested)
+                        {
+                            return;
+                        }
+
+                        foreach (var newNft in newItems)
+                        {
+                            Items.Add(newNft);
+                        }
+                    });
+
+                    _ = PersistPropertiesAsync(newItems);
+                }
+
+                if (results.Count < LIMIT)
+                {
+                    hasMore = false;
                 }
             }
             catch (OperationCanceledException)
@@ -125,8 +139,11 @@ namespace PlutoFramework.Components.XcavateProperty
                 Console.WriteLine("Indexed nft list error: ");
                 Console.WriteLine(ex);
             }
-
-            Loading = false;
+            finally
+            {
+                Loading = false;
+                loadMoreSemaphore.Release();
+            }
         }
 
         public override async Task InitialLoadAsync(CancellationToken token)
@@ -137,8 +154,6 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 return;
             }
-
-            Loading = true;
 
             try
             {
@@ -151,17 +166,14 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 offset = 0;
                 hasMore = true;
+
+                await LoadMoreAsync(token).ConfigureAwait(false);
+                _ = HydrateRemainingAsync(token);
             }
             catch (OperationCanceledException)
             {
                 return;
             }
-            finally
-            {
-                Loading = false;
-            }
-
-            await LoadMoreAsync(token).ConfigureAwait(false);
         }
 
         [RelayCommand]
@@ -335,6 +347,8 @@ namespace PlutoFramework.Components.XcavateProperty
                 activeLoadingCts?.Dispose();
                 activeLoadingCts = null;
             }
+
+            isBackgroundHydrationRunning = false;
         }
 
         private bool IsActiveLoadingCanceled()
@@ -372,6 +386,52 @@ namespace PlutoFramework.Components.XcavateProperty
             Items.Clear();
             offset = 0;
             hasMore = true;
+            isBackgroundHydrationRunning = false;
+        }
+
+        private async Task HydrateRemainingAsync(CancellationToken token)
+        {
+            if (isBackgroundHydrationRunning)
+            {
+                return;
+            }
+
+            isBackgroundHydrationRunning = true;
+
+            try
+            {
+                while (hasMore)
+                {
+                    token.ThrowIfCancellationRequested();
+                    await LoadMoreAsync(token).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when a new search/refresh starts.
+            }
+            finally
+            {
+                isBackgroundHydrationRunning = false;
+            }
+        }
+
+        private static async Task PersistPropertiesAsync(IReadOnlyList<XcavateNftWrapper> items)
+        {
+            try
+            {
+                foreach (var item in items)
+                {
+                    await XcavatePropertyDatabase.SavePropertyAsync(item).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error saving to DB: ");
+                Console.WriteLine(ex);
+
+                await XcavatePropertyDatabase.DropAsync().ConfigureAwait(false);
+            }
         }
     }
 }

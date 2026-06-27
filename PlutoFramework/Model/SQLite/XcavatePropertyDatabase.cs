@@ -120,22 +120,12 @@ namespace PlutoFramework.Model.SQLite
 
         public static async Task<int> SavePropertyAsync(NftWrapper property)
         {
-            Console.WriteLine(JsonSerializer.Serialize((INftXcavateBase)property.NftBase));
-
             var databaseItem = property.ToDatabaseItem();
 
             await InitAsync().ConfigureAwait(false);
 
-            var exists = (await Database.FindAsync<XcavatePropertyDatabaseItem>(databaseItem.Key).ConfigureAwait(false)) is not null;
-
-            if (exists)
-            {
-                return await Database.UpdateAsync(databaseItem).ConfigureAwait(false);
-            }
-            else
-            {
-                return await Database.InsertAsync(databaseItem).ConfigureAwait(false);
-            }
+            // A single write avoids an extra existence query on hot list-loading paths.
+            return await Database.InsertOrReplaceAsync(databaseItem).ConfigureAwait(false);
         }
 
         public static async Task DeleteAllAsync()

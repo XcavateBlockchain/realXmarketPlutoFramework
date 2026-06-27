@@ -4,6 +4,8 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
 {
     private readonly XcavateIndexedPropertyMarketplaceViewModel viewModel;
     private readonly PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel navigationBarViewModel;
+    private CancellationTokenSource? initializationCts;
+    private bool isInitialized;
     private bool manualSearchRequested;
 
     public XcavateIndexedPropertyMarketplacePage()
@@ -27,6 +29,10 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        initializationCts?.Cancel();
+        initializationCts?.Dispose();
+        initializationCts = null;
+
         viewModel.AutoSearchCompleted -= OnAutoSearchCompleted;
         viewModel.CancelPendingOperations();
         base.OnDisappearing();
@@ -36,11 +42,30 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
     {
         base.OnNavigatedTo(args);
 
-        await Task.Delay(100);
+        if (isInitialized)
+        {
+            return;
+        }
 
-        navigationBarViewModel.Selected = PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel.XcavateNavigationBarSelection.Marketplace;
+        isInitialized = true;
 
-        await viewModel.InitialLoadAsync(CancellationToken.None);
+        initializationCts?.Cancel();
+        initializationCts?.Dispose();
+        initializationCts = new CancellationTokenSource();
+        var token = initializationCts.Token;
+
+        try
+        {
+            await Task.Delay(100, token);
+
+            navigationBarViewModel.Selected = PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel.XcavateNavigationBarSelection.Marketplace;
+
+            await viewModel.InitialLoadAsync(token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Page disappeared while initialization work was running.
+        }
     }
 
     private void OnMarketplaceTapped(object? sender, TappedEventArgs e)
