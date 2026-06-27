@@ -51,10 +51,16 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_xcavate_whitelist.pallet
         /// A user���s compliance status has been updated.
         /// </summary>
         PermissionUpdated = 4,
+        
+        /// <summary>
+        /// >> Airdropped
+        /// Tokens were airdropped to a user on role assignment.
+        /// </summary>
+        Airdropped = 5,
     }
     
     /// <summary>
-    /// >> 189 - Variant[pallet_xcavate_whitelist.pallet.Event]
+    /// >> 70 - Variant[pallet_xcavate_whitelist.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>
@@ -70,6 +76,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_xcavate_whitelist.pallet
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>(Event.AdminRegistered);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>(Event.AdminRemoved);
 				AddTypeDecoder<BaseTuple<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, XcavatePaseo.NetApi.Generated.Model.pallet_xcavate_whitelist.pallet.EnumRole, XcavatePaseo.NetApi.Generated.Model.pallet_xcavate_whitelist.pallet.EnumAccessPermission>>(Event.PermissionUpdated);
+				AddTypeDecoder<BaseTuple<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128>>(Event.Airdropped);
         }
     }
 }

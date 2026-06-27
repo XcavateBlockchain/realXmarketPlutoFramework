@@ -372,7 +372,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             fullPageLoadingViewModel.IsVisible = false;
 
-            var method = MarketplaceCalls.ClaimPropertyToken(ListingDetails?.AssetId);
+            var method = MarketplaceCalls.ClaimPropertyShares(ListingDetails?.AssetId);
 
             // Submitting the extrinsic
             var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();

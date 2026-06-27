@@ -56,9 +56,9 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("PropertyGovernance", "AssetLettingChallenge"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(Substrate.NetApi.Model.Types.Primitive.U64)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("PropertyGovernance", "ProposalRoundsExpiring"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT64)));
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT24)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("PropertyGovernance", "ChallengeRoundsExpiring"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT64)));
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT24)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("PropertyGovernance", "LastAutoExecutionBlock"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(Substrate.NetApi.Model.Types.Primitive.U32)));
         }
@@ -364,10 +364,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> ProposalRoundsExpiring
         ///  Stores asset IDs for proposal votings ending at a specific block.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT64> ProposalRoundsExpiring(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT24> ProposalRoundsExpiring(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
         {
             string parameters = PropertyGovernanceStorage.ProposalRoundsExpiringParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT64>(parameters, blockhash, token);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT24>(parameters, blockhash, token);
             return result;
         }
         
@@ -395,10 +395,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> ChallengeRoundsExpiring
         ///  Stores asset IDs for challenge votings ending at a specific block.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT64> ChallengeRoundsExpiring(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT24> ChallengeRoundsExpiring(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
         {
             string parameters = PropertyGovernanceStorage.ChallengeRoundsExpiringParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT64>(parameters, blockhash, token);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT24>(parameters, blockhash, token);
             return result;
         }
         
@@ -444,13 +444,13 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> propose
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method Propose(Substrate.NetApi.Model.Types.Primitive.U32 asset_id, Substrate.NetApi.Model.Types.Primitive.U128 amount, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 data)
+        public static Method Propose(Substrate.NetApi.Model.Types.Primitive.U32 asset_id, Substrate.NetApi.Model.Types.Primitive.U128 amount, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 data)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(asset_id.Encode());
             byteArray.AddRange(amount.Encode());
             byteArray.AddRange(data.Encode());
-            return new Method(67, "PropertyGovernance", 0, "propose", byteArray.ToArray());
+            return new Method(27, "PropertyGovernance", 0, "propose", byteArray.ToArray());
         }
         
         /// <summary>
@@ -461,7 +461,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(asset_id.Encode());
-            return new Method(67, "PropertyGovernance", 1, "challenge_against_letting_agent", byteArray.ToArray());
+            return new Method(27, "PropertyGovernance", 1, "challenge_against_letting_agent", byteArray.ToArray());
         }
         
         /// <summary>
@@ -474,18 +474,18 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(asset_id.Encode());
             byteArray.AddRange(vote.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(67, "PropertyGovernance", 2, "vote_on_proposal", byteArray.ToArray());
+            return new Method(27, "PropertyGovernance", 2, "vote_on_proposal", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> unfreeze_proposal_token
+        /// >> unfreeze_proposal_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method UnfreezeProposalToken(Substrate.NetApi.Model.Types.Primitive.U64 proposal_id)
+        public static Method UnfreezeProposalShares(Substrate.NetApi.Model.Types.Primitive.U64 proposal_id)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(proposal_id.Encode());
-            return new Method(67, "PropertyGovernance", 3, "unfreeze_proposal_token", byteArray.ToArray());
+            return new Method(27, "PropertyGovernance", 3, "unfreeze_proposal_shares", byteArray.ToArray());
         }
         
         /// <summary>
@@ -498,18 +498,18 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(asset_id.Encode());
             byteArray.AddRange(vote.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(67, "PropertyGovernance", 4, "vote_on_letting_agent_challenge", byteArray.ToArray());
+            return new Method(27, "PropertyGovernance", 4, "vote_on_letting_agent_challenge", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> unfreeze_challenge_token
+        /// >> unfreeze_challenge_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method UnfreezeChallengeToken(Substrate.NetApi.Model.Types.Primitive.U64 proposal_id)
+        public static Method UnfreezeChallengeShares(Substrate.NetApi.Model.Types.Primitive.U64 proposal_id)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(proposal_id.Encode());
-            return new Method(67, "PropertyGovernance", 5, "unfreeze_challenge_token", byteArray.ToArray());
+            return new Method(27, "PropertyGovernance", 5, "unfreeze_challenge_shares", byteArray.ToArray());
         }
     }
     
@@ -701,10 +701,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         ArithmeticOverflow,
         
         /// <summary>
-        /// >> ZeroTokenAmount
-        /// Token amount is zero.
+        /// >> ZeroShareAmount
+        /// Share amount is zero.
         /// </summary>
-        ZeroTokenAmount,
+        ZeroShareAmount,
         
         /// <summary>
         /// >> TooManyAssignedProperties
@@ -720,7 +720,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         
         /// <summary>
         /// >> NoFrozenAmount
-        /// The user has no token amount frozen.
+        /// The user has no share amount frozen.
         /// </summary>
         NoFrozenAmount,
         

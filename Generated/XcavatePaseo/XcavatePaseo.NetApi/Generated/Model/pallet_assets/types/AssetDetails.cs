@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_assets.types
     
     
     /// <summary>
-    /// >> 596 - Composite[pallet_assets.types.AssetDetails]
+    /// >> 263 - Composite[pallet_assets.types.AssetDetails]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class AssetDetails : BaseType

@@ -52,13 +52,13 @@ namespace PlutoFramework.Model.Xcavate
 
         public static Method BuyPropertyTokens(EndpointEnum endpointKey, uint listingId, uint amount, AssetKey paymentAsset) => endpointKey switch
         {
-            EndpointEnum.XcavatePaseo => MarketplaceCalls.BuyPropertyToken(new U32(listingId), new U32(amount), new U32((uint)paymentAsset.Item3)),
+            EndpointEnum.XcavatePaseo => MarketplaceCalls.BuyPropertyShares(new U32(listingId), new U32(amount), new U32((uint)paymentAsset.Item3)),
             _ => throw new NotImplementedException($"BuyPropertyTokens not implemented for {endpointKey}"),
         };
 
         public static Method RelistPropertyTokens(EndpointEnum endpointKey, uint assetId, uint amount, BigInteger pricePerToken, AssetKey paymentAsset) => endpointKey switch
         {
-            EndpointEnum.XcavatePaseo => MarketplaceCalls.RelistToken(new U32(assetId), new U128(pricePerToken), new U32(amount)),
+            EndpointEnum.XcavatePaseo => MarketplaceCalls.RelistShares(new U32(assetId), new U128(pricePerToken), new U32(amount)),
             _ => throw new NotImplementedException($"RelistPropertyTokens not implemented for {endpointKey}"),
         };
 
@@ -72,7 +72,7 @@ namespace PlutoFramework.Model.Xcavate
             var accountId = new AccountId32();
             accountId.Create(Utils.GetPublicKeyFrom(address));
 
-            var keyPrefix = Utils.HexToByteArray(MarketplaceStorage.TokenOwnerParams(new BaseTuple<AccountId32, U32>(accountId, new U32(0))).Substring(0, keyPrefixLength));
+            var keyPrefix = Utils.HexToByteArray(MarketplaceStorage.ShareOwnerParams(new BaseTuple<AccountId32, U32>(accountId, new U32(0))).Substring(0, keyPrefixLength));
 
             var fullKeys = await client.State.GetKeysPagedAsync(keyPrefix, limit, lastKey, string.Empty, token).ConfigureAwait(false);
 
@@ -90,7 +90,7 @@ namespace PlutoFramework.Model.Xcavate
 
             var storageChangeSets = await client.State.GetQueryStorageAtAsync(fullKeys.Select(p => Utils.HexToByteArray(p.ToString())).ToList(), string.Empty, token).ConfigureAwait(false);
 
-            var tokenOwnerDetails = new List<TokenOwnerDetails>();
+            var shareOwnerDetails = new List<ShareOwnerDetails>();
 
             foreach (var change in storageChangeSets.First().Changes)
             {
@@ -99,10 +99,10 @@ namespace PlutoFramework.Model.Xcavate
                     continue;
                 }
 
-                var details = new TokenOwnerDetails();
+                var details = new ShareOwnerDetails();
                 details.Create(change[1]);
 
-                tokenOwnerDetails.Add(details);
+                shareOwnerDetails.Add(details);
 
                 // Combine the amount owned with the rest of the property details
             }
@@ -111,9 +111,9 @@ namespace PlutoFramework.Model.Xcavate
 
             return new RecursiveReturn<PropertyOwnership>
             {
-                Items = propertyAssetDetails.Items.Zip(tokenOwnerDetails, (propertyDetails, ownerDetails) => new PropertyOwnership
+                Items = propertyAssetDetails.Items.Zip(shareOwnerDetails, (propertyDetails, ownerDetails) => new PropertyOwnership
                 {
-                    TokensBought = ownerDetails.TokenAmount,
+                    TokensBought = ownerDetails.ShareAmount,
                     TokensOwned = 0,
                     NftBase = propertyDetails,
                 }),

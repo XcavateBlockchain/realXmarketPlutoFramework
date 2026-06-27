@@ -120,7 +120,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(admin.Encode());
-            return new Method(60, "XcavateWhitelist", 0, "add_admin", byteArray.ToArray());
+            return new Method(20, "XcavateWhitelist", 0, "add_admin", byteArray.ToArray());
         }
         
         /// <summary>
@@ -131,7 +131,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(admin.Encode());
-            return new Method(60, "XcavateWhitelist", 1, "remove_admin", byteArray.ToArray());
+            return new Method(20, "XcavateWhitelist", 1, "remove_admin", byteArray.ToArray());
         }
         
         /// <summary>
@@ -143,7 +143,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(user.Encode());
             byteArray.AddRange(role.Encode());
-            return new Method(60, "XcavateWhitelist", 2, "assign_role", byteArray.ToArray());
+            return new Method(20, "XcavateWhitelist", 2, "assign_role", byteArray.ToArray());
         }
         
         /// <summary>
@@ -155,7 +155,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(user.Encode());
             byteArray.AddRange(role.Encode());
-            return new Method(60, "XcavateWhitelist", 3, "remove_role", byteArray.ToArray());
+            return new Method(20, "XcavateWhitelist", 3, "remove_role", byteArray.ToArray());
         }
         
         /// <summary>
@@ -168,7 +168,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(user.Encode());
             byteArray.AddRange(role.Encode());
             byteArray.AddRange(permission.Encode());
-            return new Method(60, "XcavateWhitelist", 4, "set_permission", byteArray.ToArray());
+            return new Method(20, "XcavateWhitelist", 4, "set_permission", byteArray.ToArray());
         }
     }
     
@@ -177,6 +177,39 @@ namespace XcavatePaseo.NetApi.Generated.Storage
     /// </summary>
     public sealed class XcavateWhitelistConstants
     {
+        
+        /// <summary>
+        /// >> AirdropNativeAmount
+        ///  Amount of native XCAV to mint on role assignment.
+        /// </summary>
+        public Substrate.NetApi.Model.Types.Primitive.U128 AirdropNativeAmount()
+        {
+            var result = new Substrate.NetApi.Model.Types.Primitive.U128();
+            result.Create("0x00A0724E180900000000000000000000");
+            return result;
+        }
+        
+        /// <summary>
+        /// >> AirdropAssetId
+        ///  Asset ID for testnet tGBP airdrop.
+        /// </summary>
+        public Substrate.NetApi.Model.Types.Primitive.U32 AirdropAssetId()
+        {
+            var result = new Substrate.NetApi.Model.Types.Primitive.U32();
+            result.Create("0x0A000000");
+            return result;
+        }
+        
+        /// <summary>
+        /// >> AirdropAssetAmount
+        ///  Amount of tGBP to mint on role assignment.
+        /// </summary>
+        public Substrate.NetApi.Model.Types.Primitive.U128 AirdropAssetAmount()
+        {
+            var result = new Substrate.NetApi.Model.Types.Primitive.U128();
+            result.Create("0x000040B2BAC9E0191E02000000000000");
+            return result;
+        }
     }
     
     /// <summary>

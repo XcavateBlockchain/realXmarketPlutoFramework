@@ -38,7 +38,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_assets.types
     }
     
     /// <summary>
-    /// >> 600 - Variant[pallet_assets.types.AccountStatus]
+    /// >> 267 - Variant[pallet_assets.types.AccountStatus]
     /// </summary>
     public sealed class EnumAccountStatus : BaseEnum<AccountStatus>
     {

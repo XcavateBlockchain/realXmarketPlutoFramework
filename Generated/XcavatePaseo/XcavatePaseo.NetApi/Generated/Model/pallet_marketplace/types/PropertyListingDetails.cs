@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
     
     
     /// <summary>
-    /// >> 749 - Composite[pallet_marketplace.types.PropertyListingDetails]
+    /// >> 355 - Composite[pallet_marketplace.types.PropertyListingDetails]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class PropertyListingDetails : BaseType
@@ -29,9 +29,9 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
         /// </summary>
         public XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32 RealEstateDeveloper { get; set; }
         /// <summary>
-        /// >> token_price
+        /// >> share_price
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U128 TokenPrice { get; set; }
+        public Substrate.NetApi.Model.Types.Primitive.U128 SharePrice { get; set; }
         /// <summary>
         /// >> collected_funds
         /// </summary>
@@ -57,13 +57,13 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
         /// </summary>
         public Substrate.NetApi.Model.Types.Primitive.U32 CollectionId { get; set; }
         /// <summary>
-        /// >> token_amount
+        /// >> share_amount
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U32 TokenAmount { get; set; }
+        public Substrate.NetApi.Model.Types.Primitive.U32 ShareAmount { get; set; }
         /// <summary>
-        /// >> listed_token_amount
+        /// >> listed_share_amount
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U32 ListedTokenAmount { get; set; }
+        public Substrate.NetApi.Model.Types.Primitive.U32 ListedShareAmount { get; set; }
         /// <summary>
         /// >> tax_paid_by_developer
         /// </summary>
@@ -89,9 +89,9 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
         /// </summary>
         public Substrate.NetApi.Model.Types.Primitive.U8 RelistCount { get; set; }
         /// <summary>
-        /// >> unclaimed_token_amount
+        /// >> unclaimed_share_amount
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U32 UnclaimedTokenAmount { get; set; }
+        public Substrate.NetApi.Model.Types.Primitive.U32 UnclaimedShareAmount { get; set; }
         
         /// <inheritdoc/>
         public override string TypeName()
@@ -104,22 +104,22 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
         {
             var result = new List<byte>();
             result.AddRange(RealEstateDeveloper.Encode());
-            result.AddRange(TokenPrice.Encode());
+            result.AddRange(SharePrice.Encode());
             result.AddRange(CollectedFunds.Encode());
             result.AddRange(CollectedTax.Encode());
             result.AddRange(CollectedFees.Encode());
             result.AddRange(AssetId.Encode());
             result.AddRange(ItemId.Encode());
             result.AddRange(CollectionId.Encode());
-            result.AddRange(TokenAmount.Encode());
-            result.AddRange(ListedTokenAmount.Encode());
+            result.AddRange(ShareAmount.Encode());
+            result.AddRange(ListedShareAmount.Encode());
             result.AddRange(TaxPaidByDeveloper.Encode());
             result.AddRange(Tax.Encode());
             result.AddRange(ListingExpiry.Encode());
             result.AddRange(InvestorFunds.Encode());
             result.AddRange(ClaimExpiry.Encode());
             result.AddRange(RelistCount.Encode());
-            result.AddRange(UnclaimedTokenAmount.Encode());
+            result.AddRange(UnclaimedShareAmount.Encode());
             return result.ToArray();
         }
         
@@ -129,8 +129,8 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
             var start = p;
             RealEstateDeveloper = new XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32();
             RealEstateDeveloper.Decode(byteArray, ref p);
-            TokenPrice = new Substrate.NetApi.Model.Types.Primitive.U128();
-            TokenPrice.Decode(byteArray, ref p);
+            SharePrice = new Substrate.NetApi.Model.Types.Primitive.U128();
+            SharePrice.Decode(byteArray, ref p);
             CollectedFunds = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_map.BoundedBTreeMapT1();
             CollectedFunds.Decode(byteArray, ref p);
             CollectedTax = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_map.BoundedBTreeMapT1();
@@ -143,10 +143,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
             ItemId.Decode(byteArray, ref p);
             CollectionId = new Substrate.NetApi.Model.Types.Primitive.U32();
             CollectionId.Decode(byteArray, ref p);
-            TokenAmount = new Substrate.NetApi.Model.Types.Primitive.U32();
-            TokenAmount.Decode(byteArray, ref p);
-            ListedTokenAmount = new Substrate.NetApi.Model.Types.Primitive.U32();
-            ListedTokenAmount.Decode(byteArray, ref p);
+            ShareAmount = new Substrate.NetApi.Model.Types.Primitive.U32();
+            ShareAmount.Decode(byteArray, ref p);
+            ListedShareAmount = new Substrate.NetApi.Model.Types.Primitive.U32();
+            ListedShareAmount.Decode(byteArray, ref p);
             TaxPaidByDeveloper = new Substrate.NetApi.Model.Types.Primitive.Bool();
             TaxPaidByDeveloper.Decode(byteArray, ref p);
             Tax = new XcavatePaseo.NetApi.Generated.Model.sp_arithmetic.per_things.Permill();
@@ -159,8 +159,8 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
             ClaimExpiry.Decode(byteArray, ref p);
             RelistCount = new Substrate.NetApi.Model.Types.Primitive.U8();
             RelistCount.Decode(byteArray, ref p);
-            UnclaimedTokenAmount = new Substrate.NetApi.Model.Types.Primitive.U32();
-            UnclaimedTokenAmount.Decode(byteArray, ref p);
+            UnclaimedShareAmount = new Substrate.NetApi.Model.Types.Primitive.U32();
+            UnclaimedShareAmount.Decode(byteArray, ref p);
             var bytesLength = p - start;
             TypeSize = bytesLength;
             Bytes = new byte[bytesLength];

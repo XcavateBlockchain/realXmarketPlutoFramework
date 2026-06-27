@@ -239,7 +239,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_x_education.pallet
     }
     
     /// <summary>
-    /// >> 518 - Variant[pallet_real_x_education.pallet.Call]
+    /// >> 240 - Variant[pallet_real_x_education.pallet.Call]
     /// Contains a variant per dispatchable extrinsic that this pallet has.
     /// </summary>
     public sealed class EnumCall : BaseEnumRust<Call>
@@ -250,12 +250,12 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_x_education.pallet
         /// </summary>
         public EnumCall()
         {
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U16, Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6>>(Call.create_module);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U16, Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1>>(Call.create_module);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.sponsor_module);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U64, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6>>(Call.book_module);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U64, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1>>(Call.book_module);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U64>>(Call.claim_booking);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U64, XcavatePaseo.NetApi.Generated.Model.sp_arithmetic.per_things.Permill, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6>>(Call.submit_impact_score);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U64, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6>>(Call.mint_recipient_nft);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U64, XcavatePaseo.NetApi.Generated.Model.sp_arithmetic.per_things.Permill, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1>>(Call.submit_impact_score);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U64, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1>>(Call.mint_recipient_nft);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U64>>(Call.finish_booking_process);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.burn_unsponsored_token);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.remove_module);

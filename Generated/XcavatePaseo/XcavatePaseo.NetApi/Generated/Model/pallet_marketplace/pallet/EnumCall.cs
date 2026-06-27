@@ -32,8 +32,8 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// Parameters:
         /// - `region`: The region where the object is located.
         /// - `location`: The location where the object is located.
-        /// - `token_price`: The price of a single token.
-        /// - `token_amount`: The amount of tokens for a object.
+        /// - `share_price`: The price of a single share.
+        /// - `share_amount`: The amount of shares for a object.
         /// - `data`: The Metadata of the nft.
         /// - `tax_paid_by_developer`: Bool if the tax is paid by the real estate developer or not.
         /// 
@@ -42,36 +42,32 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         list_property = 0,
         
         /// <summary>
-        /// >> buy_property_token
-        /// Buy listed token from the marketplace.
+        /// >> buy_property_shares
+        /// Buy listed shares from the marketplace.
         /// 
         /// The origin must be Signed by a compliant RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
-        /// - `listing_id`: The listing that the investor wants to buy token from.
-        /// - `amount`: The amount of token that the investor wants to buy.
+        /// - `listing_id`: The listing that the investor wants to buy shares from.
+        /// - `amount`: The amount of shares that the investor wants to buy.
         /// - `payment_asset`: Asset in which the investor wants to pay.
         /// 
-        /// Emits `PropertyTokenBought` event when successful.
+        /// Emits `PropertySharesBought` event when successful.
         /// </summary>
-        buy_property_token = 1,
+        buy_property_shares = 1,
         
         /// <summary>
-        /// >> claim_property_token
-        /// Claim purchased property token once all token are sold.
+        /// >> claim_property_shares
+        /// Claim purchased property shares once all shares are sold.
         /// 
         /// The origin must be Signed by a compliant RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
-        /// - `listing_id`: The listing that the investor wants to claim token from.
+        /// - `listing_id`: The listing that the investor wants to claim shares from.
         /// 
-        /// Emits `PropertyTokenClaimed` event when successful.
+        /// Emits `PropertySharesClaimed` event when successful.
         /// </summary>
-        claim_property_token = 2,
+        claim_property_shares = 2,
         
         /// <summary>
         /// >> finalize_claim_window
@@ -82,7 +78,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// Parameters:
         /// - `listing_id`: The listing that the investor wants to finalize the claim window from
         /// 
-        /// Emits `PropertyTokenClaimed` event when successful.
+        /// Emits `PropertySharesClaimed` event when successful.
         /// </summary>
         finalize_claim_window = 3,
         
@@ -100,48 +96,42 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         create_spv = 4,
         
         /// <summary>
-        /// >> relist_token
-        /// Relist token on the marketplace.
+        /// >> relist_shares
+        /// Relist shares on the marketplace.
         /// The property must be registered on the marketplace.
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
         /// - `region`: The region where the object is located.
         /// - `item_id`: The item id of the nft.
-        /// - `token_price`: The price of a single token.
-        /// - `amount`: The amount of token of the real estate object that should be listed.
+        /// - `share_price`: The price of a single share.
+        /// - `amount`: The amount of shares of the real estate object that should be listed.
         /// 
-        /// Emits `TokenRelisted` event when successful
+        /// Emits `SharesRelisted` event when successful
         /// </summary>
-        relist_token = 5,
+        relist_shares = 5,
         
         /// <summary>
-        /// >> buy_relisted_token
-        /// Buy token from the marketplace.
+        /// >> buy_relisted_shares
+        /// Buy shares from the marketplace.
         /// 
         /// The origin must be Signed by a compliant RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
         /// - `listing_id`: The listing that the investor wants to buy from.
-        /// - `amount`: The amount of token the investor wants to buy.
+        /// - `amount`: The amount of shares the investor wants to buy.
         /// - `payment_asset`: Asset in which the investor wants to pay.
         /// 
-        /// Emits `RelistedTokenBought` event when successful.
+        /// Emits `RelistedSharesBought` event when successful.
         /// </summary>
-        buy_relisted_token = 6,
+        buy_relisted_shares = 6,
         
         /// <summary>
         /// >> cancel_property_purchase
-        /// Lets a investor cancel the property token purchase.
+        /// Lets an investor cancel the property shares purchase.
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
-        /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
         /// 
         /// Parameters:
         /// - `listing_id`: The listing that the investor wants to buy from.
@@ -152,16 +142,14 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         
         /// <summary>
         /// >> make_offer
-        /// Created an offer for a token listing.
+        /// Created an offer for a share listing.
         /// 
         /// The origin must be Signed by a compliant RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
         /// - `listing_id`: The listing that the investor wants to buy from.
-        /// - `offer_price`: The offer price for token that are offered.
-        /// - `amount`: The amount of token that the investor wants to buy.
+        /// - `offer_price`: The offer price for shares that are offered.
+        /// - `amount`: The amount of shares that the investor wants to buy.
         /// - `payment_asset`: Asset in which the investor wants to pay.
         /// 
         /// Emits `OfferCreated` event when successful.
@@ -173,8 +161,6 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// Lets the investor handle an offer.
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
-        /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
         /// 
         /// Parameters:
         /// - `listing_id`: The listing that the investor wants to buy from.
@@ -192,8 +178,6 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
         /// - `listing_id`: The listing that the investor wants to buy from.
         /// 
@@ -206,8 +190,6 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// Lets the investor withdraw his funds after a property deal was unsuccessful.
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
-        /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
         /// 
         /// Parameters:
         /// - `listing_id`: The listing that the investor wants to withdraw from.
@@ -222,8 +204,6 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
         /// - `listing_id`: The listing that the investor wants to withdraw from.
         /// 
@@ -237,8 +217,6 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
         /// - `listing_id`: The listing that the investor wants to buy from.
         /// 
@@ -248,11 +226,9 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         
         /// <summary>
         /// >> withdraw_deposit_unsold
-        /// Lets the real estate developer withdraw his deposit in case no token have been sold.
+        /// Lets the real estate developer withdraw his deposit in case no shares have been sold.
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
-        /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
         /// 
         /// Parameters:
         /// - `listing_id`: The listing that the caller wants to withdraw the deposit from.
@@ -267,8 +243,6 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
         /// - `listing_id`: The listing that the caller wants to withdraw the funds from.
         /// 
@@ -282,12 +256,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
         /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
-        /// 
         /// Parameters:
         /// - `listing_id`: The listing that the caller wants to unfreeze the funds from.
         /// 
-        /// Emits `UnclaimedTokenWithdrawn` event when successful.
+        /// Emits `UnclaimedSharesWithdrawn` event when successful.
         /// </summary>
         withdraw_unclaimed = 16,
         
@@ -306,19 +278,17 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         upgrade_object = 17,
         
         /// <summary>
-        /// >> delist_token
-        /// Allows a real estate investor to delist (remove) a relisted token from the marketplace.
+        /// >> delist_shares
+        /// Allows a real estate investor to delist (remove) relisted shares from the marketplace.
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
-        /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
         /// 
         /// Parameters:
         /// - `listing_id`: The listing that the seller wants to delist.
         /// 
         /// Emits `ListingDelisted` event when successful.
         /// </summary>
-        delist_token = 18,
+        delist_shares = 18,
         
         /// <summary>
         /// >> lawyer_claim_property
@@ -337,14 +307,14 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         
         /// <summary>
         /// >> vote_on_spv_lawyer
-        /// Allows a token holder (real estate investor) to vote on the lawyer that will represent the SPV.
+        /// Allows a share holder (real estate investor) to vote on the lawyer that will represent the SPV.
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
         /// 
         /// Parameters:
         /// - `listing_id`: The listing from the property.
         /// - `vote`: Must be either a Yes vote or a No vote.
-        /// - `amount`: The amount of property token that the investor is using for voting.
+        /// - `amount`: The amount of property shares that the investor is using for voting.
         /// 
         /// Emits `VotedOnLawyer` event when successful.
         /// </summary>
@@ -378,17 +348,17 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         finalize_spv_lawyer = 22,
         
         /// <summary>
-        /// >> unfreeze_spv_lawyer_token
-        /// Lets a voter unlock his locked token after voting on a spv lawyer.
+        /// >> unfreeze_spv_lawyer_shares
+        /// Lets a voter unlock his locked shares after voting on a spv lawyer.
         /// 
         /// The origin must be signed and have sufficient funds.
         /// 
         /// Parameters:
         /// - `proposal_id`: Id of the spv lawyer proposal.
         /// 
-        /// Emits `TokenUnfrozen` event when successful.
+        /// Emits `SharesUnfrozen` event when successful.
         /// </summary>
-        unfreeze_spv_lawyer_token = 23,
+        unfreeze_spv_lawyer_shares = 23,
         
         /// <summary>
         /// >> remove_lawyer_claim
@@ -418,25 +388,23 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         lawyer_confirm_documents = 25,
         
         /// <summary>
-        /// >> send_property_token
-        /// Allows a sender to transfer property tokens to another account.
+        /// >> send_property_shares
+        /// Allows a sender to transfer property shares to another account.
         /// 
         /// The origin must be Signed by a RealEstateInvestor and have sufficient funds.
-        /// 
-        /// The call will be delayed because of: https://github.com/XcavateBlockchain/xcavate-node-audit/issues/3
         /// 
         /// Parameters:
         /// - `asset_id`: The asset id of the property.
         /// - `receiver`: AccountId of the person that the seller wants to handle the offer from.
-        /// - `token_amount`: The amount of token the sender wants to send.
+        /// - `share_amount`: The amount of shares the sender wants to send.
         /// 
         /// Emits `DocumentsConfirmed` event when successful.
         /// </summary>
-        send_property_token = 26,
+        send_property_shares = 26,
     }
     
     /// <summary>
-    /// >> 213 - Variant[pallet_marketplace.pallet.Call]
+    /// >> 243 - Variant[pallet_marketplace.pallet.Call]
     /// Contains a variant per dispatchable extrinsic that this pallet has.
     /// </summary>
     public sealed class EnumCall : BaseEnumRust<Call>
@@ -447,13 +415,13 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// </summary>
         public EnumCall()
         {
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U16, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT11, Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6, Substrate.NetApi.Model.Types.Primitive.Bool>>(Call.list_property);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.buy_property_token);
-				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.claim_property_token);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U16, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT4, Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1, Substrate.NetApi.Model.Types.Primitive.Bool>>(Call.list_property);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.buy_property_shares);
+				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.claim_property_shares);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.finalize_claim_window);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.create_spv);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.relist_token);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.buy_relisted_token);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.relist_shares);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.buy_relisted_shares);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.cancel_property_purchase);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.make_offer);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.EnumOffer, Substrate.NetApi.Model.Types.Primitive.U64>>(Call.handle_offer);
@@ -465,15 +433,15 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.withdraw_claiming_expired);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.withdraw_unclaimed);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128>>(Call.upgrade_object);
-				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.delist_token);
+				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.delist_shares);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.EnumLegalProperty, Substrate.NetApi.Model.Types.Primitive.U128>>(Call.lawyer_claim_property);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.EnumVote, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.vote_on_spv_lawyer);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.Bool>>(Call.approve_developer_lawyer);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.finalize_spv_lawyer);
-				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U64>(Call.unfreeze_spv_lawyer_token);
+				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U64>(Call.unfreeze_spv_lawyer_shares);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.remove_lawyer_claim);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.Bool>>(Call.lawyer_confirm_documents);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.send_property_token);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.send_property_shares);
         }
     }
 }

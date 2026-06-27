@@ -119,7 +119,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(now.Encode());
-            return new Method(2, "Timestamp", 0, "set", byteArray.ToArray());
+            return new Method(1, "Timestamp", 0, "set", byteArray.ToArray());
         }
     }
     
@@ -141,7 +141,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public Substrate.NetApi.Model.Types.Primitive.U64 MinimumPeriod()
         {
             var result = new Substrate.NetApi.Model.Types.Primitive.U64();
-            result.Create("0x0000000000000000");
+            result.Create("0xB80B000000000000");
             return result;
         }
     }

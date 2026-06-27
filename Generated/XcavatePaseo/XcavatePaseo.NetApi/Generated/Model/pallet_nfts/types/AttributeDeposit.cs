@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types
     
     
     /// <summary>
-    /// >> 692 - Composite[pallet_nfts.types.AttributeDeposit]
+    /// >> 291 - Composite[pallet_nfts.types.AttributeDeposit]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class AttributeDeposit : BaseType

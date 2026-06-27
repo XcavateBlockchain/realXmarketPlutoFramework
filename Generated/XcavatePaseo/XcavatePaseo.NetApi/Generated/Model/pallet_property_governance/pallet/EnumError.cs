@@ -65,10 +65,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet
         ArithmeticOverflow = 6,
         
         /// <summary>
-        /// >> ZeroTokenAmount
-        /// Token amount is zero.
+        /// >> ZeroShareAmount
+        /// Share amount is zero.
         /// </summary>
-        ZeroTokenAmount = 7,
+        ZeroShareAmount = 7,
         
         /// <summary>
         /// >> TooManyAssignedProperties
@@ -84,7 +84,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet
         
         /// <summary>
         /// >> NoFrozenAmount
-        /// The user has no token amount frozen.
+        /// The user has no share amount frozen.
         /// </summary>
         NoFrozenAmount = 10,
         
@@ -120,7 +120,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet
     }
     
     /// <summary>
-    /// >> 793 - Variant[pallet_property_governance.pallet.Error]
+    /// >> 395 - Variant[pallet_property_governance.pallet.Error]
     /// The `Error` enum of this pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

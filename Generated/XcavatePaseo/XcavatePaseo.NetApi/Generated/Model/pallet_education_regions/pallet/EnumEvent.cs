@@ -132,7 +132,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_education_regions.pallet
     }
     
     /// <summary>
-    /// >> 192 - Variant[pallet_education_regions.pallet.Event]
+    /// >> 73 - Variant[pallet_education_regions.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>

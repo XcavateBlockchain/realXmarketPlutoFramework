@@ -18,16 +18,16 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
     
     
     /// <summary>
-    /// >> 757 - Composite[pallet_marketplace.types.OfferDetails]
+    /// >> 363 - Composite[pallet_marketplace.types.OfferDetails]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class OfferDetails : BaseType
     {
         
         /// <summary>
-        /// >> token_price
+        /// >> share_price
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U128 TokenPrice { get; set; }
+        public Substrate.NetApi.Model.Types.Primitive.U128 SharePrice { get; set; }
         /// <summary>
         /// >> amount
         /// </summary>
@@ -51,7 +51,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
         public override byte[] Encode()
         {
             var result = new List<byte>();
-            result.AddRange(TokenPrice.Encode());
+            result.AddRange(SharePrice.Encode());
             result.AddRange(Amount.Encode());
             result.AddRange(PaymentAssets.Encode());
             result.AddRange(Nonce.Encode());
@@ -62,8 +62,8 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
         public override void Decode(byte[] byteArray, ref int p)
         {
             var start = p;
-            TokenPrice = new Substrate.NetApi.Model.Types.Primitive.U128();
-            TokenPrice.Decode(byteArray, ref p);
+            SharePrice = new Substrate.NetApi.Model.Types.Primitive.U128();
+            SharePrice.Decode(byteArray, ref p);
             Amount = new Substrate.NetApi.Model.Types.Primitive.U32();
             Amount.Decode(byteArray, ref p);
             PaymentAssets = new Substrate.NetApi.Model.Types.Primitive.U32();

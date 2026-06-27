@@ -35,10 +35,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         NotEnoughFunds = 1,
         
         /// <summary>
-        /// >> NotEnoughTokenAvailable
-        /// Not enough token available to buy.
+        /// >> NotEnoughSharesAvailable
+        /// Not enough shares available to buy.
         /// </summary>
-        NotEnoughTokenAvailable = 2,
+        NotEnoughSharesAvailable = 2,
         
         /// <summary>
         /// >> DivisionError
@@ -77,10 +77,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         ArithmeticOverflow = 8,
         
         /// <summary>
-        /// >> TokenNotForSale
-        /// The token is not for sale.
+        /// >> ShareNotForSale
+        /// The share is not for sale.
         /// </summary>
-        TokenNotForSale = 9,
+        ShareNotForSale = 9,
         
         /// <summary>
         /// >> RegionUnknown
@@ -95,16 +95,16 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         LocationUnknown = 11,
         
         /// <summary>
-        /// >> TooManyToken
-        /// The object can not be divided in so many token.
+        /// >> TooManyShares
+        /// The object can not be divided in so many shares.
         /// </summary>
-        TooManyToken = 12,
+        TooManyShares = 12,
         
         /// <summary>
-        /// >> TokenAmountTooLow
-        /// The object needs more token.
+        /// >> ShareAmountTooLow
+        /// The object needs more shares.
         /// </summary>
-        TokenAmountTooLow = 13,
+        ShareAmountTooLow = 13,
         
         /// <summary>
         /// >> OnlyOneOfferPerUser
@@ -155,10 +155,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         ExceedsMaxEntries = 21,
         
         /// <summary>
-        /// >> TokenNotRefunded
+        /// >> SharesNotRefunded
         /// The property is not refunded.
         /// </summary>
-        TokenNotRefunded = 22,
+        SharesNotRefunded = 22,
         
         /// <summary>
         /// >> PropertyAlreadySold
@@ -173,10 +173,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         ListingExpired = 24,
         
         /// <summary>
-        /// >> NoTokenBought
-        /// Signer has not bought any token.
+        /// >> NoSharesBought
+        /// Signer has not bought any shares.
         /// </summary>
-        NoTokenBought = 25,
+        NoSharesBought = 25,
         
         /// <summary>
         /// >> ListingNotExpired
@@ -185,14 +185,14 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         ListingNotExpired = 26,
         
         /// <summary>
-        /// >> InvalidTokenPrice
-        /// Price of a token can not be zero.
+        /// >> InvalidSharePrice
+        /// Price of a share can not be zero.
         /// </summary>
-        InvalidTokenPrice = 27,
+        InvalidSharePrice = 27,
         
         /// <summary>
         /// >> AmountCannotBeZero
-        /// Token amount can not be zero.
+        /// Share amount can not be zero.
         /// </summary>
         AmountCannotBeZero = 28,
         
@@ -203,16 +203,16 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         InvalidFeePercentage = 29,
         
         /// <summary>
-        /// >> NotEnoughToken
-        /// The sender has not enough token.
+        /// >> NotEnoughShares
+        /// The sender has not enough shares.
         /// </summary>
-        NotEnoughToken = 30,
+        NotEnoughShares = 30,
         
         /// <summary>
-        /// >> TokenNotReturned
-        /// Token have not been returned yet.
+        /// >> SharesNotReturned
+        /// Shares have not been returned yet.
         /// </summary>
-        TokenNotReturned = 31,
+        SharesNotReturned = 31,
         
         /// <summary>
         /// >> NoObjectFound
@@ -227,10 +227,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         WrongRegion = 33,
         
         /// <summary>
-        /// >> TokenOwnerNotFound
-        /// TokenOwnerHasNotBeenFound.
+        /// >> ShareOwnerNotFound
+        /// Share owner has not been found.
         /// </summary>
-        TokenOwnerNotFound = 34,
+        ShareOwnerNotFound = 34,
         
         /// <summary>
         /// >> NoLawyerProposed
@@ -276,13 +276,13 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         
         /// <summary>
         /// >> NoFrozenAmount
-        /// The user has no token amount frozen.
+        /// The user has no share amount frozen.
         /// </summary>
         NoFrozenAmount = 42,
         
         /// <summary>
         /// >> NoClaimWindow
-        /// The user has no token amount frozen.
+        /// The user has no share amount frozen.
         /// </summary>
         NoClaimWindow = 43,
         
@@ -299,20 +299,20 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         ClaimWindowNotExpired = 45,
         
         /// <summary>
-        /// >> StillHasUnclaimedToken
-        /// The user still has unclaimed token.
+        /// >> StillHasUnclaimedShares
+        /// The user still has unclaimed shares.
         /// </summary>
-        StillHasUnclaimedToken = 46,
+        StillHasUnclaimedShares = 46,
         
         /// <summary>
-        /// >> NoValidTokenToClaim
-        /// The user does not have any valid token to claim.
+        /// >> NoValidSharesToClaim
+        /// The user does not have any valid shares to claim.
         /// </summary>
-        NoValidTokenToClaim = 47,
+        NoValidSharesToClaim = 47,
         
         /// <summary>
         /// >> ExceedsMaxOwnership
-        /// The user is not allowed to own too many token of a certain property.
+        /// The user is not allowed to own too many shares of a certain property.
         /// </summary>
         ExceedsMaxOwnership = 48,
         
@@ -323,10 +323,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         ListingNotFound = 49,
         
         /// <summary>
-        /// >> AllTokensClaimed
-        /// All property token have already been claimed.
+        /// >> AllSharesClaimed
+        /// All property shares have already been claimed.
         /// </summary>
-        AllTokensClaimed = 50,
+        AllSharesClaimed = 50,
         
         /// <summary>
         /// >> OfferNotFound
@@ -335,16 +335,16 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         OfferNotFound = 51,
         
         /// <summary>
-        /// >> NoTokensOwned
-        /// The user does not own any token of the property.
+        /// >> NoSharesOwned
+        /// The user does not own any shares of the property.
         /// </summary>
-        NoTokensOwned = 52,
+        NoSharesOwned = 52,
         
         /// <summary>
-        /// >> InsufficientRefundableTokens
-        /// There are not enough token available to refund.
+        /// >> InsufficientRefundableShares
+        /// There are not enough shares available to refund.
         /// </summary>
-        InsufficientRefundableTokens = 53,
+        InsufficientRefundableShares = 53,
         
         /// <summary>
         /// >> ZeroVoteAmount
@@ -357,22 +357,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet
         /// The nonce does not match the nonce for this offer.
         /// </summary>
         InvalidOfferNonce = 55,
-        
-        /// <summary>
-        /// >> CallTooLarge
-        /// The encoded call is larger than `T::MaxCallLen`
-        /// </summary>
-        CallTooLarge = 56,
-        
-        /// <summary>
-        /// >> TooManyDelayedCalls
-        /// There are too many delayed calls.
-        /// </summary>
-        TooManyDelayedCalls = 57,
     }
     
     /// <summary>
-    /// >> 771 - Variant[pallet_marketplace.pallet.Error]
+    /// >> 373 - Variant[pallet_marketplace.pallet.Error]
     /// The `Error` enum of this pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

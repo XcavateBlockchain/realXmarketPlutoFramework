@@ -109,7 +109,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_multisig.pallet
     }
     
     /// <summary>
-    /// >> 567 - Variant[pallet_multisig.pallet.Error]
+    /// >> 316 - Variant[pallet_multisig.pallet.Error]
     /// The `Error` enum of this pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

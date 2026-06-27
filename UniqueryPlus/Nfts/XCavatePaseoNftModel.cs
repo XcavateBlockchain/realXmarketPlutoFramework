@@ -355,7 +355,7 @@ namespace UniqueryPlus.Nfts
                     AssetId = propertyDetails.ItemId,
                     Region = propertyDetails.Region,
                     Location = Helpers.VecU8ToString(propertyDetails.Location.Value.Value),
-                    Tokens = propertyDetails.TokenAmount,
+                    Tokens = propertyDetails.ShareAmount,
                 });
             }
 
@@ -417,8 +417,8 @@ namespace UniqueryPlus.Nfts
                     uint? claimExpiry = propertyDetails.ClaimExpiry.OptionFlag && propertyDetails.ClaimExpiry.Value != null
                         ? propertyDetails.ClaimExpiry.Value.Value
                         : null;
-                    uint listedTokens = propertyDetails.ListedTokenAmount;
-                    uint unclaimedTokens = propertyDetails.UnclaimedTokenAmount;
+                    uint listedTokens = propertyDetails.ListedShareAmount;
+                    uint unclaimedTokens = propertyDetails.UnclaimedShareAmount;
 
                     details.Add(new XcavateOngoingObjectListingDetails
                     {
@@ -471,7 +471,7 @@ namespace UniqueryPlus.Nfts
 
                 details.Add(new XcavateRealWorldAssetDetails
                 {
-                    Tokens = propertyDetails.TokenAmount,
+                    Tokens = propertyDetails.ShareAmount,
                     Price = propertyDetails.Price.Value,
                     SpvCreated = propertyDetails.SpvCreated,
                     Finalized = propertyDetails.Finalized,

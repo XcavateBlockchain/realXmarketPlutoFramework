@@ -180,7 +180,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_education_regions.pallet
     }
     
     /// <summary>
-    /// >> 727 - Variant[pallet_education_regions.pallet.Error]
+    /// >> 332 - Variant[pallet_education_regions.pallet.Error]
     /// The `Error` enum of this pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

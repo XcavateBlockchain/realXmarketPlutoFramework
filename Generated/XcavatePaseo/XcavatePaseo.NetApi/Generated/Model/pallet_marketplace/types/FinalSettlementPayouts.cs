@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
     
     
     /// <summary>
-    /// >> 202 - Composite[pallet_marketplace.types.FinalSettlementPayouts]
+    /// >> 83 - Composite[pallet_marketplace.types.FinalSettlementPayouts]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class FinalSettlementPayouts : BaseType

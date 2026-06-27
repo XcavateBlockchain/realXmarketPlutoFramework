@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.sp_consensus_aura.sr25519.app_sr25
     
     
     /// <summary>
-    /// >> 385 - Composite[sp_consensus_aura.sr25519.app_sr25519.Public]
+    /// >> 148 - Composite[sp_consensus_aura.sr25519.app_sr25519.Public]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class Public : BaseType

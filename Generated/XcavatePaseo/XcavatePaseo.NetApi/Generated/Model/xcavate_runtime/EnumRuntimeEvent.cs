@@ -27,214 +27,134 @@ namespace XcavatePaseo.NetApi.Generated.Model.xcavate_runtime
         System = 0,
         
         /// <summary>
-        /// >> ParachainSystem
+        /// >> Grandpa
         /// </summary>
-        ParachainSystem = 1,
-        
-        /// <summary>
-        /// >> Proxy
-        /// </summary>
-        Proxy = 4,
-        
-        /// <summary>
-        /// >> Utility
-        /// </summary>
-        Utility = 5,
-        
-        /// <summary>
-        /// >> Multisig
-        /// </summary>
-        Multisig = 6,
+        Grandpa = 3,
         
         /// <summary>
         /// >> Balances
         /// </summary>
-        Balances = 10,
+        Balances = 4,
         
         /// <summary>
         /// >> TransactionPayment
         /// </summary>
-        TransactionPayment = 11,
-        
-        /// <summary>
-        /// >> RealEstateAssets
-        /// </summary>
-        RealEstateAssets = 12,
-        
-        /// <summary>
-        /// >> Assets
-        /// </summary>
-        Assets = 13,
-        
-        /// <summary>
-        /// >> EducationAssets
-        /// </summary>
-        EducationAssets = 14,
+        TransactionPayment = 5,
         
         /// <summary>
         /// >> Sudo
         /// </summary>
-        Sudo = 15,
+        Sudo = 6,
         
         /// <summary>
-        /// >> CollatorSelection
+        /// >> Proxy
         /// </summary>
-        CollatorSelection = 21,
+        Proxy = 7,
         
         /// <summary>
-        /// >> Session
+        /// >> RealEstateAssets
         /// </summary>
-        Session = 22,
+        RealEstateAssets = 8,
         
         /// <summary>
-        /// >> XcmpQueue
+        /// >> Assets
         /// </summary>
-        XcmpQueue = 30,
+        Assets = 9,
         
         /// <summary>
-        /// >> PolkadotXcm
+        /// >> EducationAssets
         /// </summary>
-        PolkadotXcm = 31,
-        
-        /// <summary>
-        /// >> CumulusXcm
-        /// </summary>
-        CumulusXcm = 32,
-        
-        /// <summary>
-        /// >> MessageQueue
-        /// </summary>
-        MessageQueue = 33,
-        
-        /// <summary>
-        /// >> Vesting
-        /// </summary>
-        Vesting = 40,
-        
-        /// <summary>
-        /// >> EducationNfts
-        /// </summary>
-        EducationNfts = 41,
-        
-        /// <summary>
-        /// >> AssetsHolder
-        /// </summary>
-        AssetsHolder = 42,
-        
-        /// <summary>
-        /// >> NftFractionalization
-        /// </summary>
-        NftFractionalization = 43,
-        
-        /// <summary>
-        /// >> AssetsFreezer
-        /// </summary>
-        AssetsFreezer = 44,
+        EducationAssets = 10,
         
         /// <summary>
         /// >> RealEstateNfts
         /// </summary>
-        RealEstateNfts = 45,
+        RealEstateNfts = 11,
         
         /// <summary>
-        /// >> Ismp
+        /// >> EducationNfts
         /// </summary>
-        Ismp = 50,
+        EducationNfts = 12,
         
         /// <summary>
-        /// >> IsmpParachain
+        /// >> NftFractionalization
         /// </summary>
-        IsmpParachain = 51,
+        NftFractionalization = 13,
         
         /// <summary>
-        /// >> Hyperbridge
+        /// >> AssetsHolder
         /// </summary>
-        Hyperbridge = 52,
+        AssetsHolder = 14,
         
         /// <summary>
-        /// >> TokenGateway
+        /// >> AssetsFreezer
         /// </summary>
-        TokenGateway = 53,
+        AssetsFreezer = 15,
+        
+        /// <summary>
+        /// >> Utility
+        /// </summary>
+        Utility = 16,
+        
+        /// <summary>
+        /// >> Multisig
+        /// </summary>
+        Multisig = 17,
+        
+        /// <summary>
+        /// >> Vesting
+        /// </summary>
+        Vesting = 18,
         
         /// <summary>
         /// >> XcavateWhitelist
         /// </summary>
-        XcavateWhitelist = 60,
+        XcavateWhitelist = 20,
         
         /// <summary>
         /// >> EducationRegions
         /// </summary>
-        EducationRegions = 61,
+        EducationRegions = 21,
         
         /// <summary>
         /// >> RealXEducation
         /// </summary>
-        RealXEducation = 62,
+        RealXEducation = 22,
         
         /// <summary>
         /// >> Regions
         /// </summary>
-        Regions = 63,
+        Regions = 23,
         
         /// <summary>
         /// >> RealWorldAsset
         /// </summary>
-        RealWorldAsset = 64,
+        RealWorldAsset = 24,
         
         /// <summary>
         /// >> Marketplace
         /// </summary>
-        Marketplace = 65,
+        Marketplace = 25,
         
         /// <summary>
         /// >> PropertyManagement
         /// </summary>
-        PropertyManagement = 66,
+        PropertyManagement = 26,
         
         /// <summary>
         /// >> PropertyGovernance
         /// </summary>
-        PropertyGovernance = 67,
+        PropertyGovernance = 27,
         
         /// <summary>
         /// >> Buckets
         /// </summary>
-        Buckets = 68,
+        Buckets = 28,
         
         /// <summary>
-        /// >> Ctype
+        /// >> Faucet
         /// </summary>
-        Ctype = 80,
-        
-        /// <summary>
-        /// >> Attestation
-        /// </summary>
-        Attestation = 81,
-        
-        /// <summary>
-        /// >> Delegation
-        /// </summary>
-        Delegation = 82,
-        
-        /// <summary>
-        /// >> Did
-        /// </summary>
-        Did = 83,
-        
-        /// <summary>
-        /// >> PublicCredentials
-        /// </summary>
-        PublicCredentials = 84,
-        
-        /// <summary>
-        /// >> KiltMigration
-        /// </summary>
-        KiltMigration = 85,
-        
-        /// <summary>
-        /// >> DidLookup
-        /// </summary>
-        DidLookup = 86,
+        Faucet = 29,
     }
     
     /// <summary>
@@ -249,32 +169,22 @@ namespace XcavatePaseo.NetApi.Generated.Model.xcavate_runtime
         public EnumRuntimeEvent()
         {
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.frame_system.pallet.EnumEvent>(RuntimeEvent.System);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.cumulus_pallet_parachain_system.pallet.EnumEvent>(RuntimeEvent.ParachainSystem);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_proxy.pallet.EnumEvent>(RuntimeEvent.Proxy);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_utility.pallet.EnumEvent>(RuntimeEvent.Utility);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_multisig.pallet.EnumEvent>(RuntimeEvent.Multisig);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_grandpa.pallet.EnumEvent>(RuntimeEvent.Grandpa);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_balances.pallet.EnumEvent>(RuntimeEvent.Balances);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_transaction_payment.pallet.EnumEvent>(RuntimeEvent.TransactionPayment);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_sudo.pallet.EnumEvent>(RuntimeEvent.Sudo);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_proxy.pallet.EnumEvent>(RuntimeEvent.Proxy);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_assets.pallet.EnumEvent>(RuntimeEvent.RealEstateAssets);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_assets.pallet.EnumEvent>(RuntimeEvent.Assets);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_assets.pallet.EnumEvent>(RuntimeEvent.EducationAssets);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_sudo.pallet.EnumEvent>(RuntimeEvent.Sudo);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_collator_selection.pallet.EnumEvent>(RuntimeEvent.CollatorSelection);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_session.pallet.EnumEvent>(RuntimeEvent.Session);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.cumulus_pallet_xcmp_queue.pallet.EnumEvent>(RuntimeEvent.XcmpQueue);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_xcm.pallet.EnumEvent>(RuntimeEvent.PolkadotXcm);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.cumulus_pallet_xcm.pallet.EnumEvent>(RuntimeEvent.CumulusXcm);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_message_queue.pallet.EnumEvent>(RuntimeEvent.MessageQueue);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_vesting.pallet.EnumEvent>(RuntimeEvent.Vesting);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_nfts.pallet.EnumEvent>(RuntimeEvent.EducationNfts);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_assets_holder.pallet.EnumEvent>(RuntimeEvent.AssetsHolder);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_nft_fractionalization.pallet.EnumEvent>(RuntimeEvent.NftFractionalization);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_assets_freezer.pallet.EnumEvent>(RuntimeEvent.AssetsFreezer);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_nfts.pallet.EnumEvent>(RuntimeEvent.RealEstateNfts);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_ismp.pallet.EnumEvent>(RuntimeEvent.Ismp);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.ismp_parachain.pallet.EnumEvent>(RuntimeEvent.IsmpParachain);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_hyperbridge.pallet.EnumEvent>(RuntimeEvent.Hyperbridge);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_token_gateway.pallet.EnumEvent>(RuntimeEvent.TokenGateway);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_nfts.pallet.EnumEvent>(RuntimeEvent.EducationNfts);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_nft_fractionalization.pallet.EnumEvent>(RuntimeEvent.NftFractionalization);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_assets_holder.pallet.EnumEvent>(RuntimeEvent.AssetsHolder);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_assets_freezer.pallet.EnumEvent>(RuntimeEvent.AssetsFreezer);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_utility.pallet.EnumEvent>(RuntimeEvent.Utility);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_multisig.pallet.EnumEvent>(RuntimeEvent.Multisig);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_vesting.pallet.EnumEvent>(RuntimeEvent.Vesting);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_xcavate_whitelist.pallet.EnumEvent>(RuntimeEvent.XcavateWhitelist);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_education_regions.pallet.EnumEvent>(RuntimeEvent.EducationRegions);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_real_x_education.pallet.EnumEvent>(RuntimeEvent.RealXEducation);
@@ -284,13 +194,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.xcavate_runtime
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet.EnumEvent>(RuntimeEvent.PropertyManagement);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet.EnumEvent>(RuntimeEvent.PropertyGovernance);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_bucket.pallet.EnumEvent>(RuntimeEvent.Buckets);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.ctype.pallet.EnumEvent>(RuntimeEvent.Ctype);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.attestation.pallet.EnumEvent>(RuntimeEvent.Attestation);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.delegation.pallet.EnumEvent>(RuntimeEvent.Delegation);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.did.pallet.EnumEvent>(RuntimeEvent.Did);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.public_credentials.pallet.EnumEvent>(RuntimeEvent.PublicCredentials);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_kilt_migration.pallet.EnumEvent>(RuntimeEvent.KiltMigration);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_did_lookup.pallet.EnumEvent>(RuntimeEvent.DidLookup);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_faucet.pallet.EnumEvent>(RuntimeEvent.Faucet);
         }
     }
 }

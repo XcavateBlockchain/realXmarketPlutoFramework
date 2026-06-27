@@ -61,24 +61,24 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet
         /// Parameters:
         /// - `proposal_id`: The index of the proposal.
         /// - `vote`: Must be either a Yes vote or a No vote.
-        /// - `amount`: The amount of property token that the caller is using for voting.
+        /// - `amount`: The amount of property shares that the caller is using for voting.
         /// 
         /// Emits `VotedOnProposal` event when successful.
         /// </summary>
         vote_on_proposal = 2,
         
         /// <summary>
-        /// >> unfreeze_proposal_token
-        /// Lets a voter unlock his locked token after voting on a proposal.
+        /// >> unfreeze_proposal_shares
+        /// Lets a voter unlock his locked shares after voting on a proposal.
         /// 
         /// The origin must be signed and have sufficient funds.
         /// 
         /// Parameters:
         /// - `proposal_id`: Id of the proposal.
         /// 
-        /// Emits `TokenUnfrozen` event when successful.
+        /// Emits `SharesUnfrozen` event when successful.
         /// </summary>
-        unfreeze_proposal_token = 3,
+        unfreeze_proposal_shares = 3,
         
         /// <summary>
         /// >> vote_on_letting_agent_challenge
@@ -89,28 +89,28 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet
         /// Parameters:
         /// - `asset_id: u32`: The index of the challenge.
         /// - `vote`: Must be either a Yes vote or a No vote.
-        /// - `amount`: The amount of property token that the caller is using for voting.
+        /// - `amount`: The amount of property shares that the caller is using for voting.
         /// 
         /// Emits `VotedOnChallenge` event when successful.
         /// </summary>
         vote_on_letting_agent_challenge = 4,
         
         /// <summary>
-        /// >> unfreeze_challenge_token
-        /// Lets a voter unlock his locked token after voting on a letting agent challenge.
+        /// >> unfreeze_challenge_shares
+        /// Lets a voter unlock his locked shares after voting on a letting agent challenge.
         /// 
         /// The origin must be signed and have sufficient funds.
         /// 
         /// Parameters:
         /// - `proposal_id`: Id of the letting agent challenge.
         /// 
-        /// Emits `TokenUnfrozen` event when successful.
+        /// Emits `SharesUnfrozen` event when successful.
         /// </summary>
-        unfreeze_challenge_token = 5,
+        unfreeze_challenge_shares = 5,
     }
     
     /// <summary>
-    /// >> 522 - Variant[pallet_property_governance.pallet.Call]
+    /// >> 246 - Variant[pallet_property_governance.pallet.Call]
     /// Contains a variant per dispatchable extrinsic that this pallet has.
     /// </summary>
     public sealed class EnumCall : BaseEnumRust<Call>
@@ -121,12 +121,12 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet
         /// </summary>
         public EnumCall()
         {
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6>>(Call.propose);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1>>(Call.propose);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.challenge_against_letting_agent);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet.EnumVote, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.vote_on_proposal);
-				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U64>(Call.unfreeze_proposal_token);
+				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U64>(Call.unfreeze_proposal_shares);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet.EnumVote, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.vote_on_letting_agent_challenge);
-				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U64>(Call.unfreeze_challenge_token);
+				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U64>(Call.unfreeze_challenge_shares);
         }
     }
 }

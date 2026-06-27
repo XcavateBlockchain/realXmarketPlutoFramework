@@ -13,7 +13,7 @@ namespace PlutoFramework.Model.Xcavate
             var accountId = new AccountId32();
             accountId.Create(Utils.GetPublicKeyFrom(address));
 
-            var tokensOwned = await substrateClient.RealWorldAssetStorage.PropertyOwnerToken(new BaseTuple<U32, AccountId32>(propertyId, accountId), null, token);
+            var tokensOwned = await substrateClient.RealWorldAssetStorage.PropertyOwnerShares(new BaseTuple<U32, AccountId32>(propertyId, accountId), null, token);
 
             return tokensOwned;
         }

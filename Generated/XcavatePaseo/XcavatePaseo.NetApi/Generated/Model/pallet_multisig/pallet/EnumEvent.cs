@@ -54,7 +54,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_multisig.pallet
     }
     
     /// <summary>
-    /// >> 41 - Variant[pallet_multisig.pallet.Event]
+    /// >> 67 - Variant[pallet_multisig.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>

@@ -47,10 +47,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
         PropertyAssetNotRegistered = 3,
         
         /// <summary>
-        /// >> NotEnoughToken
-        /// The sender does not hold enough tokens.
+        /// >> NotEnoughShares
+        /// The sender does not hold enough shares.
         /// </summary>
-        NotEnoughToken = 4,
+        NotEnoughShares = 4,
         
         /// <summary>
         /// >> InvalidIndex
@@ -59,10 +59,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
         InvalidIndex = 5,
         
         /// <summary>
-        /// >> TooManyTokenBuyer
-        /// Too many token buyers for the property.
+        /// >> TooManyShareBuyers
+        /// Too many share buyers for the property.
         /// </summary>
-        TooManyTokenBuyer = 6,
+        TooManyShareBuyers = 6,
         
         /// <summary>
         /// >> PropertyNotFound
@@ -90,7 +90,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
     }
     
     /// <summary>
-    /// >> 748 - Variant[pallet_real_world_asset.pallet.Error]
+    /// >> 354 - Variant[pallet_real_world_asset.pallet.Error]
     /// The `Error` enum of this pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

@@ -181,7 +181,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_assets.pallet
     }
     
     /// <summary>
-    /// >> 48 - Variant[pallet_assets.pallet.Event]
+    /// >> 49 - Variant[pallet_assets.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>

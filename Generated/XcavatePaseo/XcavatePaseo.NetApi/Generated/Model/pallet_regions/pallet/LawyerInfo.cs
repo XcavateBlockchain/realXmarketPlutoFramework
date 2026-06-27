@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_regions.pallet
     
     
     /// <summary>
-    /// >> 744 - Composite[pallet_regions.pallet.LawyerInfo]
+    /// >> 350 - Composite[pallet_regions.pallet.LawyerInfo]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class LawyerInfo : BaseType

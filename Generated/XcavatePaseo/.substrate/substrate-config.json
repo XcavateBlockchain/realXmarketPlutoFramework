@@ -6,7 +6,7 @@
     "rest_client": "Substrate.RestClient"
   },
    "metadata": {
-      "websocket": "wss://xcavate-paseo.api.onfinality.io/public-ws"
+      "websocket": "wss://node-7476301490798493696.hm.onfinality.io/ws?apikey=67c9f0fb-ee80-4c9a-93d4-9e1b77867f33"
    },
   "rest_client_settings": {
     "service_assembly": "Substrate.RestService.dll"

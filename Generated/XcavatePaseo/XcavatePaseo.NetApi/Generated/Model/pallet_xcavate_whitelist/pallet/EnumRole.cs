@@ -83,7 +83,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_xcavate_whitelist.pallet
     }
     
     /// <summary>
-    /// >> 190 - Variant[pallet_xcavate_whitelist.pallet.Role]
+    /// >> 71 - Variant[pallet_xcavate_whitelist.pallet.Role]
     /// </summary>
     public sealed class EnumRole : BaseEnum<Role>
     {

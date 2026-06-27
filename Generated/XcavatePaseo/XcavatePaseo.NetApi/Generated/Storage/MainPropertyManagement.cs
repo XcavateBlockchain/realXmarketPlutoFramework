@@ -58,7 +58,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("PropertyManagement", "ResignationNotices"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet.ResignationNotice)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("PropertyManagement", "ResignationQueue"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT63)));
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT23)));
         }
         
         /// <summary>
@@ -393,10 +393,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> ResignationQueue
         ///  Queue of resignation notices expiring at specific block numbers.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT63> ResignationQueue(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT23> ResignationQueue(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
         {
             string parameters = PropertyManagementStorage.ResignationQueueParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT63>(parameters, blockhash, token);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT23>(parameters, blockhash, token);
             return result;
         }
     }
@@ -411,23 +411,23 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> add_letting_agent
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method AddLettingAgent(Substrate.NetApi.Model.Types.Primitive.U16 region, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT11 location)
+        public static Method AddLettingAgent(Substrate.NetApi.Model.Types.Primitive.U16 region, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT4 location)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(region.Encode());
             byteArray.AddRange(location.Encode());
-            return new Method(66, "PropertyManagement", 0, "add_letting_agent", byteArray.ToArray());
+            return new Method(26, "PropertyManagement", 0, "add_letting_agent", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> remove_letting_agent
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method RemoveLettingAgent(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT11 location)
+        public static Method RemoveLettingAgent(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT4 location)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(location.Encode());
-            return new Method(66, "PropertyManagement", 1, "remove_letting_agent", byteArray.ToArray());
+            return new Method(26, "PropertyManagement", 1, "remove_letting_agent", byteArray.ToArray());
         }
         
         /// <summary>
@@ -438,7 +438,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(asset_id.Encode());
-            return new Method(66, "PropertyManagement", 2, "letting_agent_claim_property", byteArray.ToArray());
+            return new Method(26, "PropertyManagement", 2, "letting_agent_claim_property", byteArray.ToArray());
         }
         
         /// <summary>
@@ -451,7 +451,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(asset_id.Encode());
             byteArray.AddRange(vote.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(66, "PropertyManagement", 3, "vote_on_letting_agent", byteArray.ToArray());
+            return new Method(26, "PropertyManagement", 3, "vote_on_letting_agent", byteArray.ToArray());
         }
         
         /// <summary>
@@ -462,18 +462,18 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(asset_id.Encode());
-            return new Method(66, "PropertyManagement", 4, "finalize_letting_agent", byteArray.ToArray());
+            return new Method(26, "PropertyManagement", 4, "finalize_letting_agent", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> unfreeze_letting_voting_token
+        /// >> unfreeze_letting_voting_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method UnfreezeLettingVotingToken(Substrate.NetApi.Model.Types.Primitive.U64 proposal_id)
+        public static Method UnfreezeLettingVotingShares(Substrate.NetApi.Model.Types.Primitive.U64 proposal_id)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(proposal_id.Encode());
-            return new Method(66, "PropertyManagement", 5, "unfreeze_letting_voting_token", byteArray.ToArray());
+            return new Method(26, "PropertyManagement", 5, "unfreeze_letting_voting_shares", byteArray.ToArray());
         }
         
         /// <summary>
@@ -486,7 +486,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(asset_id.Encode());
             byteArray.AddRange(amount.Encode());
             byteArray.AddRange(payment_asset.Encode());
-            return new Method(66, "PropertyManagement", 6, "distribute_income", byteArray.ToArray());
+            return new Method(26, "PropertyManagement", 6, "distribute_income", byteArray.ToArray());
         }
         
         /// <summary>
@@ -497,7 +497,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(asset_id.Encode());
-            return new Method(66, "PropertyManagement", 7, "claim_income", byteArray.ToArray());
+            return new Method(26, "PropertyManagement", 7, "claim_income", byteArray.ToArray());
         }
         
         /// <summary>
@@ -508,7 +508,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(asset_id.Encode());
-            return new Method(66, "PropertyManagement", 8, "resign_from_property", byteArray.ToArray());
+            return new Method(26, "PropertyManagement", 8, "resign_from_property", byteArray.ToArray());
         }
     }
     
@@ -569,7 +569,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public XcavatePaseo.NetApi.Generated.Types.Base.Arr2U32 AcceptedAssets()
         {
             var result = new XcavatePaseo.NetApi.Generated.Types.Base.Arr2U32();
-            result.Create("0x39050000C0070000");
+            result.Create("0x0A00000001000000");
             return result;
         }
         
@@ -781,7 +781,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         
         /// <summary>
         /// >> NoFrozenAmount
-        /// The user has no token amount frozen.
+        /// The user has no share amount frozen.
         /// </summary>
         NoFrozenAmount,
         
@@ -798,10 +798,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         ZeroDistributionAmount,
         
         /// <summary>
-        /// >> ZeroTokenSupply
-        /// The total token supply for the property cannot be zero.
+        /// >> ZeroShareSupply
+        /// The total share supply for the property cannot be zero.
         /// </summary>
-        ZeroTokenSupply,
+        ZeroShareSupply,
         
         /// <summary>
         /// >> ResignationAlreadyInitiated

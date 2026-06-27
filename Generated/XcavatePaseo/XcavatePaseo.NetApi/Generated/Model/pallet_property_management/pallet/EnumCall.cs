@@ -72,7 +72,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
         /// Parameters:
         /// - `asset_id`: The asset id of the property.
         /// - `vote`: Must be either a Yes vote or a No vote.
-        /// - `amount`: The amount of property token that the investor is using for voting.
+        /// - `amount`: The amount of property shares that the investor is using for voting.
         /// 
         /// Emits `VotedOnLettingAgent` event when successful.
         /// </summary>
@@ -93,17 +93,17 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
         finalize_letting_agent = 4,
         
         /// <summary>
-        /// >> unfreeze_letting_voting_token
-        /// Lets a voter unlock his locked token after voting on a letting agent.
+        /// >> unfreeze_letting_voting_shares
+        /// Lets a voter unlock his locked shares after voting on a letting agent.
         /// 
         /// The origin must be signed and have sufficient funds.
         /// 
         /// Parameters:
         /// - `proposal_id`: Id of the letting agent proposal.
         /// 
-        /// Emits `TokenUnfrozen` event when successful.
+        /// Emits `SharesUnfrozen` event when successful.
         /// </summary>
-        unfreeze_letting_voting_token = 5,
+        unfreeze_letting_voting_shares = 5,
         
         /// <summary>
         /// >> distribute_income
@@ -147,7 +147,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
     }
     
     /// <summary>
-    /// >> 521 - Variant[pallet_property_management.pallet.Call]
+    /// >> 245 - Variant[pallet_property_management.pallet.Call]
     /// Contains a variant per dispatchable extrinsic that this pallet has.
     /// </summary>
     public sealed class EnumCall : BaseEnumRust<Call>
@@ -158,12 +158,12 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
         /// </summary>
         public EnumCall()
         {
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U16, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT11>>(Call.add_letting_agent);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT11>(Call.remove_letting_agent);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U16, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT4>>(Call.add_letting_agent);
+				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT4>(Call.remove_letting_agent);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.letting_agent_claim_property);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet.EnumVote, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.vote_on_letting_agent);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.finalize_letting_agent);
-				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U64>(Call.unfreeze_letting_voting_token);
+				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U64>(Call.unfreeze_letting_voting_shares);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U32>>(Call.distribute_income);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.claim_income);
 				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Call.resign_from_property);

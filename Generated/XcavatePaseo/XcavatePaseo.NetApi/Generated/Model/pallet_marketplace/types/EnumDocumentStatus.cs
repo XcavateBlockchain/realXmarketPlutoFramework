@@ -38,7 +38,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
     }
     
     /// <summary>
-    /// >> 759 - Variant[pallet_marketplace.types.DocumentStatus]
+    /// >> 365 - Variant[pallet_marketplace.types.DocumentStatus]
     /// </summary>
     public sealed class EnumDocumentStatus : BaseEnum<DocumentStatus>
     {

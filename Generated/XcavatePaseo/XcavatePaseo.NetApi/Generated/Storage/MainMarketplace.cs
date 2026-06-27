@@ -40,19 +40,19 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "NextOfferNonce"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(null, null, typeof(Substrate.NetApi.Model.Types.Primitive.U64)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "OngoingObjectListing"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.PropertyListingDetails)));
-            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "TokenOwner"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "ShareOwner"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32>), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.TokenOwnerDetails)));
-            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "TokenListings"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.TokenListingDetails)));
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32>), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.ShareOwnerDetails)));
+            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "ShareListings"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.ShareListingDetails)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "OngoingOffers"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.OfferDetails)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "PropertyLawyer"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.PropertyLawyerDetails)));
-            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "RefundToken"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "RefundShare"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.RefundInfos)));
-            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "RefundClaimedToken"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "RefundClaimedShare"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(Substrate.NetApi.Model.Types.Primitive.U32)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "RefundLegalExpired"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(Substrate.NetApi.Model.Types.Primitive.U32)));
@@ -70,7 +70,6 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "ListingSpvProposal"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(Substrate.NetApi.Model.Types.Primitive.U64)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "ProposalCounter"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(null, null, typeof(Substrate.NetApi.Model.Types.Primitive.U64)));
-            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Marketplace", "DelayedCalls"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(null, null, typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT61)));
         }
         
         /// <summary>
@@ -163,64 +162,64 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         }
         
         /// <summary>
-        /// >> TokenOwnerParams
-        ///  Storage for token ownership, mapping account ID and listing ID to token amounts.
+        /// >> ShareOwnerParams
+        ///  Storage for share ownership, mapping account ID and listing ID to share amounts.
         /// </summary>
-        public static string TokenOwnerParams(Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32> key)
+        public static string ShareOwnerParams(Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32> key)
         {
-            return RequestGenerator.GetStorage("Marketplace", "TokenOwner", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+            return RequestGenerator.GetStorage("Marketplace", "ShareOwner", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                         Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                         Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, key.Value);
         }
         
         /// <summary>
-        /// >> TokenOwnerDefault
+        /// >> ShareOwnerDefault
         /// Default value as hex string
         /// </summary>
-        public static string TokenOwnerDefault()
+        public static string ShareOwnerDefault()
         {
             return "0x00";
         }
         
         /// <summary>
-        /// >> TokenOwner
-        ///  Storage for token ownership, mapping account ID and listing ID to token amounts.
+        /// >> ShareOwner
+        ///  Storage for share ownership, mapping account ID and listing ID to share amounts.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.TokenOwnerDetails> TokenOwner(Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32> key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.ShareOwnerDetails> ShareOwner(Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32> key, string blockhash, CancellationToken token)
         {
-            string parameters = MarketplaceStorage.TokenOwnerParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.TokenOwnerDetails>(parameters, blockhash, token);
+            string parameters = MarketplaceStorage.ShareOwnerParams(key);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.ShareOwnerDetails>(parameters, blockhash, token);
             return result;
         }
         
         /// <summary>
-        /// >> TokenListingsParams
-        ///  Storage for token listings, mapping listing ID to listing details.
+        /// >> ShareListingsParams
+        ///  Storage for share listings, mapping listing ID to listing details.
         /// </summary>
-        public static string TokenListingsParams(Substrate.NetApi.Model.Types.Primitive.U32 key)
+        public static string ShareListingsParams(Substrate.NetApi.Model.Types.Primitive.U32 key)
         {
-            return RequestGenerator.GetStorage("Marketplace", "TokenListings", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+            return RequestGenerator.GetStorage("Marketplace", "ShareListings", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                         Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, new Substrate.NetApi.Model.Types.IType[] {
                         key});
         }
         
         /// <summary>
-        /// >> TokenListingsDefault
+        /// >> ShareListingsDefault
         /// Default value as hex string
         /// </summary>
-        public static string TokenListingsDefault()
+        public static string ShareListingsDefault()
         {
             return "0x00";
         }
         
         /// <summary>
-        /// >> TokenListings
-        ///  Storage for token listings, mapping listing ID to listing details.
+        /// >> ShareListings
+        ///  Storage for share listings, mapping listing ID to listing details.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.TokenListingDetails> TokenListings(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.ShareListingDetails> ShareListings(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
         {
-            string parameters = MarketplaceStorage.TokenListingsParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.TokenListingDetails>(parameters, blockhash, token);
+            string parameters = MarketplaceStorage.ShareListingsParams(key);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.ShareListingDetails>(parameters, blockhash, token);
             return result;
         }
         
@@ -287,63 +286,63 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         }
         
         /// <summary>
-        /// >> RefundTokenParams
+        /// >> RefundShareParams
         ///  Storage for refund information.
         /// </summary>
-        public static string RefundTokenParams(Substrate.NetApi.Model.Types.Primitive.U32 key)
+        public static string RefundShareParams(Substrate.NetApi.Model.Types.Primitive.U32 key)
         {
-            return RequestGenerator.GetStorage("Marketplace", "RefundToken", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+            return RequestGenerator.GetStorage("Marketplace", "RefundShare", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                         Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, new Substrate.NetApi.Model.Types.IType[] {
                         key});
         }
         
         /// <summary>
-        /// >> RefundTokenDefault
+        /// >> RefundShareDefault
         /// Default value as hex string
         /// </summary>
-        public static string RefundTokenDefault()
+        public static string RefundShareDefault()
         {
             return "0x00";
         }
         
         /// <summary>
-        /// >> RefundToken
+        /// >> RefundShare
         ///  Storage for refund information.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.RefundInfos> RefundToken(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.RefundInfos> RefundShare(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
         {
-            string parameters = MarketplaceStorage.RefundTokenParams(key);
+            string parameters = MarketplaceStorage.RefundShareParams(key);
             var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.RefundInfos>(parameters, blockhash, token);
             return result;
         }
         
         /// <summary>
-        /// >> RefundClaimedTokenParams
+        /// >> RefundClaimedShareParams
         ///  Stores required infos in case of a refund.
         /// </summary>
-        public static string RefundClaimedTokenParams(Substrate.NetApi.Model.Types.Primitive.U32 key)
+        public static string RefundClaimedShareParams(Substrate.NetApi.Model.Types.Primitive.U32 key)
         {
-            return RequestGenerator.GetStorage("Marketplace", "RefundClaimedToken", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+            return RequestGenerator.GetStorage("Marketplace", "RefundClaimedShare", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                         Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, new Substrate.NetApi.Model.Types.IType[] {
                         key});
         }
         
         /// <summary>
-        /// >> RefundClaimedTokenDefault
+        /// >> RefundClaimedShareDefault
         /// Default value as hex string
         /// </summary>
-        public static string RefundClaimedTokenDefault()
+        public static string RefundClaimedShareDefault()
         {
             return "0x00";
         }
         
         /// <summary>
-        /// >> RefundClaimedToken
+        /// >> RefundClaimedShare
         ///  Stores required infos in case of a refund.
         /// </summary>
-        public async Task<Substrate.NetApi.Model.Types.Primitive.U32> RefundClaimedToken(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
+        public async Task<Substrate.NetApi.Model.Types.Primitive.U32> RefundClaimedShare(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
         {
-            string parameters = MarketplaceStorage.RefundClaimedTokenParams(key);
+            string parameters = MarketplaceStorage.RefundClaimedShareParams(key);
             var result = await _client.GetStorageAsync<Substrate.NetApi.Model.Types.Primitive.U32>(parameters, blockhash, token);
             return result;
         }
@@ -593,35 +592,6 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             var result = await _client.GetStorageAsync<Substrate.NetApi.Model.Types.Primitive.U64>(parameters, blockhash, token);
             return result;
         }
-        
-        /// <summary>
-        /// >> DelayedCallsParams
-        ///  Delayed extrinsic calls.
-        /// </summary>
-        public static string DelayedCallsParams()
-        {
-            return RequestGenerator.GetStorage("Marketplace", "DelayedCalls", Substrate.NetApi.Model.Meta.Storage.Type.Plain);
-        }
-        
-        /// <summary>
-        /// >> DelayedCallsDefault
-        /// Default value as hex string
-        /// </summary>
-        public static string DelayedCallsDefault()
-        {
-            return "0x00";
-        }
-        
-        /// <summary>
-        /// >> DelayedCalls
-        ///  Delayed extrinsic calls.
-        /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT61> DelayedCalls(string blockhash, CancellationToken token)
-        {
-            string parameters = MarketplaceStorage.DelayedCallsParams();
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT61>(parameters, blockhash, token);
-            return result;
-        }
     }
     
     /// <summary>
@@ -634,40 +604,40 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> list_property
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method ListProperty(Substrate.NetApi.Model.Types.Primitive.U16 region, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT11 location, Substrate.NetApi.Model.Types.Primitive.U128 token_price, Substrate.NetApi.Model.Types.Primitive.U32 token_amount, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 data, Substrate.NetApi.Model.Types.Primitive.Bool tax_paid_by_developer)
+        public static Method ListProperty(Substrate.NetApi.Model.Types.Primitive.U16 region, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT4 location, Substrate.NetApi.Model.Types.Primitive.U128 share_price, Substrate.NetApi.Model.Types.Primitive.U32 share_amount, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 data, Substrate.NetApi.Model.Types.Primitive.Bool tax_paid_by_developer)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(region.Encode());
             byteArray.AddRange(location.Encode());
-            byteArray.AddRange(token_price.Encode());
-            byteArray.AddRange(token_amount.Encode());
+            byteArray.AddRange(share_price.Encode());
+            byteArray.AddRange(share_amount.Encode());
             byteArray.AddRange(data.Encode());
             byteArray.AddRange(tax_paid_by_developer.Encode());
-            return new Method(65, "Marketplace", 0, "list_property", byteArray.ToArray());
+            return new Method(25, "Marketplace", 0, "list_property", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> buy_property_token
+        /// >> buy_property_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method BuyPropertyToken(Substrate.NetApi.Model.Types.Primitive.U32 listing_id, Substrate.NetApi.Model.Types.Primitive.U32 amount, Substrate.NetApi.Model.Types.Primitive.U32 payment_asset)
+        public static Method BuyPropertyShares(Substrate.NetApi.Model.Types.Primitive.U32 listing_id, Substrate.NetApi.Model.Types.Primitive.U32 amount, Substrate.NetApi.Model.Types.Primitive.U32 payment_asset)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
             byteArray.AddRange(amount.Encode());
             byteArray.AddRange(payment_asset.Encode());
-            return new Method(65, "Marketplace", 1, "buy_property_token", byteArray.ToArray());
+            return new Method(25, "Marketplace", 1, "buy_property_shares", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> claim_property_token
+        /// >> claim_property_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method ClaimPropertyToken(Substrate.NetApi.Model.Types.Primitive.U32 listing_id)
+        public static Method ClaimPropertyShares(Substrate.NetApi.Model.Types.Primitive.U32 listing_id)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 2, "claim_property_token", byteArray.ToArray());
+            return new Method(25, "Marketplace", 2, "claim_property_shares", byteArray.ToArray());
         }
         
         /// <summary>
@@ -678,7 +648,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 3, "finalize_claim_window", byteArray.ToArray());
+            return new Method(25, "Marketplace", 3, "finalize_claim_window", byteArray.ToArray());
         }
         
         /// <summary>
@@ -689,33 +659,33 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 4, "create_spv", byteArray.ToArray());
+            return new Method(25, "Marketplace", 4, "create_spv", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> relist_token
+        /// >> relist_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method RelistToken(Substrate.NetApi.Model.Types.Primitive.U32 asset_id, Substrate.NetApi.Model.Types.Primitive.U128 token_price, Substrate.NetApi.Model.Types.Primitive.U32 amount)
+        public static Method RelistShares(Substrate.NetApi.Model.Types.Primitive.U32 asset_id, Substrate.NetApi.Model.Types.Primitive.U128 share_price, Substrate.NetApi.Model.Types.Primitive.U32 amount)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(asset_id.Encode());
-            byteArray.AddRange(token_price.Encode());
+            byteArray.AddRange(share_price.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(65, "Marketplace", 5, "relist_token", byteArray.ToArray());
+            return new Method(25, "Marketplace", 5, "relist_shares", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> buy_relisted_token
+        /// >> buy_relisted_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method BuyRelistedToken(Substrate.NetApi.Model.Types.Primitive.U32 listing_id, Substrate.NetApi.Model.Types.Primitive.U32 amount, Substrate.NetApi.Model.Types.Primitive.U32 payment_asset)
+        public static Method BuyRelistedShares(Substrate.NetApi.Model.Types.Primitive.U32 listing_id, Substrate.NetApi.Model.Types.Primitive.U32 amount, Substrate.NetApi.Model.Types.Primitive.U32 payment_asset)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
             byteArray.AddRange(amount.Encode());
             byteArray.AddRange(payment_asset.Encode());
-            return new Method(65, "Marketplace", 6, "buy_relisted_token", byteArray.ToArray());
+            return new Method(25, "Marketplace", 6, "buy_relisted_shares", byteArray.ToArray());
         }
         
         /// <summary>
@@ -726,7 +696,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 7, "cancel_property_purchase", byteArray.ToArray());
+            return new Method(25, "Marketplace", 7, "cancel_property_purchase", byteArray.ToArray());
         }
         
         /// <summary>
@@ -740,7 +710,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(offer_price.Encode());
             byteArray.AddRange(amount.Encode());
             byteArray.AddRange(payment_asset.Encode());
-            return new Method(65, "Marketplace", 8, "make_offer", byteArray.ToArray());
+            return new Method(25, "Marketplace", 8, "make_offer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -754,7 +724,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(offeror.Encode());
             byteArray.AddRange(offer.Encode());
             byteArray.AddRange(offer_nonce.Encode());
-            return new Method(65, "Marketplace", 9, "handle_offer", byteArray.ToArray());
+            return new Method(25, "Marketplace", 9, "handle_offer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -765,7 +735,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 10, "cancel_offer", byteArray.ToArray());
+            return new Method(25, "Marketplace", 10, "cancel_offer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -776,7 +746,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 11, "withdraw_rejected", byteArray.ToArray());
+            return new Method(25, "Marketplace", 11, "withdraw_rejected", byteArray.ToArray());
         }
         
         /// <summary>
@@ -787,7 +757,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 12, "withdraw_legal_process_expired", byteArray.ToArray());
+            return new Method(25, "Marketplace", 12, "withdraw_legal_process_expired", byteArray.ToArray());
         }
         
         /// <summary>
@@ -798,7 +768,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 13, "withdraw_expired", byteArray.ToArray());
+            return new Method(25, "Marketplace", 13, "withdraw_expired", byteArray.ToArray());
         }
         
         /// <summary>
@@ -809,7 +779,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 14, "withdraw_deposit_unsold", byteArray.ToArray());
+            return new Method(25, "Marketplace", 14, "withdraw_deposit_unsold", byteArray.ToArray());
         }
         
         /// <summary>
@@ -820,7 +790,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 15, "withdraw_claiming_expired", byteArray.ToArray());
+            return new Method(25, "Marketplace", 15, "withdraw_claiming_expired", byteArray.ToArray());
         }
         
         /// <summary>
@@ -831,7 +801,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 16, "withdraw_unclaimed", byteArray.ToArray());
+            return new Method(25, "Marketplace", 16, "withdraw_unclaimed", byteArray.ToArray());
         }
         
         /// <summary>
@@ -843,18 +813,18 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
             byteArray.AddRange(new_price.Encode());
-            return new Method(65, "Marketplace", 17, "upgrade_object", byteArray.ToArray());
+            return new Method(25, "Marketplace", 17, "upgrade_object", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> delist_token
+        /// >> delist_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method DelistToken(Substrate.NetApi.Model.Types.Primitive.U32 listing_id)
+        public static Method DelistShares(Substrate.NetApi.Model.Types.Primitive.U32 listing_id)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 18, "delist_token", byteArray.ToArray());
+            return new Method(25, "Marketplace", 18, "delist_shares", byteArray.ToArray());
         }
         
         /// <summary>
@@ -867,7 +837,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(listing_id.Encode());
             byteArray.AddRange(legal_side.Encode());
             byteArray.AddRange(costs.Encode());
-            return new Method(65, "Marketplace", 19, "lawyer_claim_property", byteArray.ToArray());
+            return new Method(25, "Marketplace", 19, "lawyer_claim_property", byteArray.ToArray());
         }
         
         /// <summary>
@@ -880,7 +850,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(listing_id.Encode());
             byteArray.AddRange(vote.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(65, "Marketplace", 20, "vote_on_spv_lawyer", byteArray.ToArray());
+            return new Method(25, "Marketplace", 20, "vote_on_spv_lawyer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -892,7 +862,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
             byteArray.AddRange(approve.Encode());
-            return new Method(65, "Marketplace", 21, "approve_developer_lawyer", byteArray.ToArray());
+            return new Method(25, "Marketplace", 21, "approve_developer_lawyer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -903,18 +873,18 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 22, "finalize_spv_lawyer", byteArray.ToArray());
+            return new Method(25, "Marketplace", 22, "finalize_spv_lawyer", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> unfreeze_spv_lawyer_token
+        /// >> unfreeze_spv_lawyer_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method UnfreezeSpvLawyerToken(Substrate.NetApi.Model.Types.Primitive.U64 proposal_id)
+        public static Method UnfreezeSpvLawyerShares(Substrate.NetApi.Model.Types.Primitive.U64 proposal_id)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(proposal_id.Encode());
-            return new Method(65, "Marketplace", 23, "unfreeze_spv_lawyer_token", byteArray.ToArray());
+            return new Method(25, "Marketplace", 23, "unfreeze_spv_lawyer_shares", byteArray.ToArray());
         }
         
         /// <summary>
@@ -925,7 +895,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
-            return new Method(65, "Marketplace", 24, "remove_lawyer_claim", byteArray.ToArray());
+            return new Method(25, "Marketplace", 24, "remove_lawyer_claim", byteArray.ToArray());
         }
         
         /// <summary>
@@ -937,20 +907,20 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(listing_id.Encode());
             byteArray.AddRange(approve.Encode());
-            return new Method(65, "Marketplace", 25, "lawyer_confirm_documents", byteArray.ToArray());
+            return new Method(25, "Marketplace", 25, "lawyer_confirm_documents", byteArray.ToArray());
         }
         
         /// <summary>
-        /// >> send_property_token
+        /// >> send_property_shares
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method SendPropertyToken(Substrate.NetApi.Model.Types.Primitive.U32 asset_id, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32 receiver, Substrate.NetApi.Model.Types.Primitive.U32 token_amount)
+        public static Method SendPropertyShares(Substrate.NetApi.Model.Types.Primitive.U32 asset_id, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32 receiver, Substrate.NetApi.Model.Types.Primitive.U32 share_amount)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(asset_id.Encode());
             byteArray.AddRange(receiver.Encode());
-            byteArray.AddRange(token_amount.Encode());
-            return new Method(65, "Marketplace", 26, "send_property_token", byteArray.ToArray());
+            byteArray.AddRange(share_amount.Encode());
+            return new Method(25, "Marketplace", 26, "send_property_shares", byteArray.ToArray());
         }
     }
     
@@ -972,10 +942,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         }
         
         /// <summary>
-        /// >> MinPropertyToken
-        ///  The minimum amount of token of a property.
+        /// >> MinPropertyShares
+        ///  The minimum amount of shares of a property.
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U32 MinPropertyToken()
+        public Substrate.NetApi.Model.Types.Primitive.U32 MinPropertyShares()
         {
             var result = new Substrate.NetApi.Model.Types.Primitive.U32();
             result.Create("0x64000000");
@@ -983,10 +953,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         }
         
         /// <summary>
-        /// >> MaxPropertyToken
-        ///  The maximum amount of token of a property.
+        /// >> MaxPropertyShares
+        ///  The maximum amount of shares of a property.
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U32 MaxPropertyToken()
+        public Substrate.NetApi.Model.Types.Primitive.U32 MaxPropertyShares()
         {
             var result = new Substrate.NetApi.Model.Types.Primitive.U32();
             result.Create("0xFA000000");
@@ -1033,7 +1003,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public XcavatePaseo.NetApi.Generated.Types.Base.Arr2U32 AcceptedAssets()
         {
             var result = new XcavatePaseo.NetApi.Generated.Types.Base.Arr2U32();
-            result.Create("0x39050000C0070000");
+            result.Create("0x0A00000001000000");
             return result;
         }
         
@@ -1083,7 +1053,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         
         /// <summary>
         /// >> ClaimWindow
-        ///  Time window for claiming property tokens.
+        ///  Time window for claiming property shares.
         /// </summary>
         public Substrate.NetApi.Model.Types.Primitive.U32 ClaimWindow()
         {
@@ -1094,7 +1064,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         
         /// <summary>
         /// >> MaxRelistAttempts
-        ///  Maximum attempts to relist unclaimed tokens.
+        ///  Maximum attempts to relist unclaimed shares.
         /// </summary>
         public Substrate.NetApi.Model.Types.Primitive.U8 MaxRelistAttempts()
         {
@@ -1135,28 +1105,6 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             result.Create("0x0065CD1D");
             return result;
         }
-        
-        /// <summary>
-        /// >> MaxCallLen
-        ///  Max length of a scale encoded call in bytes.
-        /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U32 MaxCallLen()
-        {
-            var result = new Substrate.NetApi.Model.Types.Primitive.U32();
-            result.Create("0x40000000");
-            return result;
-        }
-        
-        /// <summary>
-        /// >> MaxDelayedCalls
-        ///  Max number of calls that can be delayed.
-        /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U32 MaxDelayedCalls()
-        {
-            var result = new Substrate.NetApi.Model.Types.Primitive.U32();
-            result.Create("0x0A000000");
-            return result;
-        }
     }
     
     /// <summary>
@@ -1178,10 +1126,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         NotEnoughFunds,
         
         /// <summary>
-        /// >> NotEnoughTokenAvailable
-        /// Not enough token available to buy.
+        /// >> NotEnoughSharesAvailable
+        /// Not enough shares available to buy.
         /// </summary>
-        NotEnoughTokenAvailable,
+        NotEnoughSharesAvailable,
         
         /// <summary>
         /// >> DivisionError
@@ -1220,10 +1168,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         ArithmeticOverflow,
         
         /// <summary>
-        /// >> TokenNotForSale
-        /// The token is not for sale.
+        /// >> ShareNotForSale
+        /// The share is not for sale.
         /// </summary>
-        TokenNotForSale,
+        ShareNotForSale,
         
         /// <summary>
         /// >> RegionUnknown
@@ -1238,16 +1186,16 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         LocationUnknown,
         
         /// <summary>
-        /// >> TooManyToken
-        /// The object can not be divided in so many token.
+        /// >> TooManyShares
+        /// The object can not be divided in so many shares.
         /// </summary>
-        TooManyToken,
+        TooManyShares,
         
         /// <summary>
-        /// >> TokenAmountTooLow
-        /// The object needs more token.
+        /// >> ShareAmountTooLow
+        /// The object needs more shares.
         /// </summary>
-        TokenAmountTooLow,
+        ShareAmountTooLow,
         
         /// <summary>
         /// >> OnlyOneOfferPerUser
@@ -1298,10 +1246,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         ExceedsMaxEntries,
         
         /// <summary>
-        /// >> TokenNotRefunded
+        /// >> SharesNotRefunded
         /// The property is not refunded.
         /// </summary>
-        TokenNotRefunded,
+        SharesNotRefunded,
         
         /// <summary>
         /// >> PropertyAlreadySold
@@ -1316,10 +1264,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         ListingExpired,
         
         /// <summary>
-        /// >> NoTokenBought
-        /// Signer has not bought any token.
+        /// >> NoSharesBought
+        /// Signer has not bought any shares.
         /// </summary>
-        NoTokenBought,
+        NoSharesBought,
         
         /// <summary>
         /// >> ListingNotExpired
@@ -1328,14 +1276,14 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         ListingNotExpired,
         
         /// <summary>
-        /// >> InvalidTokenPrice
-        /// Price of a token can not be zero.
+        /// >> InvalidSharePrice
+        /// Price of a share can not be zero.
         /// </summary>
-        InvalidTokenPrice,
+        InvalidSharePrice,
         
         /// <summary>
         /// >> AmountCannotBeZero
-        /// Token amount can not be zero.
+        /// Share amount can not be zero.
         /// </summary>
         AmountCannotBeZero,
         
@@ -1346,16 +1294,16 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         InvalidFeePercentage,
         
         /// <summary>
-        /// >> NotEnoughToken
-        /// The sender has not enough token.
+        /// >> NotEnoughShares
+        /// The sender has not enough shares.
         /// </summary>
-        NotEnoughToken,
+        NotEnoughShares,
         
         /// <summary>
-        /// >> TokenNotReturned
-        /// Token have not been returned yet.
+        /// >> SharesNotReturned
+        /// Shares have not been returned yet.
         /// </summary>
-        TokenNotReturned,
+        SharesNotReturned,
         
         /// <summary>
         /// >> NoObjectFound
@@ -1370,10 +1318,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         WrongRegion,
         
         /// <summary>
-        /// >> TokenOwnerNotFound
-        /// TokenOwnerHasNotBeenFound.
+        /// >> ShareOwnerNotFound
+        /// Share owner has not been found.
         /// </summary>
-        TokenOwnerNotFound,
+        ShareOwnerNotFound,
         
         /// <summary>
         /// >> NoLawyerProposed
@@ -1419,13 +1367,13 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         
         /// <summary>
         /// >> NoFrozenAmount
-        /// The user has no token amount frozen.
+        /// The user has no share amount frozen.
         /// </summary>
         NoFrozenAmount,
         
         /// <summary>
         /// >> NoClaimWindow
-        /// The user has no token amount frozen.
+        /// The user has no share amount frozen.
         /// </summary>
         NoClaimWindow,
         
@@ -1442,20 +1390,20 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         ClaimWindowNotExpired,
         
         /// <summary>
-        /// >> StillHasUnclaimedToken
-        /// The user still has unclaimed token.
+        /// >> StillHasUnclaimedShares
+        /// The user still has unclaimed shares.
         /// </summary>
-        StillHasUnclaimedToken,
+        StillHasUnclaimedShares,
         
         /// <summary>
-        /// >> NoValidTokenToClaim
-        /// The user does not have any valid token to claim.
+        /// >> NoValidSharesToClaim
+        /// The user does not have any valid shares to claim.
         /// </summary>
-        NoValidTokenToClaim,
+        NoValidSharesToClaim,
         
         /// <summary>
         /// >> ExceedsMaxOwnership
-        /// The user is not allowed to own too many token of a certain property.
+        /// The user is not allowed to own too many shares of a certain property.
         /// </summary>
         ExceedsMaxOwnership,
         
@@ -1466,10 +1414,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         ListingNotFound,
         
         /// <summary>
-        /// >> AllTokensClaimed
-        /// All property token have already been claimed.
+        /// >> AllSharesClaimed
+        /// All property shares have already been claimed.
         /// </summary>
-        AllTokensClaimed,
+        AllSharesClaimed,
         
         /// <summary>
         /// >> OfferNotFound
@@ -1478,16 +1426,16 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         OfferNotFound,
         
         /// <summary>
-        /// >> NoTokensOwned
-        /// The user does not own any token of the property.
+        /// >> NoSharesOwned
+        /// The user does not own any shares of the property.
         /// </summary>
-        NoTokensOwned,
+        NoSharesOwned,
         
         /// <summary>
-        /// >> InsufficientRefundableTokens
-        /// There are not enough token available to refund.
+        /// >> InsufficientRefundableShares
+        /// There are not enough shares available to refund.
         /// </summary>
-        InsufficientRefundableTokens,
+        InsufficientRefundableShares,
         
         /// <summary>
         /// >> ZeroVoteAmount
@@ -1500,17 +1448,5 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// The nonce does not match the nonce for this offer.
         /// </summary>
         InvalidOfferNonce,
-        
-        /// <summary>
-        /// >> CallTooLarge
-        /// The encoded call is larger than `T::MaxCallLen`
-        /// </summary>
-        CallTooLarge,
-        
-        /// <summary>
-        /// >> TooManyDelayedCalls
-        /// There are too many delayed calls.
-        /// </summary>
-        TooManyDelayedCalls,
     }
 }

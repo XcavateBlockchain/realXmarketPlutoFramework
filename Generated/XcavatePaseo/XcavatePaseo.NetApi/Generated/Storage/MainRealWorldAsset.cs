@@ -42,8 +42,8 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("RealWorldAsset", "PropertyAssetInfo"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet.PropertyAssetDetails)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("RealWorldAsset", "PropertyOwner"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT3)));
-            _client.StorageKeyDict.Add(new System.Tuple<string, string>("RealWorldAsset", "PropertyOwnerToken"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT2)));
+            _client.StorageKeyDict.Add(new System.Tuple<string, string>("RealWorldAsset", "PropertyOwnerShares"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>), typeof(Substrate.NetApi.Model.Types.Primitive.U32)));
         }
@@ -143,7 +143,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         
         /// <summary>
         /// >> PropertyOwnerParams
-        ///  Mapping of the assetid to the vector of token holder.
+        ///  Mapping of the assetid to the vector of share holder.
         /// </summary>
         public static string PropertyOwnerParams(Substrate.NetApi.Model.Types.Primitive.U32 key)
         {
@@ -163,42 +163,42 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         
         /// <summary>
         /// >> PropertyOwner
-        ///  Mapping of the assetid to the vector of token holder.
+        ///  Mapping of the assetid to the vector of share holder.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT3> PropertyOwner(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT2> PropertyOwner(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
         {
             string parameters = RealWorldAssetStorage.PropertyOwnerParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT3>(parameters, blockhash, token);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT2>(parameters, blockhash, token);
             return result;
         }
         
         /// <summary>
-        /// >> PropertyOwnerTokenParams
-        ///  Mapping of assetid and accountid to the amount of token an account is holding of the asset.
+        /// >> PropertyOwnerSharesParams
+        ///  Mapping of assetid and accountid to the amount of shares an account is holding of the asset.
         /// </summary>
-        public static string PropertyOwnerTokenParams(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32> key)
+        public static string PropertyOwnerSharesParams(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32> key)
         {
-            return RequestGenerator.GetStorage("RealWorldAsset", "PropertyOwnerToken", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+            return RequestGenerator.GetStorage("RealWorldAsset", "PropertyOwnerShares", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                         Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                         Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, key.Value);
         }
         
         /// <summary>
-        /// >> PropertyOwnerTokenDefault
+        /// >> PropertyOwnerSharesDefault
         /// Default value as hex string
         /// </summary>
-        public static string PropertyOwnerTokenDefault()
+        public static string PropertyOwnerSharesDefault()
         {
             return "0x00000000";
         }
         
         /// <summary>
-        /// >> PropertyOwnerToken
-        ///  Mapping of assetid and accountid to the amount of token an account is holding of the asset.
+        /// >> PropertyOwnerShares
+        ///  Mapping of assetid and accountid to the amount of shares an account is holding of the asset.
         /// </summary>
-        public async Task<Substrate.NetApi.Model.Types.Primitive.U32> PropertyOwnerToken(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32> key, string blockhash, CancellationToken token)
+        public async Task<Substrate.NetApi.Model.Types.Primitive.U32> PropertyOwnerShares(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32> key, string blockhash, CancellationToken token)
         {
-            string parameters = RealWorldAssetStorage.PropertyOwnerTokenParams(key);
+            string parameters = RealWorldAssetStorage.PropertyOwnerSharesParams(key);
             var result = await _client.GetStorageAsync<Substrate.NetApi.Model.Types.Primitive.U32>(parameters, blockhash, token);
             return result;
         }
@@ -240,10 +240,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         }
         
         /// <summary>
-        /// >> MaxPropertyToken
-        ///  The maximum number of tokens for a property.
+        /// >> MaxPropertyShares
+        ///  The maximum number of shares for a property.
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U32 MaxPropertyToken()
+        public Substrate.NetApi.Model.Types.Primitive.U32 MaxPropertyShares()
         {
             var result = new Substrate.NetApi.Model.Types.Primitive.U32();
             result.Create("0xFA000000");
@@ -304,10 +304,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         PropertyAssetNotRegistered,
         
         /// <summary>
-        /// >> NotEnoughToken
-        /// The sender does not hold enough tokens.
+        /// >> NotEnoughShares
+        /// The sender does not hold enough shares.
         /// </summary>
-        NotEnoughToken,
+        NotEnoughShares,
         
         /// <summary>
         /// >> InvalidIndex
@@ -316,10 +316,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         InvalidIndex,
         
         /// <summary>
-        /// >> TooManyTokenBuyer
-        /// Too many token buyers for the property.
+        /// >> TooManyShareBuyers
+        /// Too many share buyers for the property.
         /// </summary>
-        TooManyTokenBuyer,
+        TooManyShareBuyers,
         
         /// <summary>
         /// >> PropertyNotFound

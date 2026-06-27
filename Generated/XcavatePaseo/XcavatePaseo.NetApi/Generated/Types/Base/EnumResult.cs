@@ -33,7 +33,7 @@ namespace XcavatePaseo.NetApi.Generated.Types.Base
     }
     
     /// <summary>
-    /// >> 35 - Variant[Result]
+    /// >> 40 - Variant[Result]
     /// </summary>
     public sealed class EnumResult : BaseEnumRust<Result>
     {

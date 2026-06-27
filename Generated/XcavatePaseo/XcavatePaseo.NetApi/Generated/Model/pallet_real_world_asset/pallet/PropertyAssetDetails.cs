@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
     
     
     /// <summary>
-    /// >> 746 - Composite[pallet_real_world_asset.pallet.PropertyAssetDetails]
+    /// >> 352 - Composite[pallet_real_world_asset.pallet.PropertyAssetDetails]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class PropertyAssetDetails : BaseType
@@ -33,21 +33,25 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
         /// </summary>
         public Substrate.NetApi.Model.Types.Primitive.U32 ItemId { get; set; }
         /// <summary>
+        /// >> namespace_id
+        /// </summary>
+        public Substrate.NetApi.Model.Types.Primitive.U128 NamespaceId { get; set; }
+        /// <summary>
         /// >> region
         /// </summary>
         public Substrate.NetApi.Model.Types.Primitive.U16 Region { get; set; }
         /// <summary>
         /// >> location
         /// </summary>
-        public XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT11 Location { get; set; }
+        public XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT4 Location { get; set; }
         /// <summary>
         /// >> price
         /// </summary>
         public Substrate.NetApi.Model.Types.Primitive.U128 Price { get; set; }
         /// <summary>
-        /// >> token_amount
+        /// >> share_amount
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U32 TokenAmount { get; set; }
+        public Substrate.NetApi.Model.Types.Primitive.U32 ShareAmount { get; set; }
         /// <summary>
         /// >> spv_created
         /// </summary>
@@ -69,10 +73,11 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
             var result = new List<byte>();
             result.AddRange(CollectionId.Encode());
             result.AddRange(ItemId.Encode());
+            result.AddRange(NamespaceId.Encode());
             result.AddRange(Region.Encode());
             result.AddRange(Location.Encode());
             result.AddRange(Price.Encode());
-            result.AddRange(TokenAmount.Encode());
+            result.AddRange(ShareAmount.Encode());
             result.AddRange(SpvCreated.Encode());
             result.AddRange(Finalized.Encode());
             return result.ToArray();
@@ -86,14 +91,16 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
             CollectionId.Decode(byteArray, ref p);
             ItemId = new Substrate.NetApi.Model.Types.Primitive.U32();
             ItemId.Decode(byteArray, ref p);
+            NamespaceId = new Substrate.NetApi.Model.Types.Primitive.U128();
+            NamespaceId.Decode(byteArray, ref p);
             Region = new Substrate.NetApi.Model.Types.Primitive.U16();
             Region.Decode(byteArray, ref p);
-            Location = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT11();
+            Location = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT4();
             Location.Decode(byteArray, ref p);
             Price = new Substrate.NetApi.Model.Types.Primitive.U128();
             Price.Decode(byteArray, ref p);
-            TokenAmount = new Substrate.NetApi.Model.Types.Primitive.U32();
-            TokenAmount.Decode(byteArray, ref p);
+            ShareAmount = new Substrate.NetApi.Model.Types.Primitive.U32();
+            ShareAmount.Decode(byteArray, ref p);
             SpvCreated = new Substrate.NetApi.Model.Types.Primitive.Bool();
             SpvCreated.Decode(byteArray, ref p);
             Finalized = new Substrate.NetApi.Model.Types.Primitive.Bool();

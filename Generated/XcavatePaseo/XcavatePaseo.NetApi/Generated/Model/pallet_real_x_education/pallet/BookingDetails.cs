@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_x_education.pallet
     
     
     /// <summary>
-    /// >> 731 - Composite[pallet_real_x_education.pallet.BookingDetails]
+    /// >> 337 - Composite[pallet_real_x_education.pallet.BookingDetails]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class BookingDetails : BaseType
@@ -67,7 +67,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_x_education.pallet
         /// <summary>
         /// >> metadata
         /// </summary>
-        public XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 Metadata { get; set; }
+        public XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 Metadata { get; set; }
         
         /// <inheritdoc/>
         public override string TypeName()
@@ -117,7 +117,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_x_education.pallet
             BookedAt.Decode(byteArray, ref p);
             ClaimedAt = new Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32>();
             ClaimedAt.Decode(byteArray, ref p);
-            Metadata = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6();
+            Metadata = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1();
             Metadata.Decode(byteArray, ref p);
             var bytesLength = p - start;
             TypeSize = bytesLength;

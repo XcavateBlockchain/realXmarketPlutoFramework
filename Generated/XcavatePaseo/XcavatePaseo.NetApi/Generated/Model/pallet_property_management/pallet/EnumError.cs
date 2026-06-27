@@ -168,7 +168,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
         
         /// <summary>
         /// >> NoFrozenAmount
-        /// The user has no token amount frozen.
+        /// The user has no share amount frozen.
         /// </summary>
         NoFrozenAmount = 24,
         
@@ -185,10 +185,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
         ZeroDistributionAmount = 26,
         
         /// <summary>
-        /// >> ZeroTokenSupply
-        /// The total token supply for the property cannot be zero.
+        /// >> ZeroShareSupply
+        /// The total share supply for the property cannot be zero.
         /// </summary>
-        ZeroTokenSupply = 27,
+        ZeroShareSupply = 27,
         
         /// <summary>
         /// >> ResignationAlreadyInitiated
@@ -210,7 +210,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
     }
     
     /// <summary>
-    /// >> 787 - Variant[pallet_property_management.pallet.Error]
+    /// >> 389 - Variant[pallet_property_management.pallet.Error]
     /// The `Error` enum of this pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

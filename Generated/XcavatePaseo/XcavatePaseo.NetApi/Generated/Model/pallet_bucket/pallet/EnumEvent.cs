@@ -121,7 +121,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_bucket.pallet
     }
     
     /// <summary>
-    /// >> 220 - Variant[pallet_bucket.pallet.Event]
+    /// >> 99 - Variant[pallet_bucket.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>
@@ -142,11 +142,11 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_bucket.pallet
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Bucket, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.BucketCreated);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Bucket, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.PausedBucket);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.BucketPublicKey, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Bucket, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.BucketWritableWithKey);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT17, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.NewTag);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT10, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.NewTag);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Message, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>(Event.NewMessage);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.NamespaceMetadata>>(Event.NamespaceDeleted);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Bucket>>(Event.BucketDeleted);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT17>>(Event.TagDeleted);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT10>>(Event.TagDeleted);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Message>>(Event.MessageDeleted);
         }
     }

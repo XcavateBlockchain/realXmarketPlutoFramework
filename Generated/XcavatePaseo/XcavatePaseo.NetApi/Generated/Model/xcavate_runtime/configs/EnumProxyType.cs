@@ -35,15 +35,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.xcavate_runtime.configs
         /// >> CancelProxy
         /// </summary>
         CancelProxy = 2,
-        
-        /// <summary>
-        /// >> Collator
-        /// </summary>
-        Collator = 3,
     }
     
     /// <summary>
-    /// >> 37 - Variant[xcavate_runtime.configs.ProxyType]
+    /// >> 44 - Variant[xcavate_runtime.configs.ProxyType]
     /// </summary>
     public sealed class EnumProxyType : BaseEnum<ProxyType>
     {

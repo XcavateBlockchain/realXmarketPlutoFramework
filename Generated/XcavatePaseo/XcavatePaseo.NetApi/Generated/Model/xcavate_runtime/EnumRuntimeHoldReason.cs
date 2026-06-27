@@ -22,68 +22,38 @@ namespace XcavatePaseo.NetApi.Generated.Model.xcavate_runtime
     {
         
         /// <summary>
-        /// >> PolkadotXcm
-        /// </summary>
-        PolkadotXcm = 31,
-        
-        /// <summary>
         /// >> NftFractionalization
         /// </summary>
-        NftFractionalization = 43,
+        NftFractionalization = 13,
         
         /// <summary>
         /// >> EducationRegions
         /// </summary>
-        EducationRegions = 61,
+        EducationRegions = 21,
         
         /// <summary>
         /// >> RealXEducation
         /// </summary>
-        RealXEducation = 62,
+        RealXEducation = 22,
         
         /// <summary>
         /// >> Regions
         /// </summary>
-        Regions = 63,
+        Regions = 23,
         
         /// <summary>
         /// >> Marketplace
         /// </summary>
-        Marketplace = 65,
+        Marketplace = 25,
         
         /// <summary>
         /// >> PropertyManagement
         /// </summary>
-        PropertyManagement = 66,
-        
-        /// <summary>
-        /// >> Attestation
-        /// </summary>
-        Attestation = 81,
-        
-        /// <summary>
-        /// >> Delegation
-        /// </summary>
-        Delegation = 82,
-        
-        /// <summary>
-        /// >> Did
-        /// </summary>
-        Did = 83,
-        
-        /// <summary>
-        /// >> PublicCredentials
-        /// </summary>
-        PublicCredentials = 84,
-        
-        /// <summary>
-        /// >> DidLookup
-        /// </summary>
-        DidLookup = 86,
+        PropertyManagement = 26,
     }
     
     /// <summary>
-    /// >> 577 - Variant[xcavate_runtime.RuntimeHoldReason]
+    /// >> 176 - Variant[xcavate_runtime.RuntimeHoldReason]
     /// </summary>
     public sealed class EnumRuntimeHoldReason : BaseEnumRust<RuntimeHoldReason>
     {
@@ -93,18 +63,12 @@ namespace XcavatePaseo.NetApi.Generated.Model.xcavate_runtime
         /// </summary>
         public EnumRuntimeHoldReason()
         {
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_xcm.pallet.EnumHoldReason>(RuntimeHoldReason.PolkadotXcm);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_nft_fractionalization.pallet.EnumHoldReason>(RuntimeHoldReason.NftFractionalization);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_education_regions.pallet.EnumHoldReason>(RuntimeHoldReason.EducationRegions);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_real_x_education.pallet.EnumHoldReason>(RuntimeHoldReason.RealXEducation);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_regions.pallet.EnumHoldReason>(RuntimeHoldReason.Regions);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet.EnumHoldReason>(RuntimeHoldReason.Marketplace);
 				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet.EnumHoldReason>(RuntimeHoldReason.PropertyManagement);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.attestation.pallet.EnumHoldReason>(RuntimeHoldReason.Attestation);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.delegation.pallet.EnumHoldReason>(RuntimeHoldReason.Delegation);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.did.pallet.EnumHoldReason>(RuntimeHoldReason.Did);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.public_credentials.pallet.EnumHoldReason>(RuntimeHoldReason.PublicCredentials);
-				AddTypeDecoder<XcavatePaseo.NetApi.Generated.Model.pallet_did_lookup.pallet.EnumHoldReason>(RuntimeHoldReason.DidLookup);
         }
     }
 }
