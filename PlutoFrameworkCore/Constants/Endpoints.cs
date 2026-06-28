@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Text;
 
 namespace PlutoFramework.Constants
 {
@@ -39,7 +40,49 @@ namespace PlutoFramework.Constants
     }
     public class Endpoints
     {
+        private const string EndpointUrlKeySuffix = "_ENDPOINT_URL";
+
         public static List<Endpoint> GetAllEndpoints => GetEndpointDictionary.Values.ToList();
+
+        public static void ConfigureEndpointUrls(Func<string, string?> getSettingValue)
+        {
+            foreach ((EndpointEnum endpointKey, Endpoint endpoint) in GetEndpointDictionary)
+            {
+                string settingKey = GetEndpointSettingKey(endpointKey);
+                string? endpointUrl = getSettingValue(settingKey);
+
+                if (string.IsNullOrWhiteSpace(endpointUrl))
+                {
+                    continue;
+                }
+
+                endpoint.URLs = [endpointUrl];
+            }
+        }
+
+        private static string GetEndpointSettingKey(EndpointEnum endpointKey)
+        {
+            return $"{ConvertToScreamingSnakeCase(endpointKey.ToString())}{EndpointUrlKeySuffix}";
+        }
+
+        private static string ConvertToScreamingSnakeCase(string value)
+        {
+            var builder = new StringBuilder(value.Length + 8);
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                char current = value[i];
+
+                if (i > 0 && char.IsUpper(current) && char.IsLower(value[i - 1]))
+                {
+                    builder.Append('_');
+                }
+
+                builder.Append(char.ToUpperInvariant(current));
+            }
+
+            return builder.ToString();
+        }
 
         /// <summary>
         /// Genesis block hashes
