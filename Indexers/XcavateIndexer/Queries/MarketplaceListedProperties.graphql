@@ -32,7 +32,7 @@ query MarketplaceListedProperties(
       id
       investorFunds
       itemId
-      listedTokenAmount
+      listedShareAmount
       listingExpiry
       listingId
       realEstateDeveloper
@@ -41,9 +41,9 @@ query MarketplaceListedProperties(
       relistCount
       tax
       taxPaidByDeveloper
-      tokenAmount
-      tokenPrice
-      unclaimedTokenAmount
+      shareAmount
+      sharePrice
+      unclaimedShareAmount
       updatedBlock
       realEstateNft {
         accountAddress
@@ -68,14 +68,14 @@ query MarketplaceListedProperties(
         map
         numberOfBathrooms
         numberOfBedrooms
-        numberOfTokens
+        numberOfShares
         offStreetParking
         outdoorSpace
         planningCode
         postCode
         propertyDescription
         propertyId
-        pricePerToken
+        pricePerShare
         propertyName
         propertyPrice
         propertyType

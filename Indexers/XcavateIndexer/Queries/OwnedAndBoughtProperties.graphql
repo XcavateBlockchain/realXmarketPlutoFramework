@@ -1,11 +1,11 @@
-﻿query OwnedAndBoughtProperties($first: Int = 10, $offset: Int = 0, $tokenOwner: String = "14XAmaujtAthi7KdWsJrKh1QEjiNXwabW1YdYUCbAM6TeGk") {
+﻿query OwnedAndBoughtProperties($first: Int = 10, $offset: Int = 0, $shareOwner: String = "14XAmaujtAthi7KdWsJrKh1QEjiNXwabW1YdYUCbAM6TeGk") {
   realEstateNfts(
     offset: $offset
     first: $first
     filter: {
       or: [
-        { marketplaceOngoingObjectListings: { some: { shareOwners: { some: { account: { equalTo: $tokenOwner } } } } } },
-        { realWorldAssets: { some: { owners: { some: { account: { equalTo: $tokenOwner } } } } } }
+        { marketplaceOngoingObjectListings: { some: { shareOwners: { some: { account: { equalTo: $shareOwner } } } } } },
+        { realWorldAssets: { some: { owners: { some: { account: { equalTo: $shareOwner } } } } } }
       ]
     }
   ) {
@@ -15,7 +15,7 @@
       quality
       propertyName
       propertyId
-      pricePerToken
+      pricePerShare
       propertyDescription
       postCode
       planningCode
@@ -42,7 +42,7 @@
       map
       numberOfBedrooms
       numberOfBathrooms
-      numberOfTokens
+      numberOfShares
       offStreetParking
       stampDutyTax
       status
@@ -52,9 +52,9 @@
       marketplaceOngoingObjectListings(first: 1) {
         nodes {
           updatedBlock
-          unclaimedTokenAmount
-          tokenPrice
-          tokenAmount
+          unclaimedShareAmount
+          sharePrice
+          shareAmount
           taxPaidByDeveloper
           relistCount
           tax
@@ -63,7 +63,7 @@
           realEstateDeveloper
           listingId
           listingExpiry
-          listedTokenAmount
+          listedShareAmount
           itemId
           investorFunds
           id
@@ -73,11 +73,11 @@
           collectedFees
           claimExpiry
           assetId
-          shareOwners(first: 1, filter: {account: {equalTo: $tokenOwner}}) {
+          shareOwners(first: 1, filter: {account: {equalTo: $shareOwner}}) {
             nodes {
               id
               account
-              tokenAmount
+              shareAmount
               updatedBlock
               relistCount
               paidTax
@@ -101,14 +101,14 @@
           realEstateNftId
           region
           spvCreated
-          tokenAmount
+          shareAmount
           updatedBlock
-          owners(first: 1, filter: {account: {equalTo: $tokenOwner}}) {
+          owners(first: 1, filter: {account: {equalTo: $shareOwner}}) {
             nodes {
               account
               assetId
               id
-              tokenAmount
+              shareAmount
               assetIdNumber
               updatedBlock
             }

@@ -1,8 +1,7 @@
+using StrawberryShake;
+using Substrate.NetApi.Model.Types.Primitive;
 using System.Numerics;
 using System.Text.Json;
-using Substrate.NetApi.Model.Types.Primitive;
-using StrawberryShake;
-using UniqueryPlus;
 using UniqueryPlus.Metadata;
 using XcavateIndexer;
 using XcavatePaseo.NetApi.Generated;
@@ -180,8 +179,8 @@ namespace UniqueryPlus.Nfts
                     StampDutyTax = ToDecimal(realEstateNft?.StampDutyTax),
                     IsAnnualServiceChargePaid = realEstateNft?.IsAnnualServiceChargePaid ?? false,
                     EstimatedRentalIncome = ToDecimal(realEstateNft?.EstimatedRentalIncome),
-                    PricePerToken = ToDecimal(realEstateNft?.PricePerToken),
-                    NumberOfTokens = realEstateNft?.NumberOfTokens ?? 0,
+                    PricePerToken = ToDecimal(realEstateNft?.PricePerShare),
+                    NumberOfTokens = realEstateNft?.NumberOfShares ?? 0,
                     IsStampDutyPaid = realEstateNft?.IsStampDutyPaid ?? false,
                     PropertyPrice = ToDecimal(realEstateNft?.PropertyPrice),
                     AnnualServiceCharge = ToDecimal(realEstateNft?.AnnualServiceCharge),
@@ -236,8 +235,8 @@ namespace UniqueryPlus.Nfts
                     TaxPaidByDeveloper = listing.TaxPaidByDeveloper ?? false,
                     ListingExpiry = ToUInt32(listing.ListingExpiry),
                     ClaimExpiry = listing.ClaimExpiry is null ? null : ToUInt32Nullable(listing.ClaimExpiry),
-                    ListedTokens = ToUInt32(listing.ListedTokenAmount),
-                    UnclaimedTokens = ToUInt32(listing.UnclaimedTokenAmount),
+                    ListedTokens = ToUInt32(listing.ListedShareAmount),
+                    UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                     AssetId = new U32(ToUInt32(listing.AssetId)),
                     CollectionId = new U32(ToUInt32(listing.CollectionId ?? realEstateNft?.Collection)),
                     ItemId = new U32(ToUInt32(listing.ItemId ?? realEstateNft?.Item)),
@@ -277,8 +276,8 @@ namespace UniqueryPlus.Nfts
                     StampDutyTax = ToDecimal(property.StampDutyTax),
                     IsAnnualServiceChargePaid = property.IsAnnualServiceChargePaid ?? false,
                     EstimatedRentalIncome = ToDecimal(property.EstimatedRentalIncome),
-                    PricePerToken = ToDecimal(property.PricePerToken),
-                    NumberOfTokens = property.NumberOfTokens ?? 0,
+                    PricePerToken = ToDecimal(property.PricePerShare),
+                    NumberOfTokens = property.NumberOfShares ?? 0,
                     IsStampDutyPaid = property.IsStampDutyPaid ?? false,
                     PropertyPrice = ToDecimal(property.PropertyPrice),
                     AnnualServiceCharge = ToDecimal(property.AnnualServiceCharge),
@@ -335,7 +334,7 @@ namespace UniqueryPlus.Nfts
                         AssetId = ToUInt32(realWorldAsset.AssetId),
                         Region = ToUInt32(realWorldAsset.Region),
                         Location = realWorldAsset.Location ?? string.Empty,
-                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                        Tokens = ToUInt32(realWorldAsset.ShareAmount),
                     },
                 OngoingObjectListingDetails = listing is null
                     ? null
@@ -345,8 +344,8 @@ namespace UniqueryPlus.Nfts
                         TaxPaidByDeveloper = listing.TaxPaidByDeveloper ?? false,
                         ListingExpiry = ToUInt32(listing.ListingExpiry),
                         ClaimExpiry = listing.ClaimExpiry is null ? null : ToUInt32Nullable(listing.ClaimExpiry),
-                        ListedTokens = ToUInt32(listing.ListedTokenAmount),
-                        UnclaimedTokens = ToUInt32(listing.UnclaimedTokenAmount),
+                        ListedTokens = ToUInt32(listing.ListedShareAmount),
+                        UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                         AssetId = new U32(ToUInt32(listing.AssetId)),
                         CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
                         ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
@@ -355,7 +354,7 @@ namespace UniqueryPlus.Nfts
                     ? null
                     : new XcavateRealWorldAssetDetails
                     {
-                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                        Tokens = ToUInt32(realWorldAsset.ShareAmount),
                         Price = ParseBigInteger(realWorldAsset.Price),
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,
@@ -395,8 +394,8 @@ namespace UniqueryPlus.Nfts
                     StampDutyTax = ToDecimal(property.StampDutyTax),
                     IsAnnualServiceChargePaid = property.IsAnnualServiceChargePaid ?? false,
                     EstimatedRentalIncome = ToDecimal(property.EstimatedRentalIncome),
-                    PricePerToken = ToDecimal(property.PricePerToken),
-                    NumberOfTokens = property.NumberOfTokens ?? 0,
+                    PricePerToken = ToDecimal(property.PricePerShare),
+                    NumberOfTokens = property.NumberOfShares ?? 0,
                     IsStampDutyPaid = property.IsStampDutyPaid ?? false,
                     PropertyPrice = ToDecimal(property.PropertyPrice),
                     AnnualServiceCharge = ToDecimal(property.AnnualServiceCharge),
@@ -453,7 +452,7 @@ namespace UniqueryPlus.Nfts
                         AssetId = ToUInt32(realWorldAsset.AssetId),
                         Region = ToUInt32(realWorldAsset.Region),
                         Location = realWorldAsset.Location ?? string.Empty,
-                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                        Tokens = ToUInt32(realWorldAsset.ShareAmount),
                     },
                 OngoingObjectListingDetails = listing is null
                     ? null
@@ -463,8 +462,8 @@ namespace UniqueryPlus.Nfts
                         TaxPaidByDeveloper = listing.TaxPaidByDeveloper ?? false,
                         ListingExpiry = ToUInt32(listing.ListingExpiry),
                         ClaimExpiry = listing.ClaimExpiry is null ? null : ToUInt32Nullable(listing.ClaimExpiry),
-                        ListedTokens = ToUInt32(listing.ListedTokenAmount),
-                        UnclaimedTokens = ToUInt32(listing.UnclaimedTokenAmount),
+                        ListedTokens = ToUInt32(listing.ListedShareAmount),
+                        UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                         AssetId = new U32(ToUInt32(listing.AssetId)),
                         CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
                         ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
@@ -473,7 +472,7 @@ namespace UniqueryPlus.Nfts
                     ? null
                     : new XcavateRealWorldAssetDetails
                     {
-                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                        Tokens = ToUInt32(realWorldAsset.ShareAmount),
                         Price = ParseBigInteger(realWorldAsset.Price),
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,
@@ -513,8 +512,8 @@ namespace UniqueryPlus.Nfts
                     StampDutyTax = ToDecimal(property.StampDutyTax),
                     IsAnnualServiceChargePaid = property.IsAnnualServiceChargePaid ?? false,
                     EstimatedRentalIncome = ToDecimal(property.EstimatedRentalIncome),
-                    PricePerToken = ToDecimal(property.PricePerToken),
-                    NumberOfTokens = property.NumberOfTokens ?? 0,
+                    PricePerToken = ToDecimal(property.PricePerShare),
+                    NumberOfTokens = property.NumberOfShares ?? 0,
                     IsStampDutyPaid = property.IsStampDutyPaid ?? false,
                     PropertyPrice = ToDecimal(property.PropertyPrice),
                     AnnualServiceCharge = ToDecimal(property.AnnualServiceCharge),
@@ -571,7 +570,7 @@ namespace UniqueryPlus.Nfts
                         AssetId = ToUInt32(realWorldAsset.AssetId),
                         Region = ToUInt32(realWorldAsset.Region),
                         Location = realWorldAsset.Location ?? string.Empty,
-                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                        Tokens = ToUInt32(realWorldAsset.ShareAmount),
                     },
                 OngoingObjectListingDetails = listing is null
                     ? null
@@ -581,8 +580,8 @@ namespace UniqueryPlus.Nfts
                         TaxPaidByDeveloper = listing.TaxPaidByDeveloper ?? false,
                         ListingExpiry = ToUInt32(listing.ListingExpiry),
                         ClaimExpiry = listing.ClaimExpiry is null ? null : ToUInt32Nullable(listing.ClaimExpiry),
-                        ListedTokens = ToUInt32(listing.ListedTokenAmount),
-                        UnclaimedTokens = ToUInt32(listing.UnclaimedTokenAmount),
+                        ListedTokens = ToUInt32(listing.ListedShareAmount),
+                        UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                         AssetId = new U32(ToUInt32(listing.AssetId)),
                         CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
                         ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
@@ -591,7 +590,7 @@ namespace UniqueryPlus.Nfts
                     ? null
                     : new XcavateRealWorldAssetDetails
                     {
-                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                        Tokens = ToUInt32(realWorldAsset.ShareAmount),
                         Price = ParseBigInteger(realWorldAsset.Price),
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,
@@ -631,8 +630,8 @@ namespace UniqueryPlus.Nfts
                     StampDutyTax = ToDecimal(property.StampDutyTax),
                     IsAnnualServiceChargePaid = property.IsAnnualServiceChargePaid ?? false,
                     EstimatedRentalIncome = ToDecimal(property.EstimatedRentalIncome),
-                    PricePerToken = ToDecimal(property.PricePerToken),
-                    NumberOfTokens = property.NumberOfTokens ?? 0,
+                    PricePerToken = ToDecimal(property.PricePerShare),
+                    NumberOfTokens = property.NumberOfShares ?? 0,
                     IsStampDutyPaid = property.IsStampDutyPaid ?? false,
                     PropertyPrice = ToDecimal(property.PropertyPrice),
                     AnnualServiceCharge = ToDecimal(property.AnnualServiceCharge),
@@ -689,7 +688,7 @@ namespace UniqueryPlus.Nfts
                         AssetId = ToUInt32(realWorldAsset.AssetId),
                         Region = ToUInt32(realWorldAsset.Region),
                         Location = realWorldAsset.Location ?? string.Empty,
-                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                        Tokens = ToUInt32(realWorldAsset.ShareAmount),
                     },
                 OngoingObjectListingDetails = listing is null
                     ? null
@@ -699,8 +698,8 @@ namespace UniqueryPlus.Nfts
                         TaxPaidByDeveloper = listing.TaxPaidByDeveloper ?? false,
                         ListingExpiry = ToUInt32(listing.ListingExpiry),
                         ClaimExpiry = listing.ClaimExpiry is null ? null : ToUInt32Nullable(listing.ClaimExpiry),
-                        ListedTokens = ToUInt32(listing.ListedTokenAmount),
-                        UnclaimedTokens = ToUInt32(listing.UnclaimedTokenAmount),
+                        ListedTokens = ToUInt32(listing.ListedShareAmount),
+                        UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                         AssetId = new U32(ToUInt32(listing.AssetId)),
                         CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
                         ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
@@ -709,7 +708,7 @@ namespace UniqueryPlus.Nfts
                     ? null
                     : new XcavateRealWorldAssetDetails
                     {
-                        Tokens = ToUInt32(realWorldAsset.TokenAmount),
+                        Tokens = ToUInt32(realWorldAsset.ShareAmount),
                         Price = ParseBigInteger(realWorldAsset.Price),
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,

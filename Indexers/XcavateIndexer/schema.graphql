@@ -2649,15 +2649,15 @@ type MarketplaceOngoingObjectListing implements Node {
   itemId: Int
   realEstateNftId: String
   realEstateDeveloper: String
-  tokenPrice: String
-  tokenAmount: Int
-  listedTokenAmount: Int
+  sharePrice: String
+  shareAmount: Int
+  listedShareAmount: Int
   taxPaidByDeveloper: Boolean
   tax: Int
   listingExpiry: Int
   claimExpiry: Int
   relistCount: Int
-  unclaimedTokenAmount: Int
+  unclaimedShareAmount: Int
   collectedFunds: String
   collectedTax: String
   collectedFees: String
@@ -2933,7 +2933,7 @@ type RealWorldAsset implements Node {
   region: Int
   location: String
   price: String
-  tokenAmount: Int
+  shareAmount: Int
   spvCreated: Boolean
   finalized: Boolean
   ownerAccounts: JSON
@@ -3202,8 +3202,8 @@ type RealEstateNft implements Node {
   flatOrUnit: String
   localAuthority: String
   propertyPrice: Int
-  pricePerToken: Int
-  numberOfTokens: Int
+  pricePerShare: Int
+  numberOfShares: Int
   estimatedRentalIncome: Int
   stampDutyTax: Int
   annualServiceCharge: Int
@@ -3417,10 +3417,10 @@ type MarketplaceOngoingObjectListingSumAggregates {
   collectionId: BigInt!
   "Sum of itemId across the matching connection"
   itemId: BigInt!
-  "Sum of tokenAmount across the matching connection"
-  tokenAmount: BigInt!
-  "Sum of listedTokenAmount across the matching connection"
-  listedTokenAmount: BigInt!
+  "Sum of shareAmount across the matching connection"
+  shareAmount: BigInt!
+  "Sum of listedShareAmount across the matching connection"
+  listedShareAmount: BigInt!
   "Sum of tax across the matching connection"
   tax: BigInt!
   "Sum of listingExpiry across the matching connection"
@@ -3429,8 +3429,8 @@ type MarketplaceOngoingObjectListingSumAggregates {
   claimExpiry: BigInt!
   "Sum of relistCount across the matching connection"
   relistCount: BigInt!
-  "Sum of unclaimedTokenAmount across the matching connection"
-  unclaimedTokenAmount: BigInt!
+  "Sum of unclaimedShareAmount across the matching connection"
+  unclaimedShareAmount: BigInt!
   "Sum of updatedBlock across the matching connection"
   updatedBlock: BigInt!
 }
@@ -3452,12 +3452,12 @@ type MarketplaceOngoingObjectListingDistinctCountAggregates {
   realEstateNftId: BigInt
   "Distinct count of realEstateDeveloper across the matching connection"
   realEstateDeveloper: BigInt
-  "Distinct count of tokenPrice across the matching connection"
-  tokenPrice: BigInt
-  "Distinct count of tokenAmount across the matching connection"
-  tokenAmount: BigInt
-  "Distinct count of listedTokenAmount across the matching connection"
-  listedTokenAmount: BigInt
+  "Distinct count of sharePrice across the matching connection"
+  sharePrice: BigInt
+  "Distinct count of shareAmount across the matching connection"
+  shareAmount: BigInt
+  "Distinct count of listedShareAmount across the matching connection"
+  listedShareAmount: BigInt
   "Distinct count of taxPaidByDeveloper across the matching connection"
   taxPaidByDeveloper: BigInt
   "Distinct count of tax across the matching connection"
@@ -3468,8 +3468,8 @@ type MarketplaceOngoingObjectListingDistinctCountAggregates {
   claimExpiry: BigInt
   "Distinct count of relistCount across the matching connection"
   relistCount: BigInt
-  "Distinct count of unclaimedTokenAmount across the matching connection"
-  unclaimedTokenAmount: BigInt
+  "Distinct count of unclaimedShareAmount across the matching connection"
+  unclaimedShareAmount: BigInt
   "Distinct count of collectedFunds across the matching connection"
   collectedFunds: BigInt
   "Distinct count of collectedTax across the matching connection"
@@ -3495,10 +3495,10 @@ type MarketplaceOngoingObjectListingMinAggregates {
   collectionId: Int
   "Minimum of itemId across the matching connection"
   itemId: Int
-  "Minimum of tokenAmount across the matching connection"
-  tokenAmount: Int
-  "Minimum of listedTokenAmount across the matching connection"
-  listedTokenAmount: Int
+  "Minimum of shareAmount across the matching connection"
+  shareAmount: Int
+  "Minimum of listedShareAmount across the matching connection"
+  listedShareAmount: Int
   "Minimum of tax across the matching connection"
   tax: Int
   "Minimum of listingExpiry across the matching connection"
@@ -3507,8 +3507,8 @@ type MarketplaceOngoingObjectListingMinAggregates {
   claimExpiry: Int
   "Minimum of relistCount across the matching connection"
   relistCount: Int
-  "Minimum of unclaimedTokenAmount across the matching connection"
-  unclaimedTokenAmount: Int
+  "Minimum of unclaimedShareAmount across the matching connection"
+  unclaimedShareAmount: Int
   "Minimum of updatedBlock across the matching connection"
   updatedBlock: Int
 }
@@ -3522,10 +3522,10 @@ type MarketplaceOngoingObjectListingMaxAggregates {
   collectionId: Int
   "Maximum of itemId across the matching connection"
   itemId: Int
-  "Maximum of tokenAmount across the matching connection"
-  tokenAmount: Int
-  "Maximum of listedTokenAmount across the matching connection"
-  listedTokenAmount: Int
+  "Maximum of shareAmount across the matching connection"
+  shareAmount: Int
+  "Maximum of listedShareAmount across the matching connection"
+  listedShareAmount: Int
   "Maximum of tax across the matching connection"
   tax: Int
   "Maximum of listingExpiry across the matching connection"
@@ -3534,8 +3534,8 @@ type MarketplaceOngoingObjectListingMaxAggregates {
   claimExpiry: Int
   "Maximum of relistCount across the matching connection"
   relistCount: Int
-  "Maximum of unclaimedTokenAmount across the matching connection"
-  unclaimedTokenAmount: Int
+  "Maximum of unclaimedShareAmount across the matching connection"
+  unclaimedShareAmount: Int
   "Maximum of updatedBlock across the matching connection"
   updatedBlock: Int
 }
@@ -3549,10 +3549,10 @@ type MarketplaceOngoingObjectListingAverageAggregates {
   collectionId: BigFloat
   "Mean average of itemId across the matching connection"
   itemId: BigFloat
-  "Mean average of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
-  "Mean average of listedTokenAmount across the matching connection"
-  listedTokenAmount: BigFloat
+  "Mean average of shareAmount across the matching connection"
+  shareAmount: BigFloat
+  "Mean average of listedShareAmount across the matching connection"
+  listedShareAmount: BigFloat
   "Mean average of tax across the matching connection"
   tax: BigFloat
   "Mean average of listingExpiry across the matching connection"
@@ -3561,8 +3561,8 @@ type MarketplaceOngoingObjectListingAverageAggregates {
   claimExpiry: BigFloat
   "Mean average of relistCount across the matching connection"
   relistCount: BigFloat
-  "Mean average of unclaimedTokenAmount across the matching connection"
-  unclaimedTokenAmount: BigFloat
+  "Mean average of unclaimedShareAmount across the matching connection"
+  unclaimedShareAmount: BigFloat
   "Mean average of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -3576,10 +3576,10 @@ type MarketplaceOngoingObjectListingStddevSampleAggregates {
   collectionId: BigFloat
   "Sample standard deviation of itemId across the matching connection"
   itemId: BigFloat
-  "Sample standard deviation of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
-  "Sample standard deviation of listedTokenAmount across the matching connection"
-  listedTokenAmount: BigFloat
+  "Sample standard deviation of shareAmount across the matching connection"
+  shareAmount: BigFloat
+  "Sample standard deviation of listedShareAmount across the matching connection"
+  listedShareAmount: BigFloat
   "Sample standard deviation of tax across the matching connection"
   tax: BigFloat
   "Sample standard deviation of listingExpiry across the matching connection"
@@ -3588,8 +3588,8 @@ type MarketplaceOngoingObjectListingStddevSampleAggregates {
   claimExpiry: BigFloat
   "Sample standard deviation of relistCount across the matching connection"
   relistCount: BigFloat
-  "Sample standard deviation of unclaimedTokenAmount across the matching connection"
-  unclaimedTokenAmount: BigFloat
+  "Sample standard deviation of unclaimedShareAmount across the matching connection"
+  unclaimedShareAmount: BigFloat
   "Sample standard deviation of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -3603,10 +3603,10 @@ type MarketplaceOngoingObjectListingStddevPopulationAggregates {
   collectionId: BigFloat
   "Population standard deviation of itemId across the matching connection"
   itemId: BigFloat
-  "Population standard deviation of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
-  "Population standard deviation of listedTokenAmount across the matching connection"
-  listedTokenAmount: BigFloat
+  "Population standard deviation of shareAmount across the matching connection"
+  shareAmount: BigFloat
+  "Population standard deviation of listedShareAmount across the matching connection"
+  listedShareAmount: BigFloat
   "Population standard deviation of tax across the matching connection"
   tax: BigFloat
   "Population standard deviation of listingExpiry across the matching connection"
@@ -3615,8 +3615,8 @@ type MarketplaceOngoingObjectListingStddevPopulationAggregates {
   claimExpiry: BigFloat
   "Population standard deviation of relistCount across the matching connection"
   relistCount: BigFloat
-  "Population standard deviation of unclaimedTokenAmount across the matching connection"
-  unclaimedTokenAmount: BigFloat
+  "Population standard deviation of unclaimedShareAmount across the matching connection"
+  unclaimedShareAmount: BigFloat
   "Population standard deviation of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -3630,10 +3630,10 @@ type MarketplaceOngoingObjectListingVarianceSampleAggregates {
   collectionId: BigFloat
   "Sample variance of itemId across the matching connection"
   itemId: BigFloat
-  "Sample variance of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
-  "Sample variance of listedTokenAmount across the matching connection"
-  listedTokenAmount: BigFloat
+  "Sample variance of shareAmount across the matching connection"
+  shareAmount: BigFloat
+  "Sample variance of listedShareAmount across the matching connection"
+  listedShareAmount: BigFloat
   "Sample variance of tax across the matching connection"
   tax: BigFloat
   "Sample variance of listingExpiry across the matching connection"
@@ -3642,8 +3642,8 @@ type MarketplaceOngoingObjectListingVarianceSampleAggregates {
   claimExpiry: BigFloat
   "Sample variance of relistCount across the matching connection"
   relistCount: BigFloat
-  "Sample variance of unclaimedTokenAmount across the matching connection"
-  unclaimedTokenAmount: BigFloat
+  "Sample variance of unclaimedShareAmount across the matching connection"
+  unclaimedShareAmount: BigFloat
   "Sample variance of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -3657,10 +3657,10 @@ type MarketplaceOngoingObjectListingVariancePopulationAggregates {
   collectionId: BigFloat
   "Population variance of itemId across the matching connection"
   itemId: BigFloat
-  "Population variance of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
-  "Population variance of listedTokenAmount across the matching connection"
-  listedTokenAmount: BigFloat
+  "Population variance of shareAmount across the matching connection"
+  shareAmount: BigFloat
+  "Population variance of listedShareAmount across the matching connection"
+  listedShareAmount: BigFloat
   "Population variance of tax across the matching connection"
   tax: BigFloat
   "Population variance of listingExpiry across the matching connection"
@@ -3669,8 +3669,8 @@ type MarketplaceOngoingObjectListingVariancePopulationAggregates {
   claimExpiry: BigFloat
   "Population variance of relistCount across the matching connection"
   relistCount: BigFloat
-  "Population variance of unclaimedTokenAmount across the matching connection"
-  unclaimedTokenAmount: BigFloat
+  "Population variance of unclaimedShareAmount across the matching connection"
+  unclaimedShareAmount: BigFloat
   "Population variance of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -3721,13 +3721,13 @@ input MarketplaceOngoingObjectListingsHavingSumInput {
   assetId: HavingIntFilter
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
-  tokenAmount: HavingIntFilter
-  listedTokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
+  listedShareAmount: HavingIntFilter
   tax: HavingIntFilter
   listingExpiry: HavingIntFilter
   claimExpiry: HavingIntFilter
   relistCount: HavingIntFilter
-  unclaimedTokenAmount: HavingIntFilter
+  unclaimedShareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -3736,13 +3736,13 @@ input MarketplaceOngoingObjectListingsHavingDistinctCountInput {
   assetId: HavingIntFilter
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
-  tokenAmount: HavingIntFilter
-  listedTokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
+  listedShareAmount: HavingIntFilter
   tax: HavingIntFilter
   listingExpiry: HavingIntFilter
   claimExpiry: HavingIntFilter
   relistCount: HavingIntFilter
-  unclaimedTokenAmount: HavingIntFilter
+  unclaimedShareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -3751,13 +3751,13 @@ input MarketplaceOngoingObjectListingsHavingMinInput {
   assetId: HavingIntFilter
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
-  tokenAmount: HavingIntFilter
-  listedTokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
+  listedShareAmount: HavingIntFilter
   tax: HavingIntFilter
   listingExpiry: HavingIntFilter
   claimExpiry: HavingIntFilter
   relistCount: HavingIntFilter
-  unclaimedTokenAmount: HavingIntFilter
+  unclaimedShareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -3766,13 +3766,13 @@ input MarketplaceOngoingObjectListingsHavingMaxInput {
   assetId: HavingIntFilter
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
-  tokenAmount: HavingIntFilter
-  listedTokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
+  listedShareAmount: HavingIntFilter
   tax: HavingIntFilter
   listingExpiry: HavingIntFilter
   claimExpiry: HavingIntFilter
   relistCount: HavingIntFilter
-  unclaimedTokenAmount: HavingIntFilter
+  unclaimedShareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -3781,13 +3781,13 @@ input MarketplaceOngoingObjectListingsHavingAverageInput {
   assetId: HavingIntFilter
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
-  tokenAmount: HavingIntFilter
-  listedTokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
+  listedShareAmount: HavingIntFilter
   tax: HavingIntFilter
   listingExpiry: HavingIntFilter
   claimExpiry: HavingIntFilter
   relistCount: HavingIntFilter
-  unclaimedTokenAmount: HavingIntFilter
+  unclaimedShareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -3796,13 +3796,13 @@ input MarketplaceOngoingObjectListingsHavingStddevSampleInput {
   assetId: HavingIntFilter
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
-  tokenAmount: HavingIntFilter
-  listedTokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
+  listedShareAmount: HavingIntFilter
   tax: HavingIntFilter
   listingExpiry: HavingIntFilter
   claimExpiry: HavingIntFilter
   relistCount: HavingIntFilter
-  unclaimedTokenAmount: HavingIntFilter
+  unclaimedShareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -3811,13 +3811,13 @@ input MarketplaceOngoingObjectListingsHavingStddevPopulationInput {
   assetId: HavingIntFilter
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
-  tokenAmount: HavingIntFilter
-  listedTokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
+  listedShareAmount: HavingIntFilter
   tax: HavingIntFilter
   listingExpiry: HavingIntFilter
   claimExpiry: HavingIntFilter
   relistCount: HavingIntFilter
-  unclaimedTokenAmount: HavingIntFilter
+  unclaimedShareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -3826,13 +3826,13 @@ input MarketplaceOngoingObjectListingsHavingVarianceSampleInput {
   assetId: HavingIntFilter
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
-  tokenAmount: HavingIntFilter
-  listedTokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
+  listedShareAmount: HavingIntFilter
   tax: HavingIntFilter
   listingExpiry: HavingIntFilter
   claimExpiry: HavingIntFilter
   relistCount: HavingIntFilter
-  unclaimedTokenAmount: HavingIntFilter
+  unclaimedShareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -3841,13 +3841,13 @@ input MarketplaceOngoingObjectListingsHavingVariancePopulationInput {
   assetId: HavingIntFilter
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
-  tokenAmount: HavingIntFilter
-  listedTokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
+  listedShareAmount: HavingIntFilter
   tax: HavingIntFilter
   listingExpiry: HavingIntFilter
   claimExpiry: HavingIntFilter
   relistCount: HavingIntFilter
-  unclaimedTokenAmount: HavingIntFilter
+  unclaimedShareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -5402,12 +5402,12 @@ input MarketplaceOngoingObjectListingFilter {
   realEstateNftId: StringFilter
   "Filter by the object’s `realEstateDeveloper` field."
   realEstateDeveloper: StringFilter
-  "Filter by the object’s `tokenPrice` field."
-  tokenPrice: StringFilter
-  "Filter by the object’s `tokenAmount` field."
-  tokenAmount: IntFilter
-  "Filter by the object’s `listedTokenAmount` field."
-  listedTokenAmount: IntFilter
+  "Filter by the object’s `sharePrice` field."
+  sharePrice: StringFilter
+  "Filter by the object’s `shareAmount` field."
+  shareAmount: IntFilter
+  "Filter by the object’s `listedShareAmount` field."
+  listedShareAmount: IntFilter
   "Filter by the object’s `taxPaidByDeveloper` field."
   taxPaidByDeveloper: BooleanFilter
   "Filter by the object’s `tax` field."
@@ -5418,8 +5418,8 @@ input MarketplaceOngoingObjectListingFilter {
   claimExpiry: IntFilter
   "Filter by the object’s `relistCount` field."
   relistCount: IntFilter
-  "Filter by the object’s `unclaimedTokenAmount` field."
-  unclaimedTokenAmount: IntFilter
+  "Filter by the object’s `unclaimedShareAmount` field."
+  unclaimedShareAmount: IntFilter
   "Filter by the object’s `collectedFunds` field."
   collectedFunds: StringFilter
   "Filter by the object’s `collectedTax` field."
@@ -5721,8 +5721,8 @@ input MarketplaceOngoingOfferFilter {
   ongoingObjectListingId: StringFilter
   "Filter by the object’s `offeror` field."
   offeror: StringFilter
-  "Filter by the object’s `tokenPrice` field."
-  tokenPrice: StringFilter
+  "Filter by the object’s `sharePrice` field."
+  sharePrice: StringFilter
   "Filter by the object’s `amount` field."
   amount: IntFilter
   "Filter by the object’s `paymentAssets` field."
@@ -5783,8 +5783,8 @@ input RealWorldAssetFilter {
   location: StringFilter
   "Filter by the object’s `price` field."
   price: StringFilter
-  "Filter by the object’s `tokenAmount` field."
-  tokenAmount: IntFilter
+  "Filter by the object’s `shareAmount` field."
+  shareAmount: IntFilter
   "Filter by the object’s `spvCreated` field."
   spvCreated: BooleanFilter
   "Filter by the object’s `finalized` field."
@@ -5842,13 +5842,13 @@ input MarketplaceOngoingObjectListingSumAggregateFilter {
   assetId: BigIntFilter
   collectionId: BigIntFilter
   itemId: BigIntFilter
-  tokenAmount: BigIntFilter
-  listedTokenAmount: BigIntFilter
+  shareAmount: BigIntFilter
+  listedShareAmount: BigIntFilter
   tax: BigIntFilter
   listingExpiry: BigIntFilter
   claimExpiry: BigIntFilter
   relistCount: BigIntFilter
-  unclaimedTokenAmount: BigIntFilter
+  unclaimedShareAmount: BigIntFilter
   updatedBlock: BigIntFilter
 }
 
@@ -5861,15 +5861,15 @@ input MarketplaceOngoingObjectListingDistinctCountAggregateFilter {
   itemId: BigIntFilter
   realEstateNftId: BigIntFilter
   realEstateDeveloper: BigIntFilter
-  tokenPrice: BigIntFilter
-  tokenAmount: BigIntFilter
-  listedTokenAmount: BigIntFilter
+  sharePrice: BigIntFilter
+  shareAmount: BigIntFilter
+  listedShareAmount: BigIntFilter
   taxPaidByDeveloper: BigIntFilter
   tax: BigIntFilter
   listingExpiry: BigIntFilter
   claimExpiry: BigIntFilter
   relistCount: BigIntFilter
-  unclaimedTokenAmount: BigIntFilter
+  unclaimedShareAmount: BigIntFilter
   collectedFunds: BigIntFilter
   collectedTax: BigIntFilter
   collectedFees: BigIntFilter
@@ -5884,13 +5884,13 @@ input MarketplaceOngoingObjectListingMinAggregateFilter {
   assetId: IntFilter
   collectionId: IntFilter
   itemId: IntFilter
-  tokenAmount: IntFilter
-  listedTokenAmount: IntFilter
+  shareAmount: IntFilter
+  listedShareAmount: IntFilter
   tax: IntFilter
   listingExpiry: IntFilter
   claimExpiry: IntFilter
   relistCount: IntFilter
-  unclaimedTokenAmount: IntFilter
+  unclaimedShareAmount: IntFilter
   updatedBlock: IntFilter
 }
 
@@ -5899,13 +5899,13 @@ input MarketplaceOngoingObjectListingMaxAggregateFilter {
   assetId: IntFilter
   collectionId: IntFilter
   itemId: IntFilter
-  tokenAmount: IntFilter
-  listedTokenAmount: IntFilter
+  shareAmount: IntFilter
+  listedShareAmount: IntFilter
   tax: IntFilter
   listingExpiry: IntFilter
   claimExpiry: IntFilter
   relistCount: IntFilter
-  unclaimedTokenAmount: IntFilter
+  unclaimedShareAmount: IntFilter
   updatedBlock: IntFilter
 }
 
@@ -5914,13 +5914,13 @@ input MarketplaceOngoingObjectListingAverageAggregateFilter {
   assetId: BigFloatFilter
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
-  tokenAmount: BigFloatFilter
-  listedTokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
+  listedShareAmount: BigFloatFilter
   tax: BigFloatFilter
   listingExpiry: BigFloatFilter
   claimExpiry: BigFloatFilter
   relistCount: BigFloatFilter
-  unclaimedTokenAmount: BigFloatFilter
+  unclaimedShareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -5929,13 +5929,13 @@ input MarketplaceOngoingObjectListingStddevSampleAggregateFilter {
   assetId: BigFloatFilter
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
-  tokenAmount: BigFloatFilter
-  listedTokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
+  listedShareAmount: BigFloatFilter
   tax: BigFloatFilter
   listingExpiry: BigFloatFilter
   claimExpiry: BigFloatFilter
   relistCount: BigFloatFilter
-  unclaimedTokenAmount: BigFloatFilter
+  unclaimedShareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -5944,13 +5944,13 @@ input MarketplaceOngoingObjectListingStddevPopulationAggregateFilter {
   assetId: BigFloatFilter
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
-  tokenAmount: BigFloatFilter
-  listedTokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
+  listedShareAmount: BigFloatFilter
   tax: BigFloatFilter
   listingExpiry: BigFloatFilter
   claimExpiry: BigFloatFilter
   relistCount: BigFloatFilter
-  unclaimedTokenAmount: BigFloatFilter
+  unclaimedShareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -5959,13 +5959,13 @@ input MarketplaceOngoingObjectListingVarianceSampleAggregateFilter {
   assetId: BigFloatFilter
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
-  tokenAmount: BigFloatFilter
-  listedTokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
+  listedShareAmount: BigFloatFilter
   tax: BigFloatFilter
   listingExpiry: BigFloatFilter
   claimExpiry: BigFloatFilter
   relistCount: BigFloatFilter
-  unclaimedTokenAmount: BigFloatFilter
+  unclaimedShareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -5974,13 +5974,13 @@ input MarketplaceOngoingObjectListingVariancePopulationAggregateFilter {
   assetId: BigFloatFilter
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
-  tokenAmount: BigFloatFilter
-  listedTokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
+  listedShareAmount: BigFloatFilter
   tax: BigFloatFilter
   listingExpiry: BigFloatFilter
   claimExpiry: BigFloatFilter
   relistCount: BigFloatFilter
-  unclaimedTokenAmount: BigFloatFilter
+  unclaimedShareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -6032,7 +6032,7 @@ input MarketplaceOngoingOfferDistinctCountAggregateFilter {
   listingId: BigIntFilter
   ongoingObjectListingId: BigIntFilter
   offeror: BigIntFilter
-  tokenPrice: BigIntFilter
+  sharePrice: BigIntFilter
   amount: BigIntFilter
   paymentAssets: BigIntFilter
   paymentAssetId: BigIntFilter
@@ -6123,8 +6123,8 @@ input MarketplaceShareListingFilter {
   ongoingObjectListingId: StringFilter
   "Filter by the object’s `seller` field."
   seller: StringFilter
-  "Filter by the object’s `tokenPrice` field."
-  tokenPrice: StringFilter
+  "Filter by the object’s `sharePrice` field."
+  sharePrice: StringFilter
   "Filter by the object’s `assetId` field."
   assetId: IntFilter
   "Filter by the object’s `realWorldAssetId` field."
@@ -6209,10 +6209,10 @@ input RealEstateNftFilter {
   localAuthority: StringFilter
   "Filter by the object’s `propertyPrice` field."
   propertyPrice: IntFilter
-  "Filter by the object’s `pricePerToken` field."
-  pricePerToken: IntFilter
-  "Filter by the object’s `numberOfTokens` field."
-  numberOfTokens: IntFilter
+  "Filter by the object’s `pricePerShare` field."
+  pricePerShare: IntFilter
+  "Filter by the object’s `numberOfShares` field."
+  numberOfShares: IntFilter
   "Filter by the object’s `estimatedRentalIncome` field."
   estimatedRentalIncome: IntFilter
   "Filter by the object’s `stampDutyTax` field."
@@ -6309,7 +6309,7 @@ input MarketplaceShareListingDistinctCountAggregateFilter {
   listingId: BigIntFilter
   ongoingObjectListingId: BigIntFilter
   seller: BigIntFilter
-  tokenPrice: BigIntFilter
+  sharePrice: BigIntFilter
   assetId: BigIntFilter
   realWorldAssetId: BigIntFilter
   collectionId: BigIntFilter
@@ -6425,7 +6425,7 @@ input RealWorldAssetSumAggregateFilter {
   collectionId: BigIntFilter
   itemId: BigIntFilter
   region: BigIntFilter
-  tokenAmount: BigIntFilter
+  shareAmount: BigIntFilter
   updatedBlock: BigIntFilter
 }
 
@@ -6438,7 +6438,7 @@ input RealWorldAssetDistinctCountAggregateFilter {
   region: BigIntFilter
   location: BigIntFilter
   price: BigIntFilter
-  tokenAmount: BigIntFilter
+  shareAmount: BigIntFilter
   spvCreated: BigIntFilter
   finalized: BigIntFilter
   ownerAccounts: BigIntFilter
@@ -6452,7 +6452,7 @@ input RealWorldAssetMinAggregateFilter {
   collectionId: IntFilter
   itemId: IntFilter
   region: IntFilter
-  tokenAmount: IntFilter
+  shareAmount: IntFilter
   updatedBlock: IntFilter
 }
 
@@ -6461,7 +6461,7 @@ input RealWorldAssetMaxAggregateFilter {
   collectionId: IntFilter
   itemId: IntFilter
   region: IntFilter
-  tokenAmount: IntFilter
+  shareAmount: IntFilter
   updatedBlock: IntFilter
 }
 
@@ -6470,7 +6470,7 @@ input RealWorldAssetAverageAggregateFilter {
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
   region: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -6479,7 +6479,7 @@ input RealWorldAssetStddevSampleAggregateFilter {
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
   region: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -6488,7 +6488,7 @@ input RealWorldAssetStddevPopulationAggregateFilter {
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
   region: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -6497,7 +6497,7 @@ input RealWorldAssetVarianceSampleAggregateFilter {
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
   region: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -6506,7 +6506,7 @@ input RealWorldAssetVariancePopulationAggregateFilter {
   collectionId: BigFloatFilter
   itemId: BigFloatFilter
   region: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -6715,8 +6715,8 @@ input RealWorldAssetOwnerFilter {
   assetIdNumber: IntFilter
   "Filter by the object’s `account` field."
   account: StringFilter
-  "Filter by the object’s `tokenAmount` field."
-  tokenAmount: IntFilter
+  "Filter by the object’s `shareAmount` field."
+  shareAmount: IntFilter
   "Filter by the object’s `updatedBlock` field."
   updatedBlock: IntFilter
   "Checks for all expressions in this list."
@@ -6753,7 +6753,7 @@ input RealWorldAssetOwnerAggregatesFilter {
 
 input RealWorldAssetOwnerSumAggregateFilter {
   assetIdNumber: BigIntFilter
-  tokenAmount: BigIntFilter
+  shareAmount: BigIntFilter
   updatedBlock: BigIntFilter
 }
 
@@ -6762,7 +6762,7 @@ input RealWorldAssetOwnerDistinctCountAggregateFilter {
   assetId: BigIntFilter
   assetIdNumber: BigIntFilter
   account: BigIntFilter
-  tokenAmount: BigIntFilter
+  shareAmount: BigIntFilter
   updatedBlock: BigIntFilter
   _id: BigIntFilter
   _blockRange: BigIntFilter
@@ -6770,43 +6770,43 @@ input RealWorldAssetOwnerDistinctCountAggregateFilter {
 
 input RealWorldAssetOwnerMinAggregateFilter {
   assetIdNumber: IntFilter
-  tokenAmount: IntFilter
+  shareAmount: IntFilter
   updatedBlock: IntFilter
 }
 
 input RealWorldAssetOwnerMaxAggregateFilter {
   assetIdNumber: IntFilter
-  tokenAmount: IntFilter
+  shareAmount: IntFilter
   updatedBlock: IntFilter
 }
 
 input RealWorldAssetOwnerAverageAggregateFilter {
   assetIdNumber: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
 input RealWorldAssetOwnerStddevSampleAggregateFilter {
   assetIdNumber: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
 input RealWorldAssetOwnerStddevPopulationAggregateFilter {
   assetIdNumber: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
 input RealWorldAssetOwnerVarianceSampleAggregateFilter {
   assetIdNumber: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
 input RealWorldAssetOwnerVariancePopulationAggregateFilter {
   assetIdNumber: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
@@ -6985,8 +6985,8 @@ input MarketplaceShareOwnerFilter {
   ongoingObjectListingId: StringFilter
   "Filter by the object’s `account` field."
   account: StringFilter
-  "Filter by the object’s `tokenAmount` field."
-  tokenAmount: IntFilter
+  "Filter by the object’s `shareAmount` field."
+  shareAmount: IntFilter
   "Filter by the object’s `paidFunds` field."
   paidFunds: StringFilter
   "Filter by the object’s `paidTax` field."
@@ -7029,7 +7029,7 @@ input MarketplaceShareOwnerAggregatesFilter {
 
 input MarketplaceShareOwnerSumAggregateFilter {
   listingId: BigIntFilter
-  tokenAmount: BigIntFilter
+  shareAmount: BigIntFilter
   relistCount: BigIntFilter
   updatedBlock: BigIntFilter
 }
@@ -7039,7 +7039,7 @@ input MarketplaceShareOwnerDistinctCountAggregateFilter {
   listingId: BigIntFilter
   ongoingObjectListingId: BigIntFilter
   account: BigIntFilter
-  tokenAmount: BigIntFilter
+  shareAmount: BigIntFilter
   paidFunds: BigIntFilter
   paidTax: BigIntFilter
   relistCount: BigIntFilter
@@ -7050,49 +7050,49 @@ input MarketplaceShareOwnerDistinctCountAggregateFilter {
 
 input MarketplaceShareOwnerMinAggregateFilter {
   listingId: IntFilter
-  tokenAmount: IntFilter
+  shareAmount: IntFilter
   relistCount: IntFilter
   updatedBlock: IntFilter
 }
 
 input MarketplaceShareOwnerMaxAggregateFilter {
   listingId: IntFilter
-  tokenAmount: IntFilter
+  shareAmount: IntFilter
   relistCount: IntFilter
   updatedBlock: IntFilter
 }
 
 input MarketplaceShareOwnerAverageAggregateFilter {
   listingId: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   relistCount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
 input MarketplaceShareOwnerStddevSampleAggregateFilter {
   listingId: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   relistCount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
 input MarketplaceShareOwnerStddevPopulationAggregateFilter {
   listingId: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   relistCount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
 input MarketplaceShareOwnerVarianceSampleAggregateFilter {
   listingId: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   relistCount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
 
 input MarketplaceShareOwnerVariancePopulationAggregateFilter {
   listingId: BigFloatFilter
-  tokenAmount: BigFloatFilter
+  shareAmount: BigFloatFilter
   relistCount: BigFloatFilter
   updatedBlock: BigFloatFilter
 }
@@ -7162,7 +7162,7 @@ type MarketplaceShareListing implements Node {
   listingId: Int!
   ongoingObjectListingId: String!
   seller: String
-  tokenPrice: String
+  sharePrice: String
   assetId: Int
   realWorldAssetId: String
   collectionId: Int
@@ -7232,8 +7232,8 @@ type MarketplaceShareListingDistinctCountAggregates {
   ongoingObjectListingId: BigInt
   "Distinct count of seller across the matching connection"
   seller: BigInt
-  "Distinct count of tokenPrice across the matching connection"
-  tokenPrice: BigInt
+  "Distinct count of sharePrice across the matching connection"
+  sharePrice: BigInt
   "Distinct count of assetId across the matching connection"
   assetId: BigInt
   "Distinct count of realWorldAssetId across the matching connection"
@@ -7725,8 +7725,8 @@ type RealWorldAssetSumAggregates {
   itemId: BigInt!
   "Sum of region across the matching connection"
   region: BigInt!
-  "Sum of tokenAmount across the matching connection"
-  tokenAmount: BigInt!
+  "Sum of shareAmount across the matching connection"
+  shareAmount: BigInt!
   "Sum of updatedBlock across the matching connection"
   updatedBlock: BigInt!
 }
@@ -7748,8 +7748,8 @@ type RealWorldAssetDistinctCountAggregates {
   location: BigInt
   "Distinct count of price across the matching connection"
   price: BigInt
-  "Distinct count of tokenAmount across the matching connection"
-  tokenAmount: BigInt
+  "Distinct count of shareAmount across the matching connection"
+  shareAmount: BigInt
   "Distinct count of spvCreated across the matching connection"
   spvCreated: BigInt
   "Distinct count of finalized across the matching connection"
@@ -7773,8 +7773,8 @@ type RealWorldAssetMinAggregates {
   itemId: Int
   "Minimum of region across the matching connection"
   region: Int
-  "Minimum of tokenAmount across the matching connection"
-  tokenAmount: Int
+  "Minimum of shareAmount across the matching connection"
+  shareAmount: Int
   "Minimum of updatedBlock across the matching connection"
   updatedBlock: Int
 }
@@ -7788,8 +7788,8 @@ type RealWorldAssetMaxAggregates {
   itemId: Int
   "Maximum of region across the matching connection"
   region: Int
-  "Maximum of tokenAmount across the matching connection"
-  tokenAmount: Int
+  "Maximum of shareAmount across the matching connection"
+  shareAmount: Int
   "Maximum of updatedBlock across the matching connection"
   updatedBlock: Int
 }
@@ -7803,8 +7803,8 @@ type RealWorldAssetAverageAggregates {
   itemId: BigFloat
   "Mean average of region across the matching connection"
   region: BigFloat
-  "Mean average of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Mean average of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Mean average of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -7818,8 +7818,8 @@ type RealWorldAssetStddevSampleAggregates {
   itemId: BigFloat
   "Sample standard deviation of region across the matching connection"
   region: BigFloat
-  "Sample standard deviation of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Sample standard deviation of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Sample standard deviation of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -7833,8 +7833,8 @@ type RealWorldAssetStddevPopulationAggregates {
   itemId: BigFloat
   "Population standard deviation of region across the matching connection"
   region: BigFloat
-  "Population standard deviation of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Population standard deviation of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Population standard deviation of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -7848,8 +7848,8 @@ type RealWorldAssetVarianceSampleAggregates {
   itemId: BigFloat
   "Sample variance of region across the matching connection"
   region: BigFloat
-  "Sample variance of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Sample variance of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Sample variance of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -7863,8 +7863,8 @@ type RealWorldAssetVariancePopulationAggregates {
   itemId: BigFloat
   "Population variance of region across the matching connection"
   region: BigFloat
-  "Population variance of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Population variance of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Population variance of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -7906,7 +7906,7 @@ input RealWorldAssetsHavingSumInput {
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
   region: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -7915,7 +7915,7 @@ input RealWorldAssetsHavingDistinctCountInput {
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
   region: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -7924,7 +7924,7 @@ input RealWorldAssetsHavingMinInput {
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
   region: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -7933,7 +7933,7 @@ input RealWorldAssetsHavingMaxInput {
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
   region: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -7942,7 +7942,7 @@ input RealWorldAssetsHavingAverageInput {
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
   region: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -7951,7 +7951,7 @@ input RealWorldAssetsHavingStddevSampleInput {
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
   region: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -7960,7 +7960,7 @@ input RealWorldAssetsHavingStddevPopulationInput {
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
   region: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -7969,7 +7969,7 @@ input RealWorldAssetsHavingVarianceSampleInput {
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
   region: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -7978,7 +7978,7 @@ input RealWorldAssetsHavingVariancePopulationInput {
   collectionId: HavingIntFilter
   itemId: HavingIntFilter
   region: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -9483,7 +9483,7 @@ type MarketplaceOngoingOffer implements Node {
   listingId: Int!
   ongoingObjectListingId: String
   offeror: String!
-  tokenPrice: String
+  sharePrice: String
   amount: Int
   paymentAssets: Int
   paymentAssetId: String
@@ -9545,8 +9545,8 @@ type MarketplaceOngoingOfferDistinctCountAggregates {
   ongoingObjectListingId: BigInt
   "Distinct count of offeror across the matching connection"
   offeror: BigInt
-  "Distinct count of tokenPrice across the matching connection"
-  tokenPrice: BigInt
+  "Distinct count of sharePrice across the matching connection"
+  sharePrice: BigInt
   "Distinct count of amount across the matching connection"
   amount: BigInt
   "Distinct count of paymentAssets across the matching connection"
@@ -10257,7 +10257,7 @@ type RealWorldAssetOwner implements Node {
   assetId: String!
   assetIdNumber: Int!
   account: String!
-  tokenAmount: Int
+  shareAmount: Int
   updatedBlock: Int!
   "Reads a single `RealWorldAsset` that is related to this `RealWorldAssetOwner`."
   asset: RealWorldAsset
@@ -10296,8 +10296,8 @@ type RealWorldAssetOwnerAggregates {
 type RealWorldAssetOwnerSumAggregates {
   "Sum of assetIdNumber across the matching connection"
   assetIdNumber: BigInt!
-  "Sum of tokenAmount across the matching connection"
-  tokenAmount: BigInt!
+  "Sum of shareAmount across the matching connection"
+  shareAmount: BigInt!
   "Sum of updatedBlock across the matching connection"
   updatedBlock: BigInt!
 }
@@ -10311,8 +10311,8 @@ type RealWorldAssetOwnerDistinctCountAggregates {
   assetIdNumber: BigInt
   "Distinct count of account across the matching connection"
   account: BigInt
-  "Distinct count of tokenAmount across the matching connection"
-  tokenAmount: BigInt
+  "Distinct count of shareAmount across the matching connection"
+  shareAmount: BigInt
   "Distinct count of updatedBlock across the matching connection"
   updatedBlock: BigInt
   "Distinct count of _id across the matching connection"
@@ -10324,8 +10324,8 @@ type RealWorldAssetOwnerDistinctCountAggregates {
 type RealWorldAssetOwnerMinAggregates {
   "Minimum of assetIdNumber across the matching connection"
   assetIdNumber: Int
-  "Minimum of tokenAmount across the matching connection"
-  tokenAmount: Int
+  "Minimum of shareAmount across the matching connection"
+  shareAmount: Int
   "Minimum of updatedBlock across the matching connection"
   updatedBlock: Int
 }
@@ -10333,8 +10333,8 @@ type RealWorldAssetOwnerMinAggregates {
 type RealWorldAssetOwnerMaxAggregates {
   "Maximum of assetIdNumber across the matching connection"
   assetIdNumber: Int
-  "Maximum of tokenAmount across the matching connection"
-  tokenAmount: Int
+  "Maximum of shareAmount across the matching connection"
+  shareAmount: Int
   "Maximum of updatedBlock across the matching connection"
   updatedBlock: Int
 }
@@ -10342,8 +10342,8 @@ type RealWorldAssetOwnerMaxAggregates {
 type RealWorldAssetOwnerAverageAggregates {
   "Mean average of assetIdNumber across the matching connection"
   assetIdNumber: BigFloat
-  "Mean average of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Mean average of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Mean average of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -10351,8 +10351,8 @@ type RealWorldAssetOwnerAverageAggregates {
 type RealWorldAssetOwnerStddevSampleAggregates {
   "Sample standard deviation of assetIdNumber across the matching connection"
   assetIdNumber: BigFloat
-  "Sample standard deviation of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Sample standard deviation of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Sample standard deviation of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -10360,8 +10360,8 @@ type RealWorldAssetOwnerStddevSampleAggregates {
 type RealWorldAssetOwnerStddevPopulationAggregates {
   "Population standard deviation of assetIdNumber across the matching connection"
   assetIdNumber: BigFloat
-  "Population standard deviation of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Population standard deviation of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Population standard deviation of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -10369,8 +10369,8 @@ type RealWorldAssetOwnerStddevPopulationAggregates {
 type RealWorldAssetOwnerVarianceSampleAggregates {
   "Sample variance of assetIdNumber across the matching connection"
   assetIdNumber: BigFloat
-  "Sample variance of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Sample variance of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Sample variance of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -10378,8 +10378,8 @@ type RealWorldAssetOwnerVarianceSampleAggregates {
 type RealWorldAssetOwnerVariancePopulationAggregates {
   "Population variance of assetIdNumber across the matching connection"
   assetIdNumber: BigFloat
-  "Population variance of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Population variance of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Population variance of updatedBlock across the matching connection"
   updatedBlock: BigFloat
 }
@@ -10411,55 +10411,55 @@ input RealWorldAssetOwnersHavingInput {
 
 input RealWorldAssetOwnersHavingSumInput {
   assetIdNumber: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input RealWorldAssetOwnersHavingDistinctCountInput {
   assetIdNumber: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input RealWorldAssetOwnersHavingMinInput {
   assetIdNumber: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input RealWorldAssetOwnersHavingMaxInput {
   assetIdNumber: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input RealWorldAssetOwnersHavingAverageInput {
   assetIdNumber: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input RealWorldAssetOwnersHavingStddevSampleInput {
   assetIdNumber: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input RealWorldAssetOwnersHavingStddevPopulationInput {
   assetIdNumber: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input RealWorldAssetOwnersHavingVarianceSampleInput {
   assetIdNumber: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input RealWorldAssetOwnersHavingVariancePopulationInput {
   assetIdNumber: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
@@ -10598,10 +10598,10 @@ type RealEstateNftSumAggregates {
   item: BigInt!
   "Sum of propertyPrice across the matching connection"
   propertyPrice: BigInt!
-  "Sum of pricePerToken across the matching connection"
-  pricePerToken: BigInt!
-  "Sum of numberOfTokens across the matching connection"
-  numberOfTokens: BigInt!
+  "Sum of pricePerShare across the matching connection"
+  pricePerShare: BigInt!
+  "Sum of numberOfShares across the matching connection"
+  numberOfShares: BigInt!
   "Sum of estimatedRentalIncome across the matching connection"
   estimatedRentalIncome: BigInt!
   "Sum of stampDutyTax across the matching connection"
@@ -10663,10 +10663,10 @@ type RealEstateNftDistinctCountAggregates {
   localAuthority: BigInt
   "Distinct count of propertyPrice across the matching connection"
   propertyPrice: BigInt
-  "Distinct count of pricePerToken across the matching connection"
-  pricePerToken: BigInt
-  "Distinct count of numberOfTokens across the matching connection"
-  numberOfTokens: BigInt
+  "Distinct count of pricePerShare across the matching connection"
+  pricePerShare: BigInt
+  "Distinct count of numberOfShares across the matching connection"
+  numberOfShares: BigInt
   "Distinct count of estimatedRentalIncome across the matching connection"
   estimatedRentalIncome: BigInt
   "Distinct count of stampDutyTax across the matching connection"
@@ -10706,10 +10706,10 @@ type RealEstateNftMinAggregates {
   item: Int
   "Minimum of propertyPrice across the matching connection"
   propertyPrice: Int
-  "Minimum of pricePerToken across the matching connection"
-  pricePerToken: Int
-  "Minimum of numberOfTokens across the matching connection"
-  numberOfTokens: Int
+  "Minimum of pricePerShare across the matching connection"
+  pricePerShare: Int
+  "Minimum of numberOfShares across the matching connection"
+  numberOfShares: Int
   "Minimum of estimatedRentalIncome across the matching connection"
   estimatedRentalIncome: Int
   "Minimum of stampDutyTax across the matching connection"
@@ -10729,10 +10729,10 @@ type RealEstateNftMaxAggregates {
   item: Int
   "Maximum of propertyPrice across the matching connection"
   propertyPrice: Int
-  "Maximum of pricePerToken across the matching connection"
-  pricePerToken: Int
-  "Maximum of numberOfTokens across the matching connection"
-  numberOfTokens: Int
+  "Maximum of pricePerShare across the matching connection"
+  pricePerShare: Int
+  "Maximum of numberOfShares across the matching connection"
+  numberOfShares: Int
   "Maximum of estimatedRentalIncome across the matching connection"
   estimatedRentalIncome: Int
   "Maximum of stampDutyTax across the matching connection"
@@ -10752,10 +10752,10 @@ type RealEstateNftAverageAggregates {
   item: BigFloat
   "Mean average of propertyPrice across the matching connection"
   propertyPrice: BigFloat
-  "Mean average of pricePerToken across the matching connection"
-  pricePerToken: BigFloat
-  "Mean average of numberOfTokens across the matching connection"
-  numberOfTokens: BigFloat
+  "Mean average of pricePerShare across the matching connection"
+  pricePerShare: BigFloat
+  "Mean average of numberOfShares across the matching connection"
+  numberOfShares: BigFloat
   "Mean average of estimatedRentalIncome across the matching connection"
   estimatedRentalIncome: BigFloat
   "Mean average of stampDutyTax across the matching connection"
@@ -10775,10 +10775,10 @@ type RealEstateNftStddevSampleAggregates {
   item: BigFloat
   "Sample standard deviation of propertyPrice across the matching connection"
   propertyPrice: BigFloat
-  "Sample standard deviation of pricePerToken across the matching connection"
-  pricePerToken: BigFloat
-  "Sample standard deviation of numberOfTokens across the matching connection"
-  numberOfTokens: BigFloat
+  "Sample standard deviation of pricePerShare across the matching connection"
+  pricePerShare: BigFloat
+  "Sample standard deviation of numberOfShares across the matching connection"
+  numberOfShares: BigFloat
   "Sample standard deviation of estimatedRentalIncome across the matching connection"
   estimatedRentalIncome: BigFloat
   "Sample standard deviation of stampDutyTax across the matching connection"
@@ -10798,10 +10798,10 @@ type RealEstateNftStddevPopulationAggregates {
   item: BigFloat
   "Population standard deviation of propertyPrice across the matching connection"
   propertyPrice: BigFloat
-  "Population standard deviation of pricePerToken across the matching connection"
-  pricePerToken: BigFloat
-  "Population standard deviation of numberOfTokens across the matching connection"
-  numberOfTokens: BigFloat
+  "Population standard deviation of pricePerShare across the matching connection"
+  pricePerShare: BigFloat
+  "Population standard deviation of numberOfShares across the matching connection"
+  numberOfShares: BigFloat
   "Population standard deviation of estimatedRentalIncome across the matching connection"
   estimatedRentalIncome: BigFloat
   "Population standard deviation of stampDutyTax across the matching connection"
@@ -10821,10 +10821,10 @@ type RealEstateNftVarianceSampleAggregates {
   item: BigFloat
   "Sample variance of propertyPrice across the matching connection"
   propertyPrice: BigFloat
-  "Sample variance of pricePerToken across the matching connection"
-  pricePerToken: BigFloat
-  "Sample variance of numberOfTokens across the matching connection"
-  numberOfTokens: BigFloat
+  "Sample variance of pricePerShare across the matching connection"
+  pricePerShare: BigFloat
+  "Sample variance of numberOfShares across the matching connection"
+  numberOfShares: BigFloat
   "Sample variance of estimatedRentalIncome across the matching connection"
   estimatedRentalIncome: BigFloat
   "Sample variance of stampDutyTax across the matching connection"
@@ -10844,10 +10844,10 @@ type RealEstateNftVariancePopulationAggregates {
   item: BigFloat
   "Population variance of propertyPrice across the matching connection"
   propertyPrice: BigFloat
-  "Population variance of pricePerToken across the matching connection"
-  pricePerToken: BigFloat
-  "Population variance of numberOfTokens across the matching connection"
-  numberOfTokens: BigFloat
+  "Population variance of pricePerShare across the matching connection"
+  pricePerShare: BigFloat
+  "Population variance of numberOfShares across the matching connection"
+  numberOfShares: BigFloat
   "Population variance of estimatedRentalIncome across the matching connection"
   estimatedRentalIncome: BigFloat
   "Population variance of stampDutyTax across the matching connection"
@@ -10922,8 +10922,8 @@ input RealEstateNftsHavingSumInput {
   collection: HavingIntFilter
   item: HavingIntFilter
   propertyPrice: HavingIntFilter
-  pricePerToken: HavingIntFilter
-  numberOfTokens: HavingIntFilter
+  pricePerShare: HavingIntFilter
+  numberOfShares: HavingIntFilter
   estimatedRentalIncome: HavingIntFilter
   stampDutyTax: HavingIntFilter
   annualServiceCharge: HavingIntFilter
@@ -10935,8 +10935,8 @@ input RealEstateNftsHavingDistinctCountInput {
   collection: HavingIntFilter
   item: HavingIntFilter
   propertyPrice: HavingIntFilter
-  pricePerToken: HavingIntFilter
-  numberOfTokens: HavingIntFilter
+  pricePerShare: HavingIntFilter
+  numberOfShares: HavingIntFilter
   estimatedRentalIncome: HavingIntFilter
   stampDutyTax: HavingIntFilter
   annualServiceCharge: HavingIntFilter
@@ -10948,8 +10948,8 @@ input RealEstateNftsHavingMinInput {
   collection: HavingIntFilter
   item: HavingIntFilter
   propertyPrice: HavingIntFilter
-  pricePerToken: HavingIntFilter
-  numberOfTokens: HavingIntFilter
+  pricePerShare: HavingIntFilter
+  numberOfShares: HavingIntFilter
   estimatedRentalIncome: HavingIntFilter
   stampDutyTax: HavingIntFilter
   annualServiceCharge: HavingIntFilter
@@ -10961,8 +10961,8 @@ input RealEstateNftsHavingMaxInput {
   collection: HavingIntFilter
   item: HavingIntFilter
   propertyPrice: HavingIntFilter
-  pricePerToken: HavingIntFilter
-  numberOfTokens: HavingIntFilter
+  pricePerShare: HavingIntFilter
+  numberOfShares: HavingIntFilter
   estimatedRentalIncome: HavingIntFilter
   stampDutyTax: HavingIntFilter
   annualServiceCharge: HavingIntFilter
@@ -10974,8 +10974,8 @@ input RealEstateNftsHavingAverageInput {
   collection: HavingIntFilter
   item: HavingIntFilter
   propertyPrice: HavingIntFilter
-  pricePerToken: HavingIntFilter
-  numberOfTokens: HavingIntFilter
+  pricePerShare: HavingIntFilter
+  numberOfShares: HavingIntFilter
   estimatedRentalIncome: HavingIntFilter
   stampDutyTax: HavingIntFilter
   annualServiceCharge: HavingIntFilter
@@ -10987,8 +10987,8 @@ input RealEstateNftsHavingStddevSampleInput {
   collection: HavingIntFilter
   item: HavingIntFilter
   propertyPrice: HavingIntFilter
-  pricePerToken: HavingIntFilter
-  numberOfTokens: HavingIntFilter
+  pricePerShare: HavingIntFilter
+  numberOfShares: HavingIntFilter
   estimatedRentalIncome: HavingIntFilter
   stampDutyTax: HavingIntFilter
   annualServiceCharge: HavingIntFilter
@@ -11000,8 +11000,8 @@ input RealEstateNftsHavingStddevPopulationInput {
   collection: HavingIntFilter
   item: HavingIntFilter
   propertyPrice: HavingIntFilter
-  pricePerToken: HavingIntFilter
-  numberOfTokens: HavingIntFilter
+  pricePerShare: HavingIntFilter
+  numberOfShares: HavingIntFilter
   estimatedRentalIncome: HavingIntFilter
   stampDutyTax: HavingIntFilter
   annualServiceCharge: HavingIntFilter
@@ -11013,8 +11013,8 @@ input RealEstateNftsHavingVarianceSampleInput {
   collection: HavingIntFilter
   item: HavingIntFilter
   propertyPrice: HavingIntFilter
-  pricePerToken: HavingIntFilter
-  numberOfTokens: HavingIntFilter
+  pricePerShare: HavingIntFilter
+  numberOfShares: HavingIntFilter
   estimatedRentalIncome: HavingIntFilter
   stampDutyTax: HavingIntFilter
   annualServiceCharge: HavingIntFilter
@@ -11026,8 +11026,8 @@ input RealEstateNftsHavingVariancePopulationInput {
   collection: HavingIntFilter
   item: HavingIntFilter
   propertyPrice: HavingIntFilter
-  pricePerToken: HavingIntFilter
-  numberOfTokens: HavingIntFilter
+  pricePerShare: HavingIntFilter
+  numberOfShares: HavingIntFilter
   estimatedRentalIncome: HavingIntFilter
   stampDutyTax: HavingIntFilter
   annualServiceCharge: HavingIntFilter
@@ -13097,7 +13097,7 @@ type MarketplaceShareOwner implements Node {
   listingId: Int!
   ongoingObjectListingId: String!
   account: String!
-  tokenAmount: Int
+  shareAmount: Int
   paidFunds: String
   paidTax: String
   relistCount: Int
@@ -13139,8 +13139,8 @@ type MarketplaceShareOwnerAggregates {
 type MarketplaceShareOwnerSumAggregates {
   "Sum of listingId across the matching connection"
   listingId: BigInt!
-  "Sum of tokenAmount across the matching connection"
-  tokenAmount: BigInt!
+  "Sum of shareAmount across the matching connection"
+  shareAmount: BigInt!
   "Sum of relistCount across the matching connection"
   relistCount: BigInt!
   "Sum of updatedBlock across the matching connection"
@@ -13156,8 +13156,8 @@ type MarketplaceShareOwnerDistinctCountAggregates {
   ongoingObjectListingId: BigInt
   "Distinct count of account across the matching connection"
   account: BigInt
-  "Distinct count of tokenAmount across the matching connection"
-  tokenAmount: BigInt
+  "Distinct count of shareAmount across the matching connection"
+  shareAmount: BigInt
   "Distinct count of paidFunds across the matching connection"
   paidFunds: BigInt
   "Distinct count of paidTax across the matching connection"
@@ -13175,8 +13175,8 @@ type MarketplaceShareOwnerDistinctCountAggregates {
 type MarketplaceShareOwnerMinAggregates {
   "Minimum of listingId across the matching connection"
   listingId: Int
-  "Minimum of tokenAmount across the matching connection"
-  tokenAmount: Int
+  "Minimum of shareAmount across the matching connection"
+  shareAmount: Int
   "Minimum of relistCount across the matching connection"
   relistCount: Int
   "Minimum of updatedBlock across the matching connection"
@@ -13186,8 +13186,8 @@ type MarketplaceShareOwnerMinAggregates {
 type MarketplaceShareOwnerMaxAggregates {
   "Maximum of listingId across the matching connection"
   listingId: Int
-  "Maximum of tokenAmount across the matching connection"
-  tokenAmount: Int
+  "Maximum of shareAmount across the matching connection"
+  shareAmount: Int
   "Maximum of relistCount across the matching connection"
   relistCount: Int
   "Maximum of updatedBlock across the matching connection"
@@ -13197,8 +13197,8 @@ type MarketplaceShareOwnerMaxAggregates {
 type MarketplaceShareOwnerAverageAggregates {
   "Mean average of listingId across the matching connection"
   listingId: BigFloat
-  "Mean average of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Mean average of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Mean average of relistCount across the matching connection"
   relistCount: BigFloat
   "Mean average of updatedBlock across the matching connection"
@@ -13208,8 +13208,8 @@ type MarketplaceShareOwnerAverageAggregates {
 type MarketplaceShareOwnerStddevSampleAggregates {
   "Sample standard deviation of listingId across the matching connection"
   listingId: BigFloat
-  "Sample standard deviation of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Sample standard deviation of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Sample standard deviation of relistCount across the matching connection"
   relistCount: BigFloat
   "Sample standard deviation of updatedBlock across the matching connection"
@@ -13219,8 +13219,8 @@ type MarketplaceShareOwnerStddevSampleAggregates {
 type MarketplaceShareOwnerStddevPopulationAggregates {
   "Population standard deviation of listingId across the matching connection"
   listingId: BigFloat
-  "Population standard deviation of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Population standard deviation of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Population standard deviation of relistCount across the matching connection"
   relistCount: BigFloat
   "Population standard deviation of updatedBlock across the matching connection"
@@ -13230,8 +13230,8 @@ type MarketplaceShareOwnerStddevPopulationAggregates {
 type MarketplaceShareOwnerVarianceSampleAggregates {
   "Sample variance of listingId across the matching connection"
   listingId: BigFloat
-  "Sample variance of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Sample variance of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Sample variance of relistCount across the matching connection"
   relistCount: BigFloat
   "Sample variance of updatedBlock across the matching connection"
@@ -13241,8 +13241,8 @@ type MarketplaceShareOwnerVarianceSampleAggregates {
 type MarketplaceShareOwnerVariancePopulationAggregates {
   "Population variance of listingId across the matching connection"
   listingId: BigFloat
-  "Population variance of tokenAmount across the matching connection"
-  tokenAmount: BigFloat
+  "Population variance of shareAmount across the matching connection"
+  shareAmount: BigFloat
   "Population variance of relistCount across the matching connection"
   relistCount: BigFloat
   "Population variance of updatedBlock across the matching connection"
@@ -13279,63 +13279,63 @@ input MarketplaceShareOwnersHavingInput {
 
 input MarketplaceShareOwnersHavingSumInput {
   listingId: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   relistCount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input MarketplaceShareOwnersHavingDistinctCountInput {
   listingId: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   relistCount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input MarketplaceShareOwnersHavingMinInput {
   listingId: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   relistCount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input MarketplaceShareOwnersHavingMaxInput {
   listingId: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   relistCount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input MarketplaceShareOwnersHavingAverageInput {
   listingId: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   relistCount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input MarketplaceShareOwnersHavingStddevSampleInput {
   listingId: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   relistCount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input MarketplaceShareOwnersHavingStddevPopulationInput {
   listingId: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   relistCount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input MarketplaceShareOwnersHavingVarianceSampleInput {
   listingId: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   relistCount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
 
 input MarketplaceShareOwnersHavingVariancePopulationInput {
   listingId: HavingIntFilter
-  tokenAmount: HavingIntFilter
+  shareAmount: HavingIntFilter
   relistCount: HavingIntFilter
   updatedBlock: HavingIntFilter
 }
