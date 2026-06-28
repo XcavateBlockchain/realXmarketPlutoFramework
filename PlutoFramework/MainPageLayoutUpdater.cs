@@ -17,6 +17,8 @@ namespace PlutoFramework
 
         public static async Task ReloadAsync(CancellationToken token)
         {
+            Console.WriteLine("Reload called");
+
             try
             {
                 await ViewLocalLoadAsync(token);
@@ -120,6 +122,8 @@ namespace PlutoFramework
         public static Task ViewSubstrateClientLoadAsync(PlutoFrameworkSubstrateClient client, CancellationToken token)
         {
             List<Task> asyncLoads = [];
+
+            Console.WriteLine("Views count = " + Views.Count());
 
             foreach (var view in Views)
             {

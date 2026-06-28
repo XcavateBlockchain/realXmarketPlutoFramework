@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.Threading;
-using PlutoFramework.Components;
 using PlutoFramework.Components.NetworkSelect;
 using PlutoFramework.Constants;
 
@@ -99,7 +98,9 @@ namespace PlutoFramework.Model
 
             Endpoint endpoint = EndpointsModel.GetEndpoint(endpointKey);
 
-            string bestWebSecket = await WebSocketModel.GetFastestWebSocketAsync(endpoint.URLs).WithCancellation(token).ConfigureAwait(false);
+            //string bestWebSecket = await WebSocketModel.GetFastestWebSocketAsync(endpoint.URLs).WithCancellation(token).ConfigureAwait(false);
+
+            string bestWebSecket = endpoint.URLs.FirstOrDefault() ?? throw new Exception("No websocket URL found for endpoint: " + endpointKey);
 
             var newClient = new PlutoFrameworkSubstrateClient(
                 endpoint,
@@ -121,6 +122,7 @@ namespace PlutoFramework.Model
         /// <param name="reload">Reload data?</param>
         public static async Task ChangeConnectedClientsAsync(IEnumerable<EndpointEnum> endpointKeys, CancellationToken token, bool reload = true)
         {
+
             var requestedKeys = new HashSet<EndpointEnum>();
             foreach (var endpointKey in endpointKeys)
             {

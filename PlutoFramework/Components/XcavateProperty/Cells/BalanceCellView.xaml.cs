@@ -18,7 +18,7 @@ public partial class BalanceCellView : ContentView, ISetEmptyView, ISubstrateCli
 
     public async Task LoadAsync(CancellationToken token)
     {
-        if (KeysModel.HasSubstrateKey())
+        if (!KeysModel.HasSubstrateKey())
         {
             return;
         }
@@ -41,7 +41,7 @@ public partial class BalanceCellView : ContentView, ISetEmptyView, ISubstrateCli
         {
             try
             {
-                await Sdk.GetAssetsAsync((Hydration.NetApi.Generated.SubstrateClientExt)client.SubstrateClient,null, token);
+                await Sdk.GetAssetsAsync((Hydration.NetApi.Generated.SubstrateClientExt)client.SubstrateClient, null, token);
             }
             catch (Exception e)
             {
@@ -52,6 +52,8 @@ public partial class BalanceCellView : ContentView, ISetEmptyView, ISubstrateCli
         }
 
         await Model.AssetsModel.GetBalanceAsync(client, KeysModel.GetSubstrateKey(), token, false);
+
+        Console.Write("Balance loaded for " + client.Endpoint.Key);
 
         cell.Value = Model.AssetsModel.UsdSum.ToCurrencyString();
     }
