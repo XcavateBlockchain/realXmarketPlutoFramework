@@ -15,7 +15,6 @@
       <PackageReference Include="Uniquery" Version="1.0.1" />
       <PackageReference Include="Plutonication" Version="2.6.0" />
       <PackageReference Include="AzeroIdResolver" Version="1.0.2" />
-      <PackageReference Include="Substrate.NET.Wallet" Version="1.0.8" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +31,7 @@
     <ProjectReference Include="..\Generated\Kilt\Kilt.NetApi\Kilt.NetApi.csproj" />
     <ProjectReference Include="..\Generated\PolkadotPeople\PolkadotPeople.NetApi\PolkadotPeople.NetApi.csproj" />
     <ProjectReference Include="..\Generated\Polkadot\Polkadot.NetApi\Polkadot.NetApi.csproj" />
+    <ProjectReference Include="..\Substrate.NET.Wallet\Substrate.NET.Wallet\Substrate.NET.Wallet.csproj" />
     <ProjectReference Include="..\UniqueryPlus\UniqueryPlus.csproj" />
   </ItemGroup>
 </Project>
