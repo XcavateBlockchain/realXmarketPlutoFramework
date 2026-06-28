@@ -4,13 +4,13 @@ namespace PlutoFramework.Components.Xcavate;
 
 public partial class QuestionnaireFailedPage : PageTemplate
 {
-	public QuestionnaireFailedPage(string message)
+	public QuestionnaireFailedPage(IEnumerable<QuestionnaireFailedSection> failedSections)
 	{
 		InitializeComponent();
 
-		BindingContext = new QuestionnaireFailedPageViewModel
-		{
-			Text = message,
-        };
+        var viewModel = new QuestionnaireFailedPageViewModel();
+        viewModel.SetFailedSections(failedSections);
+
+		BindingContext = viewModel;
     }
 }

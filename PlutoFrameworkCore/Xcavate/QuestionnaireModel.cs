@@ -187,6 +187,8 @@ namespace PlutoFramework.Model.Xcavate
             response.EnsureSuccessStatusCode();
 
             var apiResponseJson = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Questionnaire post answers: ");
+            Console.WriteLine(apiResponseJson);
 
             var apiResponse = JsonSerializer.Deserialize<QuestionnaireApiResponse<QuestionnaireSubmissionRecord>>(apiResponseJson, JsonOptions);
 
@@ -198,10 +200,13 @@ namespace PlutoFramework.Model.Xcavate
             var client = new HttpClient();
 
             var response = await client.PostAsJsonAsync($"{API_URL}/api/v2/questionnaire/evaluate", responses);
-            
+
             response.EnsureSuccessStatusCode();
 
             var apiResponseJson = await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine("Questionnaire evaluate: ");
+            Console.WriteLine(apiResponseJson);
 
             var apiResponse = JsonSerializer.Deserialize<QuestionnaireApiResponse<QuestionnaireEvaluation>>(apiResponseJson, JsonOptions);
 
@@ -218,6 +223,9 @@ namespace PlutoFramework.Model.Xcavate
             var client = new HttpClient();
 
             var response = await client.PutAsJsonAsync($"{API_URL}/api/questionnaire/terms/{address}", accept);
+
+            Console.WriteLine("Questionnaire accept terms: ");
+            Console.WriteLine(response);
 
             response.EnsureSuccessStatusCode();
 

@@ -4,25 +4,24 @@
                    x:Class="PlutoFramework.Components.Xcavate.QuestionnairePage"
                    xmlns:progress="clr-namespace:PlutoFramework.Components.Progress"
                    xmlns:page="clr-namespace:PlutoFramework.Templates.PageTemplate"
+                   xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
                    xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                    xmlns:hyperlink="clr-namespace:PlutoFramework.Components.Hyperlink"
                    xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
                    Title=""
-                   NavigationBarHasShadow="False">
-    <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-            AbsoluteLayout.LayoutFlags="All">
-        <VerticalStackLayout>
-            <Grid HorizontalOptions="Fill"
-              Margin="20, 0, 20, 0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="200" />
-                </Grid.ColumnDefinitions>
+                   NavigationBarHasShadow="False"
+                   NavigationBarIsVisible="False">
+    <Grid RowDefinitions="55,*">
+        <navigationbar:TopNavigationStepperBar Grid.Row="0"
+                                               Step="{Binding Step}"
+                                               Steps="{Binding Steps}" />
 
-                <Label HorizontalOptions="Start"
-                   HorizontalTextAlignment="Start"
-                   Grid.Column="0">
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout>
+                <Label HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       Grid.Column="0"
+                       Margin="0, 20, 0, 0">
                     <Label.FormattedText>
                         <FormattedString>
                             <Span FontAttributes="Bold" Text="{Binding SectionTitle}" />
@@ -30,75 +29,69 @@
                     </Label.FormattedText>
                 </Label>
 
-                <progress:ProgressStepperView Step="{Binding Step}"
-                                          Steps="{Binding Steps}"
-                                          Grid.Column="2"
-                                          HorizontalOptions="End" />
-            </Grid>
-
-            <Label HorizontalOptions="Center"
+                <Label HorizontalOptions="Center"
                HorizontalTextAlignment="Center"
                LineBreakMode="WordWrap"
-               Margin="30, 50, 30, 10"
-               FontSize="20">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span FontAttributes="Bold"
-                  Text="{Binding SectionTitle}"/>
-                    </FormattedString>
-                </Label.FormattedText>
-            </Label>
+               Margin="30, 30, 30, 20"
+               TextColor="#717171">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="{Binding SectionDescription}" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
 
-            <Label HorizontalOptions="Center"
+                <Label HorizontalOptions="Center"
                HorizontalTextAlignment="Center"
                LineBreakMode="WordWrap"
                Margin="30, 10, 30, 20">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span FontAttributes="Bold"
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span FontAttributes="Bold"
                           Text="{Binding QuestionText}"/>
-                    </FormattedString>
-                </Label.FormattedText>
-            </Label>
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
 
-            <Label HorizontalOptions="Center"
+                <Label HorizontalOptions="Center"
                HorizontalTextAlignment="Center"
                LineBreakMode="WordWrap"
-               Margin="20, 0, 20, 40"
+               Margin="20, 70, 20, 10"
                TextColor="#717171">
-                <Label.FormattedText>
-                    <FormattedString>
-                        <Span Text="{Binding PromptText}" />
-                    </FormattedString>
-                </Label.FormattedText>
-            </Label>
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="{Binding PromptText}" />
+                        </FormattedString>
+                    </Label.FormattedText>
+                </Label>
 
-            <CollectionView ItemsSource="{Binding AnswerOptions}"
+                <CollectionView ItemsSource="{Binding AnswerOptions}"
                             IsVisible="{Binding IsOptionsVisible}"
                             Margin="20, 0, 20, 20"
                             SelectionMode="None">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <buttons:BasicGrayButton Text="{Binding .}"
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <buttons:BasicGrayButton Text="{Binding .}"
                                                  Margin="0, 8, 0, 8"
                                                  Command="{Binding Source={RelativeSource AncestorType={x:Type page:PageTemplate}}, Path=BindingContext.SelectAnswerCommand}"
                                                  CommandParameter="{Binding .}" />
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
 
-            <VerticalStackLayout IsVisible="{Binding IsTextInputVisible}"
+                <VerticalStackLayout IsVisible="{Binding IsTextInputVisible}"
                                  Margin="20, 0, 20, 20"
                                  Spacing="12">
-                <Entry Text="{Binding TextAnswer}"
+                    <Entry Text="{Binding TextAnswer}"
                        Placeholder="Enter your answer"
                        ReturnType="Done"
                        ClearButtonVisibility="WhileEditing" />
 
-                <buttons:ElevatedButton Text="Continue"
+                    <buttons:ElevatedButton Text="Continue"
                                         Command="{Binding SubmitTextAnswerCommand}"
                                         ButtonState="{Binding SubmitTextAnswerButtonState}" />
+                </VerticalStackLayout>
             </VerticalStackLayout>
-        </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+    </Grid>
 </page:PageTemplate>

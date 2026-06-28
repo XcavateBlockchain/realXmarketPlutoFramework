@@ -501,6 +501,10 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
+    <Compile Update="Components\NavigationBar\TopNavigationStepperBar.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
     <Compile Update="Components\NetworkSelect\MultiNetworkSelectView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
@@ -1335,6 +1339,9 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\NavigationBar\TopNavigationBar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Components\NavigationBar\TopNavigationStepperBar.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\NetworkSelect\MultiNetworkSelectView.xaml">
@@ -2497,6 +2504,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\Xcavate\AboutUsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Components\NavigationBar\TopNavigationStepperBar.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\Xcavate\CompanyPage.xaml">

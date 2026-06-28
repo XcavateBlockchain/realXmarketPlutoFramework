@@ -14,6 +14,7 @@ namespace PlutoFramework.Components.Xcavate
     {
         public required string SectionId { get; init; }
         public required string SectionTitle { get; init; }
+        public required string SectionDescription { get; init; }
         public required string StepId { get; init; }
         public required string StepType { get; init; }
         public required string QuestionText { get; init; }
@@ -29,6 +30,7 @@ namespace PlutoFramework.Components.Xcavate
         [NotifyPropertyChangedFor(nameof(Step))]
         [NotifyPropertyChangedFor(nameof(Steps))]
         [NotifyPropertyChangedFor(nameof(SectionTitle))]
+        [NotifyPropertyChangedFor(nameof(SectionDescription))]
         [NotifyPropertyChangedFor(nameof(QuestionText))]
         [NotifyPropertyChangedFor(nameof(PromptText))]
         [NotifyPropertyChangedFor(nameof(IsOptionsVisible))]
@@ -51,6 +53,8 @@ namespace PlutoFramework.Components.Xcavate
             : null;
 
         public string SectionTitle => CurrentStep?.SectionTitle ?? "Questionnaire";
+
+        public string SectionDescription => CurrentStep?.SectionDescription ?? "";
 
         public string QuestionText => CurrentStep?.QuestionText ?? "";
 
@@ -97,6 +101,7 @@ namespace PlutoFramework.Components.Xcavate
                     {
                         SectionId = section.Id,
                         SectionTitle = section.Title,
+                        SectionDescription = section.Description,
                         StepId = question.Id,
                         StepType = question.Type,
                         QuestionText = question.QuestionText,
@@ -110,6 +115,7 @@ namespace PlutoFramework.Components.Xcavate
                         {
                             SectionId = section.Id,
                             SectionTitle = section.Title,
+                            SectionDescription = section.Description,
                             StepId = question.Conditions.Id,
                             StepType = question.Conditions.Type,
                             QuestionText = question.Conditions.QuestionText,
@@ -126,6 +132,7 @@ namespace PlutoFramework.Components.Xcavate
                     {
                         SectionId = section.Id,
                         SectionTitle = section.Title,
+                        SectionDescription = section.Description,
                         StepId = declaration.Id,
                         StepType = "checkbox",
                         QuestionText = declaration.QuestionText,
@@ -154,6 +161,7 @@ namespace PlutoFramework.Components.Xcavate
             OnPropertyChanged(nameof(Step));
             OnPropertyChanged(nameof(Steps));
             OnPropertyChanged(nameof(SectionTitle));
+            OnPropertyChanged(nameof(SectionDescription));
             OnPropertyChanged(nameof(QuestionText));
             OnPropertyChanged(nameof(PromptText));
             OnPropertyChanged(nameof(IsOptionsVisible));
@@ -233,17 +241,22 @@ namespace PlutoFramework.Components.Xcavate
                 return;
             }
 
-            var failedReasons = assessment?.Sections
-                .Where(section => !section.Passed && !string.IsNullOrWhiteSpace(section.Reason))
-                .Select(section => section.Reason)
-                .OfType<string>()
+            var sectionTitles = Info.Sections.ToDictionary(section => section.Id, section => section.Title);
+
+            var failedSections = assessment?.Sections
+                .Where(section => !section.Passed)
+                .Select(section => new QuestionnaireFailedSection
+                {
+                    Title = sectionTitles.TryGetValue(section.QuestionnaireId, out var title)
+                        ? title
+                        : section.QuestionnaireId,
+                    Reason = string.IsNullOrWhiteSpace(section.Reason)
+                        ? "No qualifying criteria met for this investor category."
+                        : section.Reason
+                })
                 .ToList() ?? [];
 
-            var failureMessage = failedReasons.Count > 0
-                ? string.Join("\n\n", failedReasons)
-                : "You do not currently qualify under the investor questionnaire criteria.";
-
-            await Shell.Current.Navigation.PushAsync(new QuestionnaireFailedPage(failureMessage));
+            await Shell.Current.Navigation.PushAsync(new QuestionnaireFailedPage(failedSections));
         }
 
         [RelayCommand]
@@ -262,20 +275,18 @@ namespace PlutoFramework.Components.Xcavate
             {
                 SetAnswer(CurrentStep.SectionId, CurrentStep.StepId, selectedOption);
 
-                if (!string.IsNullOrWhiteSpace(CurrentStep.ParentQuestionId))
+                if (string.IsNullOrWhiteSpace(CurrentStep.ParentQuestionId))
                 {
-                    return;
-                }
+                    var childConditionStep = steps.FirstOrDefault(step =>
+                        step.SectionId == CurrentStep.SectionId &&
+                        step.ParentQuestionId == CurrentStep.StepId);
 
-                var childConditionStep = steps.FirstOrDefault(step =>
-                    step.SectionId == CurrentStep.SectionId &&
-                    step.ParentQuestionId == CurrentStep.StepId);
-
-                if (childConditionStep is not null && !string.Equals(selectedOption, "Yes", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (responses.TryGetValue(CurrentStep.SectionId, out var sectionResponses))
+                    if (childConditionStep is not null && !string.Equals(selectedOption, "Yes", StringComparison.OrdinalIgnoreCase))
                     {
-                        sectionResponses.Remove(childConditionStep.StepId);
+                        if (responses.TryGetValue(CurrentStep.SectionId, out var sectionResponses))
+                        {
+                            sectionResponses.Remove(childConditionStep.StepId);
+                        }
                     }
                 }
             }
