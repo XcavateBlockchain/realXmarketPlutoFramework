@@ -76,7 +76,7 @@
           collectedFees
           claimExpiry
           assetId
-          tokenOwners(first: 1, filter: {account: {equalTo: $tokenOwner}}) {
+          shareOwners(first: 1, filter: {account: {equalTo: $tokenOwner}}) {
             nodes {
               id
               account

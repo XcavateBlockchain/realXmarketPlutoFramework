@@ -4,7 +4,7 @@
     first: $first
     filter: {
       or: [
-        { marketplaceOngoingObjectListings: { some: { tokenOwners: { some: { account: { equalTo: $tokenOwner } } } } } },
+        { marketplaceOngoingObjectListings: { some: { shareOwners: { some: { account: { equalTo: $tokenOwner } } } } } },
         { realWorldAssets: { some: { owners: { some: { account: { equalTo: $tokenOwner } } } } } }
       ]
     }
@@ -73,7 +73,7 @@
           collectedFees
           claimExpiry
           assetId
-          tokenOwners(first: 1, filter: {account: {equalTo: $tokenOwner}}) {
+          shareOwners(first: 1, filter: {account: {equalTo: $tokenOwner}}) {
             nodes {
               id
               account
