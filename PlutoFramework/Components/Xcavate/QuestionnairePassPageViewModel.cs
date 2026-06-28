@@ -1,8 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
-using PlutoFramework.Model;
-using PlutoFramework.Model.Xcavate;
 
 namespace PlutoFramework.Components.Xcavate
 {
@@ -32,7 +30,7 @@ namespace PlutoFramework.Components.Xcavate
         [RelayCommand]
         public async Task NavigateAsync()
         {
-            await QuestionnaireModel.AcceptTermsAsync(KeysModel.GetPublicKey());
+            //await QuestionnaireModel.AcceptTermsAsync(KeysModel.GetPublicKey());
 
             await Navigation.Invoke();
         }

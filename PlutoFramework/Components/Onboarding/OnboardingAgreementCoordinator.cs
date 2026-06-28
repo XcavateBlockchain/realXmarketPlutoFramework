@@ -76,7 +76,7 @@ public class OnboardingAgreementCoordinator : IOnboardingAgreementCoordinator
 
     private async Task AcceptPrivacyAsync()
     {
-        await QuestionnaireModel.AcceptTermsAsync(KeysModel.GetPublicKey());
+        //await QuestionnaireModel.AcceptTermsAsync(KeysModel.GetPublicKey());
 
         OnboardingModel.SetOnboardingStage(OnboardingStage.KYC);
 

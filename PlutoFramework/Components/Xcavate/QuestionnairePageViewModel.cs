@@ -12,6 +12,7 @@ namespace PlutoFramework.Components.Xcavate
 {
     public record QuestionnaireStep
     {
+        public required int SectionIndex { get; init; }
         public required string SectionId { get; init; }
         public required string SectionTitle { get; init; }
         public required string SectionDescription { get; init; }
@@ -21,6 +22,7 @@ namespace PlutoFramework.Components.Xcavate
         public List<string>? Options { get; init; }
         public string? ParentQuestionId { get; init; }
         public bool IsDeclaration { get; init; }
+        public bool IsPrimaryQuestion { get; init; }
     }
 
     public partial class QuestionnairePageViewModel : ObservableObject
@@ -91,14 +93,17 @@ namespace PlutoFramework.Components.Xcavate
             responses.Clear();
             currentStepIndex = 0;
 
-            foreach (var section in questionnaireInfo.Sections)
+            for (var sectionIndex = 0; sectionIndex < questionnaireInfo.Sections.Count; sectionIndex++)
             {
+                var section = questionnaireInfo.Sections[sectionIndex];
+
                 responses[section.Id] = [];
 
                 foreach (var question in section.Questions)
                 {
                     steps.Add(new QuestionnaireStep
                     {
+                        SectionIndex = sectionIndex,
                         SectionId = section.Id,
                         SectionTitle = section.Title,
                         SectionDescription = section.Description,
@@ -106,13 +111,15 @@ namespace PlutoFramework.Components.Xcavate
                         StepType = question.Type,
                         QuestionText = question.QuestionText,
                         Options = question.Options,
-                        IsDeclaration = false
+                        IsDeclaration = false,
+                        IsPrimaryQuestion = true
                     });
 
                     if (question.Conditions is not null)
                     {
                         steps.Add(new QuestionnaireStep
                         {
+                            SectionIndex = sectionIndex,
                             SectionId = section.Id,
                             SectionTitle = section.Title,
                             SectionDescription = section.Description,
@@ -121,7 +128,8 @@ namespace PlutoFramework.Components.Xcavate
                             QuestionText = question.Conditions.QuestionText,
                             Options = question.Conditions.Options,
                             ParentQuestionId = question.Id,
-                            IsDeclaration = false
+                            IsDeclaration = false,
+                            IsPrimaryQuestion = false
                         });
                     }
                 }
@@ -130,6 +138,7 @@ namespace PlutoFramework.Components.Xcavate
                 {
                     steps.Add(new QuestionnaireStep
                     {
+                        SectionIndex = sectionIndex,
                         SectionId = section.Id,
                         SectionTitle = section.Title,
                         SectionDescription = section.Description,
@@ -137,7 +146,8 @@ namespace PlutoFramework.Components.Xcavate
                         StepType = "checkbox",
                         QuestionText = declaration.QuestionText,
                         Options = ["I agree"],
-                        IsDeclaration = true
+                        IsDeclaration = true,
+                        IsPrimaryQuestion = false
                     });
                 }
             }
@@ -214,6 +224,45 @@ namespace PlutoFramework.Components.Xcavate
             sectionResponses[answerKey] = value;
         }
 
+        private bool ShouldStoreAsNoForSingleYesOption(QuestionnaireStep step, string selectedOption)
+        {
+            if (step.IsDeclaration)
+            {
+                return false;
+            }
+
+            if (!string.Equals(selectedOption, "Yes", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (step.Options is null || step.Options.Count != 1 || !string.Equals(step.Options[0], "Yes", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (!responses.TryGetValue(step.SectionId, out var sectionResponses))
+            {
+                return false;
+            }
+
+            foreach (var previousStep in steps.Take(currentStepIndex))
+            {
+                if (previousStep.SectionIndex != step.SectionIndex || !previousStep.IsPrimaryQuestion)
+                {
+                    continue;
+                }
+
+                if (sectionResponses.TryGetValue(previousStep.StepId, out var previousAnswer)
+                    && string.Equals(previousAnswer?.ToString(), "Yes", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private async Task CompleteQuestionnaireAsync()
         {
             if (Info is null)
@@ -273,7 +322,11 @@ namespace PlutoFramework.Components.Xcavate
             }
             else
             {
-                SetAnswer(CurrentStep.SectionId, CurrentStep.StepId, selectedOption);
+                var effectiveAnswer = ShouldStoreAsNoForSingleYesOption(CurrentStep, selectedOption)
+                    ? "No"
+                    : selectedOption;
+
+                SetAnswer(CurrentStep.SectionId, CurrentStep.StepId, effectiveAnswer);
 
                 if (string.IsNullOrWhiteSpace(CurrentStep.ParentQuestionId))
                 {
@@ -281,7 +334,7 @@ namespace PlutoFramework.Components.Xcavate
                         step.SectionId == CurrentStep.SectionId &&
                         step.ParentQuestionId == CurrentStep.StepId);
 
-                    if (childConditionStep is not null && !string.Equals(selectedOption, "Yes", StringComparison.OrdinalIgnoreCase))
+                    if (childConditionStep is not null && !string.Equals(effectiveAnswer, "Yes", StringComparison.OrdinalIgnoreCase))
                     {
                         if (responses.TryGetValue(CurrentStep.SectionId, out var sectionResponses))
                         {

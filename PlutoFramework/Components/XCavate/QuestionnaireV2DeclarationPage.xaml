@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<page:PageTemplate xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                   xmlns:page="clr-namespace:PlutoFramework.Templates.PageTemplate"
+                   xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                   xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
+                   xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
+                   x:Class="PlutoFramework.Components.Xcavate.QuestionnaireV2DeclarationPage"
+                   Title=""
+                   NavigationBarIsVisible="False"
+                   NavigationBarHasShadow="False">
+    <Grid RowDefinitions="45,*,90">
+        <navigationbar:TopNavigationStepperBar Grid.Row="0"
+                                               Step="{Binding Step}"
+                                               Steps="{Binding Steps}" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout>
+                <Label HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       LineBreakMode="WordWrap"
+                       Margin="30, 20, 30, 10"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       Text="Declaration" />
+
+                <CollectionView ItemsSource="{Binding Declarations}"
+                                Margin="20, 0, 20, 20"
+                                SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout Margin="0, 8, 0, 8"
+                                                 Spacing="8">
+                                <Label Text="{Binding Text}"
+                                       LineBreakMode="WordWrap" />
+
+                                <Grid ColumnDefinitions="*,*"
+                                      ColumnSpacing="10">
+                                    <buttons:ElevatedButton Grid.Column="0"
+                                                             Text="Yes"
+                                                             ButtonState="{Binding YesButtonState}"
+                                                             Command="{Binding Source={RelativeSource AncestorType={x:Type page:PageTemplate}}, Path=BindingContext.SetDeclarationCommand}"
+                                                             CommandParameter="{Binding YesParameter}" />
+
+                                    <buttons:ElevatedButton Grid.Column="1"
+                                                             Text="No"
+                                                             ButtonState="{Binding NoButtonState}"
+                                                             Command="{Binding Source={RelativeSource AncestorType={x:Type page:PageTemplate}}, Path=BindingContext.SetDeclarationCommand}"
+                                                             CommandParameter="{Binding NoParameter}" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <xcavate:PageBottomBarView Grid.Row="2"
+                                   RowSpacing="10">
+            <xcavate:PageBottomBarView.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </xcavate:PageBottomBarView.ColumnDefinitions>
+
+            <buttons:ElevatedButton Text="Continue"
+                                    Margin="10"
+                                    Command="{Binding ContinueCommand}"
+                                    ButtonState="{Binding ContinueButtonState}" />
+        </xcavate:PageBottomBarView>
+    </Grid>
+</page:PageTemplate>

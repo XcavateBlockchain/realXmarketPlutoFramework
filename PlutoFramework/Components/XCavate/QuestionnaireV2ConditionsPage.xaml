@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<page:PageTemplate xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                   xmlns:page="clr-namespace:PlutoFramework.Templates.PageTemplate"
+                   xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                   xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
+                   x:Class="PlutoFramework.Components.Xcavate.QuestionnaireV2ConditionsPage"
+                   Title=""
+                   NavigationBarIsVisible="False"
+                   NavigationBarHasShadow="False">
+    <Grid RowDefinitions="45,*">
+        <navigationbar:TopNavigationStepperBar Grid.Row="0"
+                                               Step="{Binding Step}"
+                                               Steps="{Binding Steps}" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout>
+                <Label HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       LineBreakMode="WordWrap"
+                       Margin="30, 20, 30, 10"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       Text="Additional details" />
+
+                <Label HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       LineBreakMode="WordWrap"
+                       Margin="30, 0, 30, 20"
+                       Text="{Binding CurrentQuestionText}" />
+
+                <CollectionView ItemsSource="{Binding AnswerOptions}"
+                                IsVisible="{Binding IsOptionsVisible}"
+                                Margin="20, 0, 20, 20"
+                                SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <buttons:BasicGrayButton Text="{Binding .}"
+                                                     Margin="0, 8, 0, 8"
+                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type page:PageTemplate}}, Path=BindingContext.SelectOptionAndContinueCommand}"
+                                                     CommandParameter="{Binding .}" />
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <VerticalStackLayout IsVisible="{Binding IsTextVisible}"
+                                     Margin="20, 0, 20, 20"
+                                     Spacing="12">
+                    <Entry Text="{Binding TextAnswer}"
+                           Placeholder="Enter your answer"
+                           ReturnType="Done"
+                           ReturnCommand="{Binding ContinueCommand}"
+                           ClearButtonVisibility="WhileEditing" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</page:PageTemplate>
