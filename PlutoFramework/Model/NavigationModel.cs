@@ -10,6 +10,7 @@ namespace PlutoFramework.Model
 {
     public class NavigationModel
     {
+        public static Func<Task> NavigateToKYCUserPage { get; set; } = () => Task.FromResult(0);
         public static Func<Task> NavigateToKYC { get; set; } = () => Task.FromResult(0);
         public static Func<Task> NavigateAfterAccountCreation { get; set; } = NavigateToKYC;
         public static Func<ImportAccountFlowMode, Task> StartImportAccount { get; set; } = (flowMode) => Task.FromResult(0);

@@ -7,7 +7,6 @@ using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
-using PlutoFrameworkCore.Xcavate;
 using XcavatePaseo.NetApi.Generated;
 
 namespace PlutoFramework.Components.Menu
@@ -73,10 +72,7 @@ namespace PlutoFramework.Components.Menu
         public Task SecurityActionAsync() => Shell.Current.Navigation.PushAsync(new KeyListPage());
 
         [RelayCommand]
-        public Task KYCActionAsync()
-        {
-            return Task.FromResult(0);
-        }
+        public Task KYCActionAsync() => NavigationModel.NavigateToKYCUserPage();
 
         [RelayCommand]
         public Task SupportActionAsync() => Shell.Current.Navigation.PushAsync(new ImportantLinksPage());
