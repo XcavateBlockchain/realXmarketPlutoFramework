@@ -95,21 +95,32 @@ namespace PlutoFramework.Model
 
         public static Asset? GetFirstOwnedAsset(IEnumerable<AssetKey> assetKeys)
         {
-            if (assetKeys.Count() == 0)
+            var assetKeysList = assetKeys.ToList();
+
+            if (assetKeysList.Count == 0)
             {
                 return null;
             }
 
             var filteredAssets = AssetsDict
                 .Where((pair) => pair.Value.Amount > 0)
-                .Where((pair) => assetKeys.Contains(pair.Key));
+                .Where((pair) => assetKeysList.Contains(pair.Key));
 
-            if (filteredAssets.Count() == 0 && AssetsDict.TryGetValue(assetKeys.First(), out Asset? value))
+            var firstOwnedAsset = filteredAssets
+                .Select(pair => pair.Value)
+                .FirstOrDefault();
+
+            if (firstOwnedAsset is not null)
+            {
+                return firstOwnedAsset;
+            }
+
+            if (AssetsDict.TryGetValue(assetKeysList.First(), out Asset? value))
             {
                 return value;
             }
 
-            return filteredAssets.First().Value;
+            return null;
         }
 
         public static async Task GetBalanceAsync(SubstrateClientExt client, string substrateAddress, CancellationToken token, bool forceReload = false)

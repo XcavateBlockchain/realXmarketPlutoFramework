@@ -1,11 +1,11 @@
-﻿using Substrate.NetApi;
-using Substrate.NetApi.Model.Types.Primitive;
-using Hydration.NetApi.Generated.Model.sp_core.crypto;
-using Hydration.NetApi.Generated.Model.pallet_omnipool.types;
+﻿using Hydration.NetApi.Generated;
 using Hydration.NetApi.Generated.Model.orml_tokens;
+using Hydration.NetApi.Generated.Model.pallet_omnipool.types;
+using Hydration.NetApi.Generated.Model.sp_core.crypto;
 using PlutoFramework.Constants;
-using Hydration.NetApi.Generated;
+using Substrate.NetApi;
 using Substrate.NetApi.Model.Types.Base;
+using Substrate.NetApi.Model.Types.Primitive;
 
 namespace PlutoFramework.Model.HydraDX
 {
@@ -44,7 +44,7 @@ namespace PlutoFramework.Model.HydraDX
             var tasks = blocks.Select(block => GetAssetsAsync((SubstrateClientExt)client.SubstrateClient, block, token));
 
             await Task.WhenAll(tasks);
-            }
+        }
 
         public static async Task GetAssetsAsync(SubstrateClientExt client, uint? blocknumber, CancellationToken token)
         {
@@ -171,7 +171,7 @@ namespace PlutoFramework.Model.HydraDX
                                 AssetsById.Add((blocknumber, assetId.Value), tokenInfo);
                             }
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             //Console.WriteLine(ex);
 
@@ -183,7 +183,7 @@ namespace PlutoFramework.Model.HydraDX
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Bad Ex:");
                 Console.WriteLine(ex);
@@ -203,6 +203,11 @@ namespace PlutoFramework.Model.HydraDX
             }
 
             if (tokenSymbol.Equals("USD", StringComparison.CurrentCultureIgnoreCase))
+            {
+                return 1;
+            }
+
+            if (tokenSymbol.Equals("tGBP", StringComparison.CurrentCultureIgnoreCase))
             {
                 return 1;
             }
