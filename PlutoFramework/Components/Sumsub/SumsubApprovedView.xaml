@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.Sumsub.SumsubApprovedView"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card">
+    <card:Card VerticalOptions="Fill"
+               BackgroundColor="{AppThemeBinding Light=#E8F5E9, Dark=#1B3B1B}"
+               BorderColor="{AppThemeBinding Light=#4CAF50, Dark=#2E7D32}"
+               BorderWidth="2">
+        <VerticalStackLayout Spacing="8" Padding="16, 12, 16, 12">
+            <!-- Status header -->
+            <Label Text="Verified"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=#2E7D32, Dark=#66BB6A}"
+                   HorizontalOptions="Fill"
+                   HorizontalTextAlignment="Center" />
+
+            <!-- Role/level info -->
+            <Label x:Name="LevelNameLabel"
+                   Text="{Binding LevelName}"
+                   FontSize="14"
+                   TextColor="{AppThemeBinding Light=#424242, Dark=#BDBDBD}"
+                   HorizontalOptions="Fill"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding HasLevelName}" />
+
+            <!-- Timestamp -->
+            <Label x:Name="TimestampLabel"
+                   Text="{Binding TimestampText}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#757575, Dark=#9E9E9E}"
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding HasTimestamp}" />
+        </VerticalStackLayout>
+    </card:Card>
+</ContentView>
