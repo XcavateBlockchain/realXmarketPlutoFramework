@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.Sumsub.SumsubNeedsResubmitView"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons">
+    <card:Card VerticalOptions="Fill"
+               BackgroundColor="{AppThemeBinding Light=#FFF8E1, Dark=#3B301B}"
+               BorderColor="{AppThemeBinding Light=#FFA726, Dark=#EF6C00}"
+               BorderWidth="2">
+        <VerticalStackLayout Spacing="8" Padding="16, 12, 16, 12">
+            <!-- Status header -->
+            <Label Text="Needs Resubmission"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=#E65100, Dark:#FF9800}"
+                   HorizontalOptions="Fill"
+                   HorizontalTextAlignment="Center" />
+
+            <!-- Reason -->
+            <Label x:Name="ReasonLabel"
+                   Text="{Binding Reason}"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#424242, Dark=#BDBDBD}"
+                   HorizontalOptions="Fill"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding ShowReason}" />
+
+            <!-- Timestamp -->
+            <Label x:Name="TimestampLabel"
+                   Text="{Binding TimestampText}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#757575, Dark=#9E9E9E}"
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding HasTimestamp}" />
+
+            <!-- Attempts info -->
+            <Label x:Name="AttemptsLabel"
+                   Text="{Binding AttemptsText}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#757575, Dark=#9E9E9E}"
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding HasAttempts}" />
+
+            <!-- Resubmit button -->
+            <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                            AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                            Margin="0, 12, 0, 0">
+                <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                      AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                      ColumnSpacing="15"
+                      Margin="10, 0, 10, 10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <buttons:ElevatedButton x:Name="ResubmitButton"
+                                            Grid.Column="0"
+                                            Text="Resubmit"
+                                            ButtonState="Enabled" />
+                </Grid>
+            </AbsoluteLayout>
+        </VerticalStackLayout>
+    </card:Card>
+</ContentView>
