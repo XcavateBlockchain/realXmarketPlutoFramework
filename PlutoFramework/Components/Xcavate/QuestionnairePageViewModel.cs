@@ -283,27 +283,23 @@ namespace PlutoFramework.Components.Xcavate
             var assessment = await QuestionnaireModel.EvaluateAnswersAsync(responses);
             await QuestionnaireModel.PostAnswersAsync(answers);
 
-            if (assessment?.Passed == true)
+            if (assessment.Passed)
             {
                 var onboardingAgreementCoordinator = new OnboardingAgreementCoordinator();
                 await onboardingAgreementCoordinator.StartAsync(Info.Navigation);
                 return;
             }
 
-            var sectionTitles = Info.Sections.ToDictionary(section => section.Id, section => section.Title);
-
-            var failedSections = assessment?.Sections
-                .Where(section => !section.Passed)
-                .Select(section => new QuestionnaireFailedSection
+            var failedSections = new List<QuestionnaireFailedSection>
+            {
+                new()
                 {
-                    Title = sectionTitles.TryGetValue(section.QuestionnaireId, out var title)
-                        ? title
-                        : section.QuestionnaireId,
-                    Reason = string.IsNullOrWhiteSpace(section.Reason)
-                        ? "No qualifying criteria met for this investor category."
-                        : section.Reason
-                })
-                .ToList() ?? [];
+                    Title = "Investor eligibility assessment",
+                    Reason = string.IsNullOrWhiteSpace(assessment.Message)
+                        ? "This investment is not suitable for you. You cannot proceed."
+                        : assessment.Message
+                }
+            };
 
             await Shell.Current.Navigation.PushAsync(new QuestionnaireFailedPage(failedSections));
         }

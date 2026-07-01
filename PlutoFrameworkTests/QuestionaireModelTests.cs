@@ -40,8 +40,8 @@ namespace PlutoFrameworkTests
 
             var assessment = await QuestionnaireModel.EvaluateAnswersAsync(responses);
 
-            Assert.That(assessment.Sections.Count, Is.GreaterThan(0));
-            Assert.That(assessment.Sections.Any(s => s.QuestionnaireId == "high_net_worth_investor"), Is.True);
+            Assert.That(assessment.Successful, Is.True);
+            Assert.That(assessment.Message, Is.Not.Null.And.Not.Empty);
         }
 
         [Test]

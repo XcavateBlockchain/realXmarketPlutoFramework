@@ -113,25 +113,28 @@ namespace PlutoFramework.Model.Xcavate
         public required bool HasAgreedToTerms { get; set; }
     }
 
-    public record QuestionnaireSectionEvaluation
-    {
-        [JsonPropertyName("questionnaire_id")]
-        public required string QuestionnaireId { get; init; }
-
-        [JsonPropertyName("passed")]
-        public bool Passed { get; init; }
-
-        [JsonPropertyName("reason")]
-        public string? Reason { get; init; }
-    }
-
     public record QuestionnaireEvaluation
     {
+        [JsonPropertyName("successful")]
+        public bool Successful { get; init; }
+
         [JsonPropertyName("passed")]
         public bool Passed { get; init; }
 
-        [JsonPropertyName("sections")]
-        public required List<QuestionnaireSectionEvaluation> Sections { get; init; }
+        [JsonPropertyName("requiresSecondAssessment")]
+        public bool? RequiresSecondAssessment { get; init; }
+
+        [JsonPropertyName("message")]
+        public required string Message { get; init; }
+    }
+
+    public record QuestionnaireSubmissionSecondRequest
+    {
+        [JsonPropertyName("account_address")]
+        public required string AccountAddress { get; init; }
+
+        [JsonPropertyName("responses")]
+        public required Dictionary<string, object?> Responses { get; init; }
     }
 
     public record QuestionnaireSubmissionRecord
@@ -150,6 +153,9 @@ namespace PlutoFramework.Model.Xcavate
 
         [JsonPropertyName("assessment")]
         public QuestionnaireEvaluation? Assessment { get; init; }
+
+        [JsonPropertyName("updatedAt")]
+        public string? UpdatedAt { get; init; }
 
         [JsonPropertyName("submittedAt")]
         public required string SubmittedAt { get; init; }
@@ -209,6 +215,29 @@ namespace PlutoFramework.Model.Xcavate
             Console.WriteLine(apiResponseJson);
 
             var apiResponse = JsonSerializer.Deserialize<QuestionnaireApiResponse<QuestionnaireEvaluation>>(apiResponseJson, JsonOptions);
+
+            return apiResponse?.Result ?? throw new Exception();
+        }
+
+        public static async Task<QuestionnaireSubmissionRecord> PostSecondAnswersAsync(string submissionId, string address, Dictionary<string, object?> responses)
+        {
+            var client = new HttpClient();
+
+            var payload = new QuestionnaireSubmissionSecondRequest
+            {
+                AccountAddress = address,
+                Responses = responses
+            };
+
+            var response = await client.PostAsJsonAsync($"{API_URL}/api/v2/questionnaire/responses/{submissionId}/second", payload);
+
+            response.EnsureSuccessStatusCode();
+
+            var apiResponseJson = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Questionnaire post second answers: ");
+            Console.WriteLine(apiResponseJson);
+
+            var apiResponse = JsonSerializer.Deserialize<QuestionnaireApiResponse<QuestionnaireSubmissionRecord>>(apiResponseJson, JsonOptions);
 
             return apiResponse?.Result ?? throw new Exception();
         }

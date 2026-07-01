@@ -8,6 +8,8 @@ namespace PlutoFramework.Components.Xcavate
 
         public Dictionary<string, Dictionary<string, object?>> Responses { get; } = [];
 
+        public string? SubmissionId { get; set; }
+
         public QuestionnaireV2FlowState(QuestionnaireInfo info)
         {
             Info = info;

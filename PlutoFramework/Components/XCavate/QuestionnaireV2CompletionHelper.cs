@@ -8,47 +8,86 @@ namespace PlutoFramework.Components.Xcavate
     {
         public static async Task NavigateNextOrCompleteAsync(QuestionnaireV2FlowState flowState, int currentSectionIndex)
         {
-            var nextSectionIndex = currentSectionIndex + 1;
+            var address = KeysModel.GetPublicKey();
 
-            if (nextSectionIndex < flowState.Info.Sections.Count)
+            if (currentSectionIndex == 0)
             {
-                await Shell.Current.Navigation.PushAsync(new QuestionnaireV2QuestionsPage(flowState, nextSectionIndex));
+                var firstSectionId = flowState.Info.Sections.First().Id;
+
+                var answers = new QuestionnaireAnswers
+                {
+                    AccountAddress = address,
+                    UserId = $"User_{address}",
+                    Responses = new Dictionary<string, Dictionary<string, object?>>
+                    {
+                        [firstSectionId] = flowState.Responses[firstSectionId]
+                    }
+                };
+
+                var submission = await QuestionnaireModel.PostAnswersAsync(answers);
+                var assessment = submission.Assessment ?? throw new Exception("Assessment was not returned from phase 1 submission.");
+
+                if (assessment.Passed)
+                {
+                    var onboardingAgreementCoordinator = new OnboardingAgreementCoordinator();
+                    await onboardingAgreementCoordinator.StartAsync(flowState.Info.Navigation);
+                    return;
+                }
+
+                if (assessment.RequiresSecondAssessment == true && flowState.Info.Sections.Count > 1)
+                {
+                    flowState.SubmissionId = submission.Id;
+                    await Shell.Current.Navigation.PushAsync(new QuestionnaireV2QuestionsPage(flowState, 1));
+                    return;
+                }
+
+                await NavigateToFailedPageAsync(assessment.Message);
                 return;
             }
 
-            var address = KeysModel.GetPublicKey();
-
-            var answers = new QuestionnaireAnswers
+            if (flowState.Info.Sections.Count <= 1)
             {
-                AccountAddress = address,
-                UserId = $"User_{address}",
-                Responses = flowState.Responses
-            };
+                await NavigateToFailedPageAsync("Assessment could not be completed.");
+                return;
+            }
 
-            var assessment = await QuestionnaireModel.EvaluateAnswersAsync(flowState.Responses);
-            await QuestionnaireModel.PostAnswersAsync(answers);
+            var secondSection = flowState.Info.Sections[1];
 
-            if (assessment.Passed)
+            if (string.IsNullOrWhiteSpace(flowState.SubmissionId))
+            {
+                await NavigateToFailedPageAsync("Assessment state is invalid. Please restart the questionnaire.");
+                return;
+            }
+
+            var updatedSubmission = await QuestionnaireModel.PostSecondAnswersAsync(
+                flowState.SubmissionId,
+                address,
+                flowState.Responses[secondSection.Id]);
+
+            var secondAssessment = updatedSubmission.Assessment ?? throw new Exception("Assessment was not returned from phase 2 submission.");
+
+            if (secondAssessment.Passed)
             {
                 var onboardingAgreementCoordinator = new OnboardingAgreementCoordinator();
                 await onboardingAgreementCoordinator.StartAsync(flowState.Info.Navigation);
                 return;
             }
 
-            var sectionTitles = flowState.Info.Sections.ToDictionary(section => section.Id, section => section.Title);
+            await NavigateToFailedPageAsync(secondAssessment.Message);
+        }
 
-            var failedSections = assessment.Sections
-                .Where(section => !section.Passed)
-                .Select(section => new QuestionnaireFailedSection
+        private static async Task NavigateToFailedPageAsync(string reason)
+        {
+            var failedSections = new List<QuestionnaireFailedSection>
+            {
+                new()
                 {
-                    Title = sectionTitles.TryGetValue(section.QuestionnaireId, out var title)
-                        ? title
-                        : section.QuestionnaireId,
-                    Reason = string.IsNullOrWhiteSpace(section.Reason)
-                        ? "No qualifying criteria met for this investor category."
-                        : section.Reason
-                })
-                .ToList();
+                    Title = "Investor eligibility assessment",
+                    Reason = string.IsNullOrWhiteSpace(reason)
+                        ? "This investment is not suitable for you. You cannot proceed."
+                        : reason
+                }
+            };
 
             await Shell.Current.Navigation.PushAsync(new QuestionnaireFailedPage(failedSections));
         }
