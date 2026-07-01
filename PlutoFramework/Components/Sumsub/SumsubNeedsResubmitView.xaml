@@ -5,15 +5,13 @@
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons">
     <card:Card VerticalOptions="Fill"
-               BackgroundColor="{AppThemeBinding Light=#FFF8E1, Dark=#3B301B}"
-               BorderColor="{AppThemeBinding Light=#FFA726, Dark=#EF6C00}"
-               BorderWidth="2">
+               BackgroundColor="{AppThemeBinding Light=#FFF8E1, Dark=#3B301B}">
         <VerticalStackLayout Spacing="8" Padding="16, 12, 16, 12">
             <!-- Status header -->
-            <Label Text="Needs Resubmission"
+            <Label Text="Action required"
                    FontSize="18"
                    FontAttributes="Bold"
-                   TextColor="{AppThemeBinding Light=#E65100, Dark:#FF9800}"
+                   TextColor="{AppThemeBinding Light=#E65100, Dark=#FF9800}"
                    HorizontalOptions="Fill"
                    HorizontalTextAlignment="Center" />
 
@@ -54,9 +52,9 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <buttons:ElevatedButton x:Name="ResubmitButton"
+                                            ButtonState="GrayEnabled"
                                             Grid.Column="0"
-                                            Text="Resubmit"
-                                            ButtonState="Enabled" />
+                                            Text="Resubmit"/>
                 </Grid>
             </AbsoluteLayout>
         </VerticalStackLayout>

@@ -38,7 +38,7 @@ namespace PlutoFramework.Components.Sumsub
             ShowReason = !string.IsNullOrEmpty(viewData.Reason);
             Reason = viewData.Reason;
 
-            TimestampText = $"Rejected on {viewData.Timestamp:dddd, dd MMMM yyyy, HH:mm}";
+            TimestampText = $"Failed on {viewData.Timestamp:dddd, dd MMMM yyyy, HH:mm}";
             HasTimestamp = true;
 
             if (viewData.AttemptCount > 1)
