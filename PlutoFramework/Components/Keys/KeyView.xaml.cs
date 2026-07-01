@@ -27,10 +27,10 @@ public partial class KeyView : ContentView
 
             control.descriptionLabel.Text = key.Type switch
             {
-                KeyTypeEnum.EncryptionX25519 => "Used for AssetDidComm message encryption key",
-                KeyTypeEnum.PolkadotJson => "Your main Polkadot account key",
-                KeyTypeEnum.Sr25519 => "Your main Polkadot account key",
-                KeyTypeEnum.Did => "Decentralised Identifiers powered by Kilt",
+                KeyTypeEnum.EncryptionX25519 => "Used for message encryption/decryption",
+                KeyTypeEnum.PolkadotJson => "Your Account key",
+                KeyTypeEnum.Sr25519 => "Your Account key",
+                KeyTypeEnum.Did => "Decentralised Identifier",
                 _ => "",
             };
 
