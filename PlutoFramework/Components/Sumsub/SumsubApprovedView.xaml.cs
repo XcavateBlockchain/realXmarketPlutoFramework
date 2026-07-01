@@ -23,8 +23,7 @@ namespace PlutoFramework.Components.Sumsub
     /// </summary>
     public partial class SumsubApprovedViewModel : ObservableObject
     {
-        [ObservableProperty] private bool hasLevelName;
-        [ObservableProperty] private string levelName = "";
+        [ObservableProperty] private string levelName = "Verified";
         [ObservableProperty] private bool hasTimestamp;
         [ObservableProperty] private string timestampText = "";
 
@@ -36,8 +35,7 @@ namespace PlutoFramework.Components.Sumsub
             if (!string.IsNullOrEmpty(viewData.LevelName))
             {
                 var role = viewData.LevelName.Split('-').LastOrDefault() ?? viewData.LevelName;
-                LevelName = $"{role.Replace("-", " ")} verified";
-                HasLevelName = true;
+                LevelName = $"{role.Replace("-", " ")} role verified";
             }
 
             TimestampText = $"Verified on {viewData.Timestamp:dddd, dd MMMM yyyy}";

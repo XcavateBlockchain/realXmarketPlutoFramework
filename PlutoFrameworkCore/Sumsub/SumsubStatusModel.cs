@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace PlutoFramework.Model.Sumsub
 {
     /// <summary>
@@ -45,60 +43,47 @@ namespace PlutoFramework.Model.Sumsub
         {
             var review = applicant.Review;
 
-            SumsubStatusType statusType = SumsubStatusType.NotReviewed;
-            string reviewStatus = "";
-            string reason = "";
             DateTime timestamp = applicant.CreatedAtDateTime;
             int attemptCount = 0;
 
-            if (review != null)
+            var statusType = applicant switch
             {
-                reviewStatus = review.ReviewStatus ?? "";
-                attemptCount = review.AttemptCnt ?? 0;
+                // 1. Passed correctly
+                { Review.ReviewResult.ReviewAnswer: "GREEN" }
+                    => SumsubStatusType.Approved,
 
-                if (!string.IsNullOrEmpty(review.CreateDate))
-                {
-                    try
-                    {
-                        timestamp = DateTime.ParseExact(
-                            review.CreateDate,
-                            "yyyy-MM-dd HH:mm:ss",
-                            CultureInfo.InvariantCulture,
-                            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal
-                        );
-                    }
-                    catch
-                    {
-                        // keep createdAt as fallback
-                    }
-                }
+                // 2. Minor violation - needs to fix and resubmit
+                { Review.ReviewResult.ReviewAnswer: "RED", Review.ReviewResult.ReviewRejectType: "RETRY" }
+                    => SumsubStatusType.NeedsResubmit,
 
-                statusType = reviewStatus.ToLowerInvariant() switch
-                {
-                    "approved"      => SumsubStatusType.Approved,
-                    "rejected"      => SumsubStatusType.Rejected,
-                    "pending"       => SumsubStatusType.Pending,
-                    "needsaction"   => SumsubStatusType.NeedsResubmit,
-                    "deleted"       => SumsubStatusType.NotReviewed,
-                    _               => SumsubStatusType.NotReviewed,
-                };
-            }
+                // 3. Major violation - hard rejected
+                { Review.ReviewResult.ReviewAnswer: "RED", Review.ReviewResult.ReviewRejectType: "FINAL" }
+                    => SumsubStatusType.Rejected,
+
+                // 4. Pending - Sumsub is actively working on it
+                { Review.ReviewStatus: "pending" or "queued" or "onHold" or "prechecked" }
+                    => SumsubStatusType.Pending,
+
+                // 4b. Pending (Catch-all) - The review exists and has started, but has no answer yet
+                { Review.ReviewResult.ReviewAnswer: null, Review.ReviewStatus: not null and not "init" }
+                    => SumsubStatusType.Pending,
+
+                // 5. Default fallback (Applicant created but review is "init", deleted, or Review is completely null)
+                _ => SumsubStatusType.NotReviewed
+            };
 
             // Extract rejection/resubmit reason
-            if (statusType is SumsubStatusType.Rejected or SumsubStatusType.NeedsResubmit)
+            string reason = statusType switch
             {
-                reason = reviewStatus.ToLowerInvariant() switch
-                {
-                    "rejected" => "Your verification was declined. Please try again or contact support for assistance.",
-                    "needsaction" => "Additional information or correction is needed for your verification documents. Please resubmit.",
-                    _ => "Verification could not be completed. Please try again.",
-                };
-            }
+                SumsubStatusType.Rejected => "Your verification was declined. Contact support for assistance.",
+                SumsubStatusType.NeedsResubmit => "Additional information or correction is needed for your verification documents. Please resubmit.",
+                _ => "",
+            };
 
             return new SumsubStatusData
             {
                 StatusType = statusType,
-                ReviewStatus = reviewStatus,
+                ReviewStatus = review?.ReviewStatus ?? "",
                 Reason = reason,
                 Timestamp = timestamp,
                 AttemptCount = attemptCount,

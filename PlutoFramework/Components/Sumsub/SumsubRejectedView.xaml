@@ -4,12 +4,10 @@
              x:Class="PlutoFramework.Components.Sumsub.SumsubRejectedView"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card">
     <card:Card VerticalOptions="Fill"
-               BackgroundColor="{AppThemeBinding Light=#FFEBEE, Dark=#3B1B1B}"
-               BorderColor="{AppThemeBinding Light=#F44336, Dark=#C62828}"
-               BorderWidth="2">
+               BackgroundColor="{AppThemeBinding Light=#FFEBEE, Dark=#3B1B1B}">
         <VerticalStackLayout Spacing="8" Padding="16, 12, 16, 12">
             <!-- Status header -->
-            <Label Text="Verification Rejected"
+            <Label Text="Failed KYC verification"
                    FontSize="18"
                    FontAttributes="Bold"
                    TextColor="{AppThemeBinding Light=#C62828, Dark=#EF5350}"
@@ -23,7 +21,8 @@
                    TextColor="{AppThemeBinding Light=#424242, Dark=#BDBDBD}"
                    HorizontalOptions="Fill"
                    HorizontalTextAlignment="Center"
-                   IsVisible="{Binding ShowReason}" />
+                   IsVisible="False" />
+            <!-- IsVisible="{Binding ShowReason}" -->
 
             <!-- Timestamp -->
             <Label x:Name="TimestampLabel"
