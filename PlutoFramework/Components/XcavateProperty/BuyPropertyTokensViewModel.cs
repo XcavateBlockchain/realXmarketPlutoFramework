@@ -98,6 +98,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 var assetSelectButtonViewModel = DependencyService.Get<AssetSelectButtonViewModel>();
                 assetSelectButtonViewModel.ChangeAllowedAssets(PropertyMarketplaceModel.GetAcceptedAssets(value));
+                assetSelectButtonViewModel.SelectedAssetKey = (EndpointEnum.XcavatePaseo, Types.AssetPallet.Assets, 10);
             }
         }
 

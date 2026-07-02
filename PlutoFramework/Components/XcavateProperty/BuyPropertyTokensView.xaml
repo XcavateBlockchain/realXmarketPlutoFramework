@@ -44,7 +44,7 @@
                                         UpdateCommand="{Binding FormChangedCommand}"
                                         />
 
-                    <AbsoluteLayout Margin="10, 0, 0, -10">
+                    <!--<AbsoluteLayout Margin="10, 0, 0, -10">
                         <Label Text="Paid in:"
                                VerticalTextAlignment="Center"
                                AbsoluteLayout.LayoutBounds="0,0,AutoSize, 40"/>
@@ -52,6 +52,7 @@
                                AbsoluteLayout.LayoutBounds="1,0,AutoSize, 40"
                                AbsoluteLayout.LayoutFlags="PositionProportional"/>
                     </AbsoluteLayout>
+                    -->
                     <AbsoluteLayout Margin="10, 0, 10, -10">
                         <Label Text="Price:"
                                AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
