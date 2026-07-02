@@ -12,9 +12,9 @@ public interface IOnboardingAgreementCoordinator
 
 public class OnboardingAgreementCoordinator : IOnboardingAgreementCoordinator
 {
-    private const string TermsUrl = "https://app.realxmarket.io/terms";
-    private const string AgreementUrl = "https://app.realxmarket.io/agreement";
-    private const string PrivacyUrl = "https://app.realxmarket.io/privacy";
+    private const string TermsUrl = "https://app.realxmarket.io/terms?isHeaderVisible=false&isFooterVisible=false";
+    private const string AgreementUrl = "https://app.realxmarket.io/agreement?isHeaderVisible=false&isFooterVisible=false";
+    private const string PrivacyUrl = "https://app.realxmarket.io/privacy?isHeaderVisible=false&isFooterVisible=false";
 
     private readonly INavigationService _navigationService;
     private Func<Task> _completionNavigation = () => Task.CompletedTask;
