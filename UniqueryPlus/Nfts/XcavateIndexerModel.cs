@@ -713,6 +713,7 @@ namespace UniqueryPlus.Nfts
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,
                     },
+
             };
         }
 

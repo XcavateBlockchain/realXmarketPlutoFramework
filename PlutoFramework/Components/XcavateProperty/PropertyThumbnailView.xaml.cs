@@ -63,10 +63,10 @@ public partial class PropertyThumbnailView : ContentView
             // Favourite
             control.filledFavouriteIcon.IsVisible = nftWrapper.Favourite;
 
-            // Tokens owned
+            // Shares owned
             if (nftWrapper.TokensOwned > 0)
             {
-                control.tokensTitleLabel.Text = "Tokens owned";
+                control.tokensTitleLabel.Text = "Shares owned";
 
                 var tokensOwned = nftWrapper.TokensOwned;
 
@@ -79,10 +79,10 @@ public partial class PropertyThumbnailView : ContentView
                     control.tokensLabel.Text = $"{tokensOwned}";
                 }
             }
-            // Tokens bought
+            // Shares bought
             else if (nftWrapper.TokensBought > 0)
             {
-                control.tokensTitleLabel.Text = "Tokens bought";
+                control.tokensTitleLabel.Text = "Shares bought";
                 var tokensBought = nftWrapper.TokensBought;
                 if (nftBase.XcavateMetadata is not null)
                 {

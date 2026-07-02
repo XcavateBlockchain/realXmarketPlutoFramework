@@ -164,9 +164,9 @@ namespace PlutoFramework.Components.XcavateProperty
 
             Console.WriteLine("Getting RealWorldAssets");
 
-            var tokensOwned = await RealWorldAssetsModel.GetRealWorldAssetTokensOwnedAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)substrateClient.SubstrateClient, new U32((uint)nft.Key.Item3), KeysModel.GetSubstrateKey(), token);
+            var tokensBought = await RealWorldAssetsModel.GetRealWorldAssetTokensOwnedAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)substrateClient.SubstrateClient, new U32((uint)nft.Key.Item3), KeysModel.GetSubstrateKey(), token);
 
-            viewModel.TokensOwned = tokensOwned;
+            viewModel.TokensBought = tokensBought;
 
             Console.WriteLine("Getting Roles");
 
