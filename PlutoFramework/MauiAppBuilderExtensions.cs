@@ -20,6 +20,7 @@ using PlutoFramework.Components.NetworkSelect;
 using PlutoFramework.Components.Nft;
 using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Components.Password;
+using PlutoFramework.Components.Settings;
 using PlutoFramework.Components.Staking;
 using PlutoFramework.Components.Sumsub;
 using PlutoFramework.Components.TransactionAnalyzer;
@@ -194,6 +195,8 @@ namespace PlutoFramework
             DependencyService.Register<NoAccountPopupViewModel>();
 
             DependencyService.Register<ImportWarningPopupViewModel>();
+
+            DependencyService.Register<LogOutPopupViewModel>();
 
             DependencyService.Register<OnboardingInProgressPopupViewModel>();
 
