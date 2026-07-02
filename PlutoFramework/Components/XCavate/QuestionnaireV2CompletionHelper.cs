@@ -9,18 +9,19 @@ namespace PlutoFramework.Components.Xcavate
         public static async Task NavigateNextOrCompleteAsync(QuestionnaireV2FlowState flowState, int currentSectionIndex)
         {
             var address = KeysModel.GetPublicKey();
+            var firstSection = flowState.GetSectionById(QuestionnaireV2FlowState.HighNetWorthSectionId)
+                ?? throw new Exception($"Questionnaire section '{QuestionnaireV2FlowState.HighNetWorthSectionId}' is missing.");
+            var secondSection = flowState.GetSectionById(QuestionnaireV2FlowState.SophisticatedInvestorSectionId);
 
-            if (currentSectionIndex == 0)
+            if (string.Equals(flowState.GetSection(currentSectionIndex).Id, firstSection.Id, StringComparison.Ordinal))
             {
-                var firstSectionId = flowState.Info.Sections.First().Id;
-
                 var answers = new QuestionnaireAnswers
                 {
                     AccountAddress = address,
                     UserId = $"User_{address}",
                     Responses = new Dictionary<string, Dictionary<string, object?>>
                     {
-                        [firstSectionId] = flowState.Responses[firstSectionId]
+                        [firstSection.Id] = flowState.Responses[firstSection.Id]
                     }
                 };
 
@@ -34,24 +35,38 @@ namespace PlutoFramework.Components.Xcavate
                     return;
                 }
 
-                if (assessment.RequiresSecondAssessment == true && flowState.Info.Sections.Count > 1)
+                if (assessment.RequiresSecondAssessment is not true)
                 {
-                    flowState.SubmissionId = submission.Id;
-                    await Shell.Current.Navigation.PushAsync(new QuestionnaireV2QuestionsPage(flowState, 1));
+                    await NavigateToFailedPageAsync(assessment.Message);
                     return;
                 }
 
-                await NavigateToFailedPageAsync(assessment.Message);
+                flowState.SubmissionId = submission.Id;
+
+                if (secondSection is null)
+                {
+                    await NavigateToFailedPageAsync("Assessment could not be completed.");
+                    return;
+                }
+
+                var secondSectionIndex = flowState.Info.Sections.FindIndex(section => string.Equals(section.Id, secondSection.Id, StringComparison.Ordinal));
+
+                if (secondSectionIndex < 0)
+                {
+                    await NavigateToFailedPageAsync("Assessment could not be completed.");
+                    return;
+                }
+
+                await Shell.Current.Navigation.PushAsync(new QuestionnaireV2QuestionsPage(flowState, secondSectionIndex));
+
                 return;
             }
 
-            if (flowState.Info.Sections.Count <= 1)
+            if (secondSection is null || !string.Equals(flowState.GetSection(currentSectionIndex).Id, secondSection.Id, StringComparison.Ordinal))
             {
                 await NavigateToFailedPageAsync("Assessment could not be completed.");
                 return;
             }
-
-            var secondSection = flowState.Info.Sections[1];
 
             if (string.IsNullOrWhiteSpace(flowState.SubmissionId))
             {
@@ -62,6 +77,7 @@ namespace PlutoFramework.Components.Xcavate
             var updatedSubmission = await QuestionnaireModel.PostSecondAnswersAsync(
                 flowState.SubmissionId,
                 address,
+                secondSection.Id,
                 flowState.Responses[secondSection.Id]);
 
             var secondAssessment = updatedSubmission.Assessment ?? throw new Exception("Assessment was not returned from phase 2 submission.");
@@ -76,18 +92,23 @@ namespace PlutoFramework.Components.Xcavate
             await NavigateToFailedPageAsync(secondAssessment.Message);
         }
 
-        private static async Task NavigateToFailedPageAsync(string reason)
+        private static async Task NavigateToFailedPageAsync(params string[] reasons)
         {
-            var failedSections = new List<QuestionnaireFailedSection>
+            var failedSections = new List<QuestionnaireFailedSection>();
+            foreach (string reason in reasons)
             {
-                new()
-                {
-                    Title = "Investor eligibility assessment",
-                    Reason = string.IsNullOrWhiteSpace(reason)
-                        ? "This investment is not suitable for you. You cannot proceed."
-                        : reason
-                }
-            };
+                failedSections.Add(
+
+
+                    new()
+                    {
+                        Title = "Investor eligibility assessment",
+                        Reason = string.IsNullOrWhiteSpace(reason)
+                            ? "This investment is not suitable for you. You cannot proceed."
+                            : reason
+                    }
+                );
+            }
 
             await Shell.Current.Navigation.PushAsync(new QuestionnaireFailedPage(failedSections));
         }

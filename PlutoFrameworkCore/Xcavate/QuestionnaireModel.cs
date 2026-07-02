@@ -92,6 +92,9 @@ namespace PlutoFramework.Model.Xcavate
 
         [JsonPropertyName("result")]
         public required ResultT Result { get; set; }
+
+        [JsonPropertyName("details")]
+        public object? Details { get; set; }
     }
 
     public record QuestionnaireAnswers
@@ -134,7 +137,49 @@ namespace PlutoFramework.Model.Xcavate
         public required string AccountAddress { get; init; }
 
         [JsonPropertyName("responses")]
-        public required Dictionary<string, object?> Responses { get; init; }
+        public required Dictionary<string, Dictionary<string, object?>> Responses { get; init; }
+    }
+
+    public record QuestionnaireAssessmentBreakdownQuestion
+    {
+        [JsonPropertyName("question_id")]
+        public required string QuestionId { get; init; }
+
+        [JsonPropertyName("question_text")]
+        public required string QuestionText { get; init; }
+
+        [JsonPropertyName("answer")]
+        public object? Answer { get; init; }
+    }
+
+    public record QuestionnaireAssessmentBreakdownSection
+    {
+        [JsonPropertyName("questionnaire_id")]
+        public required string QuestionnaireId { get; init; }
+
+        [JsonPropertyName("title")]
+        public required string Title { get; init; }
+
+        [JsonPropertyName("evaluated")]
+        public bool Evaluated { get; init; }
+
+        [JsonPropertyName("outcome")]
+        public required string Outcome { get; init; }
+
+        [JsonPropertyName("passed")]
+        public bool Passed { get; init; }
+
+        [JsonPropertyName("message")]
+        public required string Message { get; init; }
+
+        [JsonPropertyName("questions")]
+        public required List<QuestionnaireAssessmentBreakdownQuestion> Questions { get; init; }
+    }
+
+    public record QuestionnaireAssessmentBreakdown
+    {
+        [JsonPropertyName("sections")]
+        public required List<QuestionnaireAssessmentBreakdownSection> Sections { get; init; }
     }
 
     public record QuestionnaireSubmissionRecord
@@ -153,6 +198,9 @@ namespace PlutoFramework.Model.Xcavate
 
         [JsonPropertyName("assessment")]
         public QuestionnaireEvaluation? Assessment { get; init; }
+
+        [JsonPropertyName("breakdown")]
+        public QuestionnaireAssessmentBreakdown? Breakdown { get; init; }
 
         [JsonPropertyName("updatedAt")]
         public string? UpdatedAt { get; init; }
@@ -219,14 +267,17 @@ namespace PlutoFramework.Model.Xcavate
             return apiResponse?.Result ?? throw new Exception();
         }
 
-        public static async Task<QuestionnaireSubmissionRecord> PostSecondAnswersAsync(string submissionId, string address, Dictionary<string, object?> responses)
+        public static async Task<QuestionnaireSubmissionRecord> PostSecondAnswersAsync(string submissionId, string address, string sectionId, Dictionary<string, object?> responses)
         {
             var client = new HttpClient();
 
             var payload = new QuestionnaireSubmissionSecondRequest
             {
                 AccountAddress = address,
-                Responses = responses
+                Responses = new Dictionary<string, Dictionary<string, object?>>
+                {
+                    [sectionId] = responses
+                }
             };
 
             var response = await client.PostAsJsonAsync($"{API_URL}/api/v2/questionnaire/responses/{submissionId}/second", payload);

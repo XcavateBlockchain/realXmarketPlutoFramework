@@ -117,8 +117,7 @@ namespace PlutoFramework.Components.Xcavate
                 .Select(question => question.SourceQuestion!.Conditions!)
                 .ToList();
 
-            var lastQuestionAnswer = Questions.LastOrDefault()?.Answer;
-            var shouldShowDeclaration = string.Equals(lastQuestionAnswer, "No", StringComparison.OrdinalIgnoreCase);
+            var shouldShowDeclaration = section.Declarations.Count > 0;
 
             if (requiredConditions.Count > 0)
             {
