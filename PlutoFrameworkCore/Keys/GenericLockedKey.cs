@@ -36,14 +36,14 @@ namespace PlutoFrameworkCore.Keys
 
         public string Name => $"{Type} Key {PublicKey}";
 
-        public async Task<Sr25519Key> ToSr25519KeyAsync()
+        public async Task<Sr25519Key> ToSr25519KeyAsync(string reason)
         {
             if (Type != KeyTypeEnum.Sr25519)
             {
                 throw new InvalidOperationException($"Cannot convert key of type {Type} to Sr25519Key");
             }
 
-            var mnemonics = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey);
+            var mnemonics = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey, reason);
 
             if (mnemonics == null)
             {
@@ -63,7 +63,7 @@ namespace PlutoFrameworkCore.Keys
                 throw new InvalidOperationException($"Cannot convert key of type {Type} to PolkadotJsonKey");
             }
 
-            var result = await PlutoConfigurationModel.SecureStorage.GetWithPasswordAsync(SecretStorageKey, PasswordStorageKey);
+            var result = await PlutoConfigurationModel.SecureStorage.GetWithPasswordAsync(SecretStorageKey, PasswordStorageKey, "Get access to Polkadot JSON key");
 
             if (result.Value == null)
             {
@@ -84,7 +84,7 @@ namespace PlutoFrameworkCore.Keys
                 throw new InvalidOperationException($"Cannot convert key of type {Type} to DidKey");
             }
 
-            var mnemonics = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey);
+            var mnemonics = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey, "Get access to DID key");
 
             if (mnemonics == null)
             {
@@ -104,7 +104,7 @@ namespace PlutoFrameworkCore.Keys
                 throw new InvalidOperationException($"Cannot convert key of type {Type} to EncryptionX25519Key");
             }
 
-            var secretKey = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey);
+            var secretKey = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey, "Get access to X25519 encryption key");
 
             if (secretKey == null)
             {

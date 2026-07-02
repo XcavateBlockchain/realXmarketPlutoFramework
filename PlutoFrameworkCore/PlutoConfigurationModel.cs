@@ -1,7 +1,4 @@
-﻿using System.Numerics;
-using PlutoFramework.Constants;
-using PlutoFramework.Types;
-using AssetKey = (PlutoFramework.Constants.EndpointEnum, PlutoFramework.Types.AssetPallet, System.Numerics.BigInteger);
+﻿using AssetKey = (PlutoFramework.Constants.EndpointEnum, PlutoFramework.Types.AssetPallet, System.Numerics.BigInteger);
 
 namespace PlutoFrameworkCore
 {
@@ -21,14 +18,14 @@ namespace PlutoFrameworkCore
         /// </summary>
         /// <param name="key">The key to retrieve the value for.</param>
         /// <returns>The decrypted string value or <see langword="null"/> if a value was not found.</returns>
-        Task<string?> GetAsync(string key);
+        Task<string?> GetAsync(string key, string reason);
 
         /// <summary>
         /// Gets and decrypts the value for a given key.
         /// </summary>
         /// <param name="key">The key to retrieve the value for.</param>
         /// <returns>The decrypted string value or <see langword="null"/> if a value was not found.</returns>
-        Task<SecretResult> GetWithPasswordAsync(string key, string passwordKey);
+        Task<SecretResult> GetWithPasswordAsync(string key, string passwordKey, string reason);
 
         /// <summary>
         /// Sets and encrypts a value for a given key.

@@ -73,7 +73,7 @@ public partial class MnemonicsPageViewModel : ObservableObject
             {
                 case KeyTypeEnum.Sr25519:
 
-                    var mnemonics = await accountLockedKey.ToSr25519KeyAsync();
+                    var mnemonics = await accountLockedKey.ToSr25519KeyAsync(reason: "Export main account key.");
 
                     var keyring = new Keyring();
                     var wallet = keyring.AddFromMnemonic(Mnemonics, new Meta() { Name = $"account" }, KeyType.Sr25519);

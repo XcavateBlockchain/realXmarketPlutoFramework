@@ -2,11 +2,11 @@
 
 namespace PlutoFramework.Model
 {
-    public class PlutoSecureStorage : ISecureStorage, IPlutoSecureStorage
+    public class PlutoSecureStorage : IPlutoSecureStorage
     {
-        public async Task<SecretResult> GetWithPasswordAsync(string key, string passwordKey)
+        public async Task<SecretResult> GetWithPasswordAsync(string key, string passwordKey, string reason)
         {
-            var authentication = await RequirementsModel.CheckAuthenticationAsync(passwordKey);
+            var authentication = await RequirementsModel.CheckAuthenticationAsync(passwordKey, reason);
 
             if (!authentication.Value)
             {
@@ -24,9 +24,9 @@ namespace PlutoFramework.Model
             };
         }
 
-        public async Task<string?> GetAsync(string key)
+        public async Task<string?> GetAsync(string key, string reason)
         {
-            var result = await GetWithPasswordAsync(key, PreferencesModel.PASSWORD);
+            var result = await GetWithPasswordAsync(key, PreferencesModel.PASSWORD, reason);
 
             return result.Value;
         }

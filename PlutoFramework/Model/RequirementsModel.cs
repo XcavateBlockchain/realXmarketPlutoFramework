@@ -132,11 +132,11 @@ namespace PlutoFramework.Model
             return true;
         }
 
-        public static async Task<AuthenticationResult> CheckAuthenticationAsync(string passwordStorageKey = PreferencesModel.PASSWORD)
+        public static async Task<AuthenticationResult> CheckAuthenticationAsync(string passwordStorageKey = PreferencesModel.PASSWORD, string reason = "Authentication required")
         {
             var biometricsEnabled = Preferences.Get(PreferencesModel.BIOMETRICS_ENABLED, false);
 
-            var request = new AuthenticationRequestConfiguration("Biometric verification", "..");
+            var request = new AuthenticationRequestConfiguration("Authentication required", reason);
             FingerprintAuthenticationResult result;
 
             if (biometricsEnabled)

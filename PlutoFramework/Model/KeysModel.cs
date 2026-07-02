@@ -405,7 +405,7 @@ namespace PlutoFramework.Model
             return Utils.GetPublicKeyFrom(GetSubstrateKey());
         }
 
-        public static async Task<Account?> GetAccountAsync()
+        public static async Task<Account?> GetAccountAsync(string reason = "..")
         {
             var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Sr25519, KeyTypeEnum.PolkadotJson);
 
@@ -418,7 +418,7 @@ namespace PlutoFramework.Model
 
             try
             {
-                var accountKey = await accountLockedKey.ToSr25519KeyAsync();
+                var accountKey = await accountLockedKey.ToSr25519KeyAsync(reason);
 
                 return accountKey.Account;
             }
