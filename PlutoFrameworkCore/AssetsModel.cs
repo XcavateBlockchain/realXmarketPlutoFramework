@@ -259,7 +259,7 @@ namespace PlutoFramework.Model
 
                         await SaveAsync(new Asset
                         {
-                            Amount = assetBalance - assetReservedBalance,
+                            Amount = assetBalance,
                             Symbol = symbol,
                             ChainIcon = endpoint.Icon,
                             DarkChainIcon = endpoint.DarkIcon,
@@ -279,7 +279,7 @@ namespace PlutoFramework.Model
                                 ChainIcon = endpoint.Icon,
                                 DarkChainIcon = endpoint.DarkIcon,
                                 Endpoint = endpoint,
-                                Pallet = AssetPallet.AssetsFrozen,
+                                Pallet = AssetPallet.AssetsReserved,
                                 AssetId = asset.Item1,
                                 UsdValue = assetReservedBalance * spotPrice,
                                 Decimals = asset.Item3.Decimals.Value,
