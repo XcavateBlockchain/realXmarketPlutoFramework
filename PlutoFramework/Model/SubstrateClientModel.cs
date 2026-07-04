@@ -84,10 +84,7 @@ namespace PlutoFramework.Model
             }
 
             // Client is not connected, reconnect it
-            if (!await client.IsConnectedAsync().WithCancellation(token).ConfigureAwait(false))
-            {
-                await client.ConnectAndLoadMetadataAsync().WithCancellation(token).ConfigureAwait(false);
-            }
+            await client.EnsureConnectedAsync(token).WithCancellation(token).ConfigureAwait(false);
 
             return client;
         }
@@ -107,7 +104,7 @@ namespace PlutoFramework.Model
                 new Uri(bestWebSecket),
                 Substrate.NetApi.Model.Extrinsics.ChargeTransactionPayment.Default());
 
-            await newClient.ConnectAndLoadMetadataAsync().WithCancellation(token).ConfigureAwait(false);
+            await newClient.EnsureConnectedAsync(token).WithCancellation(token).ConfigureAwait(false);
 
             return newClient;
         }
