@@ -12,6 +12,7 @@
     <GraphQL Remove="Queries\MarketplaceListedProperties.graphql" />
     <GraphQL Remove="Queries\OwnedAndBoughtPropertiesWithFilter.graphql" />
     <GraphQL Remove="Queries\OwnedProperties.graphql" />
+    <GraphQL Remove="Queries\PropertyFullInfo.graphql" />
   </ItemGroup>
 
   <ItemGroup>

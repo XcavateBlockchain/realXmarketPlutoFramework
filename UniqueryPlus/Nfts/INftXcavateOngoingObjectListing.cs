@@ -2,6 +2,14 @@
 
 namespace UniqueryPlus.Nfts
 {
+    public record ShareOwner
+    {
+        public string Account { get; set; } = string.Empty;
+        public uint ShareAmount { get; set; }
+        public uint UpdatedBlock { get; set; }
+        public uint RelistCount { get; set; }
+    }
+
     public record XcavateOngoingObjectListingDetails
     {
         public required string RealEstateDeveloper { get; set; }
@@ -23,6 +31,8 @@ namespace UniqueryPlus.Nfts
         public required U32 CollectionId { get; set; }
 
         public required U32 ItemId { get; set; }
+
+        public Dictionary<string, ShareOwner>? ShareOwners { get; set; }
     }
 
     public interface INftXcavateOngoingObjectListing
