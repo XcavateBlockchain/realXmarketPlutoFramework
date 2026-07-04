@@ -123,11 +123,15 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public static async Task NavigateToPropertyDetailPageAsync(XcavateNftWrapper nft, CancellationToken token)
         {
-            var loadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+            var loadingViewModel = await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                var viewModel = DependencyService.Get<FullPageLoadingViewModel>();
 
-            loadingViewModel.IsVisible = true;
+                viewModel.IsVisible = true;
+                viewModel.Message = "Gathering property details";
 
-            loadingViewModel.Message = "Gathering property details";
+                return viewModel;
+            });
 
             var ownerAddress = KeysModel.GetSubstrateKey();
 
@@ -135,7 +139,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             var indexedProperty = await XcavateIndexerModel.GetPropertyFullInfoAsync(
                     (SubstrateClientExt)substrateClient.SubstrateClient,
-                    Convert.ToInt32(nft.Key.Item3),
+                    checked((int)nft.Key.Item3),
                     ownerAddress)
                 .ConfigureAwait(false);
 
@@ -147,14 +151,42 @@ namespace PlutoFramework.Components.XcavateProperty
                     : 0u;
                 nft.TokensOwned = indexedProperty.RealWorldAssetDetails?.Tokens ?? 0u;
                 nft.SpvCreated = indexedProperty.RealWorldAssetDetails?.SpvCreated ?? true;
+
+                var s3Client = GetOrCreateS3Client();
+
+                // Handle S3
+                if (s3Client is not null && indexedProperty.XcavateMetadata?.Files is not null)
+                {
+                    var images = new List<string>();
+
+                    foreach (var file in indexedProperty.XcavateMetadata.Files.Where(file =>
+                        !string.IsNullOrWhiteSpace(file)
+                        && file.Length > 5
+                        && (file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                            || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                            || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                        && file[0] == '5'
+                    ))
+                    {
+                        const string bucketName = "real-marketplace-properties";
+
+                        var presignedUrl = await S3Model.GeneratePresignedURLAsync(s3Client, bucketName, file);
+
+                        images.Add(presignedUrl);
+                    }
+                    ((INftXcavateMetadata)nft.NftBase).XcavateMetadata?.Files = images;
+                }
             }
 
             if (nft.NftBase is not INftXcavateMetadata || ((INftXcavateMetadata)nft.NftBase).XcavateMetadata is null || nft.NftBase is not INftXcavateNftMarketplace)
             {
-                var toast = Toast.Make($"Could not navigate to property id: {nft.Key.Item3.ToString() ?? "Unknown"}");
-                await toast.Show();
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    var toast = Toast.Make($"Could not navigate to property id: {nft.Key.Item3.ToString() ?? "Unknown"}");
+                    await toast.Show(token);
 
-                loadingViewModel.IsVisible = false;
+                    loadingViewModel.IsVisible = false;
+                });
 
                 return;
             }
@@ -175,9 +207,12 @@ namespace PlutoFramework.Components.XcavateProperty
                 viewModel.TokensBought = tokenInfo?.TokensBought ?? 0;
             }
 
-            loadingViewModel.IsVisible = false;
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                loadingViewModel.IsVisible = false;
 
-            await NavigationModel.PushAsync(new PropertyDetailPage(viewModel));
+                await NavigationModel.PushAsync(new PropertyDetailPage(viewModel));
+            });
         }
     }
 }
