@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.Loading;
+using PlutoFramework.Components.Messages;
 using PlutoFramework.Components.TransactionAnalyzer;
 using PlutoFramework.Components.WebView;
 using PlutoFramework.Constants;
@@ -559,5 +560,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
         [RelayCommand]
         public Task NavigateToFeesAsync() => Shell.Current.Navigation.PushAsync(new ExtensionWebViewPage("https://app.realxmarket.io/property-info-fees"));
+
+        [RelayCommand]
+        public Task MessageAsync() => Shell.Current.Navigation.PushAsync(new MessageWebViewPage());
     }
 }

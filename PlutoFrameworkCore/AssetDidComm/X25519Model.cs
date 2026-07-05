@@ -21,6 +21,12 @@ namespace PlutoFrameworkCore.AssetDidComm
 
     public class X25519Model
     {
+        public static byte[] DerivePublicKey(byte[] secretKey)
+        {
+            var sk = new bc26::Org.BouncyCastle.Crypto.Parameters.X25519PrivateKeyParameters(secretKey, 0);
+            return sk.GeneratePublicKey().GetEncoded();
+        }
+
         public static X25519KeyPair GenerateX25519KeyPair()
         {
             var rng = new byte[32].Populate();
