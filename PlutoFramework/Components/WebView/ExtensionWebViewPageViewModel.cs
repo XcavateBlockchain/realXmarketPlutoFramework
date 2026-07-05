@@ -31,6 +31,9 @@ namespace PlutoFramework.Components.WebView
 
         public double BackOpacity => 1.0;
 
+        [ObservableProperty]
+        private bool searchbarCanEdit = false;
+
         [RelayCommand]
         public async Task GoBackAsync()
         {
