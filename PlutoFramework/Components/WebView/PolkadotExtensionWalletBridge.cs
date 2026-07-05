@@ -4,7 +4,6 @@ using Plutonication;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Extrinsics;
 using Substrate.NetApi.Model.Rpc;
-using Substrate.NetApi.Model.Types;
 using Substrate.NetApi.Model.Types.Base;
 using System.Globalization;
 using System.Text.Json;
@@ -239,18 +238,18 @@ public class PolkadotExtensionWalletBridge
             throw new InvalidOperationException("No Substrate account is available inside Pluto wallet.");
         }
 
-        SignatureTask = new TaskCompletionSource<byte[]>();
-
-        var (unCheckedExtrinsic, runtime) = ToUnCheckedExtrinsic(payload);
-
-        var substratePayload = unCheckedExtrinsic.GetPayload(runtime);
-
         var account = await Model.KeysModel.GetAccountAsync("Sign transaction via Pluto wallet");
 
         if (account is null)
         {
             throw new InvalidOperationException("Failed to retrieve account for signing.");
         }
+
+        SignatureTask = new TaskCompletionSource<byte[]>();
+
+        var (unCheckedExtrinsic, runtime) = ToUnCheckedExtrinsic(payload, account);
+
+        var substratePayload = unCheckedExtrinsic.GetPayload(runtime);
 
         byte[] signature = account.Sign(substratePayload.Encode());
 
@@ -263,7 +262,7 @@ public class PolkadotExtensionWalletBridge
         };
     }
 
-    private static (UnCheckedExtrinsic, RuntimeVersion) ToUnCheckedExtrinsic(SignerPayloadJson payload)
+    private static (UnCheckedExtrinsic, RuntimeVersion) ToUnCheckedExtrinsic(SignerPayloadJson payload, Substrate.NetApi.Model.Types.Account account)
     {
         if (payload.Tip is null || payload.SpecVersion is null ||
                     payload.TransactionVersion is null || payload.Nonce is null)
@@ -311,9 +310,6 @@ public class PolkadotExtensionWalletBridge
             charge = new ChargeAssetTxPayment(0, new());
             charge.Decode(Utils.HexToByteArray(payload.Tip), ref _p);
         }
-
-        var account = new Substrate.NetApi.Model.Types.Account();
-        account.Create(KeyType.Sr25519, Utils.GetPublicKeyFrom(payload.Address));
 
         return (
             new UnCheckedExtrinsic(true, account, method, Era.Decode(Utils.HexToByteArray(payload.Era)),
