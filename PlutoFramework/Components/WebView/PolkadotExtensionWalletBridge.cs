@@ -1,7 +1,5 @@
 using PlutoFramework.Components.MessagePopup;
-using PlutoFramework.Components.TransactionAnalyzer;
-using PlutoFramework.Constants;
-using PlutoFramework.Model;
+using PlutoFramework.Codel;
 using Plutonication;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Extrinsics;
@@ -245,73 +243,24 @@ public class PolkadotExtensionWalletBridge
 
         var (unCheckedExtrinsic, runtime) = ToUnCheckedExtrinsic(payload);
 
-        var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-
         var substratePayload = unCheckedExtrinsic.GetPayload(runtime);
 
-        if (Endpoints.HashToKey.ContainsKey(payload.GenesisHash))
-        {
-            Console.WriteLine("Genesis hash found");
-            EndpointEnum key = Endpoints.HashToKey[payload.GenesisHash];
+        var account = await Model.KeysModel.GetAccountAsync("Sign transaction via Pluto wallet");
 
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(key, CancellationToken.None);
-
-            await transactionAnalyzerConfirmationViewModel.LoadAsync(
-                client,
-                unCheckedExtrinsic.ToTempUnCheckedExtrinsic(
-                    substratePayload,
-                    client.Endpoint.AddressVersion,
-                    client.CheckMetadata
-                ),
-                true,
-                onConfirm: OnConfirmClickedAsync,
-                runtimeVersion: runtime
-            );
-        }
-        else
+        if (account is null)
         {
-            transactionAnalyzerConfirmationViewModel.LoadUnknown(
-                unCheckedExtrinsic.ToTempUnCheckedExtrinsic(substratePayload, 2u, true),
-                runtime,
-                onConfirm: OnConfirmClickedAsync
-            );
+            throw new InvalidOperationException("Failed to retrieve account for signing.");
         }
 
-        var signature = await SignatureTask.Task.ConfigureAwait(false);
+        byte[] signature = account.Sign(substratePayload);
+
+        SignatureTask.SetResult(signature);
 
         return new SignerResultPayload
         {
             Id = payload.Id ?? request.Id ?? Guid.NewGuid().ToString("N"),
             Signature = Utils.Bytes2HexString(signature).ToLowerInvariant()
         };
-    }
-
-    public static async Task OnConfirmClickedAsync()
-    {
-        try
-        {
-            var viewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-
-            var account = await Model.KeysModel.GetAccountAsync();
-
-            if (account is null)
-            {
-                return;
-            }
-
-            byte[] signature = account.Sign(viewModel.Payload.Encode());
-
-            SignatureTask.SetResult(signature);
-
-            // Hide this layout
-            viewModel.IsVisible = false;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-
-            // Handle potential errors
-        }
     }
 
     private static (UnCheckedExtrinsic, RuntimeVersion) ToUnCheckedExtrinsic(SignerPayloadJson payload)
