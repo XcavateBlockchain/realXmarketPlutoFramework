@@ -1,5 +1,5 @@
 using PlutoFramework.Components.MessagePopup;
-using PlutoFramework.Codel;
+using PlutoFramework.Model;
 using Plutonication;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Extrinsics;
@@ -252,7 +252,7 @@ public class PolkadotExtensionWalletBridge
             throw new InvalidOperationException("Failed to retrieve account for signing.");
         }
 
-        byte[] signature = account.Sign(substratePayload);
+        byte[] signature = account.Sign(substratePayload.Encode());
 
         SignatureTask.SetResult(signature);
 
