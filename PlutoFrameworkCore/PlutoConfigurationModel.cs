@@ -21,6 +21,13 @@ namespace PlutoFrameworkCore
         Task<string?> GetAsync(string key, string reason);
 
         /// <summary>
+        /// Gets and decrypts the value for a given key without authentication.
+        /// </summary>
+        /// <param name="key">The key to retrieve the value for.</param>
+        /// <returns>The decrypted string value or <see langword="null"/> if a value was not found.</returns>
+        Task<string?> GetAsyncNoAuthAsync(string key);
+
+        /// <summary>
         /// Gets and decrypts the value for a given key.
         /// </summary>
         /// <param name="key">The key to retrieve the value for.</param>

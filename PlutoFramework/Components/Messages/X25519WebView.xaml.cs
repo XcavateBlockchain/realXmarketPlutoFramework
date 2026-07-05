@@ -303,7 +303,7 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     {
         try
         {
-            var encryptionKey = await KeysModel.GetX25519KeyAsync();
+            var encryptionKey = await KeysModel.GetX25519KeyNoAuthAsync();
 
             if (encryptionKey?.SecretKey is null or { Length: not 32 })
             {

@@ -116,5 +116,25 @@ namespace PlutoFrameworkCore.Keys
                 SecretKey = Convert.FromBase64String(secretKey),
             };
         }
+
+        public async Task<EncryptionX25519Key> ToEncryptionX25519KeyNoAuthAsync()
+        {
+            if (Type != KeyTypeEnum.EncryptionX25519)
+            {
+                throw new InvalidOperationException($"Cannot convert key of type {Type} to EncryptionX25519Key");
+            }
+
+            var secretKey = await PlutoConfigurationModel.SecureStorage.GetAsyncNoAuthAsync(SecretStorageKey);
+
+            if (secretKey == null)
+            {
+                throw new InvalidOperationException("Mnemonics not found in secure storage");
+            }
+
+            return new EncryptionX25519Key
+            {
+                SecretKey = Convert.FromBase64String(secretKey),
+            };
+        }
     }
 }

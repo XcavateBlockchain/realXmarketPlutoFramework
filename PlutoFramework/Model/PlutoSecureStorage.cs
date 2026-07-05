@@ -31,6 +31,11 @@ namespace PlutoFramework.Model
             return result.Value;
         }
 
+        public async Task<string?> GetAsyncNoAuthAsync(string key)
+        {
+            return await SecureStorage.Default.GetAsync(key).ConfigureAwait(false);
+        }
+
 
         public bool Remove(string key) => SecureStorage.Default.Remove(key);
 

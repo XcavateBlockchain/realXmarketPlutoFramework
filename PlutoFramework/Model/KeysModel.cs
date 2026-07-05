@@ -472,6 +472,27 @@ namespace PlutoFramework.Model
             }
         }
 
+        public static async Task<EncryptionX25519Key?> GetX25519KeyNoAuthAsync()
+        {
+            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519);
+
+            if (!accounts.Any())
+            {
+                return null;
+            }
+
+            var accountLockedKey = accounts.First();
+
+            try
+            {
+                return await accountLockedKey.ToEncryptionX25519KeyNoAuthAsync();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public static AccountId32 GetAccountId32()
         {
             var accountId = new AccountId32();
