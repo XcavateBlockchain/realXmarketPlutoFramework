@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
+using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Model.Xcavate;
 using System.Collections.ObjectModel;
 
@@ -28,9 +29,9 @@ namespace PlutoFramework.Components.Xcavate
 
         public ObservableCollection<string> AnswerOptions { get; } = [];
 
-        public int Step => sectionIndex;
+        public int Step => OnboardingStepperViewModel.GetStep(OnboardingStage.Questionaire);
 
-        public int Steps => flowState.Info.Sections.Count;
+        public int Steps => OnboardingStepperViewModel.TotalSteps;
 
         public QuestionnaireCondition CurrentCondition => requiredConditions[currentConditionIndex];
 

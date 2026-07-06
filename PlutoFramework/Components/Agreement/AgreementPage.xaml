@@ -4,6 +4,7 @@
                    xmlns:page="clr-namespace:PlutoFramework.Templates.PageTemplate"
                    xmlns:webview="clr-namespace:PlutoFramework.Components.WebView"
                    xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
+                   xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
                    xmlns:template="clr-namespace:PlutoFramework.Templates.TopNavigationBarTemplate"
                    x:Class="PlutoFramework.Components.Agreement.AgreementPage"
                    >
@@ -16,13 +17,13 @@
                                   Navigated="OnWebViewNavigated"
                                   Scrolled="OnWebViewScrolled"
                                   Source="{Binding Url}"
-                                  Margin="0,0,0,70"
-                                          TranslationY="-10"
+                                  Margin="0,55,0,70"
                                   />
 
-        <template:TopNavigationBarTemplate 
-                    IsVisible="True"
-                    Title="Agreement"/>
+        <navigationbar:TopNavigationStepperBar AbsoluteLayout.LayoutBounds="0.5,0,1,55"
+                                               AbsoluteLayout.LayoutFlags="PositionProportional,WidthProportional"
+                                               Step="{Binding Step}"
+                                               Steps="{Binding Steps}" />
         
         <xcavate:PageBottomBarButtonView Text="{Binding AcceptButtonText}"
                                  ButtonState="{Binding AcceptButtonState}"

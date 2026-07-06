@@ -1,11 +1,13 @@
 namespace PlutoFramework.Components.Agreement;
 
+using PlutoFramework.Model.Xcavate;
+
 public partial class AgreementPage : ContentPage
 {
     private IDispatcherTimer? _scrollPollTimer;
     private bool _checkingScroll;
 
-    public AgreementPage(string url, Func<Task>? acceptFunction = null)
+    public AgreementPage(string url, Func<Task>? acceptFunction = null, OnboardingStage onboardingStage = OnboardingStage.AgreeTerms)
     {
         NavigationPage.SetHasNavigationBar(this, false);
         Shell.SetNavBarIsVisible(this, false);
@@ -16,6 +18,7 @@ public partial class AgreementPage : ContentPage
         {
             Url = url,
             AcceptFunction = acceptFunction ?? DefaultAcceptAsync,
+            OnboardingStage = onboardingStage,
         };
     }
 

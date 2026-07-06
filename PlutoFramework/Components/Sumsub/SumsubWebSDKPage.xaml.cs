@@ -1,4 +1,6 @@
+using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Model.Sumsub;
+using PlutoFramework.Model.Xcavate;
 using PlutoFramework.Templates.PageTemplate;
 using System.Text.Json;
 
@@ -6,8 +8,8 @@ namespace PlutoFramework.Components.Sumsub
 {
     public partial class SumsubWebSDKPage : PageTemplate
     {
-      private readonly Func<Task> navigation;
-      private bool navigated = false;
+  private readonly Func<Task> navigation;
+  private bool navigated = false;
 
         public SumsubWebSDKPage(string accessToken, Applicant applicant, Func<Task> navigation)
         {
@@ -16,9 +18,7 @@ namespace PlutoFramework.Components.Sumsub
 
             InitializeComponent();
 
-            var topNavigationBarHeight = (double)Application.Current.Resources["TopNavigationBarHeight"];
-
-            webView.Margin = new Thickness(0, topNavigationBarHeight, 0, 0);
+            BindingContext = new OnboardingStepperViewModel(OnboardingStage.KYC);
 
             var accessTokenJson = JsonSerializer.Serialize(accessToken);
             var emailJson = JsonSerializer.Serialize(applicant.ApplicantIdentifiers.Email);
@@ -113,13 +113,14 @@ namespace PlutoFramework.Components.Sumsub
 
         private async void OnNextPageRequested(object sender, EventArgs e)
         {
-          if (navigated)
+            if (navigated)
             {
-            return;
+                return;
             }
 
-          navigated = true;
+            navigated = true;
+
+            await navigation.Invoke();
         }
-          await navigation.Invoke();
     }
 }

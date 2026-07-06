@@ -9,7 +9,7 @@
                    Title=""
                    NavigationBarIsVisible="False"
                    NavigationBarHasShadow="False">
-    <Grid RowDefinitions="45,*,90">
+    <Grid RowDefinitions="55,*,90">
         <navigationbar:TopNavigationStepperBar Grid.Row="0"
                                                Step="{Binding Step}"
                                                Steps="{Binding Steps}" />

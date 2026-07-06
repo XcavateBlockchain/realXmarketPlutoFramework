@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
+using PlutoFramework.Components.Onboarding;
+using PlutoFramework.Model.Xcavate;
 using System.Collections.ObjectModel;
 
 namespace PlutoFramework.Components.Xcavate
@@ -34,9 +36,9 @@ namespace PlutoFramework.Components.Xcavate
 
         public ObservableCollection<QuestionnaireV2DeclarationItem> Declarations { get; } = [];
 
-        public int Step => sectionIndex;
+        public int Step => OnboardingStepperViewModel.GetStep(OnboardingStage.Questionaire);
 
-        public int Steps => flowState.Info.Sections.Count;
+        public int Steps => OnboardingStepperViewModel.TotalSteps;
 
         public ButtonStateEnum ContinueButtonState => Declarations.All(declaration => declaration.Answer is not null)
             ? ButtonStateEnum.Enabled

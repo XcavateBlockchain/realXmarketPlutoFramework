@@ -49,19 +49,19 @@ public class OnboardingAgreementCoordinator : IOnboardingAgreementCoordinator
     private Task NavigateToTermsAsync()
     {
         OnboardingModel.SetOnboardingStage(OnboardingStage.AgreeTerms);
-        return _navigationService.NavigateToAsync(new AgreementPage(TermsUrl, AcceptTermsAsync));
+        return _navigationService.NavigateToAsync(new AgreementPage(TermsUrl, AcceptTermsAsync, OnboardingStage.AgreeTerms));
     }
 
     private Task NavigateToAgreementAsync()
     {
         OnboardingModel.SetOnboardingStage(OnboardingStage.AgreeAgreement);
-        return _navigationService.NavigateToAsync(new AgreementPage(AgreementUrl, AcceptAgreementAsync));
+        return _navigationService.NavigateToAsync(new AgreementPage(AgreementUrl, AcceptAgreementAsync, OnboardingStage.AgreeAgreement));
     }
 
     private Task NavigateToPrivacyAsync()
     {
         OnboardingModel.SetOnboardingStage(OnboardingStage.AgreePrivacy);
-        return _navigationService.NavigateToAsync(new AgreementPage(PrivacyUrl, AcceptPrivacyAsync));
+        return _navigationService.NavigateToAsync(new AgreementPage(PrivacyUrl, AcceptPrivacyAsync, OnboardingStage.AgreePrivacy));
     }
 
     private Task AcceptTermsAsync()

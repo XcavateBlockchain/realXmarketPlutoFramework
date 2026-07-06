@@ -1,5 +1,7 @@
 namespace PlutoFramework.Components.NavigationBar;
 
+using System.Windows.Input;
+
 public partial class TopNavigationStepperBar : ContentView
 {
     public static readonly BindableProperty StepProperty = BindableProperty.Create(
@@ -12,9 +14,14 @@ public partial class TopNavigationStepperBar : ContentView
         defaultValue: 0,
         defaultBindingMode: BindingMode.TwoWay);
 
+    public static readonly BindableProperty BackCommandProperty = BindableProperty.Create(
+        nameof(BackCommand), typeof(ICommand), typeof(TopNavigationStepperBar));
+
     public TopNavigationStepperBar()
     {
         InitializeComponent();
+
+        BackCommand ??= new Command(async () => await GoBackAsync());
     }
 
     public int Step
@@ -29,8 +36,19 @@ public partial class TopNavigationStepperBar : ContentView
         set => SetValue(StepsProperty, value);
     }
 
-    private async void OnBackClicked(object sender, TappedEventArgs e)
+    public ICommand? BackCommand
     {
-        await Navigation.PopAsync();
+        get => (ICommand?)GetValue(BackCommandProperty);
+        set => SetValue(BackCommandProperty, value);
+    }
+
+    private static async Task GoBackAsync()
+    {
+        var navigation = Shell.Current?.Navigation;
+
+        if (navigation is not null && navigation.NavigationStack.Count > 1)
+        {
+            await navigation.PopAsync();
+        }
     }
 }
