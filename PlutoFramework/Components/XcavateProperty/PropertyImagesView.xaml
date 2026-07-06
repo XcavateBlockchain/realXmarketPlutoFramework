@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:nft="clr-namespace:PlutoFramework.Components.Nft"
+             x:Class="PlutoFramework.Components.XcavateProperty.PropertyImagesView">
+    <VerticalStackLayout Spacing="10">
+        <CarouselView x:Name="carouselView"
+                      IndicatorView="indicatorView"
+                      HeightRequest="300"
+                      PeekAreaInsets="0"
+                      HorizontalScrollBarVisibility="Never"
+                      Loop="False"
+                      IsBounceEnabled="True"
+                      PositionChanged="OnCarouselPositionChanged">
+            <CarouselView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="0"
+                            StrokeThickness="0"
+                            Stroke="{AppThemeBinding Light=White, Dark=Black}"
+                            BackgroundColor="Gray"
+                            Shadow="{StaticResource CardShadow}"
+                            Margin="20">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+
+                        <Image Source="{Binding .}"
+                               Aspect="AspectFill" />
+                    </Border>
+                </DataTemplate>
+            </CarouselView.ItemTemplate>
+        </CarouselView>
+
+        <IndicatorView x:Name="indicatorView"
+                       IndicatorColor="Gray"
+                       SelectedIndicatorColor="{x:StaticResource X-BLUE}"
+                       HorizontalOptions="Center" />
+    </VerticalStackLayout>
+</ContentView>

@@ -885,6 +885,10 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
+    <Compile Update="Components\XcavateProperty\PropertyImagesView.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
     <Compile Update="Components\XcavateProperty\PropertyLittleThumbnailView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
@@ -1657,6 +1661,9 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\XcavateProperty\PropertyDetailPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Components\XcavateProperty\PropertyImagesView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\XcavateProperty\PropertyLittleThumbnailView.xaml">
@@ -2513,6 +2520,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\XcavateProperty\PropertyDetailPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Components\XcavateProperty\PropertyImagesView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\XcavateProperty\PropertyLittleThumbnailView.xaml">
