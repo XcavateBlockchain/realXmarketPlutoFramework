@@ -25,9 +25,7 @@ public partial class BalanceCellView : ContentView, ISetEmptyView, ISubstrateCli
 
         AssetsModel.LoadAssets(await BalancesDatabase.GetBalancesAsync());
 
-        var viewModel = (UsdBalanceViewModel)BindingContext;
-        viewModel.ReloadIsVisible = false;
-        viewModel.UsdSum = AssetsModel.UsdSum.ToCurrencyString();
+        cell.Value = AssetsModel.UsdSum.ToCurrencyString();
     }
 
     public async Task LoadAsync(PlutoFrameworkSubstrateClient client, CancellationToken token)
