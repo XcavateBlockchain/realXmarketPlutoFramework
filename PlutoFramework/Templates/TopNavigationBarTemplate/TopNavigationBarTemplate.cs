@@ -5,6 +5,8 @@ namespace PlutoFramework.Templates.TopNavigationBarTemplate
 {
     public class TopNavigationBarTemplate : ContentView
     {
+        private Func<Task>? extraFunc;
+
         public static readonly BindableProperty TitleProperty =
             BindableProperty.Create(nameof(Title), typeof(string), typeof(TopNavigationBarTemplate));
         public string Title
@@ -74,6 +76,22 @@ namespace PlutoFramework.Templates.TopNavigationBarTemplate
         {
             get => (bool)GetValue(HasShadowProperty);
             set => SetValue(HasShadowProperty, value);
+        }
+
+        public Func<Task>? BackFunc
+        {
+            get => ((TopNavigationBarViewModel)BindingContext).BackFunc;
+            set => ((TopNavigationBarViewModel)BindingContext).BackFunc = value;
+        }
+
+        public Func<Task>? ExtraFunc
+        {
+            get => extraFunc;
+            set
+            {
+                extraFunc = value;
+                Extra1Command = value is null ? null : new AsyncRelayCommand(value);
+            }
         }
 
         public TopNavigationBarTemplate()
