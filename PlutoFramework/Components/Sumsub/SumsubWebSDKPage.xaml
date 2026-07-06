@@ -2,6 +2,7 @@
 <template:PageTemplate xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                        xmlns:template="clr-namespace:PlutoFramework.Templates.PageTemplate"
+                       xmlns:sumsub="clr-namespace:PlutoFramework.Components.Sumsub"
                        xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
                        xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
                        x:Class="PlutoFramework.Components.Sumsub.SumsubWebSDKPage"
@@ -10,11 +11,11 @@
                         AbsoluteLayout.LayoutFlags="All"
                         HorizontalOptions="Fill"
                         VerticalOptions="Fill">
-        <WebView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+        <sumsub:SumsubNavigationWebView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
                      AbsoluteLayout.LayoutFlags="All"
                      Margin="0, 0, 0, 0"
                  x:Name="webView"
-                 Navigating="OnNavigating" />
+                 NextPageRequested="OnNextPageRequested" />
 
         <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
                         AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
