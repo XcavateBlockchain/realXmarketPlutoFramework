@@ -461,7 +461,7 @@ namespace PlutoFramework.Model
         {
             double usdSumValue = 0.0;
 
-            foreach (var asset in AssetsDict.Values)
+            foreach (var asset in AssetsDict.Values.Where(a => a.Pallet == AssetPallet.Native || a.Pallet == AssetPallet.Assets || a.Pallet == AssetPallet.Tokens))
             {
                 double spotPrice = Model.HydraDX.Sdk.GetSpotPrice(asset.Symbol) ?? 0;
                 asset.UsdValue = asset.Amount * spotPrice;
@@ -475,7 +475,7 @@ namespace PlutoFramework.Model
         {
             double usdSumValue = 0.0;
 
-            foreach (var asset in AssetsDict.Values)
+            foreach (var asset in AssetsDict.Values.Where(a => a.Pallet == AssetPallet.Native || a.Pallet == AssetPallet.Assets || a.Pallet == AssetPallet.Tokens))
             {
                 try
                 {
