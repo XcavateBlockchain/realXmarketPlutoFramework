@@ -260,7 +260,13 @@
                                              Extra2Command="{Binding MakeFavouriteCommand}"
                                              Extra2ImageMargin="5, 6, 5, 4"
                                              Extra2ImageHeight="20"
-                                             Extra2ImageWidth="20" />
+                                             Extra2ImageWidth="20"
+                                             Extra3Image="xcavatemail.png"
+                                             Extra3IsVisible="True"
+                                             Extra3Command="{Binding MessageCommand}"
+                                             Extra3ImageMargin="0"
+                                             Extra3ImageHeight="28"
+                                             Extra3ImageWidth="28" />
 
         <xcavate:PageBottomBarButtonView Text="{Binding MainActionText}"
                                          ButtonState="{Binding MainActionButtonState}"

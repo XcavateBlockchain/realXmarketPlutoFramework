@@ -15,6 +15,9 @@ namespace PlutoFramework.Components.Password
         [ObservableProperty]
         private bool errorIsVisible = false;
 
+        [ObservableProperty]
+        private string reason = "";
+
         /// <summary>
         /// returns null if the user decided to cancel
         /// </summary>
@@ -58,6 +61,7 @@ namespace PlutoFramework.Components.Password
             Password = "";
             IsVisible = false;
             ErrorIsVisible = false;
+            Reason = "";
             EnteredPassword = new TaskCompletionSource<string?>();
         }
     }

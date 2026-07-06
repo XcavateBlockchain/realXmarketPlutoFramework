@@ -21,6 +21,13 @@ namespace PlutoFrameworkCore
         Task<string?> GetAsync(string key, string reason);
 
         /// <summary>
+        /// Gets and decrypts the value for a given key without authentication.
+        /// </summary>
+        /// <param name="key">The key to retrieve the value for.</param>
+        /// <returns>The decrypted string value or <see langword="null"/> if a value was not found.</returns>
+        Task<string?> GetAsyncNoAuthAsync(string key);
+
+        /// <summary>
         /// Gets and decrypts the value for a given key.
         /// </summary>
         /// <param name="key">The key to retrieve the value for.</param>
@@ -54,6 +61,8 @@ namespace PlutoFrameworkCore
         public static Func<Task> GenerateNewAccountAsync;
         // List of whitelisted asset keys. If empty, no whitelisting is applied.
         public static System.Collections.Generic.List<AssetKey> WhitelistedTokens { get; set; } = new System.Collections.Generic.List<AssetKey>();
+        // List of dApp URL patterns that are auto-approved for wallet connections.
+        public static System.Collections.Generic.List<string> WhitelistedDApps { get; set; } = new System.Collections.Generic.List<string>();
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     }
 }

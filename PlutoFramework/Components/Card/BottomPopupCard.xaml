@@ -48,6 +48,7 @@
                         AbsoluteLayout.LayoutBounds="0.5, 0, 1, 65"
                         AbsoluteLayout.LayoutFlags="PositionProportional,WidthProportional">
             <Border BackgroundColor="#888888"
+                    Stroke="#888888"
                     AbsoluteLayout.LayoutBounds=".5, 0, 100, 5"
                     AbsoluteLayout.LayoutFlags="PositionProportional"
                     x:Name="dragger"

@@ -63,6 +63,7 @@
                            FontAttributes="Bold"
                            IsSpellCheckEnabled="false"
                            IsTextPredictionEnabled="false"
+                           IsEnabled="{Binding SearchbarCanEdit}"
                            Placeholder="Enter URL"
                            />
                 </Grid>

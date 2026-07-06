@@ -418,9 +418,12 @@ namespace PlutoFramework.Model
 
             try
             {
-                var accountKey = await accountLockedKey.ToSr25519KeyAsync(reason);
 
-                return accountKey.Account;
+                return accountLockedKey.Type switch
+                {
+                    KeyTypeEnum.Sr25519 => (await accountLockedKey.ToSr25519KeyAsync(reason)).Account,
+                    KeyTypeEnum.PolkadotJson => (await accountLockedKey.ToPolkadotJsonKeyAsync(reason)).Account,
+                };
             }
             catch
             {
@@ -453,7 +456,7 @@ namespace PlutoFramework.Model
 
         public static async Task<EncryptionX25519Key?> GetX25519KeyAsync()
         {
-            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Did);
+            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519);
 
             if (!accounts.Any())
             {
@@ -465,6 +468,27 @@ namespace PlutoFramework.Model
             try
             {
                 return await accountLockedKey.ToEncryptionX25519KeyAsync();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static async Task<EncryptionX25519Key?> GetX25519KeyNoAuthAsync()
+        {
+            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519);
+
+            if (!accounts.Any())
+            {
+                return null;
+            }
+
+            var accountLockedKey = accounts.First();
+
+            try
+            {
+                return await accountLockedKey.ToEncryptionX25519KeyNoAuthAsync();
             }
             catch
             {

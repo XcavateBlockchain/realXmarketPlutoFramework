@@ -157,6 +157,7 @@ namespace PlutoFramework.Model
             {
                 var viewModel = DependencyService.Get<EnterPasswordPopupViewModel>();
 
+                viewModel.Reason = reason;
                 viewModel.IsVisible = true;
 
                 for (int i = 0; i < 5; i++)

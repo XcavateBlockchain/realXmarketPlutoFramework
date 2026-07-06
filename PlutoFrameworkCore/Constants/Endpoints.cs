@@ -113,7 +113,7 @@ namespace PlutoFramework.Constants
             { "0x401a1f9dca3da46f5c4091016c8a2f26dcea05865116b286f60f668207d1474b", EndpointEnum.Moonriver },
             { "0x262e1b2ad728475fd6fe88e62d34c200abe6fd693931ddad144059b1eb884e5b", EndpointEnum.Bifrost },
             { "0x411f057b9107718c9624d6aa4a3f23c1653898297f3d4d529d9bb6511a39dd21", EndpointEnum.Kilt },
-            { "0xe600ea6d0dfa0987874bc539b4c471b9f7e5a3277e80989e47a6cc69bb944511", EndpointEnum.XcavatePaseo },
+            { "0x28db0af57b1b0b91697082df4b46ee3062254becd13325ff922b3dd3f65eeb8a", EndpointEnum.XcavatePaseo },
         });
 
         public static readonly ReadOnlyDictionary<string, EndpointEnum> ParachainIdToKey = new ReadOnlyDictionary<string, EndpointEnum>(new Dictionary<string, EndpointEnum>()

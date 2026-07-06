@@ -56,14 +56,14 @@ namespace PlutoFrameworkCore.Keys
             };
         }
 
-        public async Task<PolkadotJsonKey> ToPolkadotJsonKeyAsync()
+        public async Task<PolkadotJsonKey> ToPolkadotJsonKeyAsync(string reason)
         {
             if (Type != KeyTypeEnum.PolkadotJson)
             {
                 throw new InvalidOperationException($"Cannot convert key of type {Type} to PolkadotJsonKey");
             }
 
-            var result = await PlutoConfigurationModel.SecureStorage.GetWithPasswordAsync(SecretStorageKey, PasswordStorageKey, "Get access to Polkadot JSON key");
+            var result = await PlutoConfigurationModel.SecureStorage.GetWithPasswordAsync(SecretStorageKey, PasswordStorageKey, reason);
 
             if (result.Value == null)
             {
@@ -105,6 +105,26 @@ namespace PlutoFrameworkCore.Keys
             }
 
             var secretKey = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey, "Get access to X25519 encryption key");
+
+            if (secretKey == null)
+            {
+                throw new InvalidOperationException("Mnemonics not found in secure storage");
+            }
+
+            return new EncryptionX25519Key
+            {
+                SecretKey = Convert.FromBase64String(secretKey),
+            };
+        }
+
+        public async Task<EncryptionX25519Key> ToEncryptionX25519KeyNoAuthAsync()
+        {
+            if (Type != KeyTypeEnum.EncryptionX25519)
+            {
+                throw new InvalidOperationException($"Cannot convert key of type {Type} to EncryptionX25519Key");
+            }
+
+            var secretKey = await PlutoConfigurationModel.SecureStorage.GetAsyncNoAuthAsync(SecretStorageKey);
 
             if (secretKey == null)
             {

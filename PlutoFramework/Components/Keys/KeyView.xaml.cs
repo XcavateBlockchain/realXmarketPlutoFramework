@@ -56,12 +56,12 @@ public partial class KeyView : ContentView
                 KeyTypeEnum.Sr25519 => new Sr25519KeyDetailPage(new Sr25519KeyDetailPageViewModel
                 {
                     LockedKey = Key,
-                    UnlockedKey = await Key.ToSr25519KeyAsync("..."),
+                    UnlockedKey = await Key.ToSr25519KeyAsync("Get access to account key"),
                 }),
                 KeyTypeEnum.PolkadotJson => new PolkadotJsonKeyDetailPage(new PolkadotJsonKeyDetailPageViewModel
                 {
                     LockedKey = Key,
-                    UnlockedKey = await Key.ToPolkadotJsonKeyAsync(),
+                    UnlockedKey = await Key.ToPolkadotJsonKeyAsync("Get access to account key"),
                 }),
                 KeyTypeEnum.Did => new DidKeyDetailPage(new DidKeyDetailPageViewModel
                 {
