@@ -1,6 +1,7 @@
 using PlutoFramework.Components.MessagePopup;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
+using PlutoFrameworkCore;
 using Plutonication;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Extrinsics;
@@ -120,6 +121,11 @@ public class PolkadotExtensionWalletBridge
         }
 
         var uri = new Uri(dAppInfo.Url);
+
+        if (PlutoConfigurationModel.WhitelistedDApps.Any(pattern => uri.Host.Contains(pattern)))
+        {
+            return new { approved = true, provider = ProviderName };
+        }
 
         if (ExtensionWebViewModel.ApprovedUrls.TryGetValue(uri.Host, out var cachedApproved) && cachedApproved)
         {
