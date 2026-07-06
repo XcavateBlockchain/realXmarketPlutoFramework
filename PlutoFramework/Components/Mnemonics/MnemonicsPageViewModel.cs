@@ -84,7 +84,7 @@ public partial class MnemonicsPageViewModel : ObservableObject
 
                     break;
                 case KeyTypeEnum.PolkadotJson:
-                    var jsonKey = await accountLockedKey.ToPolkadotJsonKeyAsync();
+                    var jsonKey = await accountLockedKey.ToPolkadotJsonKeyAsync("Export main account key");
 
                     await ExportJsonAsync(jsonKey.Json, token);
 

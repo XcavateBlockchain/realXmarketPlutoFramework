@@ -56,14 +56,14 @@ namespace PlutoFrameworkCore.Keys
             };
         }
 
-        public async Task<PolkadotJsonKey> ToPolkadotJsonKeyAsync()
+        public async Task<PolkadotJsonKey> ToPolkadotJsonKeyAsync(string reason)
         {
             if (Type != KeyTypeEnum.PolkadotJson)
             {
                 throw new InvalidOperationException($"Cannot convert key of type {Type} to PolkadotJsonKey");
             }
 
-            var result = await PlutoConfigurationModel.SecureStorage.GetWithPasswordAsync(SecretStorageKey, PasswordStorageKey, "Get access to Polkadot JSON key");
+            var result = await PlutoConfigurationModel.SecureStorage.GetWithPasswordAsync(SecretStorageKey, PasswordStorageKey, reason);
 
             if (result.Value == null)
             {

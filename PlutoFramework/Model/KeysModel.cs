@@ -418,9 +418,12 @@ namespace PlutoFramework.Model
 
             try
             {
-                var accountKey = await accountLockedKey.ToSr25519KeyAsync(reason);
 
-                return accountKey.Account;
+                return accountLockedKey.Type switch
+                {
+                    KeyTypeEnum.Sr25519 => (await accountLockedKey.ToSr25519KeyAsync(reason)).Account,
+                    KeyTypeEnum.PolkadotJson => (await accountLockedKey.ToPolkadotJsonKeyAsync(reason)).Account,
+                };
             }
             catch
             {

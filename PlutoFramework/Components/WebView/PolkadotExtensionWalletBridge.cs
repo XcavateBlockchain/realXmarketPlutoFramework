@@ -1,9 +1,11 @@
 using PlutoFramework.Components.MessagePopup;
+using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using Plutonication;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Extrinsics;
 using Substrate.NetApi.Model.Rpc;
+using Substrate.NetApi.Model.Types;
 using Substrate.NetApi.Model.Types.Base;
 using System.Globalization;
 using System.Text.Json;
@@ -223,43 +225,107 @@ public class PolkadotExtensionWalletBridge
 
     private static async Task<SignerResultPayload> HandleSignPayloadAsync(WalletBridgeRequest request)
     {
-        Console.WriteLine("Sign payload called");
-
-        if (!request.Payload.HasValue)
+        try
         {
-            throw new InvalidOperationException("Missing payload for signPayload request.");
+            Console.WriteLine("Sign payload called");
+
+            if (!request.Payload.HasValue)
+            {
+                throw new InvalidOperationException("Missing payload for signPayload request.");
+            }
+
+            var payload = request.Payload.Value.Deserialize<SignerPayloadJson>(SerializerOptions)
+                ?? throw new InvalidOperationException("Unable to parse signPayload payload.");
+
+            if (!KeysModel.HasSubstrateKey())
+            {
+                throw new InvalidOperationException("No Substrate account is available inside Pluto wallet.");
+            }
+
+            byte[] methodBytes = Utils.HexToByteArray(payload.Method);
+
+            var genesisHashLower = payload.GenesisHash.ToLowerInvariant();
+
+            Console.WriteLine("Genesis: " + genesisHashLower);
+
+            if (!Constants.Endpoints.HashToKey.TryGetValue(genesisHashLower, out EndpointEnum endpointKey))
+            {
+                throw new InvalidOperationException($"Unsupported genesis hash: {payload.GenesisHash}");
+            }
+
+            var client = await Model.SubstrateClientModel.GetOrAddSubstrateClientAsync(endpointKey, CancellationToken.None);
+
+            (var pallet, var call) = PalletCallModel.GetPalletAndCallName(client, methodBytes[0], methodBytes[1]);
+
+            Console.WriteLine($"About to sign {pallet}.{call}");
+
+            var account = await Model.KeysModel.GetAccountAsync($"Sign & submit {pallet}.{call} extrinsic");
+
+            Console.WriteLine($"Account got");
+
+            if (account is null)
+            {
+                throw new InvalidOperationException("Failed to retrieve account for signing.");
+            }
+
+            Console.WriteLine($"Was not null");
+
+            SignatureTask = new TaskCompletionSource<byte[]>();
+
+            var (unCheckedExtrinsic, runtime) = ToUnCheckedExtrinsic(payload, account);
+
+            Console.WriteLine($"ToUnChecked");
+
+
+            var substratePayload = unCheckedExtrinsic.GetPayload(runtime);
+
+            Console.WriteLine($"About to sign");
+
+            byte[] signature = account.Sign(substratePayload.Encode());
+
+            Console.WriteLine("Account: " + account.Value);
+            Console.WriteLine("Payload: " + Utils.Bytes2HexString(substratePayload.Encode()).ToLowerInvariant());
+            Console.WriteLine("Signature: " + Utils.Bytes2HexString(signature).ToLowerInvariant());
+            Console.WriteLine(account.Verify(signature, substratePayload.Encode()));
+
+
+            Console.WriteLine($"Now signed");
+
+
+            SignatureTask.SetResult(signature);
+
+            var multiSignature = ToMultiSignatureBytes(account, signature);
+
+            return new SignerResultPayload
+            {
+                Id = payload.Id ?? request.Id ?? Guid.NewGuid().ToString("N"),
+                Signature = Utils.Bytes2HexString(multiSignature).ToLowerInvariant()
+            };
         }
-
-        var payload = request.Payload.Value.Deserialize<SignerPayloadJson>(SerializerOptions)
-            ?? throw new InvalidOperationException("Unable to parse signPayload payload.");
-
-        if (!KeysModel.HasSubstrateKey())
+        catch (Exception ex)
         {
-            throw new InvalidOperationException("No Substrate account is available inside Pluto wallet.");
+            var messagePopup = DependencyService.Get<MessagePopupViewModel>();
+            messagePopup.Title = "ConnectionRequestView Error";
+            messagePopup.Text = ex.Message;
+            messagePopup.IsVisible = true;
+            throw;
         }
+    }
 
-        var account = await Model.KeysModel.GetAccountAsync("Sign transaction via Pluto wallet");
-
-        if (account is null)
+    private static byte[] ToMultiSignatureBytes(Substrate.NetApi.Model.Types.Account account, byte[] signature)
+    {
+        byte signatureType = account.KeyType switch
         {
-            throw new InvalidOperationException("Failed to retrieve account for signing.");
-        }
-
-        SignatureTask = new TaskCompletionSource<byte[]>();
-
-        var (unCheckedExtrinsic, runtime) = ToUnCheckedExtrinsic(payload, account);
-
-        var substratePayload = unCheckedExtrinsic.GetPayload(runtime);
-
-        byte[] signature = account.Sign(substratePayload.Encode());
-
-        SignatureTask.SetResult(signature);
-
-        return new SignerResultPayload
-        {
-            Id = payload.Id ?? request.Id ?? Guid.NewGuid().ToString("N"),
-            Signature = Utils.Bytes2HexString(signature).ToLowerInvariant()
+            KeyType.Ed25519 => 0x00,
+            KeyType.Sr25519 => 0x01,
+            _ => throw new InvalidOperationException($"Unsupported account key type '{account.KeyType}'.")
         };
+
+        var multiSignature = new byte[signature.Length + 1];
+        multiSignature[0] = signatureType;
+        Buffer.BlockCopy(signature, 0, multiSignature, 1, signature.Length);
+
+        return multiSignature;
     }
 
     private static (UnCheckedExtrinsic, RuntimeVersion) ToUnCheckedExtrinsic(SignerPayloadJson payload, Substrate.NetApi.Model.Types.Account account)
