@@ -272,6 +272,12 @@
                                          ButtonState="{Binding MainActionButtonState}"
                                          Command="{Binding MainActionCommand}" />
 
+        <xcavate:PageBottomBarTwoButtonsView IsVisible="{Binding ShowBuyMoreButtons}"
+                                             LeftCommand="{Binding CancelReservationCommand}"
+                                             LeftText="Cancel reservation"
+                                             RightCommand="{Binding BuyMoreCommand}"
+                                             RightText="Buy more" />
+
         <extrinsic:ExtrinsicStatusStackLayout />
 
         <xcavateproperty:BuyPropertyTokensView />

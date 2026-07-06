@@ -121,6 +121,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(StatusIsVisible))]
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
+        [NotifyPropertyChangedFor(nameof(ShowBuyMoreButtons))]
         private XcavateNftWrapper nftWrapper;
 
         [ObservableProperty]
@@ -146,6 +147,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
+        [NotifyPropertyChangedFor(nameof(ShowBuyMoreButtons))]
         private XcavateOngoingObjectListingDetails? listingDetails;
 
         public double AreaPricesPercentage => PropertyModel.GetAreaPricesPercentage(Metadata?.Financials.PropertyPrice ?? 0);
@@ -203,6 +205,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(TokensBoughtWorth))]
         [NotifyPropertyChangedFor(nameof(BoughtPropertyTokensViewIsVisible))]
         [NotifyPropertyChangedFor(nameof(RelistPropertyTokensButtonIsVisible))]
+        [NotifyPropertyChangedFor(nameof(ShowBuyMoreButtons))]
         private uint tokensBought = 0;
         public string TokensBoughtWorth => ((decimal)(TokensBought * Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString();
 
@@ -216,6 +219,8 @@ namespace PlutoFramework.Components.XcavateProperty
         public string TokensOwnedWorth => ((decimal)(TokensOwned * Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString();
 
         public bool OwnedPropertyTokensViewIsVisible => TokensBought > 0;
+
+        public bool ShowBuyMoreButtons => !NftWrapper.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0;
 
         public string MainActionText => getMainActionState() switch
         {
@@ -560,6 +565,72 @@ namespace PlutoFramework.Components.XcavateProperty
 
         [RelayCommand]
         public Task NavigateToFeesAsync() => Shell.Current.Navigation.PushAsync(new ExtensionWebViewPage("https://app.realxmarket.io/property-info-fees"));
+
+        [RelayCommand]
+        public async Task CancelReservationAsync()
+        {
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.Message = "Connecting to Substrate";
+
+            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(Endpoint.Key, CancellationToken.None);
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            var method = MarketplaceCalls.CancelPropertyPurchase(ListingDetails?.AssetId);
+
+            // Submitting the extrinsic
+            var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
+            await transactionAnalyzerConfirmationViewModel.LoadAsync(
+                client,
+                method,
+                showDAppView: false,
+                token: CancellationToken.None
+            );
+        }
+
+        [RelayCommand]
+        public async Task BuyMoreAsync()
+        {
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            var viewModel = DependencyService.Get<BuyPropertyTokensViewModel>();
+
+            viewModel.ListingDetails = ListingDetails;
+            viewModel.Metadata = Metadata;
+            viewModel.IsVisible = true;
+            viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper.NftBase.Type);
+        }
 
         [RelayCommand]
         public Task MessageAsync() => Shell.Current.Navigation.PushAsync(new MessageWebViewPage());
