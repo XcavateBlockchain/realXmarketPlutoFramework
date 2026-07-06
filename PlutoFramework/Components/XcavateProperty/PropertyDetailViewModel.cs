@@ -148,6 +148,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
         [NotifyPropertyChangedFor(nameof(ShowBuyMoreButtons))]
+        [NotifyPropertyChangedFor(nameof(TokensAvailable))]
         private XcavateOngoingObjectListingDetails? listingDetails;
 
         public double AreaPricesPercentage => PropertyModel.GetAreaPricesPercentage(Metadata?.Financials.PropertyPrice ?? 0);
@@ -168,10 +169,6 @@ namespace PlutoFramework.Components.XcavateProperty
         public string PricePerTokenText => $"{((decimal)(Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString()}";
 
         public string Apy => PropertyModel.GetAPY(Metadata?.Financials.EstimatedRentalIncome ?? (decimal)1, Metadata?.Financials.PropertyPrice ?? 1);
-
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(TokensAvailable))]
-        private uint tokensListed;
 
         public string TokensAvailable => $"{ListingDetails?.ListedTokens.ToString() ?? "-"} / {Metadata?.Financials.NumberOfTokens.ToString() ?? "-"}";
 
@@ -204,21 +201,21 @@ namespace PlutoFramework.Components.XcavateProperty
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TokensBoughtWorth))]
         [NotifyPropertyChangedFor(nameof(BoughtPropertyTokensViewIsVisible))]
-        [NotifyPropertyChangedFor(nameof(RelistPropertyTokensButtonIsVisible))]
         [NotifyPropertyChangedFor(nameof(ShowBuyMoreButtons))]
         private uint tokensBought = 0;
         public string TokensBoughtWorth => ((decimal)(TokensBought * Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString();
 
         public bool BoughtPropertyTokensViewIsVisible => TokensBought > 0;
-        public bool RelistPropertyTokensButtonIsVisible => TokensOwned > 0;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TokensOwnedWorth))]
         [NotifyPropertyChangedFor(nameof(OwnedPropertyTokensViewIsVisible))]
+        [NotifyPropertyChangedFor(nameof(RelistPropertyTokensButtonIsVisible))]
         private uint tokensOwned = 0;
         public string TokensOwnedWorth => ((decimal)(TokensOwned * Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString();
 
-        public bool OwnedPropertyTokensViewIsVisible => TokensBought > 0;
+        public bool OwnedPropertyTokensViewIsVisible => TokensOwned > 0;
+        public bool RelistPropertyTokensButtonIsVisible => TokensOwned > 0;
 
         public bool ShowBuyMoreButtons => !NftWrapper.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0;
 

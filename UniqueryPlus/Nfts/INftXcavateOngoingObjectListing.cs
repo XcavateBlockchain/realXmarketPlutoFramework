@@ -32,7 +32,10 @@ namespace UniqueryPlus.Nfts
 
         public required U32 ItemId { get; set; }
 
-        public Dictionary<string, ShareOwner>? ShareOwners { get; set; }
+        /// <summary>
+        /// This are only shares that have been reserved and have not been claimed yet.
+        /// </summary>
+        public required Dictionary<string, ShareOwner> ShareOwners { get; set; }
     }
 
     public interface INftXcavateOngoingObjectListing

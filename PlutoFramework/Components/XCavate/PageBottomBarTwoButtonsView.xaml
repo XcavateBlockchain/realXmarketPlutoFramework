@@ -13,11 +13,11 @@
             <ColumnDefinition Width="*" />
         </xcavate:PageBottomBarView.ColumnDefinitions>
 
-        <buttons:ElevatedButton x:Name="leftButton" 
-                                Margin="5,10,5,10" />
+        <buttons:BasicGrayButton x:Name="leftButton" 
+                                 Margin="10,10,5,10" />
 
         <buttons:ElevatedButton x:Name="rightButton" 
                                 Grid.Column="1"
-                                Margin="5,10,5,10" />
+                                Margin="5,10,10,10" />
     </xcavate:PageBottomBarView>
 </ContentView>

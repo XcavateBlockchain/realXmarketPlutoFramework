@@ -21,7 +21,7 @@
                 >
                         <Label.FormattedText>
                             <FormattedString>
-                                <Span Text="You bought" />
+                                <Span Text="You reserved" />
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>

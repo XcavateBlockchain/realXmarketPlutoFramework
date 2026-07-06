@@ -8,6 +8,8 @@ namespace UniqueryPlus.Nfts
         public required BigInteger Price { get; set; }
         public required bool SpvCreated { get; set; }
         public required bool Finalized { get; set; }
+        public required Dictionary<string, ShareOwner> ShareOwners { get; set; }
+
     }
     public interface INftXcavateRealWorldAssetDetails
     {

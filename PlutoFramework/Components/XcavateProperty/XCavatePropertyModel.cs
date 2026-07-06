@@ -103,7 +103,7 @@ namespace PlutoFramework.Components.XcavateProperty
             uint claimExpiry = ongoingObjectListing?.ClaimExpiry ?? 0;
 
             var tokensBought = ongoingObjectListing?.ShareOwners?.Count() == 1 ? ongoingObjectListing.ShareOwners.First().Value.ShareAmount : 0u;
-            var tokensOwned = ((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails?.Tokens ?? 0u;
+            var tokensOwned = ((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails?.ShareOwners.Count() == 1 ? ((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails?.ShareOwners.First().Value.ShareAmount ?? 0u : 0u;
 
             return new XcavateNftWrapper
             {
@@ -133,7 +133,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 return viewModel;
             });
 
-            var ownerAddress = KeysModel.GetSubstrateKey();
+            var ownerAddress = KeysModel.GetSubstrateKey(ss58prefix: 0);
 
             var substrateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(nft.Endpoint.Key, token);
 
@@ -146,10 +146,12 @@ namespace PlutoFramework.Components.XcavateProperty
             if (indexedProperty is not null)
             {
                 nft.NftBase = indexedProperty;
-                nft.TokensBought = indexedProperty.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareOwner) == true
+                nft.TokensBought = indexedProperty.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareBuyers) == true
+                    ? shareBuyers.ShareAmount
+                    : 0u;
+                nft.TokensOwned = indexedProperty.RealWorldAssetDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareOwner) == true
                     ? shareOwner.ShareAmount
                     : 0u;
-                nft.TokensOwned = indexedProperty.RealWorldAssetDetails?.Tokens ?? 0u;
                 nft.SpvCreated = indexedProperty.RealWorldAssetDetails?.SpvCreated ?? true;
 
                 var s3Client = GetOrCreateS3Client();
@@ -199,13 +201,9 @@ namespace PlutoFramework.Components.XcavateProperty
                 Metadata = ((INftXcavateMetadata)nft.NftBase).XcavateMetadata,
                 ListingDetails = ((INftXcavateOngoingObjectListing)nft.NftBase).OngoingObjectListingDetails,
                 Region = nft.Region,
+                TokensBought = nft.TokensBought,
+                TokensOwned = nft.TokensOwned,
             };
-
-            if (XcavateOwnedPropertiesModel.ItemsDict.TryGetValue(nft.Key, out PropertyOwnership? tokenInfo))
-            {
-                viewModel.TokensOwned = tokenInfo?.TokensOwned ?? 0;
-                viewModel.TokensBought = tokenInfo?.TokensBought ?? 0;
-            }
 
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {

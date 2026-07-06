@@ -431,6 +431,7 @@ namespace UniqueryPlus.Nfts
                         AssetId = propertyDetails.AssetId,
                         CollectionId = propertyDetails.CollectionId,
                         ItemId = propertyDetails.ItemId,
+                        ShareOwners = new Dictionary<string, ShareOwner>(),
                     });
                 }
                 catch (Exception ex)
@@ -475,6 +476,7 @@ namespace UniqueryPlus.Nfts
                     Price = propertyDetails.Price.Value,
                     SpvCreated = propertyDetails.SpvCreated,
                     Finalized = propertyDetails.Finalized,
+                    ShareOwners = new Dictionary<string, ShareOwner>(),
                 });
             }
 

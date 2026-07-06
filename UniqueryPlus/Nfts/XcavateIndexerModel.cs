@@ -258,6 +258,7 @@ namespace UniqueryPlus.Nfts
                     AssetId = new U32(ToUInt32(listing.AssetId)),
                     CollectionId = new U32(ToUInt32(listing.CollectionId ?? realEstateNft?.Collection)),
                     ItemId = new U32(ToUInt32(listing.ItemId ?? realEstateNft?.Item)),
+                    ShareOwners = new(),
                 }
             };
         }
@@ -383,6 +384,13 @@ namespace UniqueryPlus.Nfts
                         Price = ParseBigInteger(realWorldAsset.Price),
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,
+                        ShareOwners = realWorldAsset.Owners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
+                            shareOwner!.Account,
+                            new ShareOwner
+                            {
+                                Account = shareOwner.Account,
+                                ShareAmount = ToUInt32(shareOwner.ShareAmount),
+                            })).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
                     },
             };
         }
@@ -508,6 +516,14 @@ namespace UniqueryPlus.Nfts
                         Price = ParseBigInteger(realWorldAsset.Price),
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,
+
+                        ShareOwners = realWorldAsset.Owners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
+                            shareOwner!.Account,
+                            new ShareOwner
+                            {
+                                Account = shareOwner.Account,
+                                ShareAmount = ToUInt32(shareOwner.ShareAmount),
+                            })).ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                     },
             };
         }
@@ -633,6 +649,14 @@ namespace UniqueryPlus.Nfts
                         Price = ParseBigInteger(realWorldAsset.Price),
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,
+
+                        ShareOwners = realWorldAsset.Owners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
+                            shareOwner!.Account,
+                            new ShareOwner
+                            {
+                                Account = shareOwner.Account,
+                                ShareAmount = ToUInt32(shareOwner.ShareAmount),
+                            })).ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                     },
             };
         }
@@ -758,6 +782,13 @@ namespace UniqueryPlus.Nfts
                         Price = ParseBigInteger(realWorldAsset.Price),
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,
+                        ShareOwners = realWorldAsset.Owners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
+                            shareOwner!.Account,
+                            new ShareOwner
+                            {
+                                Account = shareOwner.Account,
+                                ShareAmount = ToUInt32(shareOwner.ShareAmount),
+                            })).ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                     },
 
             };
@@ -775,7 +806,6 @@ namespace UniqueryPlus.Nfts
 
             var listing = property.MarketplaceOngoingObjectListings?.Nodes?.FirstOrDefault();
             var realWorldAsset = property.RealWorldAssets?.Nodes?.FirstOrDefault();
-            var realWorldAssetOwner = realWorldAsset?.Owners?.Nodes?.FirstOrDefault();
 
             var files = ParseFiles(property.Files);
             var firstImage = files.FirstOrDefault();
@@ -881,10 +911,17 @@ namespace UniqueryPlus.Nfts
                     ? null
                     : new XcavateRealWorldAssetDetails
                     {
-                        Tokens = ToUInt32(realWorldAssetOwner?.ShareAmount),
+                        Tokens = ToUInt32(realWorldAsset.ShareAmount),
                         Price = ParseBigInteger(realWorldAsset.Price),
                         SpvCreated = realWorldAsset.SpvCreated ?? false,
                         Finalized = realWorldAsset.Finalized ?? false,
+                        ShareOwners = realWorldAsset.Owners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
+                            shareOwner!.Account,
+                            new ShareOwner
+                            {
+                                Account = shareOwner.Account,
+                                ShareAmount = ToUInt32(shareOwner.ShareAmount),
+                            })).ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
                     },
             };
         }
