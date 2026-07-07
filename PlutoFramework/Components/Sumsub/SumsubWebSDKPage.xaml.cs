@@ -8,8 +8,8 @@ namespace PlutoFramework.Components.Sumsub
 {
     public partial class SumsubWebSDKPage : PageTemplate
     {
-  private readonly Func<Task> navigation;
-  private bool navigated = false;
+        private readonly Func<Task> navigation;
+        private bool navigated = false;
 
         public SumsubWebSDKPage(string accessToken, Applicant applicant, Func<Task> navigation)
         {
@@ -19,6 +19,9 @@ namespace PlutoFramework.Components.Sumsub
             InitializeComponent();
 
             BindingContext = new OnboardingStepperViewModel(OnboardingStage.KYC);
+
+            // Check if user is already approved - if so, navigate immediately
+            _ = CheckApprovalAndNavigateAsync();
 
             var accessTokenJson = JsonSerializer.Serialize(accessToken);
             var emailJson = JsonSerializer.Serialize(applicant.ApplicantIdentifiers.Email);
@@ -121,6 +124,26 @@ namespace PlutoFramework.Components.Sumsub
             navigated = true;
 
             await navigation.Invoke();
+        }
+
+        private async Task CheckApprovalAndNavigateAsync()
+        {
+            try
+            {
+                var status = await SumsubUserModel.GetCurrentStatusAsync(CancellationToken.None);
+                if (status?.StatusType == SumsubStatusType.Approved)
+                {
+                    if (!navigated)
+                    {
+                        navigated = true;
+                        await navigation.Invoke();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking Sumsub approval status: {ex.Message}");
+            }
         }
     }
 }
