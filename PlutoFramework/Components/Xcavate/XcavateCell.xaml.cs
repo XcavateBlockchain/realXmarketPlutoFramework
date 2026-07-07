@@ -260,6 +260,11 @@ public partial class XcavateCell : ContentView
         }
 
         await Task.WhenAll(animations);
+
+        if (string.Equals(Value, newValue, StringComparison.Ordinal))
+        {
+            UpdateValueDisplay(newValue);
+        }
     }
 
     private async Task StartDelayedAnimation(Grid rollingView, int fromDigit, int toDigit, uint duration, int delayMs)
