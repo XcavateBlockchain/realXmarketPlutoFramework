@@ -28,6 +28,7 @@ namespace PlutoFramework.Components.XcavateProperty
         public ObservableCollection<string> PropertyTypes { get; } = new(PropertyMarketplaceFilterOptions.PropertyTypes);
 
         public Func<Task>? ApplyRequested { get; set; }
+        public Func<Task>? CancelRequested { get; set; }
 
         public ButtonStateEnum ContinueButtonState => ButtonStateEnum.Enabled;
 
@@ -45,7 +46,11 @@ namespace PlutoFramework.Components.XcavateProperty
         }
 
         [RelayCommand]
-        public void Cancel() => SetToDefault();
+        public void Cancel()
+        {
+            SetToDefault();
+            CancelRequested?.Invoke();
+        }
 
         [RelayCommand]
         public async Task ContinueAsync()
