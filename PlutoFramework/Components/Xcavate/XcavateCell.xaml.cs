@@ -1,6 +1,6 @@
 
-using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.Input;
+using System.Text.RegularExpressions;
 
 namespace PlutoFramework.Components.Xcavate;
 
@@ -13,7 +13,8 @@ public partial class XcavateCell : ContentView
     public static readonly BindableProperty TitleProperty = BindableProperty.Create(
         nameof(Title), typeof(string), typeof(XcavateCell),
         defaultBindingMode: BindingMode.TwoWay,
-        propertyChanging: (bindable, oldValue, newValue) => {
+        propertyChanging: (bindable, oldValue, newValue) =>
+        {
             var control = (XcavateCell)bindable;
 
             control.titleView.Title = ((string)newValue);
@@ -22,15 +23,20 @@ public partial class XcavateCell : ContentView
     public static readonly BindableProperty ValueProperty = BindableProperty.Create(
         nameof(Value), typeof(string), typeof(XcavateCell),
         defaultBindingMode: BindingMode.TwoWay,
-        propertyChanged: (bindable, oldValue, newValue) => {
+        propertyChanged: (bindable, oldValue, newValue) =>
+        {
             var control = (XcavateCell)bindable;
             var newValueStr = newValue as string;
-            
-            MainThread.BeginInvokeOnMainThread(async () => {
-                if (control.RollingTicker && !string.IsNullOrEmpty(newValueStr) && 
-                    !string.Equals(newValueStr, control._previousValue, StringComparison.Ordinal)) {
+
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                if (control.RollingTicker && !string.IsNullOrEmpty(newValueStr) &&
+                    !string.Equals(newValueStr, control._previousValue, StringComparison.Ordinal))
+                {
                     await control.ApplyRollingTickerAnimation(control._previousValue, newValueStr);
-                } else {
+                }
+                else
+                {
                     control.UpdateValueDisplay(newValueStr);
                 }
                 control._previousValue = newValueStr;
@@ -41,7 +47,8 @@ public partial class XcavateCell : ContentView
     public static readonly BindableProperty CommandProperty = BindableProperty.Create(
         nameof(Command), typeof(IAsyncRelayCommand), typeof(XcavateCell),
         defaultBindingMode: BindingMode.TwoWay,
-        propertyChanging: (bindable, oldValue, newValue) => {
+        propertyChanging: (bindable, oldValue, newValue) =>
+        {
             var control = (XcavateCell)bindable;
 
             control.tapGestureRecognizer.Command = (IAsyncRelayCommand)newValue;
@@ -52,7 +59,8 @@ public partial class XcavateCell : ContentView
     public static readonly BindableProperty InfoCommandProperty = BindableProperty.Create(
         nameof(InfoCommand), typeof(IAsyncRelayCommand), typeof(XcavateCell),
         defaultBindingMode: BindingMode.TwoWay,
-        propertyChanging: (bindable, oldValue, newValue) => {
+        propertyChanging: (bindable, oldValue, newValue) =>
+        {
             var control = (XcavateCell)bindable;
 
             control.titleView.Command = (IAsyncRelayCommand)newValue;
@@ -61,19 +69,22 @@ public partial class XcavateCell : ContentView
     public static readonly BindableProperty RollingTickerProperty = BindableProperty.Create(
         nameof(RollingTicker), typeof(bool), typeof(XcavateCell),
         defaultValue: false,
-        propertyChanged: (bindable, oldValue, newValue) => {
+        propertyChanged: (bindable, oldValue, newValue) =>
+        {
             var control = (XcavateCell)bindable;
-            if ((bool)newValue && !string.IsNullOrEmpty(control._previousValue)) {
-                MainThread.BeginInvokeOnMainThread(async () => {
+            if ((bool)newValue && !string.IsNullOrEmpty(control._previousValue))
+            {
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
                     await control.ApplyRollingTickerAnimation(null, control._previousValue);
                 });
             }
         });
 
     public XcavateCell()
-	{
-		InitializeComponent();
-	}
+    {
+        InitializeComponent();
+    }
 
     public string Title
     {
@@ -114,14 +125,20 @@ public partial class XcavateCell : ContentView
         var pattern = @"(\d+)|([^0-9]+)";
         var matches = Regex.Matches(value, pattern);
 
-        foreach (Match match in matches) {
-            if (match.Groups[1].Success && !string.IsNullOrEmpty(match.Groups[1].Value)) {
-                segments.Add(new Segment {
+        foreach (Match match in matches)
+        {
+            if (match.Groups[1].Success && !string.IsNullOrEmpty(match.Groups[1].Value))
+            {
+                segments.Add(new Segment
+                {
                     IsNumerical = true,
                     Digits = match.Groups[1].Value.Select(c => c - '0').ToList()
                 });
-            } else if (match.Groups[2].Success && !string.IsNullOrEmpty(match.Groups[2].Value)) {
-                segments.Add(new Segment {
+            }
+            else if (match.Groups[2].Success && !string.IsNullOrEmpty(match.Groups[2].Value))
+            {
+                segments.Add(new Segment
+                {
                     IsNumerical = false,
                     Text = match.Groups[2].Value
                 });
@@ -133,7 +150,8 @@ public partial class XcavateCell : ContentView
 
     private Grid CreateRollingTickerView(int fromDigit, int toDigit)
     {
-        var container = new Grid {
+        var container = new Grid
+        {
             HeightRequest = DigitHeight
         };
 
@@ -150,7 +168,8 @@ public partial class XcavateCell : ContentView
 
     private Label CreateDigitLabel(int digit)
     {
-        return new Label {
+        return new Label
+        {
             Text = digit.ToString(),
             HeightRequest = DigitHeight,
             HorizontalTextAlignment = TextAlignment.Center,
@@ -164,7 +183,8 @@ public partial class XcavateCell : ContentView
 
     private Label CreateStaticTextLabel(string text)
     {
-        return new Label {
+        return new Label
+        {
             Text = text,
             HeightRequest = DigitHeight,
             VerticalTextAlignment = TextAlignment.Center,
@@ -180,9 +200,10 @@ public partial class XcavateCell : ContentView
     private void UpdateValueDisplay(string value)
     {
         if (valueContainer == null) return;
-        
+
         valueContainer.Children.Clear();
-        if (!string.IsNullOrEmpty(value)) {
+        if (!string.IsNullOrEmpty(value))
+        {
             valueContainer.Add(CreateStaticTextLabel(value));
         }
     }
@@ -198,7 +219,8 @@ public partial class XcavateCell : ContentView
         var numericalSegments = newSegments.Where(s => s.IsNumerical).ToList();
         var totalNumericalDigits = numericalSegments.Sum(s => s.Digits.Count);
 
-        if (totalNumericalDigits == 0) {
+        if (totalNumericalDigits == 0)
+        {
             UpdateValueDisplay(newValue);
             return;
         }
@@ -209,12 +231,16 @@ public partial class XcavateCell : ContentView
         var animations = new List<Task>();
         var globalDigitIndex = 0;
 
-        foreach (var segment in newSegments) {
-            if (segment.IsNumerical && segment.Digits.Count > 0) {
-                foreach (var digit in segment.Digits) {
+        foreach (var segment in newSegments)
+        {
+            if (segment.IsNumerical && segment.Digits.Count > 0)
+            {
+                foreach (var digit in segment.Digits)
+                {
                     // Get the previous digit at this position, or 0 if not available
                     var fromDigit = 0;
-                    if (globalDigitIndex < oldNumericalDigits.Count) {
+                    if (globalDigitIndex < oldNumericalDigits.Count)
+                    {
                         fromDigit = oldNumericalDigits[globalDigitIndex];
                     }
 
@@ -223,10 +249,12 @@ public partial class XcavateCell : ContentView
 
                     var delay = (totalNumericalDigits - 1 - globalDigitIndex) * StaggerDelay;
                     animations.Add(StartDelayedAnimation(rollingView, fromDigit, digit, 600, delay));
-                    
+
                     globalDigitIndex++;
                 }
-            } else if (!segment.IsNumerical) {
+            }
+            else if (!segment.IsNumerical)
+            {
                 valueContainer.Add(CreateStaticTextLabel(segment.Text));
             }
         }
