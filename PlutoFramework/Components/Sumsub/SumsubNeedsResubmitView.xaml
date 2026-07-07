@@ -51,8 +51,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <buttons:ElevatedButton x:Name="ResubmitButton"
-                                            ButtonState="GrayEnabled"
+                    <buttons:BasicGrayButton x:Name="ResubmitButton"
                                             Grid.Column="0"
                                             Text="Resubmit"/>
                 </Grid>
