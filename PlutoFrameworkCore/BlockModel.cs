@@ -41,13 +41,13 @@ namespace PlutoFramework.Model
             return blocks;
         }
 
-        private static Dictionary<EndpointEnum, ulong> blockNumbers = [];
+        private static ConcurrentDictionary<EndpointEnum, ulong> blockNumbers = new();
 
         public static Task<ulong> GetCachedBlockNumberAsync(SubstrateClientExt client, CancellationToken token)
         {
-            if (blockNumbers.ContainsKey(client.Endpoint.Key))
+            if (blockNumbers.TryGetValue(client.Endpoint.Key, out ulong blockNumber))
             {
-                return Task.FromResult(blockNumbers[client.Endpoint.Key]);
+                return Task.FromResult(blockNumber);
             }
 
             return GetLatestBlockNumberAsync(client, token);
