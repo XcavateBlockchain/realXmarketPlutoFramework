@@ -1,6 +1,6 @@
 ﻿using PlutoFramework.Constants;
 using PlutoFramework.Model.AjunaExt;
-using PlutoFrameworkCore;
+using System.Collections.Concurrent;
 
 namespace PlutoFramework.Model
 {

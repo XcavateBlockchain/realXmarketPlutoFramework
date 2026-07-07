@@ -198,6 +198,8 @@ namespace PlutoFramework
 
             DependencyService.Register<LogOutPopupViewModel>();
 
+            DependencyService.Register<CancelReservationPopupViewModel>();
+
             DependencyService.Register<OnboardingInProgressPopupViewModel>();
 
             DependencyService.Register<NoDidPopupViewModel>();

@@ -274,7 +274,7 @@
 
         <xcavate:PageBottomBarTwoButtonsView IsVisible="{Binding ShowBuyMoreButtons}"
                                              LeftCommand="{Binding CancelReservationCommand}"
-                                             LeftText="Cancel reservation"
+                                             LeftText="Cancel"
                                              RightCommand="{Binding BuyMoreCommand}"
                                              RightText="Buy more" />
 
@@ -287,5 +287,7 @@
         <assetselect:AssetSelectView />
 
         <card:BottomPillBackgroundView />
+
+        <xcavateproperty:CancelReservationPopup />
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>

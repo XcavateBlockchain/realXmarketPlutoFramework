@@ -566,6 +566,13 @@ namespace PlutoFramework.Components.XcavateProperty
         [RelayCommand]
         public async Task CancelReservationAsync()
         {
+            var cancelPopupViewModel = DependencyService.Get<CancelReservationPopupViewModel>();
+            cancelPopupViewModel.ContinueRequested = ExecuteCancelReservationAsync;
+            cancelPopupViewModel.IsVisible = true;
+        }
+
+        private async Task ExecuteCancelReservationAsync()
+        {
             var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
 
             fullPageLoadingViewModel.IsVisible = true;
