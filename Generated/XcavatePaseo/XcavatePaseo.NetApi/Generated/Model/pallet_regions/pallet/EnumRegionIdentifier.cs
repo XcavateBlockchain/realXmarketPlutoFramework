@@ -43,7 +43,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_regions.pallet
     }
     
     /// <summary>
-    /// >> 242 - Variant[pallet_regions.pallet.RegionIdentifier]
+    /// >> 243 - Variant[pallet_regions.pallet.RegionIdentifier]
     /// </summary>
     public sealed class EnumRegionIdentifier : BaseEnum<RegionIdentifier>
     {

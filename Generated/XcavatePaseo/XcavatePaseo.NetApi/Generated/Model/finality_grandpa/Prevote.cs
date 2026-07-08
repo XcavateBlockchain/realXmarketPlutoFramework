@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.finality_grandpa
     
     
     /// <summary>
-    /// >> 158 - Composite[finality_grandpa.Prevote]
+    /// >> 159 - Composite[finality_grandpa.Prevote]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class Prevote : BaseType

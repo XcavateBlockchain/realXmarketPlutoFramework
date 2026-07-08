@@ -48,6 +48,9 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Buckets", "Contributors"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>), typeof(Substrate.NetApi.Model.Types.Base.BaseTuple)));
+            _client.StorageKeyDict.Add(new System.Tuple<string, string>("Buckets", "Viewers"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.X25519PublicKey>), typeof(Substrate.NetApi.Model.Types.Base.BaseTuple)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Buckets", "Admins"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>), typeof(Substrate.NetApi.Model.Types.Base.BaseTuple)));
@@ -234,6 +237,41 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public async Task<Substrate.NetApi.Model.Types.Base.BaseTuple> Contributors(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32> key, string blockhash, CancellationToken token)
         {
             string parameters = BucketsStorage.ContributorsParams(key);
+            var result = await _client.GetStorageAsync<Substrate.NetApi.Model.Types.Base.BaseTuple>(parameters, blockhash, token);
+            return result;
+        }
+        
+        /// <summary>
+        /// >> ViewersParams
+        ///  Viewers stored on chain.
+        /// 
+        ///  Double storage map from bucket id to viewer X25519 public key to an empty tuple.
+        /// </summary>
+        public static string ViewersParams(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.X25519PublicKey> key)
+        {
+            return RequestGenerator.GetStorage("Buckets", "Viewers", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
+                        Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
+                        Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, key.Value);
+        }
+        
+        /// <summary>
+        /// >> ViewersDefault
+        /// Default value as hex string
+        /// </summary>
+        public static string ViewersDefault()
+        {
+            return "0x00";
+        }
+        
+        /// <summary>
+        /// >> Viewers
+        ///  Viewers stored on chain.
+        /// 
+        ///  Double storage map from bucket id to viewer X25519 public key to an empty tuple.
+        /// </summary>
+        public async Task<Substrate.NetApi.Model.Types.Base.BaseTuple> Viewers(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.X25519PublicKey> key, string blockhash, CancellationToken token)
+        {
+            string parameters = BucketsStorage.ViewersParams(key);
             var result = await _client.GetStorageAsync<Substrate.NetApi.Model.Types.Base.BaseTuple>(parameters, blockhash, token);
             return result;
         }
@@ -642,6 +680,32 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(manager.Encode());
             return new Method(28, "Buckets", 17, "force_add_manager", byteArray.ToArray());
         }
+        
+        /// <summary>
+        /// >> add_viewer
+        /// Contains a variant per dispatchable extrinsic that this pallet has.
+        /// </summary>
+        public static Method AddViewer(Substrate.NetApi.Model.Types.Primitive.U128 namespace_id, Substrate.NetApi.Model.Types.Primitive.U128 bucket_id, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.X25519PublicKey viewer)
+        {
+            System.Collections.Generic.List<byte> byteArray = new List<byte>();
+            byteArray.AddRange(namespace_id.Encode());
+            byteArray.AddRange(bucket_id.Encode());
+            byteArray.AddRange(viewer.Encode());
+            return new Method(28, "Buckets", 18, "add_viewer", byteArray.ToArray());
+        }
+        
+        /// <summary>
+        /// >> remove_viewer
+        /// Contains a variant per dispatchable extrinsic that this pallet has.
+        /// </summary>
+        public static Method RemoveViewer(Substrate.NetApi.Model.Types.Primitive.U128 namespace_id, Substrate.NetApi.Model.Types.Primitive.U128 bucket_id, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.X25519PublicKey viewer)
+        {
+            System.Collections.Generic.List<byte> byteArray = new List<byte>();
+            byteArray.AddRange(namespace_id.Encode());
+            byteArray.AddRange(bucket_id.Encode());
+            byteArray.AddRange(viewer.Encode());
+            return new Method(28, "Buckets", 19, "remove_viewer", byteArray.ToArray());
+        }
     }
     
     /// <summary>
@@ -855,6 +919,12 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// There are dangling contributors
         /// </summary>
         DanglingContributors,
+        
+        /// <summary>
+        /// >> DanglingViewers
+        /// There are dangling viewers
+        /// </summary>
+        DanglingViewers,
         
         /// <summary>
         /// >> DanglingAdmins

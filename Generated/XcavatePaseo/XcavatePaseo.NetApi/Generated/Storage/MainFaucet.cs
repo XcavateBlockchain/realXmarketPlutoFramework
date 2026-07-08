@@ -113,7 +113,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public Substrate.NetApi.Model.Types.Primitive.U128 DripAmount()
         {
             var result = new Substrate.NetApi.Model.Types.Primitive.U128();
-            result.Create("0x0000A0DEC5ADC9353600000000000000");
+            result.Create("0x000080647593C1333C04000000000000");
             return result;
         }
         

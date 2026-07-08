@@ -43,7 +43,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_grandpa
     }
     
     /// <summary>
-    /// >> 151 - Variant[pallet_grandpa.StoredState]
+    /// >> 152 - Variant[pallet_grandpa.StoredState]
     /// </summary>
     public sealed class EnumStoredState : BaseEnumRust<StoredState>
     {

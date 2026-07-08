@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types
     
     
     /// <summary>
-    /// >> 248 - Composite[pallet_bucket.types.NamespaceMetadataInput]
+    /// >> 249 - Composite[pallet_bucket.types.NamespaceMetadataInput]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class NamespaceMetadataInput : BaseType

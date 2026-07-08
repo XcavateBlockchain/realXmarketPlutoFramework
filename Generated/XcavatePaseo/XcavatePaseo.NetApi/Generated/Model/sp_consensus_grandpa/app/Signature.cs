@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.sp_consensus_grandpa.app
     
     
     /// <summary>
-    /// >> 159 - Composite[sp_consensus_grandpa.app.Signature]
+    /// >> 160 - Composite[sp_consensus_grandpa.app.Signature]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class Signature : BaseType

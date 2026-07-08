@@ -116,7 +116,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.frame_system.pallet
     }
     
     /// <summary>
-    /// >> 129 - Variant[frame_system.pallet.Call]
+    /// >> 130 - Variant[frame_system.pallet.Call]
     /// Contains a variant per dispatchable extrinsic that this pallet has.
     /// </summary>
     public sealed class EnumCall : BaseEnumRust<Call>

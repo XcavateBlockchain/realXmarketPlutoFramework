@@ -23,7 +23,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.xcavate_runtime
     }
     
     /// <summary>
-    /// >> 186 - Variant[xcavate_runtime.RuntimeFreezeReason]
+    /// >> 187 - Variant[xcavate_runtime.RuntimeFreezeReason]
     /// </summary>
     public sealed class EnumRuntimeFreezeReason : BaseEnum<RuntimeFreezeReason>
     {

@@ -30,7 +30,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_faucet.pallet
     }
     
     /// <summary>
-    /// >> 119 - Variant[pallet_faucet.pallet.Event]
+    /// >> 120 - Variant[pallet_faucet.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>

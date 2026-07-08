@@ -33,7 +33,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.sp_consensus_grandpa
     }
     
     /// <summary>
-    /// >> 156 - Variant[sp_consensus_grandpa.Equivocation]
+    /// >> 157 - Variant[sp_consensus_grandpa.Equivocation]
     /// </summary>
     public sealed class EnumEquivocation : BaseEnumRust<Equivocation>
     {

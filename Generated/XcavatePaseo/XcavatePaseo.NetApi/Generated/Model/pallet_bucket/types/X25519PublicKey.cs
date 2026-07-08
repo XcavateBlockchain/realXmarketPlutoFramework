@@ -13,38 +13,33 @@ using Substrate.NetApi.Model.Types.Metadata.Base;
 using System.Collections.Generic;
 
 
-namespace XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types
+namespace XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types
 {
     
     
     /// <summary>
-    /// >> 287 - Composite[pallet_nfts.types.CollectionMetadata]
+    /// >> 110 - Composite[pallet_bucket.types.X25519PublicKey]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
-    public sealed class CollectionMetadata : BaseType
+    public sealed class X25519PublicKey : BaseType
     {
         
         /// <summary>
-        /// >> deposit
+        /// >> value
         /// </summary>
-        public Substrate.NetApi.Model.Types.Primitive.U128 Deposit { get; set; }
-        /// <summary>
-        /// >> data
-        /// </summary>
-        public XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 Data { get; set; }
+        public XcavatePaseo.NetApi.Generated.Types.Base.Arr32U8 Value { get; set; }
         
         /// <inheritdoc/>
         public override string TypeName()
         {
-            return "CollectionMetadata";
+            return "X25519PublicKey";
         }
         
         /// <inheritdoc/>
         public override byte[] Encode()
         {
             var result = new List<byte>();
-            result.AddRange(Deposit.Encode());
-            result.AddRange(Data.Encode());
+            result.AddRange(Value.Encode());
             return result.ToArray();
         }
         
@@ -52,10 +47,8 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types
         public override void Decode(byte[] byteArray, ref int p)
         {
             var start = p;
-            Deposit = new Substrate.NetApi.Model.Types.Primitive.U128();
-            Deposit.Decode(byteArray, ref p);
-            Data = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1();
-            Data.Decode(byteArray, ref p);
+            Value = new XcavatePaseo.NetApi.Generated.Types.Base.Arr32U8();
+            Value.Decode(byteArray, ref p);
             var bytesLength = p - start;
             TypeSize = bytesLength;
             Bytes = new byte[bytesLength];

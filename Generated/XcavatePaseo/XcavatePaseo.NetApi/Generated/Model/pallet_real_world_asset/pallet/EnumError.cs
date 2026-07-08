@@ -90,7 +90,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
     }
     
     /// <summary>
-    /// >> 354 - Variant[pallet_real_world_asset.pallet.Error]
+    /// >> 355 - Variant[pallet_real_world_asset.pallet.Error]
     /// The `Error` enum of this pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

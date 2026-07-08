@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_grandpa
     
     
     /// <summary>
-    /// >> 152 - Composite[pallet_grandpa.StoredPendingChange]
+    /// >> 153 - Composite[pallet_grandpa.StoredPendingChange]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class StoredPendingChange : BaseType

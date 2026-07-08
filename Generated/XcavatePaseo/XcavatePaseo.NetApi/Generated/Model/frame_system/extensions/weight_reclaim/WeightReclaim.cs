@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.frame_system.extensions.weight_rec
     
     
     /// <summary>
-    /// >> 413 - Composite[frame_system.extensions.weight_reclaim.WeightReclaim]
+    /// >> 415 - Composite[frame_system.extensions.weight_reclaim.WeightReclaim]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class WeightReclaim : BaseType

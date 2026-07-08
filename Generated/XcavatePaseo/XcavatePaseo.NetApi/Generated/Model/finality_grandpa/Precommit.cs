@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.finality_grandpa
     
     
     /// <summary>
-    /// >> 163 - Composite[finality_grandpa.Precommit]
+    /// >> 164 - Composite[finality_grandpa.Precommit]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class Precommit : BaseType

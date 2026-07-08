@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.finality_grandpa
     
     
     /// <summary>
-    /// >> 162 - Composite[finality_grandpa.EquivocationT2]
+    /// >> 163 - Composite[finality_grandpa.EquivocationT2]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class EquivocationT2 : BaseType

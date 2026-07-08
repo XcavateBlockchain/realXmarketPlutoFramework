@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_
     
     
     /// <summary>
-    /// >> 356 - Composite[bounded_collections.bounded_btree_map.BoundedBTreeMapT5]
+    /// >> 357 - Composite[bounded_collections.bounded_btree_map.BoundedBTreeMapT5]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class BoundedBTreeMapT5 : BaseType

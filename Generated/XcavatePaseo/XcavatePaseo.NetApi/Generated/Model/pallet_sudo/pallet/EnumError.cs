@@ -30,7 +30,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_sudo.pallet
     }
     
     /// <summary>
-    /// >> 253 - Variant[pallet_sudo.pallet.Error]
+    /// >> 254 - Variant[pallet_sudo.pallet.Error]
     /// Error for the Sudo pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

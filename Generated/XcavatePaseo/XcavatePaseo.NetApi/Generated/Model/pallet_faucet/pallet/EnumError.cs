@@ -36,7 +36,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_faucet.pallet
     }
     
     /// <summary>
-    /// >> 399 - Variant[pallet_faucet.pallet.Error]
+    /// >> 401 - Variant[pallet_faucet.pallet.Error]
     /// The `Error` enum of this pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

@@ -18,7 +18,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types
     
     
     /// <summary>
-    /// >> 362 - Composite[pallet_marketplace.types.ShareListingDetails]
+    /// >> 363 - Composite[pallet_marketplace.types.ShareListingDetails]
     /// </summary>
     [SubstrateNodeType(TypeDefEnum.Composite)]
     public sealed class ShareListingDetails : BaseType
