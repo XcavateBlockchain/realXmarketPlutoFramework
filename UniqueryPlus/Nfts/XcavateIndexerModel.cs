@@ -1,5 +1,6 @@
 using StrawberryShake;
 using Substrate.NetApi.Model.Types.Primitive;
+using System.Globalization;
 using System.Numerics;
 using System.Text.Json;
 using UniqueryPlus.Metadata;
@@ -242,8 +243,8 @@ namespace UniqueryPlus.Nfts
 
             return new XcavatePaseoNftsPalletNft(client)
             {
-                CollectionId = new BigInteger(realEstateNft?.Collection ?? listing.CollectionId ?? 0),
-                Id = new BigInteger(realEstateNft?.Item ?? listing.ItemId ?? 0),
+                CollectionId = ToBigIntegerOrDefault(realEstateNft?.Collection, listing.CollectionId),
+                Id = ToBigIntegerOrDefault(realEstateNft?.Item, listing.ItemId),
                 Owner = realEstateNft?.AccountAddress ?? listing.RealEstateDeveloper ?? "Unknown",
                 Metadata = metadata,
                 XcavateMetadata = propertyMetadata,
@@ -256,8 +257,8 @@ namespace UniqueryPlus.Nfts
                     ListedTokens = ToUInt32(listing.ListedShareAmount),
                     UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                     AssetId = new U32(ToUInt32(listing.AssetId)),
-                    CollectionId = new U32(ToUInt32(listing.CollectionId ?? realEstateNft?.Collection)),
-                    ItemId = new U32(ToUInt32(listing.ItemId ?? realEstateNft?.Item)),
+                    CollectionId = new U32(ToUInt32FromCandidates(listing.CollectionId, realEstateNft?.Collection)),
+                    ItemId = new U32(ToUInt32FromCandidates(listing.ItemId, realEstateNft?.Item)),
                     ShareOwners = new(),
                 }
             };
@@ -340,8 +341,8 @@ namespace UniqueryPlus.Nfts
 
             return new XcavatePaseoNftsPalletNft(client)
             {
-                CollectionId = new BigInteger(property.Collection ?? listing?.CollectionId ?? realWorldAsset?.CollectionId ?? 0),
-                Id = new BigInteger(property.Item ?? listing?.ItemId ?? realWorldAsset?.ItemId ?? 0),
+                CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
+                Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
                 Owner = property.AccountAddress ?? tokenOwner,
                 Metadata = metadata,
                 XcavateMetadata = propertyMetadata,
@@ -366,8 +367,8 @@ namespace UniqueryPlus.Nfts
                         ListedTokens = ToUInt32(listing.ListedShareAmount),
                         UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                         AssetId = new U32(ToUInt32(listing.AssetId)),
-                        CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
-                        ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
+                        CollectionId = new U32(ToUInt32FromCandidates(listing.CollectionId, property.Collection, realWorldAsset?.CollectionId)),
+                        ItemId = new U32(ToUInt32FromCandidates(listing.ItemId, property.Item, realWorldAsset?.ItemId)),
                         ShareOwners = listing.ShareOwners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
                             shareOwner!.Account,
                             new ShareOwner
@@ -472,8 +473,8 @@ namespace UniqueryPlus.Nfts
 
             return new XcavatePaseoNftsPalletNft(client)
             {
-                CollectionId = new BigInteger(property.Collection ?? listing?.CollectionId ?? realWorldAsset?.CollectionId ?? 0),
-                Id = new BigInteger(property.Item ?? listing?.ItemId ?? realWorldAsset?.ItemId ?? 0),
+                CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
+                Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
                 Owner = property.AccountAddress ?? tokenOwner,
                 Metadata = metadata,
                 XcavateMetadata = propertyMetadata,
@@ -498,8 +499,8 @@ namespace UniqueryPlus.Nfts
                         ListedTokens = ToUInt32(listing.ListedShareAmount),
                         UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                         AssetId = new U32(ToUInt32(listing.AssetId)),
-                        CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
-                        ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
+                        CollectionId = new U32(ToUInt32FromCandidates(listing.CollectionId, property.Collection, realWorldAsset?.CollectionId)),
+                        ItemId = new U32(ToUInt32FromCandidates(listing.ItemId, property.Item, realWorldAsset?.ItemId)),
                         ShareOwners = listing.ShareOwners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
                             shareOwner!.Account,
                             new ShareOwner
@@ -605,8 +606,8 @@ namespace UniqueryPlus.Nfts
 
             return new XcavatePaseoNftsPalletNft(client)
             {
-                CollectionId = new BigInteger(property.Collection ?? listing?.CollectionId ?? realWorldAsset?.CollectionId ?? 0),
-                Id = new BigInteger(property.Item ?? listing?.ItemId ?? realWorldAsset?.ItemId ?? 0),
+                CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
+                Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
                 Owner = property.AccountAddress ?? tokenOwner,
                 Metadata = metadata,
                 XcavateMetadata = propertyMetadata,
@@ -631,8 +632,8 @@ namespace UniqueryPlus.Nfts
                         ListedTokens = ToUInt32(listing.ListedShareAmount),
                         UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                         AssetId = new U32(ToUInt32(listing.AssetId)),
-                        CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
-                        ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
+                        CollectionId = new U32(ToUInt32FromCandidates(listing.CollectionId, property.Collection, realWorldAsset?.CollectionId)),
+                        ItemId = new U32(ToUInt32FromCandidates(listing.ItemId, property.Item, realWorldAsset?.ItemId)),
                         ShareOwners = listing.ShareOwners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
                             shareOwner!.Account,
                             new ShareOwner
@@ -738,8 +739,8 @@ namespace UniqueryPlus.Nfts
 
             return new XcavatePaseoNftsPalletNft(client)
             {
-                CollectionId = new BigInteger(property.Collection ?? listing?.CollectionId ?? realWorldAsset?.CollectionId ?? 0),
-                Id = new BigInteger(property.Item ?? listing?.ItemId ?? realWorldAsset?.ItemId ?? 0),
+                CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
+                Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
                 Owner = property.AccountAddress ?? tokenOwner,
                 Metadata = metadata,
                 XcavateMetadata = propertyMetadata,
@@ -764,8 +765,8 @@ namespace UniqueryPlus.Nfts
                         ListedTokens = ToUInt32(listing.ListedShareAmount),
                         UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                         AssetId = new U32(ToUInt32(listing.AssetId)),
-                        CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
-                        ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
+                        CollectionId = new U32(ToUInt32FromCandidates(listing.CollectionId, property.Collection, realWorldAsset?.CollectionId)),
+                        ItemId = new U32(ToUInt32FromCandidates(listing.ItemId, property.Item, realWorldAsset?.ItemId)),
                         ShareOwners = listing.ShareOwners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
                             shareOwner!.Account,
                             new ShareOwner
@@ -871,8 +872,8 @@ namespace UniqueryPlus.Nfts
 
             return new XcavatePaseoNftsPalletNft(client)
             {
-                CollectionId = new BigInteger(property.Collection ?? listing?.CollectionId ?? realWorldAsset?.CollectionId ?? 0),
-                Id = new BigInteger(property.Item ?? listing?.ItemId ?? realWorldAsset?.ItemId ?? 0),
+                CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
+                Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
                 Owner = property.AccountAddress ?? tokenOwner,
                 Metadata = metadata,
                 XcavateMetadata = propertyMetadata,
@@ -897,8 +898,8 @@ namespace UniqueryPlus.Nfts
                         ListedTokens = ToUInt32(listing.ListedShareAmount),
                         UnclaimedTokens = ToUInt32(listing.UnclaimedShareAmount),
                         AssetId = new U32(ToUInt32(listing.AssetId)),
-                        CollectionId = new U32(ToUInt32(listing.CollectionId ?? property.Collection ?? realWorldAsset?.CollectionId)),
-                        ItemId = new U32(ToUInt32(listing.ItemId ?? property.Item ?? realWorldAsset?.ItemId)),
+                        CollectionId = new U32(ToUInt32FromCandidates(listing.CollectionId, property.Collection, realWorldAsset?.CollectionId)),
+                        ItemId = new U32(ToUInt32FromCandidates(listing.ItemId, property.Item, realWorldAsset?.ItemId)),
                         ShareOwners = listing.ShareOwners.Nodes.Where(shareOwner => shareOwner != null).Select((shareOwner) => new KeyValuePair<string, ShareOwner>(
                             shareOwner!.Account,
                             new ShareOwner
@@ -1008,16 +1009,30 @@ namespace UniqueryPlus.Nfts
 
         private static decimal ToDecimal(int? value) => value is null ? 0m : value.Value;
 
-        private static uint ToUInt32(int? value) => value is null || value < 0 ? 0u : (uint)value.Value;
+        private static uint ToUInt32(object? value) => ToUInt32Nullable(value) ?? 0u;
 
-        private static uint? ToUInt32Nullable(int? value)
+        private static uint ToUInt32FromCandidates(params object?[] values)
         {
-            if (value is null || value < 0)
+            foreach (var value in values)
+            {
+                var parsed = ToUInt32Nullable(value);
+                if (parsed.HasValue)
+                {
+                    return parsed.Value;
+                }
+            }
+
+            return 0u;
+        }
+
+        private static uint? ToUInt32Nullable(object? value)
+        {
+            if (!TryParseInt64(value, out var parsed) || parsed < 0 || parsed > uint.MaxValue)
             {
                 return null;
             }
 
-            return (uint)value.Value;
+            return (uint)parsed;
         }
 
         private static BigInteger ParseBigInteger(string? value)
@@ -1028,6 +1043,88 @@ namespace UniqueryPlus.Nfts
             }
 
             return BigInteger.TryParse(value, out var parsed) ? parsed : BigInteger.Zero;
+        }
+
+        private static BigInteger ToBigIntegerOrDefault(params object?[] values)
+        {
+            foreach (var value in values)
+            {
+                if (TryParseBigInteger(value, out var parsed))
+                {
+                    return parsed;
+                }
+            }
+
+            return BigInteger.Zero;
+        }
+
+        private static bool TryParseBigInteger(object? value, out BigInteger parsed)
+        {
+            switch (value)
+            {
+                case null:
+                    parsed = BigInteger.Zero;
+                    return false;
+                case BigInteger bigInteger:
+                    parsed = bigInteger;
+                    return true;
+                case string text when !string.IsNullOrWhiteSpace(text):
+                    return BigInteger.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed);
+                case JsonElement element when element.ValueKind == JsonValueKind.Number && element.TryGetInt64(out var number):
+                    parsed = new BigInteger(number);
+                    return true;
+                case JsonElement element when element.ValueKind == JsonValueKind.String:
+                    return BigInteger.TryParse(element.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed);
+                default:
+                    if (TryParseInt64(value, out var intValue))
+                    {
+                        parsed = new BigInteger(intValue);
+                        return true;
+                    }
+
+                    parsed = BigInteger.Zero;
+                    return false;
+            }
+        }
+
+        private static bool TryParseInt64(object? value, out long parsed)
+        {
+            switch (value)
+            {
+                case sbyte number:
+                    parsed = number;
+                    return true;
+                case byte number:
+                    parsed = number;
+                    return true;
+                case short number:
+                    parsed = number;
+                    return true;
+                case ushort number:
+                    parsed = number;
+                    return true;
+                case int number:
+                    parsed = number;
+                    return true;
+                case uint number:
+                    parsed = number;
+                    return true;
+                case long number:
+                    parsed = number;
+                    return true;
+                case ulong number when number <= long.MaxValue:
+                    parsed = (long)number;
+                    return true;
+                case string text:
+                    return long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed);
+                case JsonElement element when element.ValueKind == JsonValueKind.Number:
+                    return element.TryGetInt64(out parsed);
+                case JsonElement element when element.ValueKind == JsonValueKind.String:
+                    return long.TryParse(element.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed);
+                default:
+                    parsed = 0;
+                    return false;
+            }
         }
     }
 }
