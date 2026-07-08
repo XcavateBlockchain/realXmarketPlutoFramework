@@ -46,7 +46,7 @@ namespace PlutoFramework.Model
         {
             var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
 
-                Wallet wallet = keyring.AddFromMnemonic(mnemonics, META, Substrate.NetApi.Model.Types.KeyType.Sr25519);
+            Wallet wallet = keyring.AddFromMnemonic(mnemonics, META, Substrate.NetApi.Model.Types.KeyType.Sr25519);
 
             return wallet.Account;
         }
@@ -83,7 +83,7 @@ namespace PlutoFramework.Model
 
             if (!wallet.Unlock(password))
             {
-                throw new Exception("Wrong password");
+                return null;
             }
 
             return wallet;

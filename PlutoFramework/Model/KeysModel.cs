@@ -151,6 +151,7 @@ namespace PlutoFramework.Model
             var viewModel = DependencyService.Get<EnterPasswordPopupViewModel>();
 
             viewModel.IsVisible = true;
+            viewModel.Reason = "Unlock JSON account";
 
             string correctPassword = "";
             string publicKey = "";
@@ -168,12 +169,7 @@ namespace PlutoFramework.Model
 
                 var wallet = MnemonicsModel.ImportJson(json, password);
 
-                if (wallet is null)
-                {
-                    continue;
-                }
-
-                if (wallet.IsUnlocked)
+                if (wallet is not null && wallet.IsUnlocked)
                 {
                     correctPassword = password;
                     publicKey = wallet.Account.Value;
