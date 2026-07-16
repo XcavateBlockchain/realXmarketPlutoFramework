@@ -8,13 +8,14 @@
 
 
   <ItemGroup>
-      <PackageReference Include="Plugin.Firebase.CloudMessaging" Version="3.1.2" />
-      <PackageReference Include="jose-jwt" Version="5.2.0" />
-      <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
-      <PackageReference Include="Substrate.NET.API" Version="0.9.24-rc6" />
-      <PackageReference Include="Uniquery" Version="1.0.1" />
-      <PackageReference Include="Plutonication" Version="2.6.0" />
-      <PackageReference Include="AzeroIdResolver" Version="1.0.2" />
+    <PackageReference Include="Plugin.Firebase.CloudMessaging" Version="3.1.2" />
+    <PackageReference Include="jose-jwt" Version="5.2.0" />
+    <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
+    <PackageReference Include="Substrate.NET.API" Version="0.9.24-rc6" />
+    <PackageReference Include="Uniquery" Version="1.0.1" />
+    <PackageReference Include="Plutonication" Version="2.6.0" />
+    <PackageReference Include="AzeroIdResolver" Version="1.0.2" />
+    <PackageReference Include="XcavateProfileApiClient" Version="1.0.50" />
   </ItemGroup>
 
   <ItemGroup>

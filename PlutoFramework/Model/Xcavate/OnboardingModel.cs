@@ -11,7 +11,8 @@
         AgreePrivacy = 6,
         EnterUserDetails = 7,
         KYC = 8,
-        Finished = 9,
+        ProfileRegistration = 9,
+        Finished = 10,
     }
     public class OnboardingModel
     {

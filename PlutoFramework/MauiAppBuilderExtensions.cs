@@ -34,6 +34,7 @@ using PlutoFramework.Components.XcavateProperty;
 using PlutoFramework.Components.Xcm;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
+using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore;
 using PlutoFrameworkCore.PushNotificationServices.Core.Utils;
 using Xe.AcrylicView;
@@ -223,6 +224,8 @@ namespace PlutoFramework
             DependencyService.Register<NotWhitelistedPopupViewModel>();
 
             DependencyService.Register<UserProfileNotCreatedPopupViewModel>();
+
+            DependencyService.Register<XcavateProfileService>();
 
             DependencyService.Register<WebSignRawPopupViewModel>();
 

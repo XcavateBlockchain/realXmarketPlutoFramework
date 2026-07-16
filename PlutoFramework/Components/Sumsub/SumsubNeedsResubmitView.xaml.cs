@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Model;
-using PlutoFramework.Model.Sumsub;
 using PlutoFramework.Model.SQLite;
+using PlutoFramework.Model.Sumsub;
 
 namespace PlutoFramework.Components.Sumsub
 {
@@ -105,9 +105,9 @@ namespace PlutoFramework.Components.Sumsub
 
                 await Shell.Current.Navigation.PushAsync(
                     new SumsubWebSDKPage(
-                        accessToken ?? "",
+                        accessToken!,
                         applicant,
-                        navigation: () => Task.FromResult(0)
+                        navigation: () => { return Shell.Current.Navigation.PopToRootAsync(); }
                     )
                 );
             }
