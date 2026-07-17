@@ -10,4 +10,14 @@ public partial class MainMenuPage : PageTemplate
 
 		BindingContext = new MainMenuPageViewModel();
 	}
+
+	protected override async void OnNavigatedTo(NavigatedToEventArgs args)
+	{
+		base.OnNavigatedTo(args);
+
+		if (BindingContext is MainMenuPageViewModel viewModel)
+		{
+			await viewModel.LoadProfileAsync();
+		}
+	}
 }

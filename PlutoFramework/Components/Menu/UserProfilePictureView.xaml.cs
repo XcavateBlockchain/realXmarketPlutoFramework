@@ -1,42 +1,30 @@
-using PlutoFramework.Model.Constants;
-using PlutoFramework.Model.Xcavate;
-
 namespace PlutoFramework.Components.Menu;
 
 public partial class UserProfilePictureView : ContentView
 {
-	private bool hasProfilePicture = false;
-	public static readonly BindableProperty AddressProperty = 
-		BindableProperty.Create(nameof(Address), typeof(string), typeof(UserProfilePictureView), default(string),
-			propertyChanged: (bindable, oldValue, newValue) =>
-			{
-				var control = (UserProfilePictureView)bindable;
+    public static readonly BindableProperty ImageSourceProperty =
+        BindableProperty.Create(nameof(ImageSource), typeof(ImageSource), typeof(UserProfilePictureView), default(string),
+            propertyChanged: (bindable, oldValue, newValue) =>
+            {
+                var control = (UserProfilePictureView)bindable;
 
-				if (control.hasProfilePicture || newValue == null)
-				{
-					Console.WriteLine("Has profile picture or new value is null");
+                if (newValue is null)
+                {
                     return;
-				}
+                }
 
-				control.image.Source = ImageSource.FromUri(new Uri($"{PlutoExpress.PLUTO_EXPRESS_API_URL}/avatars/{(string)newValue}.png"));
+                control.image.Source = (ImageSource)newValue;
             });
     public UserProfilePictureView()
-	{
-		InitializeComponent();
+    {
+        InitializeComponent();
 
-		var profilePicture = XcavateFileModel.GetSavedProfilePicture();
-
-		if (profilePicture is not null) {
-			Console.WriteLine("Has profile picture");
-
-			image.Source = profilePicture;
-			hasProfilePicture = true;
-        }
+        image.Source = "xcavateprofilepicture.png";
     }
 
-	public string Address
-	{
-		get => (string)GetValue(AddressProperty);
-		set => SetValue(AddressProperty, value);
+    public ImageSource ImageSource
+    {
+        get => (ImageSource)GetValue(ImageSourceProperty);
+        set => SetValue(ImageSourceProperty, value);
     }
 }
