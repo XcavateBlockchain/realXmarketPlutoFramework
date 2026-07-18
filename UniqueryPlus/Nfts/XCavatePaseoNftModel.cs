@@ -107,7 +107,7 @@ namespace UniqueryPlus.Nfts
 
             return GetNftsNftsPalletByIdKeysAsync(client, idKeys, lastKey, token);
         }
-        internal static async Task<INftBase?> GetNftNftsPalletByIdAsync(SubstrateClientExt client, uint collectionId, uint id, CancellationToken token)
+        public static async Task<INftBase?> GetNftNftsPalletByIdAsync(SubstrateClientExt client, uint collectionId, uint id, CancellationToken token)
         {
             var keyPrefix = Utils.HexToByteArray(RealEstateNftsStorage.ItemParams(new BaseTuple<U32, U32>(new U32(collectionId), new U32(id))));
 
