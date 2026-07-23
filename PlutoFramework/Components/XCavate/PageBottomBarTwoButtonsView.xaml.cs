@@ -1,6 +1,7 @@
 namespace PlutoFramework.Components.Xcavate;
 
 using System.Windows.Input;
+using PlutoFramework.Components.Buttons;
 
 public partial class PageBottomBarTwoButtonsView : ContentView
 {
@@ -48,8 +49,11 @@ public partial class PageBottomBarTwoButtonsView : ContentView
                 }
             });
 
-    private Button? _leftButton;
-    private Button? _rightButton;
+    // The right button is typed as ElevatedButton so Command assignments go through
+    // its shadowed Command property, which swallows clicks while the button is
+    // Disabled. BasicGrayButton disables itself natively, so no shadowing is needed.
+    private BasicGrayButton? _leftButton;
+    private ElevatedButton? _rightButton;
 
     public ICommand LeftCommand
     {
