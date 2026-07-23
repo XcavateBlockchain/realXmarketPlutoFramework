@@ -168,6 +168,8 @@
 
         <xcavateproperty:PropertyMarketplaceSelectionPopupView />
 
+        <loading:FullPageLoadingView ZIndex="20" />
+
         <card:BottomPillBackgroundView />
     </AbsoluteLayout>
 </ContentPage>
