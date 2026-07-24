@@ -15,6 +15,7 @@ public partial class X25519WebView
     private WKWebView? _nativeWebView;
     private WalletMessageHandler? _messageHandler;
     private DownloadMessageHandler? _downloadMessageHandler;
+    private HeaderMessageHandler? _headerMessageHandler;
     private EventHandler? _scrolledHandler;
 
     partial void InitializePlatformBridge(WebViewHandler handler)
@@ -35,6 +36,10 @@ public partial class X25519WebView
         _downloadMessageHandler?.Dispose();
         _downloadMessageHandler = new DownloadMessageHandler(this);
         platformView.Configuration.UserContentController.AddScriptMessageHandler(_downloadMessageHandler, DownloadInterfaceName);
+
+        _headerMessageHandler?.Dispose();
+        _headerMessageHandler = new HeaderMessageHandler(this);
+        platformView.Configuration.UserContentController.AddScriptMessageHandler(_headerMessageHandler, HeaderInterfaceName);
     }
 
     partial void DisconnectPlatformBridge()
@@ -58,6 +63,13 @@ public partial class X25519WebView
             _nativeWebView.Configuration.UserContentController.RemoveScriptMessageHandler(DownloadInterfaceName);
             _downloadMessageHandler.Dispose();
             _downloadMessageHandler = null;
+        }
+
+        if (_headerMessageHandler is not null)
+        {
+            _nativeWebView.Configuration.UserContentController.RemoveScriptMessageHandler(HeaderInterfaceName);
+            _headerMessageHandler.Dispose();
+            _headerMessageHandler = null;
         }
 
         _nativeWebView = null;
@@ -287,6 +299,36 @@ public partial class X25519WebView
             if (_owner.TryGetTarget(out var view))
             {
                 view.EnqueueWalletRequest(raw);
+            }
+        }
+    }
+
+    private sealed class HeaderMessageHandler : NSObject, IWKScriptMessageHandler
+    {
+        private readonly WeakReference<X25519WebView> _owner;
+
+        public HeaderMessageHandler(X25519WebView owner)
+        {
+            _owner = new(owner);
+        }
+
+        public void DidReceiveScriptMessage(WKUserContentController userContentController, WKScriptMessage message)
+        {
+            if (!string.Equals(message.Name, HeaderInterfaceName, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            var raw = message.Body?.ToString();
+
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return;
+            }
+
+            if (_owner.TryGetTarget(out var view))
+            {
+                view.EnqueueHeaderUpdate(raw);
             }
         }
     }

@@ -25,6 +25,7 @@ public partial class X25519WebView
     private Android.Webkit.WebView? _nativeWebView;
     private WalletJavascriptInterface? _javascriptInterface;
     private DownloadJavascriptInterface? _downloadInterface;
+    private HeaderJavascriptInterface? _headerInterface;
     private NativeDownloadListener? _downloadListener;
     private ScrollChangedListener? _scrollListener;
 
@@ -46,6 +47,10 @@ public partial class X25519WebView
         _downloadInterface?.Dispose();
         _downloadInterface = new DownloadJavascriptInterface(this);
         platformView.AddJavascriptInterface(_downloadInterface, DownloadInterfaceName);
+
+        _headerInterface?.Dispose();
+        _headerInterface = new HeaderJavascriptInterface(this);
+        platformView.AddJavascriptInterface(_headerInterface, HeaderInterfaceName);
 
         // Fallback for downloads the JS anchor hook can't see (e.g. a full-page
         // navigation to a Content-Disposition: attachment response).
@@ -90,6 +95,7 @@ public partial class X25519WebView
                 _nativeWebView.SetDownloadListener(null);
                 _nativeWebView.RemoveJavascriptInterface(ScriptInterfaceName);
                 _nativeWebView.RemoveJavascriptInterface(DownloadInterfaceName);
+                _nativeWebView.RemoveJavascriptInterface(HeaderInterfaceName);
             }
             catch
             {
@@ -101,6 +107,8 @@ public partial class X25519WebView
         _javascriptInterface = null;
         _downloadInterface?.Dispose();
         _downloadInterface = null;
+        _headerInterface?.Dispose();
+        _headerInterface = null;
         _downloadListener?.Dispose();
         _downloadListener = null;
         _nativeWebView = null;
@@ -496,6 +504,26 @@ public partial class X25519WebView
             if (_owner.TryGetTarget(out var view))
             {
                 view.EnqueueWalletRequest(json);
+            }
+        }
+    }
+
+    private sealed class HeaderJavascriptInterface : Java.Lang.Object
+    {
+        private readonly WeakReference<X25519WebView> _owner;
+
+        public HeaderJavascriptInterface(X25519WebView owner)
+        {
+            _owner = new(owner);
+        }
+
+        [JavascriptInterface]
+        [Export("updateHeader")]
+        public void UpdateHeader(string json)
+        {
+            if (_owner.TryGetTarget(out var view))
+            {
+                view.EnqueueHeaderUpdate(json);
             }
         }
     }

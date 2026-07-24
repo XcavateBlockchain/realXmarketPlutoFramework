@@ -1,3 +1,4 @@
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Handlers;
 using PlutoFramework.Components.WebView;
 using PlutoFramework.Model;
@@ -16,6 +17,7 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 {
     private const string ScriptInterfaceName = "mauiWallet";
     private const string DownloadInterfaceName = "mauiDownloads";
+    private const string HeaderInterfaceName = "mauiHeader";
 
     private uint? tabId = null;
 
@@ -68,6 +70,194 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         _ = InjectProviderAsync();
         _ = InjectX25519KeyAsync();
         _ = InjectDownloadInterceptorAsync();
+        _ = InjectHeaderBridgeAsync();
+    }
+
+    /// <summary>
+    /// Raised whenever the hosted page's header (title + action buttons) changes,
+    /// including on in-page SPA navigation. Always dispatched on the main thread so
+    /// subscribers can safely update UI. See <see cref="BuildHeaderBridgeScript"/>.
+    /// </summary>
+    internal event EventHandler<WebPageHeader>? HeaderChanged;
+
+    private Task InjectHeaderBridgeAsync()
+        => DispatchScriptSafeAsync(BuildHeaderBridgeScript());
+
+    /// <summary>
+    /// Called from the platform bridge (Android JavascriptInterface / iOS
+    /// WKScriptMessageHandler) when the injected header script reports the current
+    /// page header as JSON.
+    /// </summary>
+    internal void EnqueueHeaderUpdate(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return;
+        }
+
+        var header = TryParseHeader(json);
+
+        if (header is null)
+        {
+            return;
+        }
+
+        // The bridge callback arrives off the UI thread on Android — marshal so
+        // subscribers can touch the native navigation bar directly.
+        MainThread.BeginInvokeOnMainThread(() => HeaderChanged?.Invoke(this, header));
+    }
+
+    /// <summary>
+    /// Forwards a tap on a mirrored navigation-bar icon back to the corresponding
+    /// action button inside the web header.
+    /// </summary>
+    internal Task InvokeHeaderActionAsync(int index)
+        => DispatchScriptSafeAsync($"if (window.__plutoHeaderClick) {{ window.__plutoHeaderClick({index}); }}");
+
+    private static WebPageHeader? TryParseHeader(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var present = root.TryGetProperty("present", out var presentElement)
+                && presentElement.ValueKind == JsonValueKind.True;
+
+            var title = root.TryGetProperty("title", out var titleElement)
+                ? titleElement.GetString() ?? string.Empty
+                : string.Empty;
+
+            var subtitle = root.TryGetProperty("subtitle", out var subtitleElement)
+                ? subtitleElement.GetString()
+                : null;
+
+            var buttons = new List<string>();
+
+            if (root.TryGetProperty("buttons", out var buttonsElement)
+                && buttonsElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in buttonsElement.EnumerateArray())
+                {
+                    var label = item.GetString();
+
+                    if (!string.IsNullOrWhiteSpace(label))
+                    {
+                        buttons.Add(label.Trim());
+                    }
+                }
+            }
+
+            return new WebPageHeader(present, title, subtitle, buttons);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[PlutoHeader] Failed to parse header payload: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// JavaScript that mirrors the page-level header (see the Vue <c>page-header</c>
+    /// component: a <c>.page-header__title</c> plus a <c>.page-header__actions</c>
+    /// group) into the native navigation bar. It hides the in-page header, reports
+    /// the title and the visible text of each action button to native, re-reports on
+    /// SPA navigation via a MutationObserver, and exposes <c>__plutoHeaderClick</c>
+    /// so a native icon tap triggers the matching web button. The transport is
+    /// resolved at call time so the same script works over the Android
+    /// JavascriptInterface and the iOS WKScriptMessageHandler.
+    /// </summary>
+    private static string BuildHeaderBridgeScript()
+    {
+        return @"(function () {
+    if (window.__plutoHeaderBridgeInstalled) { return; }
+    window.__plutoHeaderBridgeInstalled = true;
+
+    // Hide the in-page header — its title and actions are mirrored into the native
+    // TopNavigationBar. It stays in the DOM so we can still read it and forward taps
+    // to its buttons.
+    var style = document.createElement('style');
+    style.textContent = '.page-header { display: none !important; }';
+    (document.head || document.documentElement).appendChild(style);
+
+    function postToNative(payload) {
+        var json = JSON.stringify(payload);
+        try {
+            if (window.mauiHeader && window.mauiHeader.updateHeader) {
+                window.mauiHeader.updateHeader(json);
+            } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.mauiHeader) {
+                window.webkit.messageHandlers.mauiHeader.postMessage(json);
+            }
+        } catch (err) {
+            console.error('Pluto header post failed', err);
+        }
+    }
+
+    function actionButtons() {
+        var header = document.querySelector('.page-header');
+        if (!header) { return []; }
+        var actions = header.querySelector('.page-header__actions');
+        if (!actions) { return []; }
+        var nodes = actions.querySelectorAll('button, a, .btn');
+        var result = [];
+        for (var i = 0; i < nodes.length; i++) {
+            if (result.indexOf(nodes[i]) === -1) { result.push(nodes[i]); }
+        }
+        return result;
+    }
+
+    function labelFor(el) {
+        var text = (el.textContent || '').trim();
+        if (text) { return text; }
+        return el.getAttribute('aria-label') || el.getAttribute('title') || '';
+    }
+
+    // Invoked from native when a mirrored button is tapped in the nav bar.
+    window.__plutoHeaderClick = function (index) {
+        var buttons = actionButtons();
+        if (index >= 0 && index < buttons.length) {
+            buttons[index].click();
+        }
+    };
+
+    var lastJson = null;
+
+    function extract() {
+        var header = document.querySelector('.page-header');
+        var payload;
+        if (!header) {
+            payload = { present: false, title: '', subtitle: '', buttons: [] };
+        } else {
+            var titleEl = header.querySelector('.page-header__title');
+            var subtitleEl = header.querySelector('.page-header__subtitle');
+            var buttons = actionButtons().map(labelFor).filter(function (t) { return t.length > 0; });
+            payload = {
+                present: true,
+                title: titleEl ? (titleEl.textContent || '').trim() : '',
+                subtitle: subtitleEl ? (subtitleEl.textContent || '').trim() : '',
+                buttons: buttons
+            };
+        }
+
+        var json = JSON.stringify(payload);
+        if (json !== lastJson) {
+            lastJson = json;
+            postToNative(payload);
+        }
+    }
+
+    var scheduled = false;
+    function scheduleExtract() {
+        if (scheduled) { return; }
+        scheduled = true;
+        setTimeout(function () { scheduled = false; extract(); }, 60);
+    }
+
+    var observer = new MutationObserver(scheduleExtract);
+    observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+
+    extract();
+})();";
     }
 
     internal void EnqueueWalletRequest(string requestJson)
@@ -589,3 +779,13 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     private static string Base64UrlEncode(byte[] bytes)
         => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 }
+
+/// <summary>
+/// A snapshot of the hosted web page's header, mirrored from the in-page
+/// <c>page-header</c> component into the native navigation bar.
+/// </summary>
+/// <param name="Present">Whether the current page renders a header at all.</param>
+/// <param name="Title">The header title text.</param>
+/// <param name="Subtitle">The optional header subtitle text.</param>
+/// <param name="Buttons">The visible labels of the header's action buttons, in DOM order.</param>
+public sealed record WebPageHeader(bool Present, string Title, string? Subtitle, IReadOnlyList<string> Buttons);
