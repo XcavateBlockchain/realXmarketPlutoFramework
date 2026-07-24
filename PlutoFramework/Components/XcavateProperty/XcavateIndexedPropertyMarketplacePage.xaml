@@ -16,6 +16,7 @@
              HideSoftInputOnTapped="True"
              xmlns:extrinsic="clr-namespace:PlutoFramework.Components.Extrinsic"
              xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
+             xmlns:animations="clr-namespace:PlutoFramework.Components.Animations"
              xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
              xmlns:transactionrequest="clr-namespace:PlutoFramework.Components.TransactionRequest"
              Shell.PresentationMode="NotAnimated"
@@ -25,7 +26,12 @@
 
         <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
             Command="{Binding RefreshCommand}"
+            RefreshColor="Transparent"
             IsRefreshing="{Binding IsRefreshing}">
+
+            <RefreshView.Behaviors>
+                <animations:PullProgressBehavior x:Name="marketplacePullProgress" />
+            </RefreshView.Behaviors>
 
             <CollectionView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
                     ItemSizingStrategy="MeasureAllItems"
@@ -151,6 +157,12 @@
             </CollectionView>
 
         </RefreshView>
+
+        <animations:ParticleStreamView AbsoluteLayout.LayoutBounds="0, 0, 1, 100"
+                                       AbsoluteLayout.LayoutFlags="XProportional,WidthProportional"
+                                       ParticleColor="{StaticResource Primary}"
+                                       Playing="{Binding IsRefreshing}"
+                                       PullProgress="{Binding Source={x:Reference marketplacePullProgress}, Path=Progress}" />
 
         <extrinsic:ExtrinsicStatusStackLayout />
 

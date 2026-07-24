@@ -15,6 +15,7 @@ namespace PlutoFramework.Components.Messages;
 public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 {
     private const string ScriptInterfaceName = "mauiWallet";
+    private const string DownloadInterfaceName = "mauiDownloads";
 
     private uint? tabId = null;
 
@@ -66,6 +67,7 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 
         _ = InjectProviderAsync();
         _ = InjectX25519KeyAsync();
+        _ = InjectDownloadInterceptorAsync();
     }
 
     internal void EnqueueWalletRequest(string requestJson)
@@ -98,6 +100,217 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
             var fallbackJson = JsonSerializer.Serialize(fallback, PolkadotExtensionWalletBridge.SerializerOptions);
             await DispatchScriptSafeAsync($"window.__mauiWalletDeliver({fallbackJson});").ConfigureAwait(false);
         }
+    }
+
+    private Task InjectDownloadInterceptorAsync()
+        => DispatchScriptSafeAsync(BuildDownloadInterceptorScript());
+
+    /// <summary>
+    /// Called from the platform bridge when the injected interceptor has read a
+    /// file (blob:, data: or same-origin https:) into base64 and handed it back.
+    /// </summary>
+    internal void EnqueueDownloadRequest(string requestJson)
+    {
+        if (string.IsNullOrWhiteSpace(requestJson))
+        {
+            return;
+        }
+
+        _ = ProcessDownloadRequestAsync(requestJson);
+    }
+
+    private async Task ProcessDownloadRequestAsync(string requestJson)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(requestJson);
+            var root = doc.RootElement;
+
+            var base64 = root.TryGetProperty("base64", out var base64Element)
+                ? base64Element.GetString()
+                : null;
+
+            if (string.IsNullOrEmpty(base64))
+            {
+                return;
+            }
+
+            var suggestedName = root.TryGetProperty("filename", out var nameElement)
+                ? nameElement.GetString()
+                : null;
+
+            var mimeType = root.TryGetProperty("mime", out var mimeElement)
+                ? mimeElement.GetString()
+                : null;
+
+            var fileName = SanitizeFileName(suggestedName, mimeType);
+            var bytes = Convert.FromBase64String(base64);
+
+            await SaveDownloadedFileAsync(fileName, mimeType, bytes).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[PlutoDownload] Failed to process download: {ex.Message}");
+        }
+    }
+
+    private static string SanitizeFileName(string? suggestedName, string? mimeType)
+    {
+        var name = suggestedName?.Trim();
+
+        if (!string.IsNullOrEmpty(name))
+        {
+            // Keep only the final path segment and strip characters invalid on disk.
+            name = name.Replace('\\', '/');
+            name = name[(name.LastIndexOf('/') + 1)..];
+
+            foreach (var invalid in Path.GetInvalidFileNameChars())
+            {
+                name = name.Replace(invalid, '_');
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            name = $"download_{DateTime.Now:yyyyMMdd_HHmmss}{GuessExtension(mimeType)}";
+        }
+
+        return name;
+    }
+
+    private static string GuessExtension(string? mimeType)
+    {
+        return mimeType?.Split(';')[0].Trim().ToLowerInvariant() switch
+        {
+            "application/pdf" => ".pdf",
+            "image/png" => ".png",
+            "image/jpeg" => ".jpg",
+            "image/gif" => ".gif",
+            "image/webp" => ".webp",
+            "image/svg+xml" => ".svg",
+            "text/plain" => ".txt",
+            "text/csv" => ".csv",
+            "application/json" => ".json",
+            "application/zip" => ".zip",
+            "application/msword" => ".doc",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => ".docx",
+            "application/vnd.ms-excel" => ".xls",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => ".xlsx",
+            _ => string.Empty
+        };
+    }
+
+    /// <summary>
+    /// JavaScript that intercepts download triggers and streams the bytes back to
+    /// native. Handles blob:, data: and same-origin https: uniformly by fetching
+    /// the URL into a Blob and base64-encoding it. Only acts on genuine downloads
+    /// (an &lt;a download&gt; element or a blob:/data: href) so normal navigation is
+    /// left untouched. The transport is resolved at call time so the same script
+    /// works over the Android JavascriptInterface and the iOS WKScriptMessageHandler.
+    /// </summary>
+    private static string BuildDownloadInterceptorScript()
+    {
+        return @"(function () {
+    if (window.__plutoDownloadInterceptorInstalled) { return; }
+    window.__plutoDownloadInterceptorInstalled = true;
+
+    function postToNative(payload) {
+        var json = JSON.stringify(payload);
+        try {
+            if (window.mauiDownloads && window.mauiDownloads.saveFile) {
+                window.mauiDownloads.saveFile(json);
+            } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.mauiDownloads) {
+                window.webkit.messageHandlers.mauiDownloads.postMessage(json);
+            } else {
+                console.warn('Pluto native download bridge is unavailable.');
+            }
+        } catch (err) {
+            console.error('Pluto download post failed', err);
+        }
+    }
+
+    function deriveName(url, suggested) {
+        if (suggested) { return suggested; }
+        try {
+            var parsed = new URL(url, window.location.href);
+            var last = parsed.pathname.split('/').filter(Boolean).pop();
+            if (last) { return decodeURIComponent(last); }
+        } catch (err) { }
+        return 'download';
+    }
+
+    function saveUrl(url, suggestedName) {
+        if (!url) { return; }
+        fetch(url).then(function (response) {
+            return response.blob();
+        }).then(function (blob) {
+            return new Promise(function (resolve, reject) {
+                var reader = new FileReader();
+                reader.onloadend = function () {
+                    var result = reader.result || '';
+                    var comma = result.indexOf(',');
+                    resolve({ base64: comma >= 0 ? result.slice(comma + 1) : result, type: blob.type });
+                };
+                reader.onerror = function () { reject(reader.error); };
+                reader.readAsDataURL(blob);
+            });
+        }).then(function (data) {
+            postToNative({ filename: deriveName(url, suggestedName), mime: data.type, base64: data.base64 });
+        }).catch(function (err) {
+            console.error('Pluto download failed for ' + url, err);
+        });
+    }
+
+    // Exposed so the native side can route a download it detected (e.g. Android's
+    // DownloadListener firing on a blob: URL) back through the same fetch path.
+    window.__plutoDownloadUrl = saveUrl;
+
+    function isDownloadAnchor(anchor) {
+        if (!anchor || anchor.tagName !== 'A') { return false; }
+        if (anchor.hasAttribute('download')) { return true; }
+        var href = anchor.getAttribute('href') || '';
+        return href.indexOf('blob:') === 0 || href.indexOf('data:') === 0;
+    }
+
+    function handleAnchor(anchor) {
+        var name = anchor.getAttribute('download');
+        saveUrl(anchor.href, name && name.length ? name : null);
+    }
+
+    // Catches anchors that live in the DOM.
+    document.addEventListener('click', function (event) {
+        var node = event.target;
+        while (node && node !== document) {
+            if (node.tagName === 'A' && isDownloadAnchor(node)) {
+                event.preventDefault();
+                event.stopPropagation();
+                handleAnchor(node);
+                return;
+            }
+            node = node.parentNode;
+        }
+    }, true);
+
+    // Catches detached anchors: createElement('a'); a.download = ...; a.click();
+    var originalClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () {
+        if (isDownloadAnchor(this)) {
+            handleAnchor(this);
+            return;
+        }
+        return originalClick.apply(this, arguments);
+    };
+
+    // Catches window.open('blob:...') / window.open('data:...').
+    var originalOpen = window.open;
+    window.open = function (url) {
+        if (typeof url === 'string' && (url.indexOf('blob:') === 0 || url.indexOf('data:') === 0)) {
+            saveUrl(url, null);
+            return null;
+        }
+        return originalOpen.apply(this, arguments);
+    };
+})();";
     }
 
     private Task InjectProviderAsync()
@@ -293,6 +506,8 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     partial void DisconnectPlatformBridge();
 
     private partial Task DispatchScriptAsync(string script);
+
+    private partial Task SaveDownloadedFileAsync(string fileName, string? mimeType, byte[] data);
 
     internal void RaiseScrolled(double x, double y)
     {

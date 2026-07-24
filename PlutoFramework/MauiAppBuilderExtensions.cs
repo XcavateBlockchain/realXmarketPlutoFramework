@@ -101,6 +101,26 @@ namespace PlutoFramework
             });
 
 
+            // Opt-in via RefreshColor="Transparent". That alone already clears the spinner on
+            // iOS, but on Android the CircleImageView still renders regardless of colour, so
+            // it has to be parked off-screen instead.
+            Microsoft.Maui.Handlers.RefreshViewHandler.Mapper.AppendToMapping("HideNativeRefreshSpinner", (handler, view) =>
+            {
+#if ANDROID
+                if (view is RefreshView refreshView && refreshView.RefreshColor?.Alpha == 0f)
+                {
+                    // setProgressViewOffset leaves mTotalDragDistance at its default, so the
+                    // pull threshold is unchanged - only the circle's resting positions move.
+                    handler.PlatformView.SetProgressViewOffset(false, -500, -400);
+
+                    handler.PlatformView.SetColorSchemeColors(Android.Graphics.Color.Transparent.ToArgb());
+                    handler.PlatformView.SetProgressBackgroundColorSchemeColor(
+                        Android.Graphics.Color.Transparent.ToArgb());
+                }
+#endif
+            });
+
+
             AssetsModel.DatabaseSaver = new BalancesDatabaseSaver();
 
             PushNotificationRegistrar.RegisterPushNotificationServices(builder.Services);
