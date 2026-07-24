@@ -1,9 +1,11 @@
 #if IOS || MACCATALYST
 using System;
 using System.Threading.Tasks;
+using CommunityToolkit.Maui.Alerts;
 using Foundation;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Handlers;
+using Microsoft.Maui.Storage;
 using WebKit;
 
 namespace PlutoFramework.Components.Messages;
@@ -117,7 +119,37 @@ public partial class X25519WebView
         return tcs.Task;
     }
 
-    private partial async Task SaveDownloadedFileAsync(string fileName, string? mimeType, byte[] data)
+    private partial void OnDownloadStarted(string? id, string fileName)
+    {
+        _ = MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                await Toast.Make($"Downloading {fileName}…").Show();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Toast failed: {ex.Message}");
+            }
+        });
+    }
+
+    private partial void OnDownloadFailed(string? id, string fileName)
+    {
+        _ = MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                await Toast.Make($"Download failed: {fileName}").Show();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Toast failed: {ex.Message}");
+            }
+        });
+    }
+
+    private partial async Task SaveDownloadedFileAsync(string? id, string fileName, string? mimeType, byte[] data)
     {
         try
         {
@@ -131,11 +163,12 @@ public partial class X25519WebView
 
             await File.WriteAllBytesAsync(targetPath, data).ConfigureAwait(false);
 
-            await ShowSavedFeedbackAsync(fileName).ConfigureAwait(false);
+            await ShowSavedFeedbackAsync(fileName, targetPath).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlutoDownload] iOS save failed: {ex.Message}");
+            OnDownloadFailed(id, fileName);
         }
     }
 
@@ -160,20 +193,42 @@ public partial class X25519WebView
         }
     }
 
-    private static Task ShowSavedFeedbackAsync(string fileName)
+    private static Task ShowSavedFeedbackAsync(string fileName, string filePath)
     {
         return MainThread.InvokeOnMainThreadAsync(async () =>
         {
             try
             {
-                var toast = CommunityToolkit.Maui.Alerts.Toast.Make($"Saved to Files: {fileName}");
-                await toast.Show();
+                // Snackbar with an "Open" action — the iOS equivalent of tapping a
+                // completed-download notification to open the file.
+                var snackbar = Snackbar.Make(
+                    $"Saved to Files: {fileName}",
+                    action: () => _ = OpenFileAsync(filePath),
+                    actionButtonText: "Open",
+                    duration: TimeSpan.FromSeconds(5));
+
+                await snackbar.Show();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Toast failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Snackbar failed: {ex.Message}");
             }
         });
+    }
+
+    private static async Task OpenFileAsync(string filePath)
+    {
+        try
+        {
+            await Launcher.Default.OpenAsync(new OpenFileRequest
+            {
+                File = new ReadOnlyFile(filePath)
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Open file failed: {ex.Message}");
+        }
     }
 
     private sealed class DownloadMessageHandler : NSObject, IWKScriptMessageHandler

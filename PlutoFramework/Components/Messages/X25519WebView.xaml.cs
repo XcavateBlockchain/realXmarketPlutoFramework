@@ -126,14 +126,13 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
             using var doc = JsonDocument.Parse(requestJson);
             var root = doc.RootElement;
 
-            var base64 = root.TryGetProperty("base64", out var base64Element)
-                ? base64Element.GetString()
-                : null;
+            var type = root.TryGetProperty("type", out var typeElement)
+                ? typeElement.GetString()
+                : "complete";
 
-            if (string.IsNullOrEmpty(base64))
-            {
-                return;
-            }
+            var id = root.TryGetProperty("id", out var idElement)
+                ? idElement.GetString()
+                : null;
 
             var suggestedName = root.TryGetProperty("filename", out var nameElement)
                 ? nameElement.GetString()
@@ -144,9 +143,31 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
                 : null;
 
             var fileName = SanitizeFileName(suggestedName, mimeType);
-            var bytes = Convert.FromBase64String(base64);
 
-            await SaveDownloadedFileAsync(fileName, mimeType, bytes).ConfigureAwait(false);
+            switch (type)
+            {
+                case "start":
+                    OnDownloadStarted(id, fileName);
+                    return;
+
+                case "error":
+                    OnDownloadFailed(id, fileName);
+                    return;
+
+                default:
+                    var base64 = root.TryGetProperty("base64", out var base64Element)
+                        ? base64Element.GetString()
+                        : null;
+
+                    if (string.IsNullOrEmpty(base64))
+                    {
+                        return;
+                    }
+
+                    var bytes = Convert.FromBase64String(base64);
+                    await SaveDownloadedFileAsync(id, fileName, mimeType, bytes).ConfigureAwait(false);
+                    return;
+            }
         }
         catch (Exception ex)
         {
@@ -241,6 +262,9 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 
     function saveUrl(url, suggestedName) {
         if (!url) { return; }
+        var id = 'dl-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+        var name = deriveName(url, suggestedName);
+        postToNative({ type: 'start', id: id, filename: name });
         fetch(url).then(function (response) {
             return response.blob();
         }).then(function (blob) {
@@ -255,8 +279,9 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
                 reader.readAsDataURL(blob);
             });
         }).then(function (data) {
-            postToNative({ filename: deriveName(url, suggestedName), mime: data.type, base64: data.base64 });
+            postToNative({ type: 'complete', id: id, filename: name, mime: data.type, base64: data.base64 });
         }).catch(function (err) {
+            postToNative({ type: 'error', id: id, filename: name });
             console.error('Pluto download failed for ' + url, err);
         });
     }
@@ -507,7 +532,11 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 
     private partial Task DispatchScriptAsync(string script);
 
-    private partial Task SaveDownloadedFileAsync(string fileName, string? mimeType, byte[] data);
+    private partial void OnDownloadStarted(string? id, string fileName);
+
+    private partial void OnDownloadFailed(string? id, string fileName);
+
+    private partial Task SaveDownloadedFileAsync(string? id, string fileName, string? mimeType, byte[] data);
 
     internal void RaiseScrolled(double x, double y)
     {

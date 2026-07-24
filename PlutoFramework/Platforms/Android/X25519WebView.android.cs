@@ -14,7 +14,13 @@ namespace PlutoFramework.Components.Messages;
 
 public partial class X25519WebView
 {
+    private const string DownloadChannelId = "downloads";
+
     private static int _downloadNotificationId = 5000;
+
+    // Maps a JS-generated download id to its Android notification id so the
+    // "Downloading…" notification can be updated in place to "Download complete".
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, int> _downloadNotifications = new();
 
     private Android.Webkit.WebView? _nativeWebView;
     private WalletJavascriptInterface? _javascriptInterface;
@@ -45,6 +51,32 @@ public partial class X25519WebView
         // navigation to a Content-Disposition: attachment response).
         _downloadListener = new NativeDownloadListener(this);
         platformView.SetDownloadListener(_downloadListener);
+
+        // Ask for POST_NOTIFICATIONS up front (Android 13+) so download progress /
+        // completion notifications can actually be shown later.
+        _ = EnsureNotificationPermissionAsync();
+    }
+
+    private static async Task EnsureNotificationPermissionAsync()
+    {
+        try
+        {
+            if (!OperatingSystem.IsAndroidVersionAtLeast(33))
+            {
+                return;
+            }
+
+            var status = await Permissions.CheckStatusAsync<PlutoFramework.Platforms.Android.NotificationPermission>();
+
+            if (status != PermissionStatus.Granted)
+            {
+                await Permissions.RequestAsync<PlutoFramework.Platforms.Android.NotificationPermission>();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Notification permission request failed: {ex.Message}");
+        }
     }
 
     partial void DisconnectPlatformBridge()
@@ -124,8 +156,38 @@ public partial class X25519WebView
         return tcs.Task;
     }
 
-    private partial async Task SaveDownloadedFileAsync(string fileName, string? mimeType, byte[] data)
+    private partial void OnDownloadStarted(string? id, string fileName)
     {
+        ShowToast($"Downloading {fileName}…");
+        ShowProgressNotification(global::Android.App.Application.Context, ResolveNotificationId(id), fileName);
+    }
+
+    private partial void OnDownloadFailed(string? id, string fileName)
+    {
+        var notificationId = ResolveNotificationId(id);
+
+        if (id is not null)
+        {
+            _downloadNotifications.TryRemove(id, out _);
+        }
+
+        ShowFailedNotification(global::Android.App.Application.Context, notificationId, fileName);
+    }
+
+    private static int ResolveNotificationId(string? id)
+    {
+        if (id is null)
+        {
+            return System.Threading.Interlocked.Increment(ref _downloadNotificationId);
+        }
+
+        return _downloadNotifications.GetOrAdd(id, _ => System.Threading.Interlocked.Increment(ref _downloadNotificationId));
+    }
+
+    private partial async Task SaveDownloadedFileAsync(string? id, string fileName, string? mimeType, byte[] data)
+    {
+        var notificationId = ResolveNotificationId(id);
+
         try
         {
             var context = global::Android.App.Application.Context;
@@ -159,12 +221,19 @@ public partial class X25519WebView
             values.Put(MediaStore.IMediaColumns.IsPending, 0);
             resolver.Update(itemUri, values, null, null);
 
-            ShowDownloadNotification(context, fileName, mime, itemUri);
+            ShowDownloadNotification(context, notificationId, fileName, mime, itemUri);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Android save failed: {ex.Message}");
-            ShowToast($"Download failed: {fileName}");
+            ShowFailedNotification(global::Android.App.Application.Context, notificationId, fileName);
+        }
+        finally
+        {
+            if (id is not null)
+            {
+                _downloadNotifications.TryRemove(id, out _);
+            }
         }
     }
 
@@ -227,21 +296,65 @@ public partial class X25519WebView
             $"if (window.__plutoDownloadUrl) {{ window.__plutoDownloadUrl({urlLiteral}, {nameLiteral}); }}");
     }
 
-    private static void ShowDownloadNotification(Context context, string fileName, string mimeType, global::Android.Net.Uri fileUri)
+    private static void EnsureDownloadChannel(NotificationManager manager)
+    {
+        if (global::Android.OS.Build.VERSION.SdkInt >= global::Android.OS.BuildVersionCodes.O)
+        {
+            var channel = new NotificationChannel(DownloadChannelId, "Downloads", NotificationImportance.Default);
+            manager.CreateNotificationChannel(channel);
+        }
+    }
+
+    private static void ShowProgressNotification(Context context, int notificationId, string fileName)
     {
         try
         {
-            const string channelId = "downloads";
-
             if (context.GetSystemService(Context.NotificationService) is not NotificationManager manager)
             {
                 return;
             }
 
-            if (global::Android.OS.Build.VERSION.SdkInt >= global::Android.OS.BuildVersionCodes.O)
+            EnsureDownloadChannel(manager);
+
+            if (!manager.AreNotificationsEnabled())
             {
-                var channel = new NotificationChannel(channelId, "Downloads", NotificationImportance.Default);
-                manager.CreateNotificationChannel(channel);
+                System.Diagnostics.Debug.WriteLine("[PlutoDownload] Notifications disabled — skipping progress notification.");
+                return;
+            }
+
+            var notification = new NotificationCompat.Builder(context, DownloadChannelId)
+                .SetContentTitle("Downloading")
+                .SetContentText(fileName)
+                .SetSmallIcon(global::Android.Resource.Drawable.StatSysDownload)
+                .SetProgress(0, 0, true)
+                .SetOngoing(true)
+                .SetAutoCancel(false)
+                .Build();
+
+            manager.Notify(notificationId, notification);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Progress notification failed: {ex.Message}");
+        }
+    }
+
+    private static void ShowDownloadNotification(Context context, int notificationId, string fileName, string mimeType, global::Android.Net.Uri fileUri)
+    {
+        try
+        {
+            if (context.GetSystemService(Context.NotificationService) is not NotificationManager manager)
+            {
+                return;
+            }
+
+            EnsureDownloadChannel(manager);
+
+            if (!manager.AreNotificationsEnabled())
+            {
+                System.Diagnostics.Debug.WriteLine("[PlutoDownload] Notifications disabled — falling back to toast.");
+                ShowToast($"Downloaded {fileName}");
+                return;
             }
 
             var openIntent = new Intent(Intent.ActionView);
@@ -254,14 +367,15 @@ public partial class X25519WebView
                 pendingFlags |= PendingIntentFlags.Immutable;
             }
 
-            var notificationId = _downloadNotificationId++;
             var pendingIntent = PendingIntent.GetActivity(context, notificationId, openIntent, pendingFlags);
 
-            var notification = new NotificationCompat.Builder(context, channelId)
+            var notification = new NotificationCompat.Builder(context, DownloadChannelId)
                 .SetContentTitle("Download complete")
                 .SetContentText(fileName)
                 .SetSmallIcon(global::Android.Resource.Drawable.StatSysDownloadDone)
                 .SetContentIntent(pendingIntent)
+                .SetProgress(0, 0, false)
+                .SetOngoing(false)
                 .SetAutoCancel(true)
                 .Build();
 
@@ -271,6 +385,40 @@ public partial class X25519WebView
         {
             System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Notification failed: {ex.Message}");
             ShowToast($"Downloaded {fileName}");
+        }
+    }
+
+    private static void ShowFailedNotification(Context context, int notificationId, string fileName)
+    {
+        try
+        {
+            if (context.GetSystemService(Context.NotificationService) is not NotificationManager manager)
+            {
+                return;
+            }
+
+            EnsureDownloadChannel(manager);
+
+            if (!manager.AreNotificationsEnabled())
+            {
+                ShowToast($"Download failed: {fileName}");
+                return;
+            }
+
+            var notification = new NotificationCompat.Builder(context, DownloadChannelId)
+                .SetContentTitle("Download failed")
+                .SetContentText(fileName)
+                .SetSmallIcon(global::Android.Resource.Drawable.StatNotifyError)
+                .SetProgress(0, 0, false)
+                .SetOngoing(false)
+                .SetAutoCancel(true)
+                .Build();
+
+            manager.Notify(notificationId, notification);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[PlutoDownload] Failed notification error: {ex.Message}");
         }
     }
 
