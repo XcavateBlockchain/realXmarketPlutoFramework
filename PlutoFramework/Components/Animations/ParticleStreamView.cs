@@ -15,24 +15,15 @@ namespace PlutoFramework.Components.Animations;
 /// </remarks>
 public class ParticleStreamView : ParticleSurfaceView
 {
-    private const int DEFAULT_PARTICLE_COUNT = 28;
-
-    private const float MIN_PARTICLE_SIZE = 3f;
-    private const float MAX_PARTICLE_SIZE = 7f;
-
-    // Shorter than the convergence field: the journey is only a band tall, so slow
-    // particles would read as drifting rather than firing.
-    private const float MIN_LIFETIME_SECONDS = 0.8f;
-    private const float MAX_LIFETIME_SECONDS = 1.6f;
-
-    // Spread the emission line slightly so it does not read as a hard rule across the top.
+    private const int DEFAULT_PARTICLE_COUNT = 85;
+    private const float MIN_PARTICLE_SIZE = 1.0f;
+    private const float MAX_PARTICLE_SIZE = 5.0f;
+    private const float MIN_LIFETIME_SECONDS = 0.2f;
+    private const float MAX_LIFETIME_SECONDS = 1.0f;
     private const float SPAWN_JITTER = 0.05f;
-
-    private const float FADE_IN_FRACTION = 0.18f;
-    private const float FADE_OUT_FRACTION = 0.40f;
-
-    // Below this the effect is fully faded in, so a short pull still reads clearly.
-    private const float ALPHA_RAMP = 3f;
+    private const float FADE_IN_FRACTION = 0.00f;
+    private const float FADE_OUT_FRACTION = 1f;
+    private const float ALPHA_RAMP = 3.0f;
 
     // The glow eases toward the current intensity instead of snapping, which both softens
     // the pull ramp-up and gives the band a gentle tail as it winds down.
@@ -149,7 +140,7 @@ public class ParticleStreamView : ParticleSurfaceView
                 // Same cubic ease-in as the convergence field. Here the clustering it
                 // produces near the start is the point: particles gather at the emission
                 // edge and then shoot downwards, which is what reads as firing.
-                float progress = particle.T * particle.T * particle.T;
+                float progress = MathF.Pow(particle.T, 2.5f);
 
                 float normalisedY = particle.OriginY + ((1f - particle.OriginY) * progress);
 

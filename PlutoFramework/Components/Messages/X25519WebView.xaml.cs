@@ -1,4 +1,3 @@
-using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Handlers;
 using PlutoFramework.Components.WebView;
 using PlutoFramework.Model;
@@ -25,7 +24,7 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 
     public static readonly BindableProperty UrlProperty =
         BindableProperty.Create(nameof(Url), typeof(string), typeof(X25519WebView),
-            defaultValue: "https://realxmessage.xcavate.io/",
+            defaultValue: "https://realxmessage.xcavate.io/messages/my-buckets/?isHeaderVisible=false",
             propertyChanged: OnUrlChanged);
 
     public string Url
@@ -71,7 +70,23 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         _ = InjectX25519KeyAsync();
         _ = InjectDownloadInterceptorAsync();
         _ = InjectHeaderBridgeAsync();
+        _ = InjectTapHighlightStyleAsync();
     }
+
+    /// <summary>
+    /// Removes the translucent blue rectangle the WebView draws over a tapped
+    /// element. Both the Android WebView and the iOS WKWebView honour the
+    /// <c>-webkit-tap-highlight-color</c> CSS property, so setting it to
+    /// transparent on every element suppresses the highlight on both platforms.
+    /// </summary>
+    private Task InjectTapHighlightStyleAsync()
+        => DispatchScriptSafeAsync(@"(function () {
+    if (window.__plutoTapHighlightInstalled) { return; }
+    window.__plutoTapHighlightInstalled = true;
+    var style = document.createElement('style');
+    style.textContent = '* { -webkit-tap-highlight-color: transparent !important; }';
+    (document.head || document.documentElement).appendChild(style);
+})();");
 
     /// <summary>
     /// Raised whenever the hosted page's header (title + action buttons) changes,
@@ -160,7 +175,8 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     /// <summary>
     /// JavaScript that mirrors the page-level header (see the Vue <c>page-header</c>
     /// component: a <c>.page-header__title</c> plus a <c>.page-header__actions</c>
-    /// group) into the native navigation bar. It hides the in-page header, reports
+    /// group) into the native navigation bar. It hides the in-page header and reclaims
+    /// the space the hosted app reserves for the topbar it is told not to render, reports
     /// the title and the visible text of each action button to native, re-reports on
     /// SPA navigation via a MutationObserver, and exposes <c>__plutoHeaderClick</c>
     /// so a native icon tap triggers the matching web button. The transport is
@@ -176,8 +192,24 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     // Hide the in-page header — its title and actions are mirrored into the native
     // TopNavigationBar. It stays in the DOM so we can still read it and forward taps
     // to its buttons.
+    //
+    // The page is also loaded with ?isHeaderVisible=false, so the hosted app drops its
+    // own 56px mobile topbar and flags the shell with .header-hidden. That flag only
+    // clears the shell's own padding though — the per-page rules still reserve the
+    // topbar's height, which now shows up as a blank strip: the in-bucket chat keeps
+    // 'padding-top: 56px' (gap above the content) and the other full-height pages size
+    // themselves to 'calc(100vh - 56px)' (gap below it). Reclaim both. Scoping to
+    // .header-hidden leaves the originals in force whenever the topbar is rendered, and
+    // the overrides say 'fill the viewport' rather than restating 56px, so they survive
+    // the hosted app changing its topbar height.
     var style = document.createElement('style');
-    style.textContent = '.page-header { display: none !important; }';
+    style.textContent = [
+        '.page-header { display: none !important; }',
+        '@media (max-width: 960px) {',
+        '.app-shell-content.header-hidden:has(.chat-page-container.ib-custom-page) { padding-top: 0 !important; }',
+        '.app-shell-content.header-hidden .chat-custom-page { height: 100vh !important; }',
+        '}'
+    ].join('');
     (document.head || document.documentElement).appendChild(style);
 
     function postToNative(payload) {

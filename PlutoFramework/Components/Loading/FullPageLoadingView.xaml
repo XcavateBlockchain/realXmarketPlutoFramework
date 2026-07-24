@@ -9,6 +9,7 @@
     <Grid BackgroundColor="#F2FFFFFF">
         <animations:ParticleConvergenceView Playing="{Binding IsVisible}"
                                             ParticleColor="{StaticResource Primary}"
+                                            ParticleCount="135"
                                             ExclusionWidth="{Binding Source={x:Reference messageLabel}, Path=Width}"
                                             ExclusionHeight="{Binding Source={x:Reference messageLabel}, Path=Height}" />
 

@@ -9,15 +9,14 @@ namespace PlutoFramework.Components.Animations;
 /// </summary>
 public class ParticleConvergenceView : ParticleSurfaceView
 {
-    private const float MIN_PARTICLE_SIZE = 3f;
-    private const float MAX_PARTICLE_SIZE = 7f;
-    private const float MIN_LIFETIME_SECONDS = 1.6f;
-    private const float MAX_LIFETIME_SECONDS = 2.8f;
+    private const float MIN_PARTICLE_SIZE = 1.0f;
+    private const float MAX_PARTICLE_SIZE = 7.0f;
+    private const float MIN_LIFETIME_SECONDS = 0.8f;
+    private const float MAX_LIFETIME_SECONDS = 1.4f;
+    private const float FADE_BAND = 86f;
+    private const float EXCLUSION_MARGIN = 10f;
 
-    private const float FADE_BAND = 48f;
-    private const float EXCLUSION_MARGIN = 16f;
     private const float FALLBACK_EXCLUSION_RADIUS = 40f;
-
     private const int MAX_SPAWN_ATTEMPTS = 16;
 
     public static readonly BindableProperty ExclusionWidthProperty = BindableProperty.Create(
@@ -62,10 +61,7 @@ public class ParticleConvergenceView : ParticleSurfaceView
 
             particle.T += deltaSeconds / particle.Life;
 
-            // Cubic ease-in. At T=0.5 a particle has covered only 12.5% of its path, so it
-            // lingers near where it spawned and then streaks inwards. That is what keeps the
-            // visible field looking evenly spread instead of clumping into the centre.
-            float progress = Math.Min(particle.T * particle.T * particle.T, 1f);
+            float progress = Math.Min(MathF.Pow(particle.T, 2.5f), 1f);
 
             float originX = particle.OriginX * width;
             float originY = particle.OriginY * height;
