@@ -58,6 +58,13 @@ namespace PlutoFrameworkCore
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         public static IPlutoSecureStorage SecureStorage;
 
+        /// <summary>
+        /// Opens Mobile Wallet Adapter association URIs. Null where the host application
+        /// has not registered one, which callers must treat as "unsupported" rather than
+        /// dereferencing.
+        /// </summary>
+        public static Solana.Mwa.IMwaIntentLauncher? MwaIntentLauncher { get; set; }
+
         public static Func<Task> GenerateNewAccountAsync;
         // List of whitelisted asset keys. If empty, no whitelisting is applied.
         public static System.Collections.Generic.List<AssetKey> WhitelistedTokens { get; set; } = new System.Collections.Generic.List<AssetKey>();

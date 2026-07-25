@@ -12,6 +12,14 @@
     <PackageReference Include="jose-jwt" Version="5.2.0" />
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
     <PackageReference Include="Substrate.NET.API" Version="0.9.24-rc6" />
+    <!--
+      Solnet, Solana's .NET SDK. Note the package id: the repository at
+      github.com/bmresearch/Solnet publishes under the Solana.* ids. The older
+      Solnet.* ids are stuck at 6.1.0 (2022) and pull Portable.BouncyCastle 1.9.0,
+      which conflicts with the BouncyCastle.Cryptography 2.6.0 aliased as bc26 below.
+      The assembly and namespace are still Solnet.Wallet.
+    -->
+    <PackageReference Include="Solana.Wallet" Version="8.7.0" />
     <PackageReference Include="Uniquery" Version="1.0.1" />
     <PackageReference Include="Plutonication" Version="2.6.0" />
     <PackageReference Include="AzeroIdResolver" Version="1.0.2" />

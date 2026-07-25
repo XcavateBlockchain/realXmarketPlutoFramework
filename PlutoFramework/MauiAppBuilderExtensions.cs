@@ -127,6 +127,8 @@ namespace PlutoFramework
 
             PlutoConfigurationModel.SecureStorage = new PlutoSecureStorage();
 
+            PlutoConfigurationModel.MwaIntentLauncher = new MwaIntentLauncher();
+
             CustomizeWebViewHandler();
 
             return builder;

@@ -1,6 +1,7 @@
 using CommunityToolkit.Maui.Alerts;
 using PlutoFramework.Components.Kilt;
 using PlutoFramework.Components.Mnemonics;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFrameworkCore.Keys;
@@ -41,6 +42,18 @@ public partial class NewKeyView : ContentView
         set => SetValue(KeyTypeProperty, value);
     }
 
+    /// <summary>
+    /// Returns from a key-creation page and re-evaluates whether this slot is now taken.
+    /// Needed because the Solana flows navigate away instead of creating the key inline,
+    /// so the buttons cannot be updated when the tap is handled.
+    /// </summary>
+    private async Task PopAndRefreshAsync()
+    {
+        await Shell.Current.Navigation.PopAsync();
+
+        await ChangeButtonsIfKeyExistsAsync();
+    }
+
     private async Task ChangeButtonsIfKeyExistsAsync()
     {
         if (!await CheckKeyExistsAsync(disableToast: true))
@@ -56,17 +69,17 @@ public partial class NewKeyView : ContentView
     {
         var allSavedKeys = await KeysDatabase.GetAllKeysAsync();
 
-        var keyIsPolkadotType = KeyType == KeyTypeEnum.Sr25519 || KeyType == KeyTypeEnum.PolkadotJson;
+        var keyIsPolkadotType = KeyType.IsPolkadotAccountType();
+
+        // The two Solana variants share one account slot, exactly as the two Polkadot
+        // ones do, so either occupying it blocks both.
+        var keyIsSolanaType = KeyType.IsSolanaAccountType();
 
         if (allSavedKeys.Where(key => key.Type == KeyType ||
-            (keyIsPolkadotType && (key.Type == KeyTypeEnum.Sr25519 || key.Type == KeyTypeEnum.PolkadotJson))).Any())
+            (keyIsPolkadotType && key.Type.IsPolkadotAccountType()) ||
+            (keyIsSolanaType && key.Type.IsSolanaAccountType())).Any())
         {
-            if (keyIsPolkadotType && !disableToast)
-            {
-                var toast = Toast.Make($"{KeyType.GetName()} already exists.");
-                await toast.Show();
-            }
-            else if (!disableToast)
+            if (!disableToast)
             {
                 var toast = Toast.Make($"{KeyType.GetName()} already exists.");
                 await toast.Show();
@@ -108,6 +121,22 @@ public partial class NewKeyView : ContentView
                 await encryptionX25519Toast.Show();
 
                 break;
+            case KeyTypeEnum.SolanaMnemonic:
+                // Navigates rather than generating inline, so the seed phrase is shown for
+                // backup before it becomes the only copy of the key.
+                await Shell.Current.Navigation.PushAsync(new CreateSolanaMnemonicsPage(new CreateSolanaMnemonicsViewModel
+                {
+                    Navigation = PopAndRefreshAsync,
+                }));
+
+                return;
+            case KeyTypeEnum.SolanaMwa:
+                await Shell.Current.Navigation.PushAsync(new ConnectMwaPage(new ConnectMwaPageViewModel
+                {
+                    Navigation = PopAndRefreshAsync,
+                }));
+
+                return;
             default:
                 var toast = Toast.Make($"Creating {KeyType.GetName()} keys is not supported yet.");
                 await toast.Show();
@@ -159,6 +188,24 @@ public partial class NewKeyView : ContentView
                 await Shell.Current.Navigation.PushAsync(new ImportEncryptionX25519KeyPage(new ImportEncryptionX25519KeyPageViewModel
                 {
                     Navigation = Shell.Current.Navigation.PopAsync,
+                }));
+
+                break;
+
+            case KeyTypeEnum.SolanaMnemonic:
+                await Shell.Current.Navigation.PushAsync(new EnterSolanaMnemonicsPage(new EnterSolanaMnemonicsViewModel
+                {
+                    Navigation = async (mnemonics) => await PopAndRefreshAsync(),
+                }));
+
+                break;
+
+            case KeyTypeEnum.SolanaMwa:
+                // Connecting an existing wallet is both the create and the import path,
+                // since there is no local key to generate either way.
+                await Shell.Current.Navigation.PushAsync(new ConnectMwaPage(new ConnectMwaPageViewModel
+                {
+                    Navigation = PopAndRefreshAsync,
                 }));
 
                 break;

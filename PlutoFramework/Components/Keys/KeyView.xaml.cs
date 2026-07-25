@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Alerts;
+using PlutoFramework.Components.Solana;
 using PlutoFrameworkCore.Keys;
 
 namespace PlutoFramework.Components.Keys;
@@ -31,6 +32,8 @@ public partial class KeyView : ContentView
                 KeyTypeEnum.PolkadotJson => "Your Account key",
                 KeyTypeEnum.Sr25519 => "Your Account key",
                 KeyTypeEnum.Did => "Decentralised Identifier",
+                KeyTypeEnum.SolanaMnemonic => "Your Solana account",
+                KeyTypeEnum.SolanaMwa => "Connected Solana wallet",
                 _ => "",
             };
 
@@ -72,6 +75,16 @@ public partial class KeyView : ContentView
                 {
                     LockedKey = Key,
                     UnlockedKey = await Key.ToEncryptionX25519KeyAsync(),
+                }),
+                KeyTypeEnum.SolanaMnemonic => new SolanaMnemonicKeyDetailPage(new SolanaMnemonicKeyDetailPageViewModel
+                {
+                    LockedKey = Key,
+                    UnlockedKey = await Key.ToSolanaMnemonicKeyAsync("Get access to Solana key"),
+                }),
+                KeyTypeEnum.SolanaMwa => new SolanaMwaKeyDetailPage(new SolanaMwaKeyDetailPageViewModel
+                {
+                    LockedKey = Key,
+                    UnlockedKey = await Key.ToSolanaMwaKeyAsync("Get access to Solana wallet"),
                 }),
                 _ => throw new Exception($"Key {Key.Type} type is missing."),
             };

@@ -24,6 +24,10 @@
 
             <keys:NewKeyView KeyType="EncryptionX25519" />
 
+            <keys:NewKeyView KeyType="SolanaMnemonic" />
+
+            <keys:NewKeyView KeyType="SolanaMwa" />
+
         </VerticalStackLayout>
     </ScrollView>
 </page:PageTemplate>

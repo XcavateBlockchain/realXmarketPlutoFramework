@@ -1,4 +1,5 @@
 ﻿using PlutoFramework.Model;
+using System.Text.Json;
 
 namespace PlutoFrameworkCore.Keys
 {
@@ -10,6 +11,11 @@ namespace PlutoFrameworkCore.Keys
         PolkadotJson,
         Did,
         EncryptionX25519,
+
+        // Appended: this enum is persisted by name in the SQLite Serialized column,
+        // so members must not be reordered or renamed.
+        SolanaMnemonic,
+        SolanaMwa,
     }
 
     public static class KeyTypeEnumExtensions
@@ -20,8 +26,24 @@ namespace PlutoFrameworkCore.Keys
             KeyTypeEnum.PolkadotJson => "Json key",
             KeyTypeEnum.Sr25519 => "Sr25519 key",
             KeyTypeEnum.Did => "DID key",
+            KeyTypeEnum.SolanaMnemonic => "Solana key",
+            KeyTypeEnum.SolanaMwa => "Solana wallet",
             _ => "Key",
         };
+
+        /// <summary>
+        /// The Solana account key types. Only one may exist at a time, so that there is a
+        /// single unambiguous Solana address, mirroring how Sr25519 and PolkadotJson are
+        /// treated as one logical Polkadot account slot.
+        /// </summary>
+        public static bool IsSolanaAccountType(this KeyTypeEnum type) =>
+            type == KeyTypeEnum.SolanaMnemonic || type == KeyTypeEnum.SolanaMwa;
+
+        /// <summary>
+        /// The Polkadot account key types, which likewise occupy a single slot.
+        /// </summary>
+        public static bool IsPolkadotAccountType(this KeyTypeEnum type) =>
+            type == KeyTypeEnum.Sr25519 || type == KeyTypeEnum.PolkadotJson;
     }
 
     public record GenericLockedKey
@@ -95,6 +117,54 @@ namespace PlutoFrameworkCore.Keys
             {
                 Mnemonics = mnemonics,
             };
+        }
+
+        public async Task<SolanaMnemonicKey> ToSolanaMnemonicKeyAsync(string reason)
+        {
+            if (Type != KeyTypeEnum.SolanaMnemonic)
+            {
+                throw new InvalidOperationException($"Cannot convert key of type {Type} to SolanaMnemonicKey");
+            }
+
+            var mnemonics = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey, reason);
+
+            if (mnemonics == null)
+            {
+                throw new InvalidOperationException("Mnemonics not found in secure storage");
+            }
+
+            return new SolanaMnemonicKey
+            {
+                Mnemonics = mnemonics,
+            };
+        }
+
+        /// <summary>
+        /// The stored secret is the JSON-serialized <see cref="SolanaMwaKey"/>, since the
+        /// authorization token it carries is itself sensitive.
+        /// </summary>
+        public async Task<SolanaMwaKey> ToSolanaMwaKeyAsync(string reason)
+        {
+            if (Type != KeyTypeEnum.SolanaMwa)
+            {
+                throw new InvalidOperationException($"Cannot convert key of type {Type} to SolanaMwaKey");
+            }
+
+            var json = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey, reason);
+
+            if (json == null)
+            {
+                throw new InvalidOperationException("Mobile Wallet Adapter authorization not found in secure storage");
+            }
+
+            var key = JsonSerializer.Deserialize<SolanaMwaKey>(json);
+
+            if (key == null)
+            {
+                throw new InvalidOperationException("Mobile Wallet Adapter authorization could not be deserialized");
+            }
+
+            return key;
         }
 
         public async Task<EncryptionX25519Key> ToEncryptionX25519KeyAsync()

@@ -15,6 +15,8 @@ using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using System.Text.Json;
+// Solnet and Substrate both define an Account type, and this file uses the Substrate one.
+using SolanaAccount = Solnet.Wallet.Account;
 
 namespace PlutoFramework.Model
 {
@@ -119,6 +121,129 @@ namespace PlutoFramework.Model
                 password: password!,
                 type: KeyTypeEnum.Did
             );
+        }
+
+        public static Task GenerateNewSolanaAccountAsync()
+        {
+            string mnemonics = SolanaMnemonicsModel.GenerateMnemonics();
+
+            return SaveSolanaMnemonicKeyAsync(mnemonics);
+        }
+
+        /// <summary>
+        /// Both Solana key types occupy a single account slot, so adding either one
+        /// clears the other. This mirrors how <see cref="SaveSr25519KeyAsync"/> treats
+        /// Sr25519 and PolkadotJson as one Polkadot account.
+        /// </summary>
+        private static Task DeleteExistingSolanaKeysAsync() => Task.WhenAll(
+            KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.SolanaMnemonic),
+            KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.SolanaMwa)
+        );
+
+        public static async Task SaveSolanaMnemonicKeyAsync(string mnemonics)
+        {
+            if (!SolanaMnemonicsModel.ValidateMnemonics(mnemonics))
+            {
+                throw new ArgumentException("The mnemonic phrase is not a valid BIP39 phrase", nameof(mnemonics));
+            }
+
+            await DeleteExistingSolanaKeysAsync();
+
+            string address = SolanaMnemonicsModel.GetAddressFromMnemonics(mnemonics);
+
+            // Just get and use the same main password without asking the user again
+            var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
+
+            await SaveKeyAsync(
+                publicKey: address,
+                secret: mnemonics.Trim(),
+                password: password!,
+                type: KeyTypeEnum.SolanaMnemonic
+            );
+        }
+
+        /// <summary>
+        /// Persists a Mobile Wallet Adapter authorization. The whole record is stored as
+        /// the secret because the auth token it carries grants signing access.
+        /// </summary>
+        public static async Task SaveSolanaMwaKeyAsync(SolanaMwaKey key)
+        {
+            await DeleteExistingSolanaKeysAsync();
+
+            // Just get and use the same main password without asking the user again
+            var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
+
+            await SaveKeyAsync(
+                publicKey: key.Address,
+                secret: JsonSerializer.Serialize(key),
+                password: password!,
+                type: KeyTypeEnum.SolanaMwa
+            );
+        }
+
+        public static async Task<bool> HasSolanaKeyAsync() =>
+            (await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.SolanaMnemonic, KeyTypeEnum.SolanaMwa)).Any();
+
+        /// <summary>
+        /// The Solana address for whichever variant is configured. Available for both,
+        /// since the MWA key stores the authorized address alongside its token.
+        /// </summary>
+        public static async Task<string?> GetSolanaAddressAsync()
+        {
+            var keys = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.SolanaMnemonic, KeyTypeEnum.SolanaMwa);
+
+            return keys.FirstOrDefault()?.PublicKey;
+        }
+
+        /// <summary>
+        /// A signing account, which only the mnemonic variant can produce. Under Mobile
+        /// Wallet Adapter the private key never leaves the wallet app, so this returns
+        /// null and callers must sign through <c>MwaClient</c> instead.
+        /// </summary>
+        public static async Task<SolanaAccount?> GetSolanaAccountAsync(string reason = "Get access to Solana key")
+        {
+            var keys = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.SolanaMnemonic);
+
+            var lockedKey = keys.FirstOrDefault();
+
+            if (lockedKey is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                return (await lockedKey.ToSolanaMnemonicKeyAsync(reason)).Account;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// The stored Mobile Wallet Adapter authorization, or null when the configured
+        /// Solana key is a local mnemonic one.
+        /// </summary>
+        public static async Task<SolanaMwaKey?> GetSolanaMwaKeyAsync(string reason = "Get access to Solana wallet")
+        {
+            var keys = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.SolanaMwa);
+
+            var lockedKey = keys.FirstOrDefault();
+
+            if (lockedKey is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                return await lockedKey.ToSolanaMwaKeyAsync(reason);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         [Obsolete("For migration purposes only")]
