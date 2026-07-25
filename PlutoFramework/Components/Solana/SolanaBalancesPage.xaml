@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<template:PageTemplate xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                       xmlns:template="clr-namespace:PlutoFramework.Templates.PageTemplate"
+                       xmlns:address="clr-namespace:PlutoFramework.Components.AddressView"
+                       xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+                       xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+                       x:Class="PlutoFramework.Components.Solana.SolanaBalancesPage"
+                       Title="Balance">
+    <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                 AbsoluteLayout.LayoutFlags="All"
+                 Command="{Binding RefreshCommand}"
+                 IsRefreshing="{Binding IsRefreshing}">
+        <ScrollView>
+            <VerticalStackLayout Padding="20, 10, 20, 100"
+                                 Spacing="15">
+
+                <card:Card IsVisible="{Binding HasAccount}">
+                    <card:Card.View>
+                        <VerticalStackLayout Padding="15, 12, 15, 12"
+                                             Spacing="4">
+                            <Label Text="Total"
+                                   FontSize="13"
+                                   TextColor="#A6A6A6" />
+                            <Label Text="{Binding TotalText}"
+                                   FontAttributes="Bold"
+                                   FontSize="26" />
+                            <Label Text="{Binding NetworkName, StringFormat='Solana {0}'}"
+                                   FontSize="12"
+                                   TextColor="#A6A6A6" />
+                        </VerticalStackLayout>
+                    </card:Card.View>
+                </card:Card>
+
+                <address:AddressView Title="Solana address"
+                                     IsVisible="{Binding HasAccount}"
+                                     Address="{Binding Address}"
+                                     QrAddress="{Binding QrAddress}" />
+
+                <Label Text="{Binding ErrorMessage}"
+                       IsVisible="{Binding ErrorIsVisible}"
+                       TextColor="#C33"
+                       FontSize="13"
+                       HorizontalTextAlignment="Center" />
+
+                <solana:SolanaNoAccountView IsVisible="{Binding NoAccount}" />
+
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Balances}"
+                                     IsVisible="{Binding HasAccount}"
+                                     Spacing="15">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <solana:SolanaAssetView Balance="{Binding .}" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+
+    <template:PageTemplate.PopupContent>
+        <address:AddressQrCodeView />
+        <solana:ImportMethodPopupView />
+    </template:PageTemplate.PopupContent>
+</template:PageTemplate>
