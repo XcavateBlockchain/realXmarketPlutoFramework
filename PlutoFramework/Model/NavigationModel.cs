@@ -1,6 +1,7 @@
 ﻿using PlutoFramework.Components.Account;
 using PlutoFramework.Components.Balance;
 using PlutoFramework.Components.MessagePopup;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Components.TransferView;
 using PlutoFramework.Components.UniversalScannerView;
 using PlutoFramework.Components.Vault;
@@ -21,6 +22,16 @@ namespace PlutoFramework.Model
 
             if (!RequirementsModel.CheckAccountExists())
             {
+                return;
+            }
+
+            // CheckAccountExists accepts either key type, so a Solana-only user reaches this
+            // point. The Substrate BalancePage is empty for them by construction, so send them
+            // to the page that can actually show their balances.
+            if (!KeysModel.HasSubstrateKey() && KeysModel.HasSolanaKey())
+            {
+                await Shell.Current.Navigation.PushAsync(new SolanaBalancesPage());
+
                 return;
             }
 
