@@ -10,21 +10,7 @@ namespace PlutoFramework.Model
     /// </summary>
     public static class SolanaMwaModel
     {
-        /// <summary>
-        /// Remembers the cluster the user last connected on, so the picker does not reset
-        /// to a different network between visits.
-        /// </summary>
-        public const string PREFERRED_CLUSTER = "solanaPreferredCluster";
-
         public static bool IsSupported => MwaConnectFlow.IsSupported;
-
-        public static SolanaCluster PreferredCluster
-        {
-            get => SolanaClusterExtensions.FromChainId(
-                Preferences.Get(PREFERRED_CLUSTER, SolanaCluster.Devnet.ToChainId()));
-
-            set => Preferences.Set(PREFERRED_CLUSTER, value.ToChainId());
-        }
 
         /// <summary>
         /// How this app presents itself on the wallet's approval screen.
@@ -38,6 +24,8 @@ namespace PlutoFramework.Model
         /// <summary>
         /// Connects to a wallet, authorizes an account, and stores the authorization.
         /// Replaces any existing Solana key, since the two variants share one slot.
+        /// The cluster is passed in rather than read here: callers connect on the app-wide
+        /// <see cref="SolanaNetworkModel.SelectedCluster"/>.
         /// </summary>
         public static async Task<SolanaMwaKey> ConnectAndSaveAsync(
             SolanaCluster cluster,
@@ -61,8 +49,6 @@ namespace PlutoFramework.Model
             };
 
             await KeysModel.SaveSolanaMwaKeyAsync(key);
-
-            PreferredCluster = cluster;
 
             return key;
         }

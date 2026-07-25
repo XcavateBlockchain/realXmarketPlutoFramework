@@ -19,6 +19,16 @@ namespace PlutoFrameworkCore.Solana
             _ => "solana:mainnet",
         };
 
+        /// <summary>
+        /// The corresponding Solnet cluster, which selects the public RPC endpoint.
+        /// </summary>
+        public static Solnet.Rpc.Cluster ToSolnetCluster(this SolanaCluster cluster) => cluster switch
+        {
+            SolanaCluster.Devnet => Solnet.Rpc.Cluster.DevNet,
+            SolanaCluster.Testnet => Solnet.Rpc.Cluster.TestNet,
+            _ => Solnet.Rpc.Cluster.MainNet,
+        };
+
         public static string GetName(this SolanaCluster cluster) => cluster switch
         {
             SolanaCluster.Devnet => "Devnet",

@@ -40,11 +40,11 @@
                                    FontAttributes="Bold"
                                    FontSize="14" />
 
-                            <Picker ItemsSource="{Binding ClusterNames}"
-                                    SelectedIndex="{Binding SelectedClusterIndex}"
-                                    AutomationId="solanaClusterPicker" />
+                            <Label Text="{Binding NetworkName}"
+                                   FontSize="14"
+                                   AutomationId="solanaClusterName" />
 
-                            <Label Text="An authorization is only valid for the network it was granted on."
+                            <Label Text="Change the network in Settings. An authorization is only valid for the network it was granted on."
                                    FontSize="11"
                                    TextColor="#A6A6A6" />
                         </VerticalStackLayout>

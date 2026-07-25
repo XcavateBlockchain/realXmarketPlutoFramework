@@ -45,6 +45,41 @@ namespace PlutoFrameworkTests
         }
     }
 
+    public class SolanaNetworkOptionsTests
+    {
+        [Test]
+        public void DefaultIsMainnet()
+        {
+            // A user who never opens Settings must be on the network real funds live on.
+            Assert.That(SolanaNetworkOptions.Default, Is.EqualTo(SolanaCluster.Mainnet));
+        }
+
+        [Test]
+        public void SelectableOffersMainnetAndDevnetInThatOrder()
+        {
+            Assert.That(SolanaNetworkOptions.Selectable,
+                Is.EqualTo(new[] { SolanaCluster.Mainnet, SolanaCluster.Devnet }));
+        }
+
+        [Test]
+        public void SelectableContainsTheDefault()
+        {
+            // Otherwise the settings selector would open with nothing highlighted.
+            Assert.That(SolanaNetworkOptions.Selectable, Does.Contain(SolanaNetworkOptions.Default));
+        }
+
+        [Test]
+        public void EverySelectableClusterSurvivesAPreferencesRoundTrip()
+        {
+            // The setting is stored as the MWA chain id, not the enum, so each offered
+            // network must come back as itself after being written and read.
+            foreach (var cluster in SolanaNetworkOptions.Selectable)
+            {
+                Assert.That(SolanaClusterExtensions.FromChainId(cluster.ToChainId()), Is.EqualTo(cluster));
+            }
+        }
+    }
+
     public class SolanaMwaKeyTests
     {
         private static SolanaMwaKey SampleKey() => new()

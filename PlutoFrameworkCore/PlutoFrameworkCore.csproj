@@ -20,6 +20,12 @@
       The assembly and namespace are still Solnet.Wallet.
     -->
     <PackageReference Include="Solana.Wallet" Version="8.7.0" />
+    <!--
+      Needed to fetch a recent blockhash and submit signed transactions. Depends only on
+      Solana.Wallet and Microsoft.Extensions.Logging 9.0.0, which resolves up to the 10.x
+      already present via MAUI.
+    -->
+    <PackageReference Include="Solana.Rpc" Version="8.7.0" />
     <PackageReference Include="Uniquery" Version="1.0.1" />
     <PackageReference Include="Plutonication" Version="2.6.0" />
     <PackageReference Include="AzeroIdResolver" Version="1.0.2" />

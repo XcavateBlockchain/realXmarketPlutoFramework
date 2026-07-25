@@ -47,10 +47,36 @@ namespace PlutoFrameworkCore.Solana.Mwa
         /// Supply a previously stored token to reauthorize it, which the wallet may accept
         /// without prompting the user again.
         /// </param>
-        public static async Task<MwaAuthorizationResult> ConnectAsync(
+        public static Task<MwaAuthorizationResult> ConnectAsync(
             MwaIdentity identity,
             SolanaCluster cluster,
             string? existingAuthToken,
+            IProgress<MwaConnectStage>? progress,
+            CancellationToken token) =>
+            WithAuthorizedSessionAsync(
+                identity,
+                cluster,
+                existingAuthToken,
+                (_, authorization, _) => Task.FromResult(authorization),
+                progress,
+                token);
+
+        /// <summary>
+        /// Opens an association, authorizes, then runs <paramref name="operation"/> inside the
+        /// same still-open session before tearing it down.
+        ///
+        /// A session ends when the wallet app hands control back, so a privileged call cannot
+        /// reuse an earlier one. Doing the authorize and the real work in a single session
+        /// means one intent and one trip through the wallet rather than two.
+        /// </summary>
+        /// <param name="operation">
+        /// Receives the client and the fresh authorization. Its result is returned to the caller.
+        /// </param>
+        public static async Task<T> WithAuthorizedSessionAsync<T>(
+            MwaIdentity identity,
+            SolanaCluster cluster,
+            string? existingAuthToken,
+            Func<MwaClient, MwaAuthorizationResult, CancellationToken, Task<T>> operation,
             IProgress<MwaConnectStage>? progress,
             CancellationToken token)
         {
@@ -84,7 +110,9 @@ namespace PlutoFrameworkCore.Solana.Mwa
 
             var client = new MwaClient(session);
 
-            return await client.AuthorizeAsync(identity, cluster, existingAuthToken, token);
+            var authorization = await client.AuthorizeAsync(identity, cluster, existingAuthToken, token);
+
+            return await operation(client, authorization, token);
         }
 
         /// <summary>

@@ -12,13 +12,11 @@ namespace PlutoFramework.Components.Solana
     {
         public Func<Task> Navigation { get; set; } = () => Task.CompletedTask;
 
-        private static readonly SolanaCluster[] Clusters =
-            [SolanaCluster.Devnet, SolanaCluster.Testnet, SolanaCluster.Mainnet];
-
-        public List<string> ClusterNames { get; } = Clusters.Select(cluster => cluster.GetName()).ToList();
-
-        [ObservableProperty]
-        private int selectedClusterIndex;
+        /// <summary>
+        /// The network is an app-wide setting, so this page reports which one it will connect
+        /// on instead of offering a second place to change it.
+        /// </summary>
+        public string NetworkName => SelectedCluster.GetName();
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ConnectButtonState))]
@@ -52,15 +50,7 @@ namespace PlutoFramework.Components.Solana
         public ButtonStateEnum ConnectButtonState =>
             IsConnecting ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
 
-        public ConnectMwaPageViewModel()
-        {
-            var preferred = SolanaMwaModel.PreferredCluster;
-
-            SelectedClusterIndex = Math.Max(0, Array.IndexOf(Clusters, preferred));
-        }
-
-        private SolanaCluster SelectedCluster =>
-            Clusters[Math.Clamp(SelectedClusterIndex, 0, Clusters.Length - 1)];
+        private static SolanaCluster SelectedCluster => SolanaNetworkModel.SelectedCluster;
 
         [RelayCommand]
         public async Task ConnectAsync()
