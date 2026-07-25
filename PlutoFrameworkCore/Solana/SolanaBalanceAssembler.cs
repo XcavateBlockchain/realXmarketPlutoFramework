@@ -30,8 +30,20 @@ namespace PlutoFrameworkCore.Solana
             // One wallet can hold several accounts for the same mint; the balance is the sum.
             var amountByMint = new Dictionary<string, decimal>(StringComparer.Ordinal);
 
+            var whitelistedMints = new HashSet<string>(
+                whitelist.Select(entry => entry.Mint), StringComparer.Ordinal);
+
             foreach (var account in tokenAccounts)
             {
+                // Unlisted mints are dropped before conversion, not just before display: a
+                // spam or dust token can report an absurd decimals value (mint decimals is an
+                // on-chain u8, freely settable to 255), and converting it would throw before
+                // any row — SOL included — gets built.
+                if (!whitelistedMints.Contains(account.Mint))
+                {
+                    continue;
+                }
+
                 var amount = SolanaAmount.FromBaseUnits(account.RawAmount, account.Decimals);
 
                 amountByMint[account.Mint] = amountByMint.TryGetValue(account.Mint, out var running)

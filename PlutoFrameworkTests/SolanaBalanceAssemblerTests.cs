@@ -99,6 +99,34 @@ namespace PlutoFrameworkTests
             });
         }
 
+        /// <summary>
+        /// Mint decimals is an on-chain u8, freely settable to 255 by whoever creates the
+        /// mint, and unsolicited dust/spam token accounts are routine on mainnet. An unlisted
+        /// mint must be skipped before its amount is converted, not just before display —
+        /// otherwise a single spam airdrop throws while building the shared amount
+        /// dictionary, before any row (SOL included) is assembled.
+        /// </summary>
+        [Test]
+        public void UnlistedMintWithAbsurdDecimalsIsSkipped()
+        {
+            var rows = SolanaBalanceAssembler.Assemble(
+                lamports: 2_500_000_000UL,
+                tokenAccounts:
+                [
+                    Account(OtherMint, "123", 255),
+                    Account(UsdcMint, "40000000", 6),
+                ],
+                whitelist: [Usdc()],
+                usdPrices: new Dictionary<string, double>());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(rows.Select(row => row.Mint), Does.Not.Contain(OtherMint));
+                Assert.That(rows.Single(row => row.IsNative).Amount, Is.EqualTo(2.5m));
+                Assert.That(rows.Single(row => row.Symbol == "USDC").Amount, Is.EqualTo(40m));
+            });
+        }
+
         [Test]
         public void UsdValueIsAmountTimesPrice()
         {
