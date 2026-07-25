@@ -15,6 +15,13 @@ namespace PlutoFramework.Model
                 PlutoConfigurationModel.SecureStorage.Remove(key.PasswordStorageKey);
             }
 
+            // Both Solana detail pages delete through here, so this is the one place that
+            // has to stay in step with the preference the save methods write.
+            if (key.Type == KeyTypeEnum.SolanaMnemonic || key.Type == KeyTypeEnum.SolanaMwa)
+            {
+                Preferences.Remove(PreferencesModel.SOLANA_PUBLIC_KEY);
+            }
+
             return KeysDatabase.DeleteKeyAsync(key);
         }
     }

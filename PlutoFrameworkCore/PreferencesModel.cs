@@ -27,5 +27,7 @@
         public const string SETTINGS_ALLOW_PRIVATE_KEY = "settingsAllowPrivateKey";
 
         public const string SETTINGS_SOLANA_NETWORK = "settingsSolanaNetwork";
+
+        public const string SOLANA_PUBLIC_KEY = "solanaPublicKey";
     }
 }

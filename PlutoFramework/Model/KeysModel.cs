@@ -151,6 +151,10 @@ namespace PlutoFramework.Model
 
             string address = SolanaMnemonicsModel.GetAddressFromMnemonics(mnemonics);
 
+            // Mirrors PUBLIC_KEY for Substrate: app start decides its shell before it can
+            // await, so key presence has to be readable synchronously.
+            Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, address);
+
             // Just get and use the same main password without asking the user again
             var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
 
@@ -169,6 +173,8 @@ namespace PlutoFramework.Model
         public static async Task SaveSolanaMwaKeyAsync(SolanaMwaKey key)
         {
             await DeleteExistingSolanaKeysAsync();
+
+            Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, key.Address);
 
             // Just get and use the same main password without asking the user again
             var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
@@ -501,6 +507,23 @@ namespace PlutoFramework.Model
             return Utils.GetAddressFrom(Utils.GetPublicKeyFrom(KeysModel.GetSubstrateKey()), ss58prefix);
         }
 
+        public static bool HasSolanaKey()
+        {
+            return Preferences.ContainsKey(PreferencesModel.SOLANA_PUBLIC_KEY);
+        }
+
+        /// <summary>
+        /// The stored Solana address, or null when no Solana key is configured. Returns null
+        /// rather than a placeholder string: <see cref="GetSubstrateKey()"/>'s placeholder
+        /// habit is what makes <c>GetSubstrateKey(0)</c> throw further down the call chain.
+        /// </summary>
+        public static string? GetSolanaAddress()
+        {
+            return Preferences.ContainsKey(PreferencesModel.SOLANA_PUBLIC_KEY)
+                ? Preferences.Get(PreferencesModel.SOLANA_PUBLIC_KEY, string.Empty)
+                : null;
+        }
+
         public static async Task<string> GetDidAddressAsync(CancellationToken token)
         {
             var dids = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Did);
@@ -691,6 +714,7 @@ namespace PlutoFramework.Model
         public static Task ClearAsync()
         {
             Preferences.Remove(PreferencesModel.PUBLIC_KEY);
+            Preferences.Remove(PreferencesModel.SOLANA_PUBLIC_KEY);
 
             return KeysDatabase.DeleteAllAsync();
 
