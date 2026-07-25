@@ -9,6 +9,14 @@ namespace PlutoFramework.Components.Solana
 {
     public partial class SolanaBalancesPageViewModel : ObservableObject
     {
+        /// <summary>
+        /// Cancels and replaces itself at the top of every <see cref="LoadAsync"/> call, so an
+        /// older in-flight load (e.g. one still waiting on an RPC response for the previous
+        /// cluster) can never win a race against a newer one and write stale rows under the
+        /// new cluster's badge.
+        /// </summary>
+        private CancellationTokenSource? loadCts;
+
         public ObservableCollection<SolanaTokenBalance> Balances { get; } = [];
 
         [ObservableProperty]
@@ -46,8 +54,38 @@ namespace PlutoFramework.Components.Solana
         /// <summary>
         /// Called by the page when it disappears. Without it the static event keeps every
         /// view model this page ever created alive, each re-querying on a network change.
+        /// Also cancels any in-flight load, so a request started before navigating away does
+        /// not resolve later and write into a view model nothing is looking at anymore.
         /// </summary>
-        public void Unsubscribe() => SolanaNetworkModel.ClusterChanged -= OnClusterChanged;
+        public void Unsubscribe()
+        {
+            SolanaNetworkModel.ClusterChanged -= OnClusterChanged;
+
+            loadCts?.Cancel();
+        }
+
+        /// <summary>
+        /// Cancels and disposes the previous load's token source, then hands back a fresh
+        /// token linked to <paramref name="externalToken"/> for the caller to use. Not
+        /// lock-protected: unlike <c>InvestorMainPageViewModel</c>, every caller of
+        /// <see cref="LoadAsync"/> here (OnAppearing, the refresh command, and the
+        /// cluster-changed handler via <c>MainThread.BeginInvokeOnMainThread</c>) runs on the
+        /// UI thread's single synchronization context, so there is no genuine concurrent
+        /// access to guard - only sequential interleaving of awaits, which cancellation alone
+        /// already resolves.
+        /// </summary>
+        private CancellationToken ReplaceLoadingToken(CancellationToken externalToken)
+        {
+            var previousCts = loadCts;
+            var newCts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
+
+            loadCts = newCts;
+
+            previousCts?.Cancel();
+            previousCts?.Dispose();
+
+            return newCts.Token;
+        }
 
         private void OnClusterChanged(object? sender, SolanaCluster cluster)
         {
@@ -61,6 +99,8 @@ namespace PlutoFramework.Components.Solana
 
         public async Task LoadAsync(CancellationToken token)
         {
+            var loadToken = ReplaceLoadingToken(token);
+
             Address = KeysModel.GetSolanaAddress() ?? string.Empty;
             NetworkName = SolanaNetworkModel.SelectedCluster.GetName();
 
@@ -77,7 +117,14 @@ namespace PlutoFramework.Components.Solana
             try
             {
                 var rows = await SolanaBalancesModel.GetBalancesAsync(
-                    Address, SolanaNetworkModel.SelectedCluster, token);
+                    Address, SolanaNetworkModel.SelectedCluster, loadToken);
+
+                // Guards against a load that finished normally (its RPC calls may not have
+                // observed the token) after a newer load already superseded it. ReplaceLoadingToken
+                // cancels the previous source synchronously before this one starts, so if this
+                // token is stale, IsCancellationRequested is already true here regardless of how
+                // the awaited call itself completed.
+                loadToken.ThrowIfCancellationRequested();
 
                 Balances.Clear();
 
@@ -90,7 +137,8 @@ namespace PlutoFramework.Components.Solana
             }
             catch (OperationCanceledException)
             {
-                // The page went away mid-query.
+                // The page went away mid-query, or a newer load (network switch, pull-to-refresh)
+                // superseded this one before it finished.
             }
             catch (SolanaRpcException ex)
             {
@@ -106,7 +154,13 @@ namespace PlutoFramework.Components.Solana
             }
             finally
             {
-                IsRefreshing = false;
+                // Only the load that is still current should clear the spinner - otherwise a
+                // superseded load's finally could turn it off while its replacement is still
+                // running.
+                if (loadCts is not null && loadToken == loadCts.Token)
+                {
+                    IsRefreshing = false;
+                }
             }
         }
     }
