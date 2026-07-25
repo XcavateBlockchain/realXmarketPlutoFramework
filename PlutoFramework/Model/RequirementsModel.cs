@@ -30,6 +30,16 @@ namespace PlutoFramework.Model
         {
             var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
 
+            // KYC, DID and the profile are all keyed to a Substrate address. A Solana-only
+            // account has none, so this reports "account required" rather than sending the
+            // GetSubstrateKey() placeholder string to Sumsub.
+            if (!KeysModel.HasSubstrateKey())
+            {
+                DependencyService.Get<NoAccountPopupViewModel>().IsVisible = true;
+
+                return false;
+            }
+
             fullPageLoadingViewModel.Message = "Getting Account";
 
             if (!CheckAccountExists())
@@ -78,6 +88,14 @@ namespace PlutoFramework.Model
 
         public static async Task<bool> CheckXcavateRoleAsync(XcavateRole role, CancellationToken token)
         {
+            // Roles live in the XcavatePaseo whitelist pallet, keyed by Substrate address.
+            if (!KeysModel.HasSubstrateKey())
+            {
+                DependencyService.Get<NotWhitelistedPopupViewModel>().IsVisible = true;
+
+                return false;
+            }
+
             var address = KeysModel.GetSubstrateKey();
 
             var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
@@ -106,7 +124,7 @@ namespace PlutoFramework.Model
         {
             var onboardingCompleted = OnboardingModel.IsOnboardingCompleted();
 
-            if (!KeysModel.HasSubstrateKey() || !onboardingCompleted)
+            if ((!KeysModel.HasSolanaKey() && !KeysModel.HasSubstrateKey()) || !onboardingCompleted)
             {
                 var noAccountPopupViewModel = DependencyService.Get<NoAccountPopupViewModel>();
 
