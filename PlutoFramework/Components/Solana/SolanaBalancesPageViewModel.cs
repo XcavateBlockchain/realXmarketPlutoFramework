@@ -108,6 +108,14 @@ namespace PlutoFramework.Components.Solana
             {
                 Balances.Clear();
                 TotalText = "-";
+
+                // RefreshView.IsRefreshing is two-way bound, so a pull sets it true before the
+                // command runs. Returning without clearing it would leave the spinner turning
+                // forever - which is exactly what a Substrate-only user sees on this page.
+                // No staleness guard is needed: nothing is awaited between ReplaceLoadingToken
+                // and here, so loadToken is always still the current one.
+                IsRefreshing = false;
+
                 return;
             }
 
