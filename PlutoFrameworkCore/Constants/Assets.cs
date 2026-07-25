@@ -28,6 +28,7 @@ namespace PlutoFramework.Model.Constants
             { "kilt", "kilt.png" },
             { "glmr", "moonbeam.png" },
             { "ajun", "ajuna.png" },
+            { "sol", "solana.png" },
         });
     }
 }
