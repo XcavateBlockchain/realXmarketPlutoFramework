@@ -21,6 +21,7 @@ using PlutoFramework.Components.Nft;
 using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Components.Password;
 using PlutoFramework.Components.Settings;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Components.Staking;
 using PlutoFramework.Components.Sumsub;
 using PlutoFramework.Components.TransactionAnalyzer;
@@ -218,6 +219,8 @@ namespace PlutoFramework
             DependencyService.Register<NoAccountPopupViewModel>();
 
             DependencyService.Register<ImportWarningPopupViewModel>();
+
+            DependencyService.Register<ImportMethodPopupViewModel>();
 
             DependencyService.Register<LogOutPopupViewModel>();
 

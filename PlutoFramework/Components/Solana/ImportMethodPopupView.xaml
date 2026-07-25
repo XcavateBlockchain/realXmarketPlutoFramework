@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+             x:Class="PlutoFramework.Components.Solana.ImportMethodPopupView"
+             IsVisible="{Binding IsVisible}"
+             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+             AbsoluteLayout.LayoutFlags="All">
+
+    <card:BottomPopupCard Title="Import your Solana account"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
+            <VerticalStackLayout Spacing="15"
+                                 Padding="10, 10, 10, 20">
+
+                <Label Text="Connect the wallet app that already holds your account, or enter its seed phrase."
+                       FontSize="13"
+                       TextColor="#A6A6A6" />
+
+                <buttons:ElevatedButton Text="Connect wallet app"
+                                        ButtonState="Enabled"
+                                        IsVisible="{Binding MwaIsSupported}"
+                                        Command="{Binding ChooseMwaCommand}" />
+
+                <Label Text="Connecting a wallet app is only available on Android."
+                       FontSize="12"
+                       TextColor="#A6A6A6"
+                       IsVisible="{Binding MwaIsUnsupported}"
+                       HorizontalTextAlignment="Center" />
+
+                <buttons:ElevatedButton Text="Enter seed phrase"
+                                        ButtonState="Enabled"
+                                        Command="{Binding ChooseSeedPhraseCommand}" />
+            </VerticalStackLayout>
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+</ContentView>
