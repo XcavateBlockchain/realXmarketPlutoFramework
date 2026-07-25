@@ -151,10 +151,6 @@ namespace PlutoFramework.Model
 
             string address = SolanaMnemonicsModel.GetAddressFromMnemonics(mnemonics);
 
-            // Mirrors PUBLIC_KEY for Substrate: app start decides its shell before it can
-            // await, so key presence has to be readable synchronously.
-            Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, address);
-
             // Just get and use the same main password without asking the user again
             var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
 
@@ -164,6 +160,12 @@ namespace PlutoFramework.Model
                 password: password!,
                 type: KeyTypeEnum.SolanaMnemonic
             );
+
+            // Written only once the key is actually persisted. Mirrors PUBLIC_KEY for Substrate:
+            // app start decides its shell before it can await, so key presence has to be
+            // readable synchronously - which makes a preference claiming a key that the save
+            // never stored strictly worse than no preference at all.
+            Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, address);
         }
 
         /// <summary>
@@ -174,8 +176,6 @@ namespace PlutoFramework.Model
         {
             await DeleteExistingSolanaKeysAsync();
 
-            Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, key.Address);
-
             // Just get and use the same main password without asking the user again
             var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
 
@@ -185,6 +185,9 @@ namespace PlutoFramework.Model
                 password: password!,
                 type: KeyTypeEnum.SolanaMwa
             );
+
+            // Written only once the key is actually persisted - see SaveSolanaMnemonicKeyAsync.
+            Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, key.Address);
         }
 
         public static async Task<bool> HasSolanaKeyAsync() =>
