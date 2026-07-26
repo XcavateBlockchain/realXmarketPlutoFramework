@@ -43,7 +43,8 @@
                        FontSize="13"
                        HorizontalTextAlignment="Center" />
 
-                <solana:SolanaNoAccountView IsVisible="{Binding NoAccount}" />
+                <solana:SolanaNoAccountView IsVisible="{Binding NoAccount}"
+                                            AccountAddedCommand="{Binding RefreshCommand}" />
 
                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding Balances}"
                                      IsVisible="{Binding HasAccount}"
@@ -61,5 +62,8 @@
     <template:PageTemplate.PopupContent>
         <address:AddressQrCodeView />
         <solana:ImportMethodPopupView />
+        <solana:CreateSolanaMnemonicsPopupView />
+        <solana:EnterSolanaMnemonicsPopupView />
+        <solana:ConnectMwaPopupView />
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>

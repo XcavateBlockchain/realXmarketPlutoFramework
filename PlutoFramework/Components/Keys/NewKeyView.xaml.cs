@@ -43,15 +43,35 @@ public partial class NewKeyView : ContentView
     }
 
     /// <summary>
-    /// Returns from a key-creation page and re-evaluates whether this slot is now taken.
-    /// Needed because the Solana flows navigate away instead of creating the key inline,
-    /// so the buttons cannot be updated when the tap is handled.
+    /// Opens the popup that creates a Solana account from a new seed phrase. The Solana flows
+    /// do not create the key inline, so the buttons can only be re-evaluated once the popup
+    /// reports back - not when the tap is handled.
     /// </summary>
-    private async Task PopAndRefreshAsync()
+    private void ShowCreateSolanaMnemonicsPopup()
     {
-        await Shell.Current.Navigation.PopAsync();
+        var popup = DependencyService.Get<CreateSolanaMnemonicsPopupViewModel>();
 
-        await ChangeButtonsIfKeyExistsAsync();
+        popup.Completed = ChangeButtonsIfKeyExistsAsync;
+
+        popup.IsVisible = true;
+    }
+
+    private void ShowEnterSolanaMnemonicsPopup()
+    {
+        var popup = DependencyService.Get<EnterSolanaMnemonicsPopupViewModel>();
+
+        popup.Completed = (mnemonics) => ChangeButtonsIfKeyExistsAsync();
+
+        popup.IsVisible = true;
+    }
+
+    private void ShowConnectMwaPopup()
+    {
+        var popup = DependencyService.Get<ConnectMwaPopupViewModel>();
+
+        popup.Completed = ChangeButtonsIfKeyExistsAsync;
+
+        popup.IsVisible = true;
     }
 
     private async Task ChangeButtonsIfKeyExistsAsync()
@@ -122,19 +142,13 @@ public partial class NewKeyView : ContentView
 
                 break;
             case KeyTypeEnum.SolanaMnemonic:
-                // Navigates rather than generating inline, so the seed phrase is shown for
+                // Asks rather than generating inline, so the seed phrase is shown for
                 // backup before it becomes the only copy of the key.
-                await Shell.Current.Navigation.PushAsync(new CreateSolanaMnemonicsPage(new CreateSolanaMnemonicsViewModel
-                {
-                    Navigation = PopAndRefreshAsync,
-                }));
+                ShowCreateSolanaMnemonicsPopup();
 
                 return;
             case KeyTypeEnum.SolanaMwa:
-                await Shell.Current.Navigation.PushAsync(new ConnectMwaPage(new ConnectMwaPageViewModel
-                {
-                    Navigation = PopAndRefreshAsync,
-                }));
+                ShowConnectMwaPopup();
 
                 return;
             default:
@@ -193,20 +207,14 @@ public partial class NewKeyView : ContentView
                 break;
 
             case KeyTypeEnum.SolanaMnemonic:
-                await Shell.Current.Navigation.PushAsync(new EnterSolanaMnemonicsPage(new EnterSolanaMnemonicsViewModel
-                {
-                    Navigation = async (mnemonics) => await PopAndRefreshAsync(),
-                }));
+                ShowEnterSolanaMnemonicsPopup();
 
                 break;
 
             case KeyTypeEnum.SolanaMwa:
                 // Connecting an existing wallet is both the create and the import path,
                 // since there is no local key to generate either way.
-                await Shell.Current.Navigation.PushAsync(new ConnectMwaPage(new ConnectMwaPageViewModel
-                {
-                    Navigation = PopAndRefreshAsync,
-                }));
+                ShowConnectMwaPopup();
 
                 break;
 

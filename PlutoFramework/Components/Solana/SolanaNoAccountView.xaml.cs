@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
-using PlutoFramework.Model;
+using System.Windows.Input;
 
 namespace PlutoFramework.Components.Solana;
 
@@ -10,6 +10,14 @@ namespace PlutoFramework.Components.Solana;
 /// </summary>
 public partial class SolanaNoAccountView : ContentView
 {
+    /// <summary>
+    /// Runs once an account exists. The create and import flows are popups rather than pages,
+    /// so the host page never disappears and reappears - without this it would keep showing
+    /// the empty state until something else made it look again.
+    /// </summary>
+    public static readonly BindableProperty AccountAddedCommandProperty = BindableProperty.Create(
+        nameof(AccountAddedCommand), typeof(ICommand), typeof(SolanaNoAccountView));
+
     public SolanaNoAccountView()
     {
         InitializeComponent();
@@ -18,36 +26,66 @@ public partial class SolanaNoAccountView : ContentView
         ImportCommand = new AsyncRelayCommand(ImportAsync);
     }
 
+    public ICommand? AccountAddedCommand
+    {
+        get => (ICommand?)GetValue(AccountAddedCommandProperty);
+        set => SetValue(AccountAddedCommandProperty, value);
+    }
+
     public IAsyncRelayCommand CreateCommand { get; }
 
     public IAsyncRelayCommand ImportCommand { get; }
 
-    private static Task CreateAsync() =>
-        NavigationModel.PushAsync(new CreateSolanaMnemonicsPage(new CreateSolanaMnemonicsViewModel
-        {
-            Navigation = () => NavigationModel.PopAsync(),
-        }));
+    private Task CreateAsync()
+    {
+        var popup = DependencyService.Get<CreateSolanaMnemonicsPopupViewModel>();
 
-    private static Task ImportAsync()
+        popup.Completed = NotifyAccountAddedAsync;
+
+        popup.IsVisible = true;
+
+        return Task.CompletedTask;
+    }
+
+    private Task ImportAsync()
     {
         var popup = DependencyService.Get<ImportMethodPopupViewModel>();
 
-        // EnterSolanaMnemonicsViewModel.ContinueWithMnemonicsAsync already saves the key
-        // via KeysModel.SaveSolanaMnemonicKeyAsync before invoking Navigation, so this
-        // callback only needs to pop back - saving again here would delete and re-save
-        // the key it just created.
-        popup.SeedPhraseChosen = () => NavigationModel.PushAsync(new EnterSolanaMnemonicsPage(
-            new EnterSolanaMnemonicsViewModel
-            {
-                Navigation = (mnemonics) => NavigationModel.PopAsync(),
-            }));
-
-        popup.MwaChosen = () => NavigationModel.PushAsync(new ConnectMwaPage(new ConnectMwaPageViewModel
+        // Both callbacks only refresh: the popup they open saves the key itself before
+        // reporting back - EnterSolanaMnemonicsPopupViewModel through
+        // KeysModel.SaveSolanaMnemonicKeyAsync, ConnectMwaPopupViewModel through
+        // SolanaMwaModel.ConnectAndSaveAsync. Saving again here would delete and re-save
+        // the key that was just created.
+        popup.SeedPhraseChosen = () =>
         {
-            Navigation = () => NavigationModel.PopAsync(),
-        }));
+            var seedPhrasePopup = DependencyService.Get<EnterSolanaMnemonicsPopupViewModel>();
+
+            seedPhrasePopup.Completed = (mnemonics) => NotifyAccountAddedAsync();
+
+            seedPhrasePopup.IsVisible = true;
+
+            return Task.CompletedTask;
+        };
+
+        popup.MwaChosen = () =>
+        {
+            var mwaPopup = DependencyService.Get<ConnectMwaPopupViewModel>();
+
+            mwaPopup.Completed = NotifyAccountAddedAsync;
+
+            mwaPopup.IsVisible = true;
+
+            return Task.CompletedTask;
+        };
 
         popup.IsVisible = true;
+
+        return Task.CompletedTask;
+    }
+
+    private Task NotifyAccountAddedAsync()
+    {
+        AccountAddedCommand?.Execute(null);
 
         return Task.CompletedTask;
     }

@@ -4,6 +4,7 @@
                    x:Class="PlutoFramework.Components.Keys.CreateNewKeyPage"
                    xmlns:keys="clr-namespace:PlutoFramework.Components.Keys"
                    xmlns:page="clr-namespace:PlutoFramework.Templates.PageTemplate"
+                   xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
                    Title="Generate new key">
     <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
                 AbsoluteLayout.LayoutFlags="All">
@@ -30,4 +31,10 @@
 
         </VerticalStackLayout>
     </ScrollView>
+
+    <page:PageTemplate.PopupContent>
+        <solana:CreateSolanaMnemonicsPopupView />
+        <solana:EnterSolanaMnemonicsPopupView />
+        <solana:ConnectMwaPopupView />
+    </page:PageTemplate.PopupContent>
 </page:PageTemplate>

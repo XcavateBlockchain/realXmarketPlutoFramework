@@ -8,15 +8,31 @@ using PlutoFrameworkCore.Solana.Mwa;
 
 namespace PlutoFramework.Components.Solana
 {
-    public partial class ConnectMwaPageViewModel : ObservableObject
+    /// <summary>
+    /// Authorizes an installed Solana wallet app over Mobile Wallet Adapter and saves the
+    /// resulting key.
+    /// </summary>
+    /// <remarks>
+    /// One instance is shared through <see cref="DependencyService"/>. Callers set
+    /// <see cref="Completed"/> and then <see cref="IsVisible"/>.
+    /// </remarks>
+    public partial class ConnectMwaPopupViewModel : ObservableObject, IPopup, ISetToDefault
     {
-        public Func<Task> Navigation { get; set; } = () => Task.CompletedTask;
+        [ObservableProperty]
+        private bool isVisible = false;
 
         /// <summary>
-        /// The network is an app-wide setting, so this page reports which one it will connect
-        /// on instead of offering a second place to change it.
+        /// Runs after the authorization is saved. The popup closes itself first.
         /// </summary>
-        public string NetworkName => SelectedCluster.GetName();
+        public Func<Task> Completed { get; set; } = () => Task.CompletedTask;
+
+        /// <summary>
+        /// The network is an app-wide setting, so this popup reports which one it will connect
+        /// on instead of offering a second place to change it. Re-read every time the popup
+        /// opens, because the shared instance outlives any single network selection.
+        /// </summary>
+        [ObservableProperty]
+        private string networkName = SelectedCluster.GetName();
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ConnectButtonState))]
@@ -40,7 +56,7 @@ namespace PlutoFramework.Components.Solana
         public bool ErrorIsVisible => !string.IsNullOrEmpty(ErrorMessage);
 
         /// <summary>
-        /// Mobile Wallet Adapter is specified for Android only, so on iOS the page shows an
+        /// Mobile Wallet Adapter is specified for Android only, so on iOS the popup shows an
         /// explanation instead of a dead button.
         /// </summary>
         public bool IsSupported => SolanaMwaModel.IsSupported;
@@ -51,6 +67,23 @@ namespace PlutoFramework.Components.Solana
             IsConnecting ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
 
         private static SolanaCluster SelectedCluster => SolanaNetworkModel.SelectedCluster;
+
+        partial void OnIsVisibleChanged(bool value)
+        {
+            if (value)
+            {
+                NetworkName = SelectedCluster.GetName();
+            }
+        }
+
+        public void SetToDefault()
+        {
+            IsVisible = false;
+            IsConnecting = false;
+            Status = "";
+            ErrorMessage = "";
+            Completed = () => Task.CompletedTask;
+        }
 
         [RelayCommand]
         public async Task ConnectAsync()
@@ -72,13 +105,17 @@ namespace PlutoFramework.Components.Solana
                 _ => "",
             });
 
+            var connected = false;
+
             try
             {
                 var key = await SolanaMwaModel.ConnectAndSaveAsync(SelectedCluster, progress, CancellationToken.None);
 
-                await Toast.Make($"Connected to {key.DisplayName}.").Show();
+                // Set before the toast: the authorization is already saved at this point, so a
+                // toast that fails to show must not be read as a failed connection.
+                connected = true;
 
-                await Navigation.Invoke();
+                await Toast.Make($"Connected to {key.DisplayName}.").Show();
             }
             catch (MwaConnectFlow.PlatformNotSupportedException)
             {
@@ -106,6 +143,25 @@ namespace PlutoFramework.Components.Solana
                 IsConnecting = false;
                 Status = "";
             }
+
+            // A failed attempt leaves the popup open on its error message, so the user can
+            // retry. Kept outside the try so a throw from the callback cannot be relabelled
+            // as a connection failure on an already-closed popup.
+            if (!connected)
+            {
+                return;
+            }
+
+            var completed = Completed;
+
+            IsVisible = false;
+
+            // Reset here rather than leaving it to the card's close animation: onboarding's
+            // callback replaces the whole page, and a card torn down mid-animation never
+            // reaches SetToDefault.
+            SetToDefault();
+
+            await completed.Invoke();
         }
     }
 }

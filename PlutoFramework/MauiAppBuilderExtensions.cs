@@ -222,6 +222,12 @@ namespace PlutoFramework
 
             DependencyService.Register<ImportMethodPopupViewModel>();
 
+            DependencyService.Register<CreateSolanaMnemonicsPopupViewModel>();
+
+            DependencyService.Register<EnterSolanaMnemonicsPopupViewModel>();
+
+            DependencyService.Register<ConnectMwaPopupViewModel>();
+
             DependencyService.Register<LogOutPopupViewModel>();
 
             DependencyService.Register<CancelReservationPopupViewModel>();
