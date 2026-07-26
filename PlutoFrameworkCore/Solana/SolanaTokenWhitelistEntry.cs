@@ -22,6 +22,14 @@ namespace PlutoFrameworkCore.Solana
         /// </summary>
         public double? PinnedUsdPrice { get; init; }
 
+        /// <summary>
+        /// Whether the detail page draws a price chart for this token. Off by default:
+        /// every token configured so far is a stablecoin, and a flat line implies a
+        /// volatility they do not have. A token earns a chart deliberately, so a new entry
+        /// cannot acquire one by omission.
+        /// </summary>
+        public bool ShowPriceChart { get; init; }
+
         public string ProgramId { get; init; } = SolanaTokenProgram.Legacy;
     }
 

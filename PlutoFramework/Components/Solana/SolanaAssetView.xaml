@@ -3,8 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              x:Class="PlutoFramework.Components.Solana.SolanaAssetView">
-    <card:Card CardPadding="0, 0, 0, 0">
-        <card:Card.View>
+    <card:ClickableCard CardPadding="0, 0, 0, 0">
+        <card:ClickableCard.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnClicked" />
+        </card:ClickableCard.GestureRecognizers>
+        <card:ClickableCard.View>
             <Grid ColumnDefinitions="70,*,130"
                   HeightRequest="70">
 
@@ -38,6 +41,6 @@
                            HorizontalTextAlignment="End" />
                 </VerticalStackLayout>
             </Grid>
-        </card:Card.View>
-    </card:Card>
+        </card:ClickableCard.View>
+    </card:ClickableCard>
 </ContentView>

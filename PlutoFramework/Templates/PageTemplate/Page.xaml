@@ -12,6 +12,7 @@
                     xmlns:webview="clr-namespace:PlutoFramework.Components.WebView"
                     xmlns:topnavigationbartemplate="clr-namespace:PlutoFramework.Templates.TopNavigationBarTemplate"
                     xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+                    xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
                     x:Class="PlutoFramework.Templates.PageTemplate.Page">
 
     <ControlTemplate x:Key="PageTemplate">
@@ -46,6 +47,12 @@
             <txanalyzer:TransactionAnalyzerConfirmationView ZIndex="{TemplateBinding TransactionAnalyzerZIndex}"/>
 
             <account:NoAccountPopup ZIndex="10" />
+
+            <!-- Hosted here because NoAccountPopup, which is itself raised from anywhere
+                 (RequirementsModel, the navigation bar, a resumed onboarding), continues its
+                 Import Account button into this popup. Hosting it per-page left that button
+                 dead on every page that had not thought to include it. -->
+            <solana:ImportMethodPopupView ZIndex="10" />
 
             <kilt:NoDidPopupView ZIndex="10" />
 

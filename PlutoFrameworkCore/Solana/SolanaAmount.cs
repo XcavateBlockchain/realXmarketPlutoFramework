@@ -35,6 +35,19 @@ namespace PlutoFrameworkCore.Solana
             return (decimal)raw / (decimal)BigInteger.Pow(10, decimals);
         }
 
+        /// <summary>
+        /// A balance as the balances list and the detail page both print it. Trailing zeros
+        /// are trimmed so a whole balance reads "40 USDC" rather than "40.000000 USDC", but a
+        /// dust balance keeps enough places to stay visible.
+        /// </summary>
+        /// <remarks>
+        /// Capped at six places whatever the mint declares: SOL's nine would push the USD
+        /// column off a narrow screen, and the extra digits are noise at any realistic balance.
+        /// </remarks>
+        public static string ToDisplayString(decimal amount, int decimals) =>
+            Math.Round(amount, Math.Min(decimals, 6))
+                .ToString("0.######", CultureInfo.InvariantCulture);
+
         public static decimal FromLamports(ulong lamports) =>
             FromBaseUnits(lamports.ToString(CultureInfo.InvariantCulture), SolanaNativeToken.Decimals);
     }

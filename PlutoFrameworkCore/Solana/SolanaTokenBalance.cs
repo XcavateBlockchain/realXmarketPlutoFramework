@@ -14,6 +14,13 @@ namespace PlutoFrameworkCore.Solana
 
         public required bool IsNative { get; init; }
 
+        /// <summary>
+        /// Whether the detail page draws a price chart for this row. Carried on the row, the
+        /// way <see cref="Symbol"/> and <see cref="Decimals"/> are, so the detail page needs
+        /// neither the whitelist nor the cluster to decide.
+        /// </summary>
+        public required bool ShowPriceChart { get; init; }
+
         /// <summary>Null when no price is known. Not zero — those mean different things.</summary>
         public double? UsdValue { get; init; }
     }

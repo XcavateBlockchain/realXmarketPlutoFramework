@@ -192,5 +192,57 @@ namespace PlutoFrameworkTests
 
             Assert.That(rows.Select(row => row.Symbol), Is.EqualTo(new[] { "SOL", "USDC", "TEST" }));
         }
+
+        /// <summary>
+        /// SOL is not a whitelist entry, so no configuration mistake can switch its chart
+        /// off. It is also the only token on the page whose price actually moves.
+        /// </summary>
+        [Test]
+        public void SolIsAlwaysChartable()
+        {
+            var rows = SolanaBalanceAssembler.Assemble(
+                lamports: 0UL,
+                tokenAccounts: [],
+                whitelist: [],
+                usdPrices: new Dictionary<string, double>());
+
+            Assert.That(rows[0].ShowPriceChart, Is.True);
+        }
+
+        /// <summary>
+        /// A stablecoin opts out. Charting a pegged token draws a flat line that implies a
+        /// volatility it does not have.
+        /// </summary>
+        [Test]
+        public void WhitelistEntryWithoutTheFlagProducesAChartlessRow()
+        {
+            var rows = SolanaBalanceAssembler.Assemble(
+                lamports: 0UL,
+                tokenAccounts: [],
+                whitelist: [Usdc()],
+                usdPrices: new Dictionary<string, double>());
+
+            Assert.That(rows.Single(row => row.Symbol == "USDC").ShowPriceChart, Is.False);
+        }
+
+        [Test]
+        public void WhitelistEntryWithTheFlagProducesAChartableRow()
+        {
+            var volatile_ = Usdc() with
+            {
+                Mint = OtherMint,
+                Symbol = "TEST",
+                PinnedUsdPrice = null,
+                ShowPriceChart = true,
+            };
+
+            var rows = SolanaBalanceAssembler.Assemble(
+                lamports: 0UL,
+                tokenAccounts: [],
+                whitelist: [volatile_],
+                usdPrices: new Dictionary<string, double>());
+
+            Assert.That(rows.Single(row => row.Symbol == "TEST").ShowPriceChart, Is.True);
+        }
     }
 }

@@ -20,7 +20,8 @@ public partial class SolanaAssetView : ContentView
 
             control.assetIcon.Source = Assets.GetAssetIcon(balance.Symbol);
             control.symbolLabel.Text = balance.Symbol;
-            control.amountLabel.Text = $"{FormatAmount(balance)} {balance.Symbol}";
+            control.amountLabel.Text =
+                $"{SolanaAmount.ToDisplayString(balance.Amount, balance.Decimals)} {balance.Symbol}";
 
             // An unknown price shows nothing at all. "$0.00" would read as "your money is
             // gone" rather than "we could not reach the price feed".
@@ -38,14 +39,15 @@ public partial class SolanaAssetView : ContentView
         set => SetValue(BalanceProperty, value);
     }
 
-    /// <summary>
-    /// Trailing zeros are trimmed so a whole balance reads "40 USDC" rather than
-    /// "40.000000 USDC", but a dust balance keeps enough places to stay visible.
-    /// </summary>
-    private static string FormatAmount(SolanaTokenBalance balance)
+    private async void OnClicked(object sender, TappedEventArgs e)
     {
-        var rounded = Math.Round(balance.Amount, Math.Min(balance.Decimals, 6));
+        // BindableProperty defaults to null, so a row whose binding has not resolved yet is
+        // still tappable.
+        if (Balance is null)
+        {
+            return;
+        }
 
-        return rounded.ToString("0.######");
+        await Navigation.PushAsync(new SolanaTokenDetailPage(Balance));
     }
 }

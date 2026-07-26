@@ -45,6 +45,34 @@ namespace PlutoFrameworkCore.Solana
             return resolved;
         }
 
+        /// <summary>
+        /// One mint's current price and 24-hour movement, for the token detail page's price
+        /// row. Null when the feed failed or omitted the mint — never a zeroed quote, which
+        /// would read as "worthless" rather than "unknown".
+        /// </summary>
+        /// <remarks>
+        /// The unit price cannot be recovered from the balances page's rows instead: a row
+        /// carries amount × price, which is 0 at a zero balance and yields no price at all.
+        /// </remarks>
+        public static async Task<SolanaSpotQuote?> GetSpotQuoteAsync(
+            string mint, CancellationToken token)
+        {
+            try
+            {
+                var body = await Client.GetStringAsync(PRICE_ENDPOINT + mint, token);
+
+                return SolanaPriceParser.ParseQuotes(body).TryGetValue(mint, out var quote)
+                    ? quote
+                    : null;
+            }
+            catch (Exception ex) when (!token.IsCancellationRequested)
+            {
+                Console.WriteLine($"Solana spot quote fetch failed: {ex.Message}");
+
+                return null;
+            }
+        }
+
         public static async Task<IReadOnlyDictionary<string, double>> GetUsdPricesAsync(
             IReadOnlyList<SolanaTokenWhitelistEntry> whitelist,
             CancellationToken token)

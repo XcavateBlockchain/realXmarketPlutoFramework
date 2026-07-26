@@ -53,6 +53,62 @@ namespace PlutoFrameworkTests
                 Assert.That(SolanaPriceParser.Parse("[1,2,3]"), Is.Empty);
             });
         }
+
+        [Test]
+        public void ParseQuotesReadsPriceAndTwentyFourHourChange()
+        {
+            var quotes = SolanaPriceParser.ParseQuotes(SampleResponse);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    quotes[SolanaNativeToken.Mint].UsdPrice,
+                    Is.EqualTo(74.15443178403174).Within(0.0000001));
+                Assert.That(
+                    quotes[SolanaNativeToken.Mint].Change24h,
+                    Is.EqualTo(0.3258998223782334).Within(0.0000001));
+            });
+        }
+
+        /// <summary>
+        /// "We do not know the change" and "the price did not move" are different claims.
+        /// Defaulting to zero would print a confident +0.00% over missing data.
+        /// </summary>
+        [Test]
+        public void ParseQuotesLeavesAbsentChangeNull()
+        {
+            var quotes = SolanaPriceParser.ParseQuotes("""{"MintA":{"usdPrice":2.0}}""");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(quotes["MintA"].UsdPrice, Is.EqualTo(2.0));
+                Assert.That(quotes["MintA"].Change24h, Is.Null);
+            });
+        }
+
+        [Test]
+        public void ParseQuotesSkipsEntriesWithoutAPrice()
+        {
+            var quotes = SolanaPriceParser.ParseQuotes(
+                """{"MintA":{"priceChange24h":1.5},"MintB":{"usdPrice":2.0}}""");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(quotes.ContainsKey("MintA"), Is.False);
+                Assert.That(quotes.ContainsKey("MintB"), Is.True);
+            });
+        }
+
+        [Test]
+        public void ParseQuotesDegradesToEmptyOnMalformedJson()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(SolanaPriceParser.ParseQuotes("not json"), Is.Empty);
+                Assert.That(SolanaPriceParser.ParseQuotes(""), Is.Empty);
+                Assert.That(SolanaPriceParser.ParseQuotes("[1,2,3]"), Is.Empty);
+            });
+        }
     }
 
     public class SolanaPriceModelTests

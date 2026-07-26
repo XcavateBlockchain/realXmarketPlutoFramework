@@ -24,6 +24,9 @@ namespace PlutoFrameworkCore.Solana
                 Amount = solAmount,
                 Decimals = SolanaNativeToken.Decimals,
                 IsNative = true,
+                // Not configurable, unlike a whitelist row: SOL is the one token here whose
+                // price moves, and no configuration mistake should be able to hide that.
+                ShowPriceChart = true,
                 UsdValue = ToUsdValue(solAmount, SolanaNativeToken.Mint, usdPrices),
             });
 
@@ -64,6 +67,7 @@ namespace PlutoFrameworkCore.Solana
                     Amount = amount,
                     Decimals = entry.Decimals,
                     IsNative = false,
+                    ShowPriceChart = entry.ShowPriceChart,
                     UsdValue = ToUsdValue(amount, entry.Mint, usdPrices),
                 });
             }

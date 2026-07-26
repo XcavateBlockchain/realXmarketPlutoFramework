@@ -73,5 +73,44 @@ namespace PlutoFrameworkTests
         {
             Assert.Throws<FormatException>(() => SolanaAmount.FromBaseUnits("not-a-number", 6));
         }
+
+        /// <summary>
+        /// A whole balance should read "40", not "40.000000". The rule was private to
+        /// SolanaAssetView; the detail page needs the same one, so it lives here where both
+        /// can reach it and a test can pin it.
+        /// </summary>
+        [Test]
+        public void DisplayStringTrimsTrailingZeros()
+        {
+            Assert.That(SolanaAmount.ToDisplayString(40m, decimals: 6), Is.EqualTo("40"));
+        }
+
+        [Test]
+        public void DisplayStringKeepsDustVisible()
+        {
+            Assert.That(SolanaAmount.ToDisplayString(0.000012345m, decimals: 9), Is.EqualTo("0.000012"));
+        }
+
+        /// <summary>
+        /// Six places is the cap regardless of the mint's own decimals, so a nine-decimal
+        /// SOL balance does not push the USD column off a narrow screen.
+        /// </summary>
+        [Test]
+        public void DisplayStringCapsAtSixPlaces()
+        {
+            Assert.That(SolanaAmount.ToDisplayString(1.123456789m, decimals: 9), Is.EqualTo("1.123457"));
+        }
+
+        [Test]
+        public void DisplayStringRespectsFewerMintDecimals()
+        {
+            Assert.That(SolanaAmount.ToDisplayString(1.129m, decimals: 2), Is.EqualTo("1.13"));
+        }
+
+        [Test]
+        public void DisplayStringRendersZeroPlainly()
+        {
+            Assert.That(SolanaAmount.ToDisplayString(0m, decimals: 6), Is.EqualTo("0"));
+        }
     }
 }
