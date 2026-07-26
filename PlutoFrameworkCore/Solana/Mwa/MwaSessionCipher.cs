@@ -8,7 +8,9 @@ namespace PlutoFrameworkCore.Solana.Mwa
     ///
     /// Both endpoints derive one shared AES-128 key via ECDH plus HKDF-SHA256, salted with
     /// the association keypoint. Each frame is
-    /// <c>[4-byte big-endian sequence][12-byte IV][ciphertext][16-byte tag]</c>.
+    /// <c>[4-byte big-endian sequence][12-byte IV][ciphertext][16-byte tag]</c>, with the
+    /// sequence bytes authenticated as AES-GCM associated data — a frame sealed without
+    /// them is rejected by real wallets.
     ///
     /// Outbound and inbound sequences are counted independently, since each direction
     /// numbers its own messages from 1.
@@ -76,7 +78,8 @@ namespace PlutoFrameworkCore.Solana.Mwa
                 nonce: iv,
                 plaintext: plaintext,
                 ciphertext: frame.AsSpan(SEQUENCE_LENGTH + IV_LENGTH, plaintext.Length),
-                tag: frame.AsSpan(SEQUENCE_LENGTH + IV_LENGTH + plaintext.Length, TAG_LENGTH));
+                tag: frame.AsSpan(SEQUENCE_LENGTH + IV_LENGTH + plaintext.Length, TAG_LENGTH),
+                associatedData: frame.AsSpan(0, SEQUENCE_LENGTH));
 
             return frame;
         }
@@ -113,7 +116,8 @@ namespace PlutoFrameworkCore.Solana.Mwa
                 nonce: frame.AsSpan(SEQUENCE_LENGTH, IV_LENGTH),
                 ciphertext: frame.AsSpan(SEQUENCE_LENGTH + IV_LENGTH, ciphertextLength),
                 tag: frame.AsSpan(SEQUENCE_LENGTH + IV_LENGTH + ciphertextLength, TAG_LENGTH),
-                plaintext: plaintext);
+                plaintext: plaintext,
+                associatedData: frame.AsSpan(0, SEQUENCE_LENGTH));
 
             // Only advance once the frame has authenticated.
             inboundSequence = sequence;

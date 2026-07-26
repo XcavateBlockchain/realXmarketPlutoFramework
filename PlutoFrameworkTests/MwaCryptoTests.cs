@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.WebUtilities;
 using PlutoFrameworkCore.Solana.Mwa;
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 
 namespace PlutoFrameworkTests
@@ -293,6 +294,100 @@ namespace PlutoFrameworkTests
 
             Assert.Throws<MwaProtocolException>(() =>
                 MwaSessionCipher.Derive(ephemeral, new byte[10], association.PublicKeyPoint));
+        }
+    }
+
+    /// <summary>
+    /// Pins our cipher to the wire format of the reference walletlib, which round-trip
+    /// tests between two of our own ciphers cannot do: a deviation both sides share
+    /// still round-trips, but no real wallet would accept the frames.
+    ///
+    /// The reference side here re-derives the session key independently and, like the
+    /// walletlib, authenticates the 4-byte sequence number as AES-GCM associated data.
+    /// </summary>
+    public class MwaSessionCipherWireFormatTests
+    {
+        private const int SEQUENCE_LENGTH = 4;
+        private const int IV_LENGTH = 12;
+        private const int TAG_LENGTH = 16;
+
+        private static (MwaSessionCipher Dapp, byte[] WalletKey) EstablishedAgainstReference()
+        {
+            using var association = MwaAssociationKeypair.Generate();
+            using var dappEphemeral = MwaEphemeralKeypair.Generate();
+            using var walletEphemeral = MwaEphemeralKeypair.Generate();
+
+            var dapp = MwaSessionCipher.Derive(
+                dappEphemeral, walletEphemeral.PublicKeyPoint, association.PublicKeyPoint);
+
+            // ECDH + HKDF-SHA256(salt: association keypoint, L: 16), as the walletlib does.
+            var sharedSecret = walletEphemeral.DeriveSharedSecret(dappEphemeral.PublicKeyPoint);
+
+            var walletKey = HKDF.DeriveKey(
+                HashAlgorithmName.SHA256,
+                ikm: sharedSecret,
+                outputLength: 16,
+                salt: association.PublicKeyPoint,
+                info: null);
+
+            return (dapp, walletKey);
+        }
+
+        private static byte[] ReferenceEncrypt(byte[] key, uint sequence, byte[] plaintext)
+        {
+            var frame = new byte[SEQUENCE_LENGTH + IV_LENGTH + plaintext.Length + TAG_LENGTH];
+
+            BinaryPrimitives.WriteUInt32BigEndian(frame.AsSpan(0, SEQUENCE_LENGTH), sequence);
+            RandomNumberGenerator.Fill(frame.AsSpan(SEQUENCE_LENGTH, IV_LENGTH));
+
+            using var aes = new AesGcm(key, TAG_LENGTH);
+
+            aes.Encrypt(
+                nonce: frame.AsSpan(SEQUENCE_LENGTH, IV_LENGTH),
+                plaintext: plaintext,
+                ciphertext: frame.AsSpan(SEQUENCE_LENGTH + IV_LENGTH, plaintext.Length),
+                tag: frame.AsSpan(SEQUENCE_LENGTH + IV_LENGTH + plaintext.Length, TAG_LENGTH),
+                associatedData: frame.AsSpan(0, SEQUENCE_LENGTH));
+
+            return frame;
+        }
+
+        private static byte[] ReferenceDecrypt(byte[] key, byte[] frame)
+        {
+            var plaintext = new byte[frame.Length - SEQUENCE_LENGTH - IV_LENGTH - TAG_LENGTH];
+
+            using var aes = new AesGcm(key, TAG_LENGTH);
+
+            aes.Decrypt(
+                nonce: frame.AsSpan(SEQUENCE_LENGTH, IV_LENGTH),
+                ciphertext: frame.AsSpan(SEQUENCE_LENGTH + IV_LENGTH, plaintext.Length),
+                tag: frame.AsSpan(SEQUENCE_LENGTH + IV_LENGTH + plaintext.Length, TAG_LENGTH),
+                plaintext: plaintext,
+                associatedData: frame.AsSpan(0, SEQUENCE_LENGTH));
+
+            return plaintext;
+        }
+
+        [Test]
+        public void ReferenceWalletAcceptsDappFrame()
+        {
+            var (dapp, walletKey) = EstablishedAgainstReference();
+            var plaintext = System.Text.Encoding.UTF8.GetBytes("""{"jsonrpc":"2.0","method":"authorize"}""");
+
+            var frame = dapp.Encrypt(plaintext);
+
+            Assert.That(ReferenceDecrypt(walletKey, frame), Is.EqualTo(plaintext));
+        }
+
+        [Test]
+        public void DappAcceptsReferenceWalletFrame()
+        {
+            var (dapp, walletKey) = EstablishedAgainstReference();
+            var plaintext = System.Text.Encoding.UTF8.GetBytes("""{"jsonrpc":"2.0","result":{}}""");
+
+            var frame = ReferenceEncrypt(walletKey, sequence: 1, plaintext);
+
+            Assert.That(dapp.Decrypt(frame), Is.EqualTo(plaintext));
         }
     }
 }
