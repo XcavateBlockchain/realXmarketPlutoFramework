@@ -16,7 +16,7 @@ namespace PlutoFramework.Components.Solana;
 /// </remarks>
 public partial class ImportSolanaWalletPage : PageTemplate
 {
-    public required Func<Task> Navigation;
+    public required new Func<Task> Navigation;
 
     /// <summary>
     /// Owned by this page rather than resolved from <see cref="DependencyService"/>, so the
