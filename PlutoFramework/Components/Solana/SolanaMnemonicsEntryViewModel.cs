@@ -14,12 +14,19 @@ namespace PlutoFramework.Components.Solana
     /// </remarks>
     public partial class SolanaMnemonicsEntryViewModel : ObservableObject
     {
-        private const string INVALID_PHRASE_MESSAGE = "That is not a valid seed phrase.";
+        public const string INVALID_PHRASE_MESSAGE = "That is not a valid seed phrase.";
+
+        /// <summary>
+        /// BIP39 phrases are 12, 15, 18, 21 or 24 words - 12 is the shortest length at which a
+        /// phrase can first validate.
+        /// </summary>
+        private const int SHORTEST_VALID_PHRASE_WORDS = 12;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(AddressPreview))]
         [NotifyPropertyChangedFor(nameof(AddressPreviewIsVisible))]
         [NotifyPropertyChangedFor(nameof(IsValid))]
+        [NotifyPropertyChangedFor(nameof(InvalidPhraseIsVisible))]
         private string mnemonics = "";
 
         [ObservableProperty]
@@ -37,6 +44,17 @@ namespace PlutoFramework.Components.Solana
         public string AddressPreview => SolanaMnemonicsModel.TryGetAddressPreview(Mnemonics);
 
         public bool AddressPreviewIsVisible => !string.IsNullOrEmpty(AddressPreview);
+
+        /// <summary>
+        /// True once the phrase is long enough to be a complete BIP39 phrase but still does not
+        /// validate. Gated on the word count so the message does not accuse the user of a bad
+        /// phrase while they are still typing the first one.
+        /// </summary>
+        public bool InvalidPhraseIsVisible => WordCount >= SHORTEST_VALID_PHRASE_WORDS && !IsValid;
+
+        private int WordCount => Mnemonics.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+
+        public string InvalidPhraseMessage => INVALID_PHRASE_MESSAGE;
 
         partial void OnMnemonicsChanged(string value)
         {

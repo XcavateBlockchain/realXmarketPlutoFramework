@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Alerts;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Model;
 using PlutoFramework.Templates.PageTemplate;
@@ -27,7 +28,18 @@ public partial class SetupPasswordPage : PageTemplate
 
         _clicked = true;
 
-        await PasswordSetupModel.SaveNewPasswordAsync(setPasswordView.Password);
+        try
+        {
+            await PasswordSetupModel.SaveNewPasswordAsync(setPasswordView.Password);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make($"Could not save your password: {ex.Message}").Show();
+
+            _clicked = false;
+
+            return;
+        }
 
         await Navigation.Invoke();
 

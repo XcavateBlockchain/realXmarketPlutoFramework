@@ -48,8 +48,7 @@ namespace PlutoFramework.Components.Solana
         {
             if (!Entry.IsValid)
             {
-                Entry.ShowError("That is not a valid seed phrase.");
-
+                // The live invalid-phrase label on the entry view is already saying so.
                 return;
             }
 

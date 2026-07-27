@@ -36,6 +36,10 @@
                    HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 
+        <Label Text="{Binding InvalidPhraseMessage}"
+               IsVisible="{Binding InvalidPhraseIsVisible}"
+               HorizontalTextAlignment="Center" />
+
         <Label Text="{Binding ErrorMessage}"
                IsVisible="{Binding ErrorIsVisible}"
                HorizontalTextAlignment="Center" />
