@@ -64,5 +64,31 @@ namespace PlutoFramework.Model
                 return false;
             }
         }
+
+        /// <summary>
+        /// The address a phrase unlocks, or an empty string when nothing can be derived.
+        /// </summary>
+        /// <remarks>
+        /// Shown live while the user types. It is the only thing standing between them and a
+        /// phrase imported under the wrong derivation, which yields a valid but empty
+        /// account - otherwise discoverable only after the import.
+        /// </remarks>
+        public static string TryGetAddressPreview(string? mnemonics)
+        {
+            if (!ValidateMnemonics(mnemonics ?? ""))
+            {
+                return "";
+            }
+
+            try
+            {
+                return GetAddressFromMnemonics(mnemonics!);
+            }
+            catch
+            {
+                // A passing checksum does not guarantee Solnet can derive from the phrase.
+                return "";
+            }
+        }
     }
 }

@@ -117,5 +117,38 @@ namespace PlutoFrameworkTests
         {
             Assert.That(SolanaMnemonicsModel.ValidateMnemonics("   "), Is.False);
         }
+
+        [Test]
+        public void TryGetAddressPreviewReturnsTheAddressForAValidPhrase()
+        {
+            Assert.That(
+                SolanaMnemonicsModel.TryGetAddressPreview(TestMnemonics),
+                Is.EqualTo(ExpectedEd25519Bip32Address));
+        }
+
+        [Test]
+        public void TryGetAddressPreviewIsEmptyForAHalfTypedPhrase()
+        {
+            Assert.That(SolanaMnemonicsModel.TryGetAddressPreview("lens scheme misery"), Is.Empty);
+        }
+
+        [Test]
+        public void TryGetAddressPreviewIsEmptyForABadChecksum()
+        {
+            // Twelve wordlist words in a combination BIP39's checksum rejects. The canonical
+            // valid all-abandon phrase ends in "about".
+            var badChecksum = string.Join(" ", Enumerable.Repeat("abandon", 12));
+
+            Assert.That(SolanaMnemonicsModel.ValidateMnemonics(badChecksum), Is.False);
+            Assert.That(SolanaMnemonicsModel.TryGetAddressPreview(badChecksum), Is.Empty);
+        }
+
+        [Test]
+        public void TryGetAddressPreviewIsEmptyForNullAndEmptyInput()
+        {
+            Assert.That(SolanaMnemonicsModel.TryGetAddressPreview(null), Is.Empty);
+            Assert.That(SolanaMnemonicsModel.TryGetAddressPreview(""), Is.Empty);
+            Assert.That(SolanaMnemonicsModel.TryGetAddressPreview("   "), Is.Empty);
+        }
     }
 }

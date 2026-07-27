@@ -9,7 +9,10 @@ namespace PlutoFramework.Components.Solana
     /// </summary>
     /// <remarks>
     /// One instance is shared through <see cref="DependencyService"/>. Callers set
-    /// <see cref="Completed"/> and then <see cref="IsVisible"/>.
+    /// <see cref="Completed"/> and then <see cref="IsVisible"/>. Only usable where a password
+    /// is already stored - <see cref="KeysModel.SaveSolanaMnemonicKeyAsync"/> reads it to
+    /// encrypt the phrase. Onboarding, which has no password yet, uses
+    /// <c>ImportSolanaWalletPage</c> instead.
     /// </remarks>
     public partial class EnterSolanaMnemonicsPopupViewModel : ObservableObject, IPopup, ISetToDefault
     {
@@ -17,55 +20,16 @@ namespace PlutoFramework.Components.Solana
         private bool isVisible = false;
 
         /// <summary>
+        /// The phrase, its validity and its address preview. Not shared with any other
+        /// surface, so a phrase typed here cannot surface anywhere else.
+        /// </summary>
+        public SolanaMnemonicsEntryViewModel Entry { get; } = new();
+
+        /// <summary>
         /// Runs after the key is saved, with the phrase that was imported. The popup closes
         /// itself first.
         /// </summary>
         public Func<string, Task> Completed { get; set; } = (string mnemonics) => Task.CompletedTask;
-
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(AddressPreview))]
-        [NotifyPropertyChangedFor(nameof(AddressPreviewIsVisible))]
-        [NotifyPropertyChangedFor(nameof(IsValid))]
-        private string mnemonics = "";
-
-        [ObservableProperty]
-        private bool incorrectMnemonicsEntered = false;
-
-        public bool IsValid => SolanaMnemonicsModel.ValidateMnemonics(Mnemonics);
-
-        /// <summary>
-        /// Shown live so the user can confirm the derived address matches the one their
-        /// existing wallet displays before committing to the import. A mnemonic imported
-        /// under the wrong derivation yields a valid but empty account, which is otherwise
-        /// only discoverable after the fact.
-        /// </summary>
-        public string AddressPreview
-        {
-            get
-            {
-                if (!IsValid)
-                {
-                    return "";
-                }
-
-                try
-                {
-                    return SolanaMnemonicsModel.GetAddressFromMnemonics(Mnemonics);
-                }
-                catch
-                {
-                    return "";
-                }
-            }
-        }
-
-        public bool AddressPreviewIsVisible => !string.IsNullOrEmpty(AddressPreview);
-
-        partial void OnMnemonicsChanged(string value)
-        {
-            // Clear a stale error as soon as the user edits the phrase.
-            IncorrectMnemonicsEntered = false;
-        }
 
         /// <summary>
         /// Runs when the card finishes closing. Clearing the phrase matters here beyond the
@@ -75,39 +39,41 @@ namespace PlutoFramework.Components.Solana
         public void SetToDefault()
         {
             IsVisible = false;
-            Mnemonics = "";
-            IncorrectMnemonicsEntered = false;
+            Entry.Reset();
             Completed = (string mnemonics) => Task.CompletedTask;
         }
 
         [RelayCommand]
         public async Task ContinueWithMnemonicsAsync()
         {
-            if (!IsValid)
+            if (!Entry.IsValid)
             {
-                IncorrectMnemonicsEntered = true;
+                Entry.ShowError("That is not a valid seed phrase.");
 
                 return;
             }
 
             try
             {
-                await KeysModel.SaveSolanaMnemonicKeyAsync(Mnemonics);
+                await KeysModel.SaveSolanaMnemonicKeyAsync(Entry.Mnemonics);
             }
             catch
             {
                 // Only the save is guarded. Letting this also cover the callback would report
-                // a phrase that imported perfectly well as invalid, on a popup that has
+                // a phrase that imported perfectly well as a failure, on a popup that has
                 // already closed - and, on a shared instance, the error would still be
                 // showing the next time somebody opens it.
-                IncorrectMnemonicsEntered = true;
+                //
+                // The phrase was validated above, so this is not an invalid-phrase failure
+                // and must not claim to be one.
+                Entry.ShowError("Could not save your wallet. Please try again.");
 
                 return;
             }
 
             // Captured before the reset below clears them.
             var completed = Completed;
-            var mnemonics = Mnemonics;
+            var mnemonics = Entry.Mnemonics;
 
             IsVisible = false;
 
