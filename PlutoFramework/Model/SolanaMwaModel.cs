@@ -6,7 +6,8 @@ namespace PlutoFramework.Model
 {
     /// <summary>
     /// Application-level Mobile Wallet Adapter operations: builds this app's identity,
-    /// connects, and persists or removes the resulting authorization.
+    /// connects, and removes an existing authorization. Persisting a new authorization is
+    /// left to the caller - see <see cref="ConnectAsync"/>.
     /// </summary>
     public static class SolanaMwaModel
     {
@@ -22,12 +23,12 @@ namespace PlutoFramework.Model
         };
 
         /// <summary>
-        /// Connects to a wallet, authorizes an account, and stores the authorization.
-        /// Replaces any existing Solana key, since the two variants share one slot.
-        /// The cluster is passed in rather than read here: callers connect on the app-wide
-        /// <see cref="SolanaNetworkModel.SelectedCluster"/>.
+        /// Connects to a wallet and authorizes an account. Does not persist anything - the
+        /// caller decides when the authorization is saved, which is what lets onboarding ask
+        /// for a password in between. The cluster is passed in rather than read here: callers
+        /// connect on the app-wide <see cref="SolanaNetworkModel.SelectedCluster"/>.
         /// </summary>
-        public static async Task<SolanaMwaKey> ConnectAndSaveAsync(
+        public static async Task<SolanaMwaKey> ConnectAsync(
             SolanaCluster cluster,
             IProgress<MwaConnectStage>? progress,
             CancellationToken token)
@@ -39,7 +40,7 @@ namespace PlutoFramework.Model
                 progress,
                 token);
 
-            var key = new SolanaMwaKey
+            return new SolanaMwaKey
             {
                 AuthToken = result.AuthToken,
                 Address = result.Address,
@@ -47,10 +48,6 @@ namespace PlutoFramework.Model
                 WalletUriBase = result.WalletUriBase,
                 AccountLabel = result.AccountLabel,
             };
-
-            await KeysModel.SaveSolanaMwaKeyAsync(key);
-
-            return key;
         }
 
         /// <summary>

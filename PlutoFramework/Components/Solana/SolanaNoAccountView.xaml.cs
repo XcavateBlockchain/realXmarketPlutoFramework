@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Model;
 using System.Windows.Input;
 
 namespace PlutoFramework.Components.Solana;
@@ -51,11 +52,10 @@ public partial class SolanaNoAccountView : ContentView
     {
         var popup = DependencyService.Get<ImportMethodPopupViewModel>();
 
-        // Both callbacks only refresh: the popup they open saves the key itself before
-        // reporting back - EnterSolanaMnemonicsPopupViewModel through
-        // KeysModel.SaveSolanaMnemonicKeyAsync, ConnectMwaPopupViewModel through
-        // SolanaMwaModel.ConnectAndSaveAsync. Saving again here would delete and re-save
-        // the key that was just created.
+        // The seed-phrase popup saves the key itself through
+        // KeysModel.SaveSolanaMnemonicKeyAsync before reporting back, so its callback only
+        // refreshes. The MWA popup does not save - it reports the authorization and leaves
+        // persisting it to whoever asked, so this saves before refreshing.
         popup.SeedPhraseChosen = () =>
         {
             var seedPhrasePopup = DependencyService.Get<EnterSolanaMnemonicsPopupViewModel>();
@@ -71,7 +71,12 @@ public partial class SolanaNoAccountView : ContentView
         {
             var mwaPopup = DependencyService.Get<ConnectMwaPopupViewModel>();
 
-            mwaPopup.Completed = NotifyAccountAddedAsync;
+            mwaPopup.Completed = async (key) =>
+            {
+                await KeysModel.SaveSolanaMwaKeyAsync(key);
+
+                await NotifyAccountAddedAsync();
+            };
 
             mwaPopup.IsVisible = true;
 

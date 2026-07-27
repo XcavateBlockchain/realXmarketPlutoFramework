@@ -65,11 +65,20 @@ public partial class NewKeyView : ContentView
         popup.IsVisible = true;
     }
 
+    /// <summary>
+    /// The popup reports the authorization without persisting it, so this saves it. There is
+    /// already a password here - this screen is only reachable once the app is set up.
+    /// </summary>
     private void ShowConnectMwaPopup()
     {
         var popup = DependencyService.Get<ConnectMwaPopupViewModel>();
 
-        popup.Completed = ChangeButtonsIfKeyExistsAsync;
+        popup.Completed = async (key) =>
+        {
+            await KeysModel.SaveSolanaMwaKeyAsync(key);
+
+            await ChangeButtonsIfKeyExistsAsync();
+        };
 
         popup.IsVisible = true;
     }

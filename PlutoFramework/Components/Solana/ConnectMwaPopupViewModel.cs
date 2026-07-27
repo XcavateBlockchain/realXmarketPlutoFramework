@@ -3,14 +3,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Model;
+using PlutoFrameworkCore.Keys;
 using PlutoFrameworkCore.Solana;
 using PlutoFrameworkCore.Solana.Mwa;
 
 namespace PlutoFramework.Components.Solana
 {
     /// <summary>
-    /// Authorizes an installed Solana wallet app over Mobile Wallet Adapter and saves the
-    /// resulting key.
+    /// Authorizes an installed Solana wallet app over Mobile Wallet Adapter and reports the
+    /// resulting key. Saving it is left to the caller - see <see cref="Completed"/>.
     /// </summary>
     /// <remarks>
     /// One instance is shared through <see cref="DependencyService"/>. Callers set
@@ -22,9 +23,11 @@ namespace PlutoFramework.Components.Solana
         private bool isVisible = false;
 
         /// <summary>
-        /// Runs after the authorization is saved. The popup closes itself first.
+        /// Runs with the authorization once the wallet approves it. The popup closes itself
+        /// first. Nothing is persisted here - the caller saves the key, because onboarding
+        /// has to set a password before it can.
         /// </summary>
-        public Func<Task> Completed { get; set; } = () => Task.CompletedTask;
+        public Func<SolanaMwaKey, Task> Completed { get; set; } = (SolanaMwaKey key) => Task.CompletedTask;
 
         /// <summary>
         /// The network is an app-wide setting, so this popup reports which one it will connect
@@ -82,7 +85,7 @@ namespace PlutoFramework.Components.Solana
             IsConnecting = false;
             Status = "";
             ErrorMessage = "";
-            Completed = () => Task.CompletedTask;
+            Completed = (SolanaMwaKey key) => Task.CompletedTask;
         }
 
         [RelayCommand]
@@ -105,15 +108,15 @@ namespace PlutoFramework.Components.Solana
                 _ => "",
             });
 
-            var connected = false;
+            SolanaMwaKey? connectedKey = null;
 
             try
             {
-                var key = await SolanaMwaModel.ConnectAndSaveAsync(SelectedCluster, progress, CancellationToken.None);
+                var key = await SolanaMwaModel.ConnectAsync(SelectedCluster, progress, CancellationToken.None);
 
-                // Set before the toast: the authorization is already saved at this point, so a
-                // toast that fails to show must not be read as a failed connection.
-                connected = true;
+                // Set before the toast: the wallet has authorized at this point, so a toast
+                // that fails to show must not be read as a failed connection.
+                connectedKey = key;
 
                 await Toast.Make($"Connected to {key.DisplayName}.").Show();
             }
@@ -147,7 +150,7 @@ namespace PlutoFramework.Components.Solana
             // A failed attempt leaves the popup open on its error message, so the user can
             // retry. Kept outside the try so a throw from the callback cannot be relabelled
             // as a connection failure on an already-closed popup.
-            if (!connected)
+            if (connectedKey is null)
             {
                 return;
             }
@@ -161,7 +164,7 @@ namespace PlutoFramework.Components.Solana
             // reaches SetToDefault.
             SetToDefault();
 
-            await completed.Invoke();
+            await completed.Invoke(connectedKey);
         }
     }
 }
