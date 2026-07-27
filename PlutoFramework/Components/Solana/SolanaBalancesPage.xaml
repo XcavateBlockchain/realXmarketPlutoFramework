@@ -61,9 +61,8 @@
 
     <template:PageTemplate.PopupContent>
         <address:AddressQrCodeView />
-        <!-- ImportMethodPopupView is supplied by the page template. -->
+        <!-- ImportMethodPopupView and ConnectMwaPopupView are supplied by the page template. -->
         <solana:CreateSolanaMnemonicsPopupView />
         <solana:EnterSolanaMnemonicsPopupView />
-        <solana:ConnectMwaPopupView />
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>

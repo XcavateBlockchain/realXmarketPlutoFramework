@@ -54,6 +54,11 @@
                  dead on every page that had not thought to include it. -->
             <solana:ImportMethodPopupView ZIndex="10" />
 
+            <!-- Hosted here for the same reason as the popup above: the import-method popup
+                 is raised from anywhere, and its Mobile Wallet Adapter option now continues
+                 into this popup in place rather than into a page that hosted it. -->
+            <solana:ConnectMwaPopupView ZIndex="10" />
+
             <kilt:NoDidPopupView ZIndex="10" />
 
             <xcavate:UserProfileNotCreatedPopupView ZIndex="10" />

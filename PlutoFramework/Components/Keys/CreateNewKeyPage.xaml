@@ -33,8 +33,8 @@
     </ScrollView>
 
     <page:PageTemplate.PopupContent>
+        <!-- ConnectMwaPopupView is supplied by the page template. -->
         <solana:CreateSolanaMnemonicsPopupView />
         <solana:EnterSolanaMnemonicsPopupView />
-        <solana:ConnectMwaPopupView />
     </page:PageTemplate.PopupContent>
 </page:PageTemplate>
