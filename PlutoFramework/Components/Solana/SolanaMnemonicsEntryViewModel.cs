@@ -52,7 +52,11 @@ namespace PlutoFramework.Components.Solana
         /// </summary>
         public bool InvalidPhraseIsVisible => WordCount >= SHORTEST_VALID_PHRASE_WORDS && !IsValid;
 
-        private int WordCount => Mnemonics.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+        /// <summary>
+        /// Splits on any whitespace, not just spaces: the phrase arrives in a multiline editor
+        /// and is often pasted with newlines from a text file or password manager.
+        /// </summary>
+        private int WordCount => Mnemonics.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
 
         public string InvalidPhraseMessage => INVALID_PHRASE_MESSAGE;
 

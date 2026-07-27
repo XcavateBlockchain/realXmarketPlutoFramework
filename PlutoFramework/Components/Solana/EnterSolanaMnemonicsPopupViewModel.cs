@@ -48,7 +48,14 @@ namespace PlutoFramework.Components.Solana
         {
             if (!Entry.IsValid)
             {
-                // The live invalid-phrase label on the entry view is already saying so.
+                // Below the word-count gate the live label stays hidden, and this tap is the
+                // only signal that the user considers the phrase finished. Above it the label
+                // is already saying this, so saying it twice would be noise.
+                if (!Entry.InvalidPhraseIsVisible)
+                {
+                    Entry.ShowError(SolanaMnemonicsEntryViewModel.INVALID_PHRASE_MESSAGE);
+                }
+
                 return;
             }
 
