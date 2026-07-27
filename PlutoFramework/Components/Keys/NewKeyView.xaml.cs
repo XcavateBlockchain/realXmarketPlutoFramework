@@ -75,7 +75,19 @@ public partial class NewKeyView : ContentView
 
         popup.Completed = async (key) =>
         {
-            await KeysModel.SaveSolanaMwaKeyAsync(key);
+            // SaveSolanaMwaKeyAsync deletes the existing Solana key before it can fail, so a
+            // failure here must not be reported as success - it can leave the account slot
+            // empty rather than unchanged.
+            try
+            {
+                await KeysModel.SaveSolanaMwaKeyAsync(key);
+            }
+            catch (Exception ex)
+            {
+                await Toast.Make($"Could not save your wallet: {ex.Message}").Show();
+
+                return;
+            }
 
             await ChangeButtonsIfKeyExistsAsync();
         };
