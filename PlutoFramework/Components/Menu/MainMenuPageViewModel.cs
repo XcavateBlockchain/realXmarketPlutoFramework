@@ -64,10 +64,7 @@ namespace PlutoFramework.Components.Menu
 
         public MainMenuPageViewModel()
         {
-            if (Preferences.ContainsKey(PreferencesModel.PUBLIC_KEY))
-            {
-                Address = Preferences.Get(PreferencesModel.PUBLIC_KEY, "None");
-            }
+            Address = MainKeyModel.GetAddress();
 
             _ = LoadAsync();
         }
@@ -76,7 +73,10 @@ namespace PlutoFramework.Components.Menu
         {
             User = await XcavateUserDatabase.GetUserInformationAsync();
 
-            if (!Preferences.ContainsKey(PreferencesModel.PUBLIC_KEY))
+            // Roles come from a XcavatePaseo pallet query, so they follow the Substrate key
+            // rather than the main one. A Solana-only user simply has none, and the badge
+            // layout renders nothing for an empty list.
+            if (!KeysModel.HasSubstrateKey())
             {
                 return;
             }
@@ -87,9 +87,24 @@ namespace PlutoFramework.Components.Menu
             Roles = [.. await WhitelistModel.GetRolesCachedAsync((SubstrateClientExt)client.SubstrateClient, address, CancellationToken.None)];
         }
 
+        /// <summary>
+        /// Called by the page on navigation, which is also how a change to the main key in
+        /// Settings gets picked up: Settings is pushed over this page, so coming back
+        /// re-resolves the address rather than leaving the previous chain's on screen.
+        /// </summary>
         public async Task LoadProfileAsync()
         {
-            if (!KeysModel.HasSubstrateKey())
+            var address = MainKeyModel.GetAddress();
+
+            if (address != Address)
+            {
+                Address = address;
+
+                // Belongs to the address we just navigated away from.
+                Profile = null;
+            }
+
+            if (address is null)
             {
                 return;
             }

@@ -50,6 +50,63 @@ namespace PlutoFramework.Model
 
             return SaveEncryptionX25519KeyAsync(keyPair.PrivateKey);
         }
+
+        public static async Task<bool> HasEncryptionX25519KeyAsync() =>
+            (await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519)).Any();
+
+        /// <summary>
+        /// Ensures an X25519 encryption key exists, which the profile API requires and no
+        /// Solana onboarding path creates. Derives it from the seed phrase when there is one,
+        /// so it is recoverable from the same backup as the account, and generates a fresh one
+        /// for Mobile Wallet Adapter, which keeps no phrase on the device.
+        /// </summary>
+        /// <remarks>
+        /// Returns without touching anything when a key already exists. That guard is the
+        /// point: <see cref="SaveEncryptionX25519KeyAsync(byte[])"/> deletes every existing
+        /// X25519 key before writing, so calling this unguarded when a Substrate user later
+        /// adds a Solana key would silently destroy the messaging key they already have.
+        /// </remarks>
+        /// <param name="mnemonics">
+        /// The Solana phrase, when the caller already holds it. Saves unlocking the stored key
+        /// again, which would mean a second authentication prompt.
+        /// </param>
+        public static async Task EnsureEncryptionX25519KeyAsync(
+            string reason = "Set up your encryption key",
+            string? mnemonics = null)
+        {
+            if (await HasEncryptionX25519KeyAsync())
+            {
+                return;
+            }
+
+            if (mnemonics is not null)
+            {
+                await SaveEncryptionX25519KeyAsync(mnemonics);
+
+                return;
+            }
+
+            var lockedKey = (await KeysDatabase.GetAllKeysOfTypeAsync(
+                KeyTypeEnum.SolanaMnemonic, KeyTypeEnum.SolanaMwa)).FirstOrDefault();
+
+            switch (lockedKey?.Type)
+            {
+                case KeyTypeEnum.SolanaMnemonic:
+                    var solanaKey = await lockedKey.ToSolanaMnemonicKeyAsync(reason);
+
+                    await SaveEncryptionX25519KeyAsync(solanaKey.Mnemonics);
+
+                    break;
+
+                // Nothing to derive from: either an MWA wallet, which never hands over a
+                // phrase, or no Solana key at all, which is a Substrate-only user - and their
+                // key has always been random, generated alongside the account.
+                default:
+                    await GenerateNewEncryptionX25519KeyAsync();
+
+                    break;
+            }
+        }
         public static async Task RegisterBiometricAuthenticationAsync()
         {
             if (Preferences.Get(PreferencesModel.BIOMETRICS_ENABLED, false))
@@ -166,6 +223,10 @@ namespace PlutoFramework.Model
             // readable synchronously - which makes a preference claiming a key that the save
             // never stored strictly worse than no preference at all.
             Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, address);
+
+            // Derived from the phrase the caller already has, so the user is not asked to
+            // authenticate a second time and the key is recoverable from the same backup.
+            await EnsureEncryptionX25519KeyAsync(mnemonics: mnemonics.Trim());
         }
 
         /// <summary>
@@ -188,6 +249,9 @@ namespace PlutoFramework.Model
 
             // Written only once the key is actually persisted - see SaveSolanaMnemonicKeyAsync.
             Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, key.Address);
+
+            // No phrase to derive from - the wallet keeps the key - so this one is random.
+            await EnsureEncryptionX25519KeyAsync();
         }
 
         public static async Task<bool> HasSolanaKeyAsync() =>
@@ -718,6 +782,11 @@ namespace PlutoFramework.Model
         {
             Preferences.Remove(PreferencesModel.PUBLIC_KEY);
             Preferences.Remove(PreferencesModel.SOLANA_PUBLIC_KEY);
+
+            // A choice of main key outliving both keys would silently apply to whatever the
+            // next account turns out to be. Resolution tolerates that, but the next user of
+            // this device should start from the default rather than the last one's preference.
+            Preferences.Remove(PreferencesModel.SETTINGS_MAIN_KEY_CHAIN);
 
             return KeysDatabase.DeleteAllAsync();
 

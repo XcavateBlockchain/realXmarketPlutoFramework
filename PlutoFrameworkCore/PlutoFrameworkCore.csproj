@@ -11,7 +11,13 @@
     <PackageReference Include="Plugin.Firebase.CloudMessaging" Version="3.1.2" />
     <PackageReference Include="jose-jwt" Version="5.2.0" />
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
-    <PackageReference Include="Substrate.NET.API" Version="0.9.24-rc6" />
+    <!--
+      0.9.24 final, not the rc6 the generated projects pin. XcavateProfileApiClient 1.0.61
+      requires >= 0.9.24, and NuGet ranks a prerelease below the release it precedes, so rc6
+      here is a downgrade (NU1605). Raising this one direct reference lifts the whole graph:
+      the generated projects' rc6 is transitive from here and unifies upward.
+    -->
+    <PackageReference Include="Substrate.NET.API" Version="0.9.24" />
     <!--
       Solnet, Solana's .NET SDK. Note the package id: the repository at
       github.com/bmresearch/Solnet publishes under the Solana.* ids. The older
@@ -29,7 +35,13 @@
     <PackageReference Include="Uniquery" Version="1.0.1" />
     <PackageReference Include="Plutonication" Version="2.6.0" />
     <PackageReference Include="AzeroIdResolver" Version="1.0.2" />
-    <PackageReference Include="XcavateProfileApiClient" Version="1.0.50" />
+    <!--
+      Signs profile writes with sr25519 or Solana ed25519. Do not also reference
+      XcavateProfileApiSolanaClient: it defines the same types in the same namespaces, and its
+      only advantage - dropping Substrate.NET.API - buys nothing here, since the Polkadot side
+      needs that package anyway.
+    -->
+    <PackageReference Include="XcavateProfileApiClient" Version="1.0.61" />
   </ItemGroup>
 
   <ItemGroup>
