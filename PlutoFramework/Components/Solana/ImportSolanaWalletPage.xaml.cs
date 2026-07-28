@@ -16,7 +16,11 @@ namespace PlutoFramework.Components.Solana;
 /// </remarks>
 public partial class ImportSolanaWalletPage : PageTemplate
 {
-    public required new Func<Task> Navigation;
+    /// <summary>
+    /// Invoked with the imported phrase. The caller derives the rest of the account's keys
+    /// from it, and this page is the only place it ever exists on the device.
+    /// </summary>
+    public required new Func<string, Task> Navigation;
 
     /// <summary>
     /// Owned by this page rather than resolved from <see cref="DependencyService"/>, so the
@@ -75,11 +79,14 @@ public partial class ImportSolanaWalletPage : PageTemplate
             return;
         }
 
-        // The phrase has served its purpose, and this page stays alive behind whatever the
-        // callback navigates to.
+        // Held for the callback, which derives the account's remaining keys from it. Read
+        // before the reset below, because this page stays alive behind whatever the callback
+        // navigates to and must not be the thing still holding somebody's seed phrase.
+        var mnemonics = _entry.Mnemonics;
+
         _entry.Reset();
 
-        await Navigation.Invoke();
+        await Navigation.Invoke(mnemonics);
 
         _clicked = false;
     }

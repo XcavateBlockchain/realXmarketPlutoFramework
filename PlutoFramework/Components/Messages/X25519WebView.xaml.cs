@@ -22,9 +22,17 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 
     private readonly PolkadotExtensionWalletBridge _walletBridge = new();
 
+    private readonly SolanaWalletStandardBridge _solanaBridge = new();
+
+    /// <summary>
+    /// The wallet icon as a data URI, read once from the packaged asset. Wallet Standard
+    /// requires a data URI, and the asset never changes during a run.
+    /// </summary>
+    private static string? _walletIconDataUri;
+
     public static readonly BindableProperty UrlProperty =
         BindableProperty.Create(nameof(Url), typeof(string), typeof(X25519WebView),
-            defaultValue: "https://realxmessage.xcavate.io/messages/my-buckets/?isHeaderVisible=false",
+            defaultValue: "https://realxmessenger.xcavate.io/messages/my-buckets/?isHeaderVisible=false",
             propertyChanged: OnUrlChanged);
 
     public string Url
@@ -66,7 +74,12 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         if (e.Result != WebNavigationResult.Success)
             return;
 
+        // Registered before the injections rather than inside one of them: both wallets
+        // report the same tab, and they are dispatched concurrently.
+        RegisterTab();
+
         _ = InjectProviderAsync();
+        _ = InjectSolanaWalletAsync();
         _ = InjectX25519KeyAsync();
         _ = InjectDownloadInterceptorAsync();
         _ = InjectHeaderBridgeAsync();
@@ -302,12 +315,25 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         _ = ProcessWalletRequestAsync(requestJson);
     }
 
+    /// <summary>
+    /// Both injected wallets share one channel, so the method name decides which bridge
+    /// answers and which reply function the page is waiting on. The two keep separate
+    /// delivery globals rather than chaining onto one, which would depend on the order the
+    /// concurrently dispatched injections happen to land in.
+    /// </summary>
     private async Task ProcessWalletRequestAsync(string requestJson)
     {
+        var isSolana = SolanaWalletStandardBridge.Handles(TryExtractMethod(requestJson));
+
+        var deliver = isSolana ? "window.__plutoSolanaDeliver" : "window.__mauiWalletDeliver";
+
         try
         {
-            var responseJson = await _walletBridge.HandleAsync(requestJson).ConfigureAwait(false);
-            await DispatchScriptSafeAsync($"window.__mauiWalletDeliver({responseJson});").ConfigureAwait(false);
+            var responseJson = isSolana
+                ? await _solanaBridge.HandleAsync(requestJson).ConfigureAwait(false)
+                : await _walletBridge.HandleAsync(requestJson).ConfigureAwait(false);
+
+            await DispatchScriptSafeAsync($"{deliver}({responseJson});").ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -320,7 +346,7 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
             };
 
             var fallbackJson = JsonSerializer.Serialize(fallback, PolkadotExtensionWalletBridge.SerializerOptions);
-            await DispatchScriptSafeAsync($"window.__mauiWalletDeliver({fallbackJson});").ConfigureAwait(false);
+            await DispatchScriptSafeAsync($"{deliver}({fallbackJson});").ConfigureAwait(false);
         }
     }
 
@@ -560,16 +586,97 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 })();";
     }
 
-    private Task InjectProviderAsync()
+    private void RegisterTab()
     {
-        if (tabId is null)
-        {
-            tabId = ExtensionWebViewModel.GetNextTabId();
-        }
+        tabId ??= ExtensionWebViewModel.GetNextTabId();
 
         ExtensionWebViewModel.TabInfos[tabId.Value] = GetDAppInfo();
+    }
 
-        return DispatchScriptSafeAsync(BuildProviderInjectionScript());
+    private Task InjectProviderAsync() => DispatchScriptSafeAsync(BuildProviderInjectionScript());
+
+    /// <summary>
+    /// Registers the app's Solana account with the page as a Wallet Standard wallet, which is
+    /// how <c>@solana/wallet-adapter</c> discovers wallets.
+    /// </summary>
+    /// <remarks>
+    /// Injected after load like everything else here, which the Wallet Standard is built for:
+    /// a wallet both dispatches <c>register-wallet</c> and listens for <c>app-ready</c>, so
+    /// registration lands whichever side comes up first.
+    /// </remarks>
+    private async Task InjectSolanaWalletAsync()
+    {
+        try
+        {
+            var initialAccounts = "[]";
+
+            // Pre-populated only when the page is already cleared to connect, so a dapp's
+            // autoConnect works without a prompt on load. Reads the stored address only,
+            // never unlocking the key.
+            if (DAppApprovalModel.IsAlreadyApproved(GetCurrentUrl() ?? string.Empty))
+            {
+                var account = await SolanaWalletStandardBridge.LoadAccountAsync();
+
+                if (account is not null)
+                {
+                    initialAccounts = JsonSerializer.Serialize(
+                        new[] { account }, SolanaWalletStandardBridge.SerializerOptions);
+                }
+            }
+
+            await DispatchScriptSafeAsync(BuildSolanaWalletScript(initialAccounts, await LoadWalletIconAsync()));
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[PlutoSolana] Wallet injection failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// A last-resort icon. Wallet Standard requires a data URI, and a wallet with a broken
+    /// icon is worse than a plain one.
+    /// </summary>
+    private const string FALLBACK_WALLET_ICON_SVG =
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"64\" height=\"64\">" +
+        "<rect width=\"64\" height=\"64\" rx=\"14\" fill=\"#111827\"/></svg>";
+
+    private static async Task<string> LoadWalletIconAsync()
+    {
+        if (_walletIconDataUri is not null)
+        {
+            return _walletIconDataUri;
+        }
+
+        try
+        {
+            using var asset = await FileSystem.OpenAppPackageFileAsync("solanawalleticon.svg");
+            using var buffer = new MemoryStream();
+
+            await asset.CopyToAsync(buffer);
+
+            _walletIconDataUri = $"data:image/svg+xml;base64,{Convert.ToBase64String(buffer.ToArray())}";
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[PlutoSolana] Wallet icon asset unavailable: {ex.Message}");
+
+            _walletIconDataUri =
+                $"data:image/svg+xml;base64,{Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(FALLBACK_WALLET_ICON_SVG))}";
+        }
+
+        return _walletIconDataUri;
+    }
+
+    private string BuildSolanaWalletScript(string initialAccountsJson, string icon)
+    {
+        // Placeholder substitution rather than interpolation: the script is mostly braces,
+        // and escaping every one of them for an interpolated string makes it unreadable.
+        return SolanaWalletScript
+            .Replace("__PLUTO_CHANNEL__", JsonSerializer.Serialize(ScriptInterfaceName))
+            .Replace("__PLUTO_TAB_ID__", (tabId ?? 0).ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Replace("__PLUTO_NAME__", JsonSerializer.Serialize(AppInfo.Name))
+            .Replace("__PLUTO_ICON__", JsonSerializer.Serialize(icon))
+            .Replace("__PLUTO_ACCOUNTS__", initialAccountsJson);
     }
 
     private Task DispatchScriptSafeAsync(string script)
@@ -582,14 +689,18 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         return DispatchScriptAsync(script);
     }
 
-    private static string? TryExtractId(string json)
+    private static string? TryExtractId(string json) => TryExtractProperty(json, "id");
+
+    private static string? TryExtractMethod(string json) => TryExtractProperty(json, "method");
+
+    private static string? TryExtractProperty(string json, string name)
     {
         try
         {
             using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty("id", out var idProperty))
+            if (doc.RootElement.TryGetProperty(name, out var property))
             {
-                return idProperty.GetString();
+                return property.GetString();
             }
         }
         catch
@@ -675,6 +786,209 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     }};
 }})();";
     }
+
+    /// <summary>
+    /// The Wallet Standard wallet, as vanilla JavaScript. The registration handshake is
+    /// reproduced from <c>@wallet-standard/wallet</c>'s <c>registerWallet</c> rather than
+    /// imported: this runs as an evaluated string, where no package can be pulled in.
+    ///
+    /// The wallet advertises every feature; each account then lists the subset its key type
+    /// can actually honour, which is what wallet-adapter checks each call against.
+    /// </summary>
+    private const string SolanaWalletScript = @"(function () {
+    if (window.__plutoSolanaInjected) { return; }
+    window.__plutoSolanaInjected = true;
+
+    var channel = __PLUTO_CHANNEL__;
+    var tabId = __PLUTO_TAB_ID__;
+    var pending = {};
+
+    // Separate from the Polkadot bridge's __mauiWalletDeliver so neither injection can
+    // clobber the other's reply router, whichever lands first.
+    window.__plutoSolanaDeliver = function (message) {
+        try {
+            var payload = (typeof message === 'string') ? JSON.parse(message) : message;
+            if (!payload || !payload.id || !pending[payload.id]) { return; }
+            var entry = pending[payload.id];
+            delete pending[payload.id];
+            if (payload.error) { entry.reject(new Error(payload.error)); }
+            else { entry.resolve(payload.result); }
+        } catch (err) {
+            console.error('Solana wallet deliver failure', err);
+        }
+    };
+
+    function post(method, payload) {
+        return new Promise(function (resolve, reject) {
+            var id = 'sol-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+            pending[id] = { resolve: resolve, reject: reject };
+            try {
+                var body = JSON.stringify({ id: id, method: method, payload: payload });
+                if (window[channel] && window[channel].walletCall) {
+                    window[channel].walletCall(body);
+                } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers[channel]) {
+                    window.webkit.messageHandlers[channel].postMessage(body);
+                } else {
+                    throw new Error('Pluto wallet bridge is unavailable on this platform.');
+                }
+            } catch (err) {
+                delete pending[id];
+                reject(err);
+            }
+        });
+    }
+
+    // JSON carries no byte arrays, so everything binary crosses the bridge base64-encoded.
+    function toBytes(base64) {
+        var binary = atob(base64);
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) { bytes[i] = binary.charCodeAt(i); }
+        return bytes;
+    }
+
+    function toBase64(bytes) {
+        var view = new Uint8Array(bytes);
+        var binary = '';
+        for (var i = 0; i < view.length; i++) { binary += String.fromCharCode(view[i]); }
+        return btoa(binary);
+    }
+
+    function toAccount(dto) {
+        return {
+            address: dto.address,
+            publicKey: toBytes(dto.publicKey),
+            chains: dto.chains,
+            features: dto.features,
+            label: dto.label
+        };
+    }
+
+    var accounts = (__PLUTO_ACCOUNTS__ || []).map(toAccount);
+    var listeners = [];
+
+    function setAccounts(next) {
+        accounts = next;
+        listeners.slice().forEach(function (listener) {
+            try { listener({ accounts: wallet.accounts }); }
+            catch (err) { console.error('Solana wallet change listener failed', err); }
+        });
+    }
+
+    // Sequential rather than parallel: each input may show a screen, or under Mobile Wallet
+    // Adapter leave the app entirely, and those must not overlap.
+    function runAll(args, handler) {
+        return Array.prototype.slice.call(args).reduce(function (chain, input) {
+            return chain.then(function (results) {
+                return handler(input).then(function (output) {
+                    results.push(output);
+                    return results;
+                });
+            });
+        }, Promise.resolve([]));
+    }
+
+    function signMessage(input) {
+        return post('solana:signMessage', {
+            message: toBase64(input.message),
+            address: input.account ? input.account.address : null
+        }).then(function (result) {
+            return {
+                signedMessage: toBytes(result.signedMessage),
+                signature: toBytes(result.signature),
+                signatureType: 'ed25519'
+            };
+        });
+    }
+
+    function signTransaction(input) {
+        return post('solana:signTransaction', {
+            transaction: toBase64(input.transaction)
+        }).then(function (result) {
+            return { signedTransaction: toBytes(result.signedTransaction) };
+        });
+    }
+
+    function signAndSendTransaction(input) {
+        return post('solana:signAndSendTransaction', {
+            transaction: toBase64(input.transaction),
+            chain: input.chain
+        }).then(function (result) {
+            return { signature: toBytes(result.signature) };
+        });
+    }
+
+    var features = {
+        'standard:connect': {
+            version: '1.0.0',
+            connect: function (input) {
+                return post('solana:connect', {
+                    tabId: tabId,
+                    silent: !!(input && input.silent)
+                }).then(function (result) {
+                    setAccounts(((result && result.accounts) || []).map(toAccount));
+                    return { accounts: wallet.accounts };
+                });
+            }
+        },
+        'standard:disconnect': {
+            version: '1.0.0',
+            disconnect: function () {
+                return post('solana:disconnect', { tabId: tabId }).then(function () {
+                    setAccounts([]);
+                });
+            }
+        },
+        'standard:events': {
+            version: '1.0.0',
+            on: function (event, listener) {
+                if (event !== 'change') { return function () { }; }
+                listeners.push(listener);
+                return function () {
+                    listeners = listeners.filter(function (existing) { return existing !== listener; });
+                };
+            }
+        },
+        'solana:signMessage': {
+            version: '1.1.0',
+            signMessage: function () { return runAll(arguments, signMessage); }
+        },
+        'solana:signTransaction': {
+            version: '1.0.0',
+            supportedTransactionVersions: ['legacy', 0],
+            signTransaction: function () { return runAll(arguments, signTransaction); }
+        },
+        'solana:signAndSendTransaction': {
+            version: '1.0.0',
+            supportedTransactionVersions: ['legacy', 0],
+            signAndSendTransaction: function () { return runAll(arguments, signAndSendTransaction); }
+        }
+    };
+
+    var wallet = {
+        get version() { return '1.0.0'; },
+        get name() { return __PLUTO_NAME__; },
+        get icon() { return __PLUTO_ICON__; },
+        get chains() { return ['solana:mainnet', 'solana:devnet', 'solana:testnet']; },
+        get features() { return features; },
+        get accounts() { return accounts.slice(); }
+    };
+
+    // Dispatch and listen both, so registration lands whether the app is already up or
+    // comes up later. This is what makes injecting after page load safe.
+    var callback = function (api) { api.register(wallet); };
+
+    try {
+        window.dispatchEvent(new CustomEvent('wallet-standard:register-wallet', { detail: callback }));
+    } catch (err) {
+        console.error('wallet-standard:register-wallet could not be dispatched', err);
+    }
+
+    try {
+        window.addEventListener('wallet-standard:app-ready', function (event) { callback(event.detail); });
+    } catch (err) {
+        console.error('wallet-standard:app-ready listener could not be added', err);
+    }
+})();";
 
     private DAppInfo GetDAppInfo()
     {

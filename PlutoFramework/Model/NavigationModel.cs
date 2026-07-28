@@ -5,6 +5,7 @@ using PlutoFramework.Components.Solana;
 using PlutoFramework.Components.TransferView;
 using PlutoFramework.Components.UniversalScannerView;
 using PlutoFramework.Components.Vault;
+using PlutoFrameworkCore.Keys;
 using Plutonication;
 
 namespace PlutoFramework.Model
@@ -25,10 +26,11 @@ namespace PlutoFramework.Model
                 return;
             }
 
-            // CheckAccountExists accepts either key type, so a Solana-only user reaches this
-            // point. The Substrate BalancePage is empty for them by construction, so send them
-            // to the page that can actually show their balances.
-            if (!KeysModel.HasSubstrateKey() && KeysModel.HasSolanaKey())
+            // Onboarding writes a Substrate key for every account, because KYC and the
+            // XcavatePaseo whitelist are keyed to one, so its absence no longer identifies a
+            // Solana user. The main key does, and it is what decides whose balances these are;
+            // the Substrate BalancePage is empty by construction for a Solana-main user.
+            if (MainKeyModel.ResolvedChain == MainKeyChain.Solana)
             {
                 await Shell.Current.Navigation.PushAsync(new SolanaBalancesPage());
 

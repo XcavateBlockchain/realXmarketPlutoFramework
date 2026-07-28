@@ -107,6 +107,54 @@ namespace PlutoFramework.Model
                     break;
             }
         }
+
+        /// <summary>Whether a Polkadot account key of either stored kind exists.</summary>
+        public static async Task<bool> HasSubstrateAccountAsync() =>
+            (await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Sr25519, KeyTypeEnum.PolkadotJson)).Any();
+
+        public static async Task<bool> HasDidKeyAsync() =>
+            (await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Did)).Any();
+
+        /// <summary>
+        /// Ensures the Substrate account and DID that the rest of onboarding is keyed to
+        /// exist. Sumsub applicants are identified by SS58 address and DID, the questionnaire
+        /// submits one, and roles live in the XcavatePaseo whitelist pallet - so a Solana-only
+        /// account cannot complete verification, and cannot invest once it has.
+        /// </summary>
+        /// <remarks>
+        /// Each key is guarded separately, and an existing one is never rewritten:
+        /// <see cref="SaveSr25519KeyAsync"/> and <see cref="SaveDidKeyAsync"/> both delete
+        /// before they write, so calling this unguarded for a user who already holds a
+        /// Polkadot account would destroy it. Same shape as
+        /// <see cref="EnsureEncryptionX25519KeyAsync"/>, which guards the third key of the set.
+        /// </remarks>
+        /// <param name="mnemonics">
+        /// The phrase to derive from, when the caller has one. Both keys then come off the
+        /// same backup as the account itself. Null for a Mobile Wallet Adapter wallet, which
+        /// keeps its phrase in the wallet app and never hands it over; a fresh phrase is
+        /// generated for those, exactly as the X25519 key already is.
+        /// </param>
+        public static async Task EnsureSubstrateIdentityAsync(string? mnemonics = null)
+        {
+            var seed = string.IsNullOrWhiteSpace(mnemonics) ? null : mnemonics.Trim();
+
+            if (!await HasSubstrateAccountAsync())
+            {
+                seed ??= MnemonicsModel.GenerateMnemonics();
+
+                await SaveSr25519KeyAsync(seed);
+            }
+
+            if (!await HasDidKeyAsync())
+            {
+                seed ??= MnemonicsModel.GenerateMnemonics();
+
+                // An independent key derived from the same phrase, matching what the Polkadot
+                // onboarding flow has always written.
+                await SaveDidKeyAsync($"{seed}//did");
+            }
+        }
+
         public static async Task RegisterBiometricAuthenticationAsync()
         {
             if (Preferences.Get(PreferencesModel.BIOMETRICS_ENABLED, false))

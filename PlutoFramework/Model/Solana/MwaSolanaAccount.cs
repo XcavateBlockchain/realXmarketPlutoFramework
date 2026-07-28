@@ -42,6 +42,7 @@ namespace PlutoFramework.Model.Solana
 
         public override Task<byte[]> SignMessageAsync(byte[] message, string reason, CancellationToken token) =>
             RunAuthorizedAsync(
+                Cluster,
                 async (client, operationToken) =>
                 {
                     var signedPayloads = await client.SignMessagesAsync(Address, [message], operationToken);
@@ -62,6 +63,7 @@ namespace PlutoFramework.Model.Solana
             string reason,
             CancellationToken token) =>
             RunAuthorizedAsync(
+                cluster,
                 async (client, operationToken) =>
                 {
                     // The wallet needs a wire-format transaction with an empty signature slot
@@ -83,19 +85,63 @@ namespace PlutoFramework.Model.Solana
                 token);
 
         /// <summary>
-        /// Opens a session, authorizes on the app-wide network using the stored token, keeps
-        /// any refreshed authorization, then runs the operation in that same session.
+        /// Not available under Mobile Wallet Adapter, which is why the injected wallet does
+        /// not advertise <c>solana:signTransaction</c> for this key type.
+        /// </summary>
+        /// <remarks>
+        /// MWA 2.0 deprecated <c>sign_transactions</c> and made <c>sign_and_send_transactions</c>
+        /// mandatory instead, so a wallet app may simply refuse to sign without submitting.
+        /// </remarks>
+        public override Task<byte[]> SignWireTransactionAsync(
+            byte[] wireTransaction,
+            string reason,
+            CancellationToken token) =>
+            throw new NotSupportedException(
+                "Signing without submitting is not available under Mobile Wallet Adapter");
+
+        /// <summary>
+        /// Hands the transaction over exactly as it arrived. The wallet fills in its signature
+        /// and submits, so this app makes no RPC call for the send.
+        /// </summary>
+        public override Task<byte[]> SignAndSendWireTransactionAsync(
+            byte[] wireTransaction,
+            SolanaCluster cluster,
+            string reason,
+            CancellationToken token) =>
+            RunAuthorizedAsync(
+                cluster,
+                async (client, operationToken) =>
+                {
+                    var signatures = await client.SignAndSendTransactionsAsync([wireTransaction], operationToken);
+
+                    if (signatures.Count == 0)
+                    {
+                        throw new MwaProtocolException("The wallet returned no transaction signature");
+                    }
+
+                    return signatures[0];
+                },
+                token);
+
+        /// <summary>
+        /// Opens a session, authorizes on <paramref name="cluster"/> using the stored token,
+        /// keeps any refreshed authorization, then runs the operation in that same session.
         ///
         /// Passing the stored token lets the wallet reauthorize without reprompting. When the
-        /// stored network differs from the app-wide one, this is also what moves the
+        /// stored network differs from the requested one, this is also what moves the
         /// authorization across, rather than failing and asking the user to reconnect.
         /// </summary>
+        /// <param name="cluster">
+        /// Usually <see cref="PlutoFrameworkSolanaAccount.Cluster"/>, but a dapp relaying
+        /// through the injected wallet names its own network and that choice wins.
+        /// </param>
         private Task<T> RunAuthorizedAsync<T>(
+            SolanaCluster cluster,
             Func<MwaClient, CancellationToken, Task<T>> operation,
             CancellationToken token) =>
             MwaConnectFlow.WithAuthorizedSessionAsync(
                 SolanaMwaModel.BuildIdentity(),
-                Cluster,
+                cluster,
                 key.AuthToken,
                 async (client, authorization, operationToken) =>
                 {

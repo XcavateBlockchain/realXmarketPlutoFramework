@@ -133,5 +133,35 @@ namespace PlutoFramework.Model.Solana
             SolanaCluster cluster,
             string reason,
             CancellationToken token);
+
+        /// <summary>
+        /// Signs an already-serialized transaction and returns it with this account's
+        /// signature filled in. Signatures other signers have already applied are preserved.
+        /// </summary>
+        /// <remarks>
+        /// Unlike <see cref="SendAsync"/>, the transaction arrives fully built — an injected
+        /// dapp constructs its own and hands over the bytes. Only implemented where a local
+        /// key exists: Mobile Wallet Adapter 2.0 deprecated <c>sign_transactions</c>, so a
+        /// wallet app may refuse to sign without submitting.
+        /// </remarks>
+        public abstract Task<byte[]> SignWireTransactionAsync(
+            byte[] wireTransaction,
+            string reason,
+            CancellationToken token);
+
+        /// <summary>
+        /// Signs an already-serialized transaction and submits it, returning the 64-byte
+        /// transaction signature.
+        /// </summary>
+        /// <param name="cluster">
+        /// The network to submit on, which a caller relaying a dapp's request takes from that
+        /// request rather than from <see cref="Cluster"/>. The dapp chose its own RPC
+        /// endpoint, and signing against a different network would fail on submission.
+        /// </param>
+        public abstract Task<byte[]> SignAndSendWireTransactionAsync(
+            byte[] wireTransaction,
+            SolanaCluster cluster,
+            string reason,
+            CancellationToken token);
     }
 }

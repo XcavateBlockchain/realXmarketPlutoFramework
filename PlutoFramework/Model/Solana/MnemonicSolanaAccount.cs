@@ -46,5 +46,43 @@ namespace PlutoFramework.Model.Solana
 
             return await SolanaRpcModel.SendTransactionAsync(cluster, signedTransaction, token);
         }
+
+        public override Task<byte[]> SignWireTransactionAsync(
+            byte[] wireTransaction,
+            string reason,
+            CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+
+            return Task.FromResult(Sign(wireTransaction));
+        }
+
+        public override async Task<byte[]> SignAndSendWireTransactionAsync(
+            byte[] wireTransaction,
+            SolanaCluster cluster,
+            string reason,
+            CancellationToken token)
+        {
+            var signed = Sign(wireTransaction);
+
+            var signature = await SolanaRpcModel.SendTransactionAsync(cluster, signed, token);
+
+            // The RPC reports the signature base58-encoded, but callers relaying to a dapp
+            // need the raw 64 bytes. Not PublicKey: that type rejects anything but 32.
+            return SolanaBase58.Decode(signature);
+        }
+
+        /// <summary>
+        /// Finds this account's slot among the transaction's required signers, signs the
+        /// message, and writes the signature into that slot.
+        /// </summary>
+        private byte[] Sign(byte[] wireTransaction)
+        {
+            var parsed = SolanaTransactionFramer.Parse(wireTransaction);
+
+            var signerIndex = SolanaTransactionFramer.FindSignerIndex(parsed.Message, key.Account.PublicKey.KeyBytes);
+
+            return SolanaTransactionFramer.ApplySignature(parsed, signerIndex, key.Account.Sign(parsed.Message));
+        }
     }
 }

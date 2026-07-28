@@ -103,8 +103,6 @@ public class PolkadotExtensionWalletBridge
 
     private static async Task<object> HandleEnableAsync(JsonElement? payload)
     {
-        var allowedOrigins = (string[])Application.Current.Resources["AllowedOrigins"];
-
         if (payload == null)
         {
             return new { approved = false, provider = ProviderName };
@@ -114,28 +112,8 @@ public class PolkadotExtensionWalletBridge
 
         var dAppInfo = ExtensionWebViewModel.TabInfos[enablePayload.TabId];
 
-
-        if (allowedOrigins.Any(dAppInfo.Url.Contains))
-        {
-            return new { approved = true, provider = ProviderName };
-        }
-
-        var uri = new Uri(dAppInfo.Url);
-
-        if (PlutoConfigurationModel.WhitelistedDApps.Any(pattern => uri.Host.Contains(pattern)))
-        {
-            return new { approved = true, provider = ProviderName };
-        }
-
-        if (ExtensionWebViewModel.ApprovedUrls.TryGetValue(uri.Host, out var cachedApproved) && cachedApproved)
-        {
-            return new { approved = cachedApproved, provider = ProviderName };
-        }
-
-        var popupViewModel = DependencyService.Get<DAppWebViewConnectionRequestPopupViewModel>();
-        var approved = await popupViewModel.ShowAsync(dAppInfo);
-
-        ExtensionWebViewModel.ApprovedUrls[uri.Host] = approved;
+        // Shared with the injected Solana wallet so both show the same connection screen.
+        var approved = await DAppApprovalModel.RequestAsync(dAppInfo);
 
         return new { approved, provider = ProviderName };
     }
