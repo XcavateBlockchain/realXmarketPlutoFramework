@@ -866,8 +866,13 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     var accounts = (__PLUTO_ACCOUNTS__ || []).map(toAccount);
     var listeners = [];
 
+    // Mirrors accounts[0] for the legacy provider below, which exposes a single active
+    // account rather than a list.
+    var connectedAddress = accounts.length ? accounts[0].address : null;
+
     function setAccounts(next) {
         accounts = next;
+        connectedAddress = next.length ? next[0].address : null;
         listeners.slice().forEach(function (listener) {
             try { listener({ accounts: wallet.accounts }); }
             catch (err) { console.error('Solana wallet change listener failed', err); }
@@ -987,6 +992,76 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         window.addEventListener('wallet-standard:app-ready', function (event) { callback(event.detail); });
     } catch (err) {
         console.error('wallet-standard:app-ready listener could not be added', err);
+    }
+
+    // The dashboard finds Solana wallets the Phantom way and never looks at the Wallet
+    // Standard: app/services/wallet/solanaProvider.ts probes window.phantom.solana, then
+    // window.solflare, then window.backpack, and app/services/wallet/walletCatalog.ts
+    // decides a wallet is installed from those same globals. Registering the standard
+    // wallet above is therefore not enough on its own, so the same bridge is served again
+    // through the legacy provider shape that page actually reads.
+    function publicKeyOf(address) {
+        if (!address) { return null; }
+        return {
+            toBase58: function () { return address; },
+            toString: function () { return address; },
+            toBytes: function () { return accounts.length ? accounts[0].publicKey : new Uint8Array(0); }
+        };
+    }
+
+    var legacyProvider = {
+        isPhantom: true,
+        get publicKey() { return publicKeyOf(connectedAddress); },
+        get isConnected() { return connectedAddress !== null; },
+
+        connect: function (options) {
+            return post('solana:connect', {
+                tabId: tabId,
+                silent: !!(options && options.onlyIfTrusted)
+            }).then(function (result) {
+                setAccounts(((result && result.accounts) || []).map(toAccount));
+
+                // onlyIfTrusted resolves empty when the page was never approved. The
+                // dashboard reads a rejection as 'not trusted yet' and leaves the stored
+                // session alone, whereas resolving with no key would throw deeper in its
+                // own resolveAddress with a misleading message.
+                if (!connectedAddress) { throw new Error('WALLET_CONNECTION_REJECTED'); }
+
+                return { publicKey: publicKeyOf(connectedAddress) };
+            });
+        },
+
+        disconnect: function () {
+            return post('solana:disconnect', { tabId: tabId }).then(function () {
+                setAccounts([]);
+            });
+        },
+
+        signMessage: function (message) {
+            return post('solana:signMessage', {
+                message: toBase64(message),
+                address: connectedAddress
+            }).then(function (result) {
+                // A real Uint8Array, not a plain object: the page hands this straight to
+                // @polkadot/util-crypto's base58Encode.
+                return {
+                    signature: toBytes(result.signature),
+                    publicKey: publicKeyOf(connectedAddress)
+                };
+            });
+        },
+
+        // Present because a Phantom-shaped provider is expected to have them.
+        on: function () { },
+        off: function () { },
+        removeListener: function () { }
+    };
+
+    try {
+        window.phantom = window.phantom || {};
+        if (!window.phantom.solana) { window.phantom.solana = legacyProvider; }
+    } catch (err) {
+        console.error('Solana legacy provider could not be installed', err);
     }
 })();";
 
