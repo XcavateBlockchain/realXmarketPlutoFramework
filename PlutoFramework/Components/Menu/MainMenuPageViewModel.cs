@@ -50,15 +50,18 @@ namespace PlutoFramework.Components.Menu
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(FullName))]
-        [NotifyPropertyChangedFor(nameof(ProfilePictureImageSource))]
         private Profile? profile;
 
-        public ImageSource? ProfilePictureImageSource => Profile?.ProfilePicture is not null ? new UriImageSource
-        {
-            Uri = new Uri(Profile.ProfilePicture),
-            CachingEnabled = false,
-            CacheValidity = TimeSpan.FromSeconds(0),
-        } : null;
+        [ObservableProperty]
+        private ImageSource? profilePictureImageSource;
+
+        /// <summary>
+        /// Resolved when the profile arrives rather than on every read of the property it
+        /// feeds: the URL carries a cache buster, so re-resolving it would download the
+        /// picture again each time a binding happened to ask.
+        /// </summary>
+        partial void OnProfileChanged(Profile? value) =>
+            ProfilePictureImageSource = ProfilePictureImageSourceModel.Create(value?.ProfilePicture);
 
         private readonly XcavateProfileService profileService = new();
 
