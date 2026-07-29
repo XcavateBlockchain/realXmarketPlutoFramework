@@ -3,15 +3,16 @@ using PlutoFrameworkCore.Xcavate;
 namespace PlutoFrameworkTests
 {
     /// <summary>
-    /// The profile API stores a picture at one address-derived key -
-    /// <c>profiles/profile_{address}.jpg</c> - and an upload overwrites it in place. The URL a
-    /// profile hands back is therefore the same string before and after the user changes their
-    /// picture, which is exactly the shape every image cache keys on. Without a token that
-    /// moves, the menu and the edit page keep showing the previous picture.
+    /// The profile API stores a picture at <c>profiles/{address}/{fileName}</c>, and because
+    /// the app names every upload for the same account the same thing, a new picture overwrites
+    /// the old object in place. The URL a profile hands back is therefore the same string
+    /// before and after the user changes their picture, which is exactly the shape every image
+    /// cache keys on. Without a token that moves, the menu and the edit page keep showing the
+    /// previous picture.
     /// </summary>
     public class ProfilePictureUrlTests
     {
-        private const string Url = "https://xcavate-profile.fsn1.your-objectstorage.com/profiles/profile_5Di7RnyX8TXwM9C9RCVHWTuXemwmRiJLiX3wapYgN588qB2E.jpg";
+        private const string Url = "https://xcavate-profile.fsn1.your-objectstorage.com/profiles/5Di7RnyX8TXwM9C9RCVHWTuXemwmRiJLiX3wapYgN588qB2E/ProfilePicture_5Di7RnyX8TXwM9C9RCVHWTuXemwmRiJLiX3wapYgN588qB2E.jpg";
 
         /// <summary>
         /// The bug this whole function exists for: two loads of an unchanged URL have to ask

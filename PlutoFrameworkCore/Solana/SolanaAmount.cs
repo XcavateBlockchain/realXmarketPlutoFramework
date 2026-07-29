@@ -48,6 +48,32 @@ namespace PlutoFrameworkCore.Solana
             Math.Round(amount, Math.Min(decimals, 6))
                 .ToString("0.######", CultureInfo.InvariantCulture);
 
+        /// <summary>
+        /// Display units to base units — the inverse of <see cref="FromBaseUnits"/>, used to
+        /// turn what the user typed into what the instruction carries.
+        /// </summary>
+        /// <remarks>
+        /// Truncates, never rounds. Max fills the field with the exact balance, and rounding
+        /// the last place up would build a transaction for one base unit more than the wallet
+        /// holds — rejected by the chain, after the user has already confirmed.
+        /// </remarks>
+        public static BigInteger ToBaseUnits(decimal amount, int decimals)
+        {
+            if (decimals < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(decimals), decimals, "Decimals cannot be negative");
+            }
+
+            if (amount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(amount), amount, "A token amount cannot be negative");
+            }
+
+            var scaled = amount * (decimal)BigInteger.Pow(10, decimals);
+
+            return (BigInteger)decimal.Truncate(scaled);
+        }
+
         public static decimal FromLamports(ulong lamports) =>
             FromBaseUnits(lamports.ToString(CultureInfo.InvariantCulture), SolanaNativeToken.Decimals);
     }

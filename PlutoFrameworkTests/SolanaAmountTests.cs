@@ -1,3 +1,4 @@
+using System.Numerics;
 using PlutoFrameworkCore.Solana;
 
 namespace PlutoFrameworkTests
@@ -111,6 +112,66 @@ namespace PlutoFrameworkTests
         public void DisplayStringRendersZeroPlainly()
         {
             Assert.That(SolanaAmount.ToDisplayString(0m, decimals: 6), Is.EqualTo("0"));
+        }
+
+        /// <summary>
+        /// The one rule that matters for sending: rounding up a Max-filled balance would
+        /// build a transaction for one base unit more than the wallet holds, which the
+        /// chain rejects after the user has already confirmed.
+        /// </summary>
+        [Test]
+        public void ToBaseUnitsTruncatesRatherThanRounds()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(SolanaAmount.ToBaseUnits(0.9999999m, 6), Is.EqualTo(new BigInteger(999999)));
+                Assert.That(SolanaAmount.ToBaseUnits(1.9999999999m, 9), Is.EqualTo(new BigInteger(1999999999)));
+            });
+        }
+
+        [Test]
+        public void ToBaseUnitsRoundTripsWithFromBaseUnits()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(SolanaAmount.ToBaseUnits(SolanaAmount.FromBaseUnits("40000000", 6), 6),
+                    Is.EqualTo(new BigInteger(40000000)));
+                Assert.That(SolanaAmount.ToBaseUnits(SolanaAmount.FromBaseUnits("1234567890", 9), 9),
+                    Is.EqualTo(new BigInteger(1234567890)));
+            });
+        }
+
+        [Test]
+        public void ToBaseUnitsHandlesZeroAndZeroDecimals()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(SolanaAmount.ToBaseUnits(0m, 9), Is.EqualTo(BigInteger.Zero));
+                Assert.That(SolanaAmount.ToBaseUnits(42m, 0), Is.EqualTo(new BigInteger(42)));
+            });
+        }
+
+        /// <summary>
+        /// A u64-sized SOL balance must survive the conversion. decimal carries 28 significant
+        /// digits, so 18446744073.709551615 SOL scales back without loss.
+        /// </summary>
+        [Test]
+        public void ToBaseUnitsHandlesMaximumUnsignedLong()
+        {
+            Assert.That(SolanaAmount.ToBaseUnits(18446744073.709551615m, 9),
+                Is.EqualTo(BigInteger.Parse("18446744073709551615")));
+        }
+
+        [Test]
+        public void ToBaseUnitsRejectsNegativeDecimals()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => SolanaAmount.ToBaseUnits(1m, -1));
+        }
+
+        [Test]
+        public void ToBaseUnitsRejectsNegativeAmounts()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => SolanaAmount.ToBaseUnits(-1m, 9));
         }
     }
 }

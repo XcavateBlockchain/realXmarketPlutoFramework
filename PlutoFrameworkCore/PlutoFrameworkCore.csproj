@@ -32,6 +32,14 @@
       already present via MAUI.
     -->
     <PackageReference Include="Solana.Rpc" Version="8.7.0" />
+    <!--
+      The instruction builders: SystemProgram, TokenProgram and
+      AssociatedTokenAccountProgram. A separate package from Solana.Rpc, and the only
+      source of them. Its nuspec declares just Solana.Rpc 8.7.0 and
+      System.Runtime.Extensions, so it does not reintroduce the Portable.BouncyCastle
+      conflict described above.
+    -->
+    <PackageReference Include="Solana.Programs" Version="8.7.0" />
     <PackageReference Include="Uniquery" Version="1.0.1" />
     <PackageReference Include="Plutonication" Version="2.6.0" />
     <PackageReference Include="AzeroIdResolver" Version="1.0.2" />

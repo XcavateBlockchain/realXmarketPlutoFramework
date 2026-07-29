@@ -1,4 +1,5 @@
 using PlutoFramework.Components.Loading;
+using PlutoFrameworkCore.Xcavate;
 using XcavateProfile.Client;
 
 namespace PlutoFramework.Model.Xcavate.Profile
@@ -76,7 +77,10 @@ namespace PlutoFramework.Model.Xcavate.Profile
                 {
                     loadingViewModel.Message = "Uploading image";
 
-                    // Server rejects large payloads with 413; crop to square, downscale to 256x256 and re-encode losslessly (PNG)
+                    // Server rejects payloads over 25MB with 413; fit within 256x256 and
+                    // re-encode as JPEG, dropping quality until it fits 256KB. JPEG is what
+                    // the upload is named for - see ProfilePictureModel.UploadFileName - and
+                    // the two have to agree or the bucket labels the object the wrong format.
                     using var compressedPictureStream = ImageModel.CompressImageToJpeg(profilePictureStream, 256, 256, 1024 * 256);
 
                     if (compressedPictureStream.Length == 0)
@@ -87,7 +91,7 @@ namespace PlutoFramework.Model.Xcavate.Profile
                     var uploadResult = await _client.UploadImageAsync(
                         signer.Address,
                         compressedPictureStream,
-                        $"ProfilePicture_{signer.Address}",
+                        ProfilePictureModel.UploadFileName(signer.Address),
                         signer,
                         cancellationToken);
 
@@ -100,7 +104,30 @@ namespace PlutoFramework.Model.Xcavate.Profile
                 catch (Exception ex)
                 {
                     Console.WriteLine("Failed to upload profile picture: " + ex);
-                    // Continue without profile picture
+                    // Save the rest of the profile anyway. The picture the user already has
+                    // is kept below rather than dropped, so a failed upload costs them the
+                    // new picture and not the old one too.
+                }
+            }
+
+            string? existingPictureUrl = null;
+
+            // The update below replaces every field it sends, so a save that uploaded nothing -
+            // editing only a nickname, or an upload that failed - has to hand back the URL
+            // already stored or it writes a null over the picture and it disappears from the
+            // menu and the edit page at once. Only worth the round trip when there is no fresh
+            // upload to store: a successful one has already replaced the object anyway.
+            if (profilePictureUrl is null)
+            {
+                try
+                {
+                    loadingViewModel.Message = "Finding profile picture";
+
+                    existingPictureUrl = (await GetProfileAsync(cancellationToken))?.ProfilePicture;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to read the stored profile picture: " + ex);
                 }
             }
 
@@ -108,7 +135,7 @@ namespace PlutoFramework.Model.Xcavate.Profile
             {
                 Ss58Address = signer.Address,
                 Nickname = nickname != string.Empty ? nickname : null,
-                ProfilePicture = profilePictureUrl != string.Empty ? profilePictureUrl : null,
+                ProfilePicture = ProfilePictureModel.ResolveStoredUrl(profilePictureUrl, existingPictureUrl),
                 Bio = bio != string.Empty ? bio : null,
                 X25519Key = x25519key.PublicKeyString,
             };
