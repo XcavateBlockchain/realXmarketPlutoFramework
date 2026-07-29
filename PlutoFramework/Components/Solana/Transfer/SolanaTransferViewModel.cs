@@ -20,7 +20,13 @@ namespace PlutoFramework.Components.Solana.Transfer
     /// the NFT and Xcavate flows. This picker serves one flow, and splitting it would mean
     /// keeping a balance list and a selection in step across two singletons.
     /// </remarks>
-    public partial class SolanaTransferViewModel : ObservableObject
+    /// <remarks>
+    /// <see cref="IPopup"/> and <see cref="ISetToDefault"/> are the contract
+    /// <c>BottomPopupCard</c> uses to clear a popup the user dismissed by swiping it down or
+    /// tapping outside: it casts its parent's BindingContext to them. Without both, the card
+    /// animates away but <see cref="IsVisible"/> stays true and the popup never closes.
+    /// </remarks>
+    public partial class SolanaTransferViewModel : ObservableObject, IPopup, ISetToDefault
     {
         /// <summary>
         /// How often the balances refresh while the popup is open. Frequent enough that a
@@ -40,9 +46,6 @@ namespace PlutoFramework.Components.Solana.Transfer
 
         [ObservableProperty]
         private bool isVisible;
-
-        [ObservableProperty]
-        private bool isTokenSelectVisible;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SymbolText))]
@@ -132,10 +135,15 @@ namespace PlutoFramework.Components.Solana.Transfer
             _ = PollBalancesAsync();
         }
 
+        /// <summary>
+        /// Also called by <c>BottomPopupCard</c> when the user swipes the popup away or taps
+        /// outside it, which is why the cleanup lives here rather than in the Cancel handler.
+        /// </summary>
         public void SetToDefault()
         {
             IsVisible = false;
-            IsTokenSelectVisible = false;
+
+            DependencyService.Get<SolanaTokenSelectViewModel>().IsVisible = false;
 
             Recipient = string.Empty;
             Amount = string.Empty;
@@ -154,7 +162,8 @@ namespace PlutoFramework.Components.Solana.Transfer
         private void Cancel() => SetToDefault();
 
         [RelayCommand]
-        private void OpenTokenSelect() => IsTokenSelectVisible = true;
+        private void OpenTokenSelect() =>
+            DependencyService.Get<SolanaTokenSelectViewModel>().IsVisible = true;
 
         [RelayCommand]
         private void SelectToken(SolanaTransferBalance? token)
@@ -163,8 +172,6 @@ namespace PlutoFramework.Components.Solana.Transfer
             {
                 SelectedToken = token;
             }
-
-            IsTokenSelectVisible = false;
 
             Validate();
         }

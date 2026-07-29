@@ -53,6 +53,8 @@ public partial class SolanaTokenSelectRowView : ContentView
             return;
         }
 
-        DependencyService.Get<SolanaTransferViewModel>().SelectTokenCommand.Execute(Balance);
+        // Goes through the picker's own view model, which applies the choice and then closes
+        // itself. Calling the transfer view model directly would select without dismissing.
+        DependencyService.Get<SolanaTokenSelectViewModel>().SelectTokenCommand.Execute(Balance);
     }
 }

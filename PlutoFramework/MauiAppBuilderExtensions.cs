@@ -172,6 +172,8 @@ namespace PlutoFramework
 
             DependencyService.Register<Components.Solana.Transfer.SolanaTransferViewModel>();
 
+            DependencyService.Register<Components.Solana.Transfer.SolanaTokenSelectViewModel>();
+
             DependencyService.Register<ExportPlutoLayoutQRViewModel>();
 
             DependencyService.Register<CustomItemViewModel>();
