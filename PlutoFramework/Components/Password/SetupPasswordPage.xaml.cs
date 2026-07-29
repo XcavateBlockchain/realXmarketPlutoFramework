@@ -1,6 +1,8 @@
 using CommunityToolkit.Maui.Alerts;
 using PlutoFramework.Components.Buttons;
+using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Model;
+using PlutoFramework.Model.Xcavate;
 using PlutoFramework.Templates.PageTemplate;
 
 namespace PlutoFramework.Components.Password;
@@ -14,6 +16,8 @@ public partial class SetupPasswordPage : PageTemplate
     public SetupPasswordPage()
     {
         InitializeComponent();
+
+        BindingContext = new OnboardingStepperViewModel(OnboardingStage.SetupPassword);
     }
 
     private void OnPasswordValidityChanged(object? sender, EventArgs e)
