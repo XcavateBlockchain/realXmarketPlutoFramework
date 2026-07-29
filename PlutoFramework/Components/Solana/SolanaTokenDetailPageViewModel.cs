@@ -305,6 +305,18 @@ namespace PlutoFramework.Components.Solana
             qrViewModel.IsVisible = true;
         }
 
+        /// <summary>
+        /// Opens the transfer popup on the token being viewed.
+        /// </summary>
+        /// <remarks>
+        /// Passes the mint rather than this page's row: <see cref="SolanaTokenBalance.Amount"/>
+        /// is the sum across every account for the mint, and a transfer spends from one. The
+        /// popup queries the spendable figure itself.
+        /// </remarks>
+        [RelayCommand]
+        public void Transfer() =>
+            DependencyService.Get<Transfer.SolanaTransferViewModel>().Appear(preselectMint: Mint);
+
         [RelayCommand]
         public Task CopyMintAsync() => CopyAddress.CopyToClipboardAsync(Mint);
 

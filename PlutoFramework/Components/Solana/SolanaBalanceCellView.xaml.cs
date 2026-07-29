@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Components.Solana.Status;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
 using PlutoFrameworkCore.Solana;
@@ -30,6 +31,22 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
         cell.Command = new AsyncRelayCommand(OpenBalancesPageAsync);
 
         SolanaNetworkModel.ClusterChanged += OnClusterChanged;
+        SolanaTransactionTracker.TransactionConfirmed += OnTransactionConfirmed;
+    }
+
+    /// <summary>
+    /// A confirmed transfer leaves this headline showing the pre-transfer total. Guarded by
+    /// the same orphan check as <see cref="OnClusterChanged"/>: this cell has no disposal
+    /// hook, so a cell left behind when the main page was replaced stays subscribed.
+    /// </summary>
+    private void OnTransactionConfirmed(object? sender, EventArgs e)
+    {
+        if (Handler is null)
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(async () => await LoadAsync(CancellationToken.None));
     }
 
     private void OnClusterChanged(object? sender, SolanaCluster cluster)

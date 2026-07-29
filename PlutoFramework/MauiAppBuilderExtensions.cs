@@ -168,6 +168,10 @@ namespace PlutoFramework
 
             DependencyService.Register<ExtrinsicStatusStackViewModel>();
 
+            DependencyService.Register<Components.Solana.Status.SolanaTransactionStatusStackViewModel>();
+
+            DependencyService.Register<Components.Solana.Transfer.SolanaTransferViewModel>();
+
             DependencyService.Register<ExportPlutoLayoutQRViewModel>();
 
             DependencyService.Register<CustomItemViewModel>();

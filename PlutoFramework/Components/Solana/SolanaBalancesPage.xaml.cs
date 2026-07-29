@@ -28,4 +28,7 @@ public partial class SolanaBalancesPage : PageTemplate
 
         base.OnDisappearing();
     }
+
+    private void OnTransferClicked(object sender, EventArgs e) =>
+        DependencyService.Get<Transfer.SolanaTransferViewModel>().Appear();
 }

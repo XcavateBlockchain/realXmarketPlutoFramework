@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Components.Solana.Status;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
 using PlutoFrameworkCore.Solana;
@@ -49,6 +50,7 @@ namespace PlutoFramework.Components.Solana
         public SolanaBalancesPageViewModel()
         {
             SolanaNetworkModel.ClusterChanged += OnClusterChanged;
+            SolanaTransactionTracker.TransactionConfirmed += OnTransactionConfirmed;
         }
 
         /// <summary>
@@ -60,9 +62,18 @@ namespace PlutoFramework.Components.Solana
         public void Unsubscribe()
         {
             SolanaNetworkModel.ClusterChanged -= OnClusterChanged;
+            SolanaTransactionTracker.TransactionConfirmed -= OnTransactionConfirmed;
 
             loadCts?.Cancel();
         }
+
+        /// <summary>
+        /// A confirmed transfer means the figures on screen are the pre-transfer ones. The
+        /// Solana counterpart of the <c>MainPageLayoutUpdater.ReloadAsync</c> call the
+        /// Substrate tracker makes when an extrinsic lands in a block.
+        /// </summary>
+        private void OnTransactionConfirmed(object? sender, EventArgs e) =>
+            MainThread.BeginInvokeOnMainThread(async () => await LoadAsync(CancellationToken.None));
 
         /// <summary>
         /// Cancels and disposes the previous load's token source, then hands back a fresh

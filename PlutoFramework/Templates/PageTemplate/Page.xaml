@@ -13,6 +13,8 @@
                     xmlns:topnavigationbartemplate="clr-namespace:PlutoFramework.Templates.TopNavigationBarTemplate"
                     xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                     xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+                    xmlns:solanastatus="clr-namespace:PlutoFramework.Components.Solana.Status"
+                    xmlns:solanatransfer="clr-namespace:PlutoFramework.Components.Solana.Transfer"
                     x:Class="PlutoFramework.Templates.PageTemplate.Page">
 
     <ControlTemplate x:Key="PageTemplate">
@@ -67,9 +69,18 @@
 
             <password:EnterPasswordPopupView ZIndex="10"/>
 
+            <!-- Hosted here rather than per page so the global QR scanner can open a transfer
+                 from wherever the user happens to be. The token picker stacks above it. -->
+            <solanatransfer:SolanaTransferView ZIndex="10" />
+
+            <solanatransfer:SolanaTokenSelectView ZIndex="11" />
+
             <loading:FullPageLoadingView ZIndex="20" />
 
             <extrinsic:ExtrinsicStatusStackLayout ZIndex="5" />
+
+            <!-- Offsets itself below the Substrate stack, which shares these bounds. -->
+            <solanastatus:SolanaTransactionStatusStackLayout ZIndex="5" />
 
             <card:BottomPillBackgroundView />
 

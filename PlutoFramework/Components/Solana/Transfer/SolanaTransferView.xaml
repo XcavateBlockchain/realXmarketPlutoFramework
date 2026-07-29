@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+             x:Class="PlutoFramework.Components.Solana.Transfer.SolanaTransferView"
+             IsVisible="{Binding IsVisible}"
+             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+             AbsoluteLayout.LayoutFlags="All">
+
+    <card:BottomPopupCard Title="Transfer"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
+            <AbsoluteLayout>
+
+                <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
+                                     AbsoluteLayout.LayoutFlags="WidthProportional"
+                                     Padding="10, 10, 10, 10"
+                                     Spacing="12">
+
+                    <card:Card>
+                        <card:Card.View>
+                            <Grid ColumnDefinitions="*, 50"
+                                  Padding="12, 4, 4, 4">
+                                <Entry x:Name="recipientEntry"
+                                       Grid.Column="0"
+                                       Placeholder="Recipient address"
+                                       Text="{Binding Recipient}"
+                                       TextChanged="OnRecipientChanged" />
+
+                                <Image Grid.Column="1"
+                                       Source="{AppThemeBinding Light=qrcodeblack.png, Dark=qrcodewhite.png}"
+                                       Aspect="AspectFit"
+                                       HeightRequest="24"
+                                       WidthRequest="24">
+                                    <Image.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnScanClicked" />
+                                    </Image.GestureRecognizers>
+                                </Image>
+                            </Grid>
+                        </card:Card.View>
+                    </card:Card>
+
+                    <Label Text="{Binding AddressError}"
+                           IsVisible="{Binding AddressErrorIsVisible}"
+                           TextColor="#C33"
+                           FontSize="12" />
+
+                    <card:Card>
+                        <card:Card.View>
+                            <Grid ColumnDefinitions="*, Auto, Auto"
+                                  Padding="12, 4, 8, 4"
+                                  ColumnSpacing="6">
+                                <Entry x:Name="amountEntry"
+                                       Grid.Column="0"
+                                       Placeholder="Amount"
+                                       Keyboard="Numeric"
+                                       Text="{Binding Amount}"
+                                       TextChanged="OnAmountChanged" />
+
+                                <Label Grid.Column="1"
+                                       Text="Max"
+                                       FontAttributes="Bold"
+                                       FontSize="13"
+                                       VerticalTextAlignment="Center">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding MaxCommand}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+
+                                <Border Grid.Column="2"
+                                        Padding="10, 6, 10, 6"
+                                        StrokeThickness="0"
+                                        VerticalOptions="Center">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="14" />
+                                    </Border.StrokeShape>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding OpenTokenSelectCommand}" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding SymbolText}"
+                                           FontAttributes="Bold"
+                                           FontSize="13" />
+                                </Border>
+                            </Grid>
+                        </card:Card.View>
+                    </card:Card>
+
+                    <Label Text="{Binding BalanceText}"
+                           TextColor="#A6A6A6"
+                           FontSize="12" />
+
+                    <Label Text="{Binding AmountError}"
+                           IsVisible="{Binding AmountErrorIsVisible}"
+                           TextColor="#C33"
+                           FontSize="12" />
+
+                </VerticalStackLayout>
+
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          ColumnSpacing="15"
+                          Padding="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <buttons:BasicGrayButton Text="Cancel"
+                                                 Grid.Column="0"
+                                                 Clicked="OnCancelClicked" />
+
+                        <buttons:PlutoFrameworkElevatedButton Text="Transfer"
+                                                              Grid.Column="1"
+                                                              Clicked="OnTransferClicked"
+                                                              ButtonState="{Binding ConfirmButtonState}" />
+                    </Grid>
+                </AbsoluteLayout>
+
+            </AbsoluteLayout>
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+
+</ContentView>

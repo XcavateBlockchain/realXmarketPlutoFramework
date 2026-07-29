@@ -126,6 +126,20 @@ namespace PlutoFramework.Model
                             viewModel.Address = scannedAddress.Substring(10);
                         }
                     }
+                    else if (PlutoFrameworkCore.Solana.SolanaUri.TryParseRecipient(scannedValue)
+                        is string solanaRecipient)
+                    {
+                        // The app emits solana: codes from the balances page, the token detail
+                        // page and both key detail pages, so before this branch existed
+                        // scanning its own QR code fell through to "incorrect format".
+                        //
+                        // The popup is hosted by the page template, so unlike the substrate:
+                        // branch above — whose popup only exists on some pages — this always
+                        // has somewhere to appear.
+                        DependencyService
+                            .Get<Components.Solana.Transfer.SolanaTransferViewModel>()
+                            .Appear(recipientAddress: solanaRecipient);
+                    }
                     else if (Substrate.NetApi.Utils.Bytes2HexString(e.Results[0].Raw).IndexOf("530102") != -1)
                     {
                         var vaultSign = DependencyService.Get<VaultSignViewModel>();

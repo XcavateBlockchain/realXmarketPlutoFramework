@@ -5,6 +5,7 @@
                        xmlns:address="clr-namespace:PlutoFramework.Components.AddressView"
                        xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                        xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+                       xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
                        x:Class="PlutoFramework.Components.Solana.SolanaBalancesPage"
                        Title="Balance">
     <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
@@ -37,6 +38,13 @@
                                      Address="{Binding Address}"
                                      QrAddress="{Binding QrAddress}" />
 
+                <!-- Receive is already covered by the address card above, so this is a single
+                     full-width action rather than the Substrate page's pair. -->
+                <buttons:ElevatedButton Text="Transfer"
+                                        ButtonState="Enabled"
+                                        IsVisible="{Binding HasAccount}"
+                                        Clicked="OnTransferClicked" />
+
                 <Label Text="{Binding ErrorMessage}"
                        IsVisible="{Binding ErrorIsVisible}"
                        TextColor="#C33"
@@ -64,5 +72,6 @@
         <!-- ImportMethodPopupView and ConnectMwaPopupView are supplied by the page template. -->
         <solana:CreateSolanaMnemonicsPopupView />
         <solana:EnterSolanaMnemonicsPopupView />
+        <!-- SolanaTransferView and SolanaTokenSelectView are supplied by the page template. -->
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>
