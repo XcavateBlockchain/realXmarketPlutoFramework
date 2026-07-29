@@ -95,6 +95,45 @@ namespace PlutoFrameworkCore.Solana
         }
 
         /// <summary>
+        /// One account's data, or null when the account does not exist.
+        /// </summary>
+        /// <remarks>
+        /// Used to tell whether a recipient already has an associated token account. A missing
+        /// account is a successful response carrying a null value, not an error — which is why
+        /// null is returned rather than thrown. An actual RPC failure still throws, because
+        /// assuming "absent" on a network blip would add a create instruction that then fails
+        /// against an account which does exist.
+        /// </remarks>
+        public static async Task<AccountInfo?> GetAccountInfoAsync(
+            SolanaCluster cluster, string address, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+
+            var result = await GetClient(cluster).GetAccountInfoAsync(address);
+
+            return Unwrap(result, $"fetch account info on {cluster.GetName()}").Value;
+        }
+
+        /// <summary>
+        /// The confirmation status of one signature, or null when the cluster has not seen it.
+        /// </summary>
+        /// <remarks>
+        /// Null is the normal answer for a transaction that was submitted moments ago, and for
+        /// one the node has dropped from its recent cache. It means "no information", never
+        /// "failed" — see <see cref="SolanaSignatureStatusMapper"/>.
+        /// </remarks>
+        public static async Task<SignatureStatusInfo?> GetSignatureStatusAsync(
+            SolanaCluster cluster, string signature, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+
+            var result = await GetClient(cluster).GetSignatureStatusesAsync([signature]);
+
+            return Unwrap(result, $"fetch the transaction status on {cluster.GetName()}")
+                .Value?.FirstOrDefault();
+        }
+
+        /// <summary>
         /// Returns the result, or throws with whatever reason the node gave.
         /// </summary>
         private static T Unwrap<T>(RequestResult<T> result, string attempted)

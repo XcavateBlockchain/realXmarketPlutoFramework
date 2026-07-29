@@ -36,5 +36,16 @@ namespace PlutoFrameworkCore.Solana
         public required string RawAmount { get; init; }
 
         public required int Decimals { get; init; }
+
+        /// <summary>
+        /// The token account's own address.
+        /// </summary>
+        /// <remarks>
+        /// Optional because the balances page does not need it — that page sums every account
+        /// for a mint. The transfer picker does: it must tell the associated token account,
+        /// which a transfer can spend from, apart from any other account holding the same
+        /// mint, which it cannot.
+        /// </remarks>
+        public string? Address { get; init; }
     }
 }
