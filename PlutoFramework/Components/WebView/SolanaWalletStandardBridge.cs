@@ -3,6 +3,7 @@ using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Solana;
 using PlutoFrameworkCore.Keys;
 using PlutoFrameworkCore.Solana;
+using PlutoFrameworkCore.Xcavate;
 using Plutonication;
 using Substrate.NetApi;
 using System.Text.Json;
@@ -58,6 +59,15 @@ namespace PlutoFramework.Components.WebView
         public static bool Handles(string? method) =>
             method?.StartsWith(METHOD_PREFIX, StringComparison.Ordinal) == true;
 
+        /// <summary>
+        /// When set and returning true, a <c>solana:signMessage</c> whose bytes are a Profile
+        /// API signing payload (see <see cref="ProfileApiPayloadModel"/>) is signed without
+        /// the confirmation sheet. Left null everywhere except the messenger WebView, whose
+        /// hosted dashboard authenticates every API call with such a signature and would
+        /// otherwise raise the sheet each time. Transactions never take this path.
+        /// </summary>
+        public Func<bool>? AllowProfileApiAutoSign { get; init; }
+
         public async Task<string> HandleAsync(string requestJson)
         {
             WalletBridgeRequest request;
@@ -81,7 +91,8 @@ namespace PlutoFramework.Components.WebView
                 {
                     "solana:connect" => await HandleConnectAsync(request.Payload),
                     "solana:disconnect" => HandleDisconnect(request.Payload),
-                    "solana:signMessage" => await HandleSignMessageAsync(request.Payload),
+                    "solana:signMessage" => await HandleSignMessageAsync(
+                        request.Payload, AllowProfileApiAutoSign?.Invoke() == true),
                     "solana:signTransaction" => await HandleSignTransactionAsync(request.Payload),
                     "solana:signAndSendTransaction" => await HandleSignAndSendTransactionAsync(request.Payload),
                     _ => throw new NotSupportedException(
@@ -153,7 +164,7 @@ namespace PlutoFramework.Components.WebView
         /// Backs <c>solana:signMessage</c> through the same bottom sheet the Polkadot
         /// <c>signRaw</c> uses, so both chains show the user one screen.
         /// </summary>
-        private static async Task<object> HandleSignMessageAsync(JsonElement? payload)
+        private static async Task<object> HandleSignMessageAsync(JsonElement? payload, bool allowProfileApiAutoSign)
         {
             var request = payload?.Deserialize<SignMessagePayload>(SerializerOptions)
                 ?? throw new InvalidOperationException("Missing payload for signMessage request.");
@@ -169,6 +180,25 @@ namespace PlutoFramework.Components.WebView
                 !string.Equals(address, request.Address, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException("Requested account does not match the active wallet address.");
+            }
+
+            // A recognised Profile API authentication: routine, requested for every API call
+            // the dashboard makes, so it signs without the sheet. The account still resolves
+            // through the normal unlock, so a protected key keeps its own prompt.
+            if (allowProfileApiAutoSign && ProfileApiPayloadModel.IsProfileApiSignPayload(message, DateTime.UtcNow))
+            {
+                var autoAccount = await PlutoFrameworkSolanaAccount.ResolveAsync(SIGN_MESSAGE_REASON)
+                    ?? throw new InvalidOperationException("No Solana account is available.");
+
+                var autoSignature = await autoAccount
+                    .SignMessageAsync(message, SIGN_MESSAGE_REASON, CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                return new SignMessageResult
+                {
+                    SignedMessage = request.Message,
+                    Signature = Convert.ToBase64String(autoSignature),
+                };
             }
 
             var signatureTask = new TaskCompletionSource<byte[]>();

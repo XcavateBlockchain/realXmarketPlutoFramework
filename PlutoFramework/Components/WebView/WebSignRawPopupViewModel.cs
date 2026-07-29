@@ -88,9 +88,10 @@ namespace PlutoFramework.Components.WebView
 
         /// <summary>
         /// The default signer: the app's Substrate account, hashing anything over the 256-byte
-        /// limit the way the Polkadot extension does.
+        /// limit the way the Polkadot extension does. Also used by the bridge's Profile API
+        /// auto-sign path, so a message signs identically with or without the sheet.
         /// </summary>
-        private static async Task<byte[]> SignWithSubstrateAccountAsync(byte[] msg)
+        internal static async Task<byte[]> SignWithSubstrateAccountAsync(byte[] msg)
         {
             var account = await Model.KeysModel.GetAccountAsync()
                 ?? throw new Exception("No Substrate account is available to sign with.");

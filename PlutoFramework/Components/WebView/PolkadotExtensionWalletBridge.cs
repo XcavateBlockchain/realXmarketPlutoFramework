@@ -2,6 +2,7 @@ using PlutoFramework.Components.MessagePopup;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFrameworkCore;
+using PlutoFrameworkCore.Xcavate;
 using Plutonication;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Extrinsics;
@@ -47,6 +48,15 @@ public class PolkadotExtensionWalletBridge
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    /// <summary>
+    /// When set and returning true, a <c>signRaw</c> whose bytes decode to a Profile API
+    /// signing payload (see <see cref="ProfileApiPayloadModel"/>) is signed without the
+    /// confirmation sheet. Left null everywhere except the messenger WebView, whose hosted
+    /// dashboard authenticates every API call with such a signature and would otherwise
+    /// raise the sheet each time. <c>signPayload</c> transactions never take this path.
+    /// </summary>
+    public Func<bool>? AllowProfileApiAutoSign { get; init; }
+
     public async Task<string> HandleAsync(string requestJson)
     {
         WalletBridgeRequest request;
@@ -79,7 +89,8 @@ public class PolkadotExtensionWalletBridge
                     result = HandleAccounts();
                     break;
                 case "signRaw":
-                    result = await HandleSignRawAsync(request).ConfigureAwait(false);
+                    result = await HandleSignRawAsync(request, AllowProfileApiAutoSign?.Invoke() == true)
+                        .ConfigureAwait(false);
                     break;
                 case "signPayload":
                     result = await HandleSignPayloadAsync(request).ConfigureAwait(false);
@@ -141,7 +152,7 @@ public class PolkadotExtensionWalletBridge
         ];
     }
 
-    private static async Task<SignerResultPayload> HandleSignRawAsync(WalletBridgeRequest request)
+    private static async Task<SignerResultPayload> HandleSignRawAsync(WalletBridgeRequest request, bool allowProfileApiAutoSign)
     {
         Console.WriteLine("Sign raw called");
 
@@ -166,6 +177,25 @@ public class PolkadotExtensionWalletBridge
         if (!string.Equals(expectedAddress, signRawPayload.Address, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("Requested account does not match the active wallet address.");
+        }
+
+        // A recognised Profile API authentication signs without the sheet, through the same
+        // signer the sheet's Sign button uses, so the signature is identical either way.
+        // Anything else - including hex that fails to decode - falls through to the sheet.
+        if (allowProfileApiAutoSign
+            && signRawPayload.Type == "bytes"
+            && TryDecodeHex(signRawPayload.Data, out var rawMessage)
+            && ProfileApiPayloadModel.IsProfileApiSignPayload(rawMessage, DateTime.UtcNow))
+        {
+            var autoSignature = await WebSignRawPopupViewModel
+                .SignWithSubstrateAccountAsync(rawMessage)
+                .ConfigureAwait(false);
+
+            return new SignerResultPayload
+            {
+                Id = signRawPayload.Id ?? request.Id ?? Guid.NewGuid().ToString("N"),
+                Signature = Utils.Bytes2HexString(autoSignature).ToLowerInvariant()
+            };
         }
 
         try
@@ -293,6 +323,20 @@ public class PolkadotExtensionWalletBridge
             messagePopup.Text = ex.Message;
             messagePopup.IsVisible = true;
             throw;
+        }
+    }
+
+    private static bool TryDecodeHex(string hex, out byte[] bytes)
+    {
+        try
+        {
+            bytes = Utils.HexToByteArray(hex);
+            return true;
+        }
+        catch
+        {
+            bytes = [];
+            return false;
         }
     }
 

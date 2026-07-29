@@ -1,6 +1,7 @@
 using Microsoft.Maui.Handlers;
 using PlutoFramework.Components.WebView;
 using PlutoFramework.Model;
+using PlutoFrameworkCore;
 using PlutoFrameworkCore.AssetDidComm;
 using System.Diagnostics;
 using System.Text.Json;
@@ -20,9 +21,17 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 
     private uint? tabId = null;
 
-    private readonly PolkadotExtensionWalletBridge _walletBridge = new();
+    private readonly PolkadotExtensionWalletBridge _walletBridge;
 
-    private readonly SolanaWalletStandardBridge _solanaBridge = new();
+    private readonly SolanaWalletStandardBridge _solanaBridge;
+
+    /// <summary>
+    /// Whether the hosted page is one of the configured trusted dapps, refreshed on every
+    /// completed navigation. Gates the bridges' Profile API auto-signing: the messenger
+    /// dashboard signs a Profile API payload for every call it makes, but a page the user
+    /// navigated away to gets the ordinary signing sheet again.
+    /// </summary>
+    private volatile bool _hostIsWhitelistedDApp;
 
     /// <summary>
     /// The wallet icon as a data URI, read once from the packaged asset. Wallet Standard
@@ -43,6 +52,11 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 
     public X25519WebView()
     {
+        // Auto-signing is this view's decision rather than the bridges' default: only here
+        // is the hosted page meant to be the whitelisted messenger dashboard.
+        _walletBridge = new() { AllowProfileApiAutoSign = () => _hostIsWhitelistedDApp };
+        _solanaBridge = new() { AllowProfileApiAutoSign = () => _hostIsWhitelistedDApp };
+
         Source = new UrlWebViewSource { Url = Url };
         Navigated += OnNavigated;
     }
@@ -73,6 +87,10 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     {
         if (e.Result != WebNavigationResult.Success)
             return;
+
+        // Evaluated here, on the UI thread, because reading the native WebView's URL from
+        // the bridges' background callbacks would not be safe on Android.
+        _hostIsWhitelistedDApp = IsWhitelistedDAppHost(GetCurrentUrl());
 
         // Registered before the injections rather than inside one of them: both wallets
         // report the same tab, and they are dispatched concurrently.
@@ -1136,6 +1154,16 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
             ? uri.Host
             : null;
     }
+
+    /// <summary>
+    /// The configured <see cref="PlutoConfigurationModel.WhitelistedDApps"/> only, matched
+    /// the way <see cref="DAppApprovalModel"/> matches them. Session approvals the user
+    /// tapped through deliberately do not count: they clear a page to connect, not to sign
+    /// without being shown what.
+    /// </summary>
+    private static bool IsWhitelistedDAppHost(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        && PlutoConfigurationModel.WhitelistedDApps.Any(pattern => uri.Host.Contains(pattern));
 
     partial void InitializePlatformBridge(WebViewHandler handler);
 
