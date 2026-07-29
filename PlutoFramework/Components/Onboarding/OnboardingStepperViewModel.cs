@@ -4,7 +4,7 @@ namespace PlutoFramework.Components.Onboarding;
 
 public class OnboardingStepperViewModel
 {
-    public const int TotalSteps = 5;
+    public const int TotalSteps = 8;
 
     public OnboardingStepperViewModel(OnboardingStage stage)
     {
@@ -21,11 +21,15 @@ public class OnboardingStepperViewModel
     {
         return stage switch
         {
-            OnboardingStage.Questionaire => 0,
-            OnboardingStage.AgreeTerms => 1,
-            OnboardingStage.AgreeAgreement => 2,
-            OnboardingStage.AgreePrivacy => 3,
-            OnboardingStage.KYC => 4,
+            OnboardingStage.SetupPassword => 0,
+            OnboardingStage.SelectRole => 1,
+            OnboardingStage.EnterUserDetails => 1,
+            OnboardingStage.Questionaire => 2,
+            OnboardingStage.AgreeTerms => 3,
+            OnboardingStage.AgreeAgreement => 4,
+            OnboardingStage.AgreePrivacy => 5,
+            OnboardingStage.KYC => 6,
+            OnboardingStage.ProfileRegistration => 7,
             _ => 0,
         };
     }
