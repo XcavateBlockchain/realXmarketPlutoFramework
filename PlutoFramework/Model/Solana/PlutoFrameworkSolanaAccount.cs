@@ -69,7 +69,7 @@ namespace PlutoFramework.Model.Solana
                 return null;
             }
 
-            return lockedKey.Type switch
+            PlutoFrameworkSolanaAccount? account = lockedKey.Type switch
             {
                 KeyTypeEnum.SolanaMnemonic =>
                     new MnemonicSolanaAccount(await lockedKey.ToSolanaMnemonicKeyAsync(reason)),
@@ -79,6 +79,16 @@ namespace PlutoFramework.Model.Solana
 
                 _ => null,
             };
+
+            if (account is not null)
+            {
+                // A notifications wallet link that failed earlier (offline, device not yet
+                // registered) retries here, riding on an account something else already
+                // unlocked. Fire-and-forget, never prompts, skips itself when linked.
+                _ = WalletLinkModel.TryLinkResolvedSolanaAccountAsync(account);
+            }
+
+            return account;
         }
 
         /// <summary>

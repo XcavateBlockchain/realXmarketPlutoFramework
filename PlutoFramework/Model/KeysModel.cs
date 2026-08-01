@@ -817,6 +817,17 @@ namespace PlutoFramework.Model
             if (type == KeyTypeEnum.Sr25519 || type == KeyTypeEnum.PolkadotJson)
             {
                 _ = DeviceRegisterService.UpdateUserIdAsync(KeysModel.GetSubstrateKey());
+
+                _ = WalletLinkModel.LinkPolkadotAsync();
+            }
+
+            // The one moment a Solana link can be signed without an unlock prompt: the
+            // phrase is right here in hand. SolanaMwa is deliberately absent - the API
+            // demands a signature for Solana, and an MWA signature launches the external
+            // wallet, which must not happen as a side effect of saving a key.
+            if (type == KeyTypeEnum.SolanaMnemonic)
+            {
+                _ = WalletLinkModel.LinkSolanaMnemonicAsync(publicKey, secret);
             }
 
             return Task.WhenAll(
@@ -828,6 +839,10 @@ namespace PlutoFramework.Model
 
         public static Task ClearAsync()
         {
+            // A device that no longer holds these keys must stop receiving their
+            // notifications. Uses the stored link list, so key deletion below can proceed.
+            _ = WalletLinkModel.UnlinkAllAsync();
+
             Preferences.Remove(PreferencesModel.PUBLIC_KEY);
             Preferences.Remove(PreferencesModel.SOLANA_PUBLIC_KEY);
 

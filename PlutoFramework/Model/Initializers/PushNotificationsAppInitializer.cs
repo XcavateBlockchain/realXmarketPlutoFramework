@@ -62,7 +62,13 @@ public static class PushNotificationsAppInitializer
         var isUserIdUpdated = await SecureStorageManager.Storage.GetIsUserIdUpdatedAsync() ?? false;
         if (!isUserIdUpdated && hasAddress)
             await DeviceRegisterService.UpdateUserIdAsync(KeysModel.GetSubstrateKey());
-        
+
+        // Polkadot needs no ownership signature yet, so a missing link can be made good
+        // silently on every start. Solana is absent on purpose: its link must be signed,
+        // signing needs the key unlocked, and unlocking prompts - so Solana links happen
+        // at account creation and ride on later unlocks (PlutoFrameworkSolanaAccount).
+        await WalletLinkModel.LinkPolkadotAsync();
+
         Console.WriteLine($"[PlutoNotifications] Background jobs processed.");
     }
 }

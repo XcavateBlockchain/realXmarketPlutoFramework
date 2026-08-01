@@ -11,7 +11,8 @@
         private const string KeyIsRegistered = "device_registered";
         private const string KeyFcmTokenExpired = "fcm_token_expired";
         private const string KeyIsUserIdUpdated = "uid_updated";
-        
+        private const string KeyLinkedWallets = "linked_wallets";
+
         private const string InstallInitializedKey = "install_initialized";
         
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -120,6 +121,27 @@
             }
         }
 
+        public async Task SaveLinkedWalletsAsync(IReadOnlyList<LinkedWallet> wallets)
+        {
+            var json = JsonSerializer.Serialize(wallets, JsonOptions);
+            await SecureStorage.Default.SetAsync(KeyLinkedWallets, json);
+        }
+
+        public async Task<IReadOnlyList<LinkedWallet>> GetLinkedWalletsAsync()
+        {
+            try
+            {
+                var json = await SecureStorage.Default.GetAsync(KeyLinkedWallets);
+                return json is null
+                    ? []
+                    : JsonSerializer.Deserialize<List<LinkedWallet>>(json, JsonOptions) ?? [];
+            }
+            catch
+            {
+                return [];
+            }
+        }
+
         private static async Task WipeAllAsync()
         {
             try
@@ -128,6 +150,7 @@
                 SecureStorage.Default.Remove(KeyAuthTokenPair);
                 SecureStorage.Default.Remove(KeyIsRegistered);
                 SecureStorage.Default.Remove(KeyFcmTokenExpired);
+                SecureStorage.Default.Remove(KeyLinkedWallets);
             }
             catch
             {

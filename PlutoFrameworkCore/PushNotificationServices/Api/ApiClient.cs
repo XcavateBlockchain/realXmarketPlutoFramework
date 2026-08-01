@@ -98,6 +98,65 @@ public static class ApiClient
         );
     }
 
+    /// <summary>
+    /// Links a wallet address to this device on the notifications API.
+    /// </summary>
+    /// <param name="signMessageAsync">
+    /// Receives the canonical <see cref="WalletLinkMessage"/> and returns its base58-encoded
+    /// signature. Required for Solana; null for Polkadot, which the server records without
+    /// ownership proof until it implements sr25519 verification.
+    /// </param>
+    /// <remarks>
+    /// The nonce is fetched here rather than by the caller: nonces are single-use and expire
+    /// after 120 seconds, so each attempt - including retries of this whole method - must
+    /// sign against a fresh one.
+    /// </remarks>
+    public static async Task LinkWalletRequestAsync(
+        string chain,
+        string address,
+        Func<string, Task<string>>? signMessageAsync = null)
+    {
+        if (Platform.Current == PlatformType.Other) return;
+
+        var nonce = await NonceEndpoint.GetNonceAsync(PublicClient);
+
+        var deviceId = await SecureStorageManager.Storage.GetDeviceIdAsync()
+            ?? throw new InvalidOperationException("No device id stored, register the device first.");
+
+        string? signature = null;
+        if (signMessageAsync != null)
+        {
+            signature = await signMessageAsync(WalletLinkMessage.Build(chain, address, nonce, deviceId));
+        }
+
+        await RequestWithAuthAsync(async () =>
+            await WalletLinkEndpoint.LinkAsync(
+                AuthenticatedClient,
+                new WalletLinkData
+                {
+                    Nonce = nonce,
+                    Chain = chain,
+                    Address = address,
+                    Signature = signature
+                })
+        );
+    }
+
+    public static async Task UnlinkWalletRequestAsync(string chain, string address)
+    {
+        if (Platform.Current == PlatformType.Other) return;
+
+        await RequestWithAuthAsync(async () =>
+            await WalletUnlinkEndpoint.UnlinkAsync(
+                AuthenticatedClient,
+                new WalletUnlinkData
+                {
+                    Chain = chain,
+                    Address = address
+                })
+        );
+    }
+
     public static async Task<T> RequestWithAuthAsync<T>(Func<Task<T>> apiCall)
     {
         if (!await SetAuthHeaderAsync()) throw new UnauthorizedException("Not authorized");
