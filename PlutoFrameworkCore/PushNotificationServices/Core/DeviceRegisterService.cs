@@ -110,8 +110,11 @@ public static class DeviceRegisterService
             }
 
             Console.WriteLine($"[PlutoNotifications] Trying to link {chain} wallet...");
-            await RetryHelper.RunWithRetryAsync(async () =>
-                await ApiClient.LinkWalletRequestAsync(chain, address, signMessageAsync)
+            // A cancellation is the user declining the signature, not a flaky network -
+            // retrying would re-prompt (and under MWA, relaunch the wallet app).
+            await RetryHelper.RunWithRetryAsync(
+                async () => await ApiClient.LinkWalletRequestAsync(chain, address, signMessageAsync),
+                isTransient: ex => ex is not OperationCanceledException
             );
 
             await SecureStorageManager.Storage.SaveLinkedWalletsAsync([

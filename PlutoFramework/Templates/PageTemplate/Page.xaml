@@ -75,6 +75,12 @@
 
             <solanatransfer:SolanaTokenSelectView ZIndex="11" />
 
+            <!-- Every Mobile Wallet Adapter signature shows this, and a signature can be
+                 requested from anywhere - transfers, dapp bridges, notification wallet
+                 linking - so it is hosted here. Above the transfer popups, which are one
+                 of the things that trigger it. -->
+            <solana:MwaSignPopupView ZIndex="12" />
+
             <loading:FullPageLoadingView ZIndex="20" />
 
             <extrinsic:ExtrinsicStatusStackLayout ZIndex="5" />

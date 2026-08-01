@@ -3,6 +3,7 @@ using PlutoFrameworkCore;
 using PlutoFrameworkCore.PushNotificationServices.Core;
 using PlutoFrameworkCore.PushNotificationServices.Core.Misc;
 using PlutoFrameworkCore.Solana;
+using PlutoFrameworkCore.Solana.Mwa;
 using System.Text;
 
 namespace PlutoFramework.Model
@@ -73,8 +74,10 @@ namespace PlutoFramework.Model
         /// eventually lands without ever prompting the user.
         /// </summary>
         /// <remarks>
-        /// Mobile Wallet Adapter accounts are skipped: they sign by launching the wallet
-        /// app, which must never happen as a surprise side effect of an unrelated action.
+        /// Mobile Wallet Adapter accounts are skipped here: resolution happens right before
+        /// the resolved account opens its own wallet session, and a concurrent link would
+        /// collide with it. They link through <see cref="TryLinkSolanaMwaAsync"/> at
+        /// moments when no session is open instead.
         /// </remarks>
         public static async Task TryLinkResolvedSolanaAccountAsync(PlutoFrameworkSolanaAccount account)
         {
@@ -102,6 +105,89 @@ namespace PlutoFramework.Model
             catch (Exception e)
             {
                 Console.WriteLine($"[PlutoNotifications] Solana wallet link retry failed: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Guards against a second Mobile Wallet Adapter link starting while one is
+        /// running. Without it, a failed link's own signature - which fires the
+        /// after-signature retry below - would immediately launch the wallet again.
+        /// </summary>
+        private static int mwaLinkInProgress;
+
+        /// <summary>
+        /// Links a Mobile Wallet Adapter account's address. This launches the external
+        /// wallet (behind the waiting popup), so it is only called from moments where a
+        /// wallet trip is expected: right after a connect completes, and right after
+        /// another signature session has closed.
+        /// </summary>
+        public static async Task TryLinkSolanaMwaAsync(PlutoFrameworkSolanaAccount account)
+        {
+            if (Interlocked.Exchange(ref mwaLinkInProgress, 1) == 1)
+            {
+                return;
+            }
+
+            try
+            {
+                if (await DeviceRegisterService.IsWalletLinkedAsync(WalletChain.Solana, account.Address))
+                {
+                    return;
+                }
+
+                await DeviceRegisterService.LinkWalletAsync(
+                    WalletChain.Solana,
+                    account.Address,
+                    async message =>
+                    {
+                        try
+                        {
+                            return SolanaBase58.Encode(await account.SignMessageAsync(
+                                Encoding.UTF8.GetBytes(message),
+                                "Verify this wallet address to receive its notifications on this device",
+                                CancellationToken.None));
+                        }
+                        catch (MwaAuthorizationException e)
+                        {
+                            // The user declined in the wallet. Reported as a cancellation
+                            // so the retry loop stops instead of relaunching the wallet.
+                            throw new OperationCanceledException(e.Message, e);
+                        }
+                    });
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"[PlutoNotifications] Solana wallet link failed: {e.Message}");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref mwaLinkInProgress, 0);
+            }
+        }
+
+        /// <summary>
+        /// Links whatever Mobile Wallet Adapter account was just connected. Called when the
+        /// connect flow completes - the user has just approved this app in their wallet, so
+        /// one follow-up signature request is contextually clear rather than a surprise.
+        /// </summary>
+        public static async Task TryLinkSolanaMwaAfterConnectAsync()
+        {
+            try
+            {
+                var account = await PlutoFrameworkSolanaAccount.ResolveAsync(
+                    "Enable notifications for your Solana wallet");
+
+                // Mnemonic accounts were already linked silently when their key was saved.
+                if (account is null || account.CanSignLocally)
+                {
+                    return;
+                }
+
+                await TryLinkSolanaMwaAsync(account);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"[PlutoNotifications] Solana wallet link failed: {e.Message}");
             }
         }
 

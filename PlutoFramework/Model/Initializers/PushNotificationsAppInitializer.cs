@@ -65,8 +65,10 @@ public static class PushNotificationsAppInitializer
 
         // Polkadot needs no ownership signature yet, so a missing link can be made good
         // silently on every start. Solana is absent on purpose: its link must be signed,
-        // signing needs the key unlocked, and unlocking prompts - so Solana links happen
-        // at account creation and ride on later unlocks (PlutoFrameworkSolanaAccount).
+        // and neither prompting to unlock a mnemonic key nor launching an external wallet
+        // belongs at app start - so Solana links happen at account creation/connect and
+        // ride on later unlocks and wallet sessions (PlutoFrameworkSolanaAccount,
+        // MwaSolanaAccount).
         await WalletLinkModel.LinkPolkadotAsync();
 
         Console.WriteLine($"[PlutoNotifications] Background jobs processed.");

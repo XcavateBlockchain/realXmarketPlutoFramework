@@ -165,6 +165,11 @@ namespace PlutoFramework.Components.Solana
             SetToDefault();
 
             await completed.Invoke(connectedKey);
+
+            // The user has just approved this app in their wallet, so asking that wallet
+            // for one signature to register the address for notifications follows on
+            // naturally. After the callback, which is what actually saves the key.
+            await WalletLinkModel.TryLinkSolanaMwaAfterConnectAsync();
         }
     }
 }

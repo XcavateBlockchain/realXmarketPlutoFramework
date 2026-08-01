@@ -1,3 +1,4 @@
+using PlutoFramework.Components.Solana;
 using PlutoFrameworkCore.Keys;
 using PlutoFrameworkCore.Solana;
 using PlutoFrameworkCore.Solana.Mwa;
@@ -43,6 +44,7 @@ namespace PlutoFramework.Model.Solana
         public override Task<byte[]> SignMessageAsync(byte[] message, string reason, CancellationToken token) =>
             RunAuthorizedAsync(
                 Cluster,
+                reason,
                 async (client, operationToken) =>
                 {
                     var signedPayloads = await client.SignMessagesAsync(Address, [message], operationToken);
@@ -64,6 +66,7 @@ namespace PlutoFramework.Model.Solana
             CancellationToken token) =>
             RunAuthorizedAsync(
                 cluster,
+                reason,
                 async (client, operationToken) =>
                 {
                     // The wallet needs a wire-format transaction with an empty signature slot
@@ -110,6 +113,7 @@ namespace PlutoFramework.Model.Solana
             CancellationToken token) =>
             RunAuthorizedAsync(
                 cluster,
+                reason,
                 async (client, operationToken) =>
                 {
                     var signatures = await client.SignAndSendTransactionsAsync([wireTransaction], operationToken);
@@ -130,27 +134,49 @@ namespace PlutoFramework.Model.Solana
         /// Passing the stored token lets the wallet reauthorize without reprompting. When the
         /// stored network differs from the requested one, this is also what moves the
         /// authorization across, rather than failing and asking the user to reconnect.
+        ///
+        /// The waiting popup covers the whole session, and cancelling it cancels the session.
+        /// There is deliberately no local password/biometric gate anywhere on this path:
+        /// the user approves every request inside the wallet app itself, which is the
+        /// stronger check, so a second local prompt would only double-ask.
         /// </summary>
         /// <param name="cluster">
         /// Usually <see cref="PlutoFrameworkSolanaAccount.Cluster"/>, but a dapp relaying
         /// through the injected wallet names its own network and that choice wins.
         /// </param>
-        private Task<T> RunAuthorizedAsync<T>(
+        private async Task<T> RunAuthorizedAsync<T>(
             SolanaCluster cluster,
+            string reason,
             Func<MwaClient, CancellationToken, Task<T>> operation,
-            CancellationToken token) =>
-            MwaConnectFlow.WithAuthorizedSessionAsync(
-                SolanaMwaModel.BuildIdentity(),
-                cluster,
-                key.AuthToken,
-                async (client, authorization, operationToken) =>
-                {
-                    await PersistIfRefreshedAsync(authorization);
+            CancellationToken token)
+        {
+            var popup = DependencyService.Get<MwaSignPopupViewModel>();
 
-                    return await operation(client, operationToken);
-                },
-                progress: null,
+            var result = await popup.ShowWhileAsync(
+                reason,
+                (progress, operationToken) => MwaConnectFlow.WithAuthorizedSessionAsync(
+                    SolanaMwaModel.BuildIdentity(),
+                    cluster,
+                    key.AuthToken,
+                    async (client, authorization, innerToken) =>
+                    {
+                        await PersistIfRefreshedAsync(authorization);
+
+                        return await operation(client, innerToken);
+                    },
+                    progress,
+                    operationToken),
                 token);
+
+            // The session above is closed, so a follow-up wallet trip cannot collide with
+            // it. This is how an address that missed its notifications link (connected
+            // before the feature, or offline at the time) gets one: riding on a signature
+            // the user asked for. No-ops once linked, and drops itself while a link is
+            // already running - including the one whose own signature just returned here.
+            _ = WalletLinkModel.TryLinkSolanaMwaAsync(this);
+
+            return result;
+        }
 
         /// <summary>
         /// Writes the authorization back when the wallet issued a new token, moved us to a

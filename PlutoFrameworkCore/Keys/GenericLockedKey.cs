@@ -143,6 +143,12 @@ namespace PlutoFrameworkCore.Keys
         /// The stored secret is the JSON-serialized <see cref="SolanaMwaKey"/>, since the
         /// authorization token it carries is itself sensitive.
         /// </summary>
+        /// <remarks>
+        /// Deliberately the no-auth read, unlike every signing key above: this value cannot
+        /// sign anything, it only lets the app ask the wallet app to. The user approves each
+        /// request inside that wallet, which is the real check - a local password/biometric
+        /// prompt in front of it would make every signature a double prompt.
+        /// </remarks>
         public async Task<SolanaMwaKey> ToSolanaMwaKeyAsync(string reason)
         {
             if (Type != KeyTypeEnum.SolanaMwa)
@@ -150,7 +156,7 @@ namespace PlutoFrameworkCore.Keys
                 throw new InvalidOperationException($"Cannot convert key of type {Type} to SolanaMwaKey");
             }
 
-            var json = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey, reason);
+            var json = await PlutoConfigurationModel.SecureStorage.GetAsyncNoAuthAsync(SecretStorageKey);
 
             if (json == null)
             {

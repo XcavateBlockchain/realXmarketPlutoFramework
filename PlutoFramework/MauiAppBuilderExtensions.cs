@@ -234,6 +234,8 @@ namespace PlutoFramework
 
             DependencyService.Register<ConnectMwaPopupViewModel>();
 
+            DependencyService.Register<MwaSignPopupViewModel>();
+
             DependencyService.Register<LogOutPopupViewModel>();
 
             DependencyService.Register<CancelReservationPopupViewModel>();

@@ -822,9 +822,11 @@ namespace PlutoFramework.Model
             }
 
             // The one moment a Solana link can be signed without an unlock prompt: the
-            // phrase is right here in hand. SolanaMwa is deliberately absent - the API
-            // demands a signature for Solana, and an MWA signature launches the external
-            // wallet, which must not happen as a side effect of saving a key.
+            // phrase is right here in hand. SolanaMwa is deliberately absent - its saves
+            // also happen mid-session when a signature refreshes the authorization, and
+            // launching a second wallet trip from there would collide with the open one.
+            // MWA links from the connect flow and after signature sessions instead
+            // (WalletLinkModel.TryLinkSolanaMwaAsync).
             if (type == KeyTypeEnum.SolanaMnemonic)
             {
                 _ = WalletLinkModel.LinkSolanaMnemonicAsync(publicKey, secret);
