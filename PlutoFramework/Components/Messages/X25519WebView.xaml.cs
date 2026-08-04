@@ -41,7 +41,7 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 
     public static readonly BindableProperty UrlProperty =
         BindableProperty.Create(nameof(Url), typeof(string), typeof(X25519WebView),
-            defaultValue: "https://realxmessenger.xcavate.io/messages/my-buckets/?isHeaderVisible=false",
+            defaultValue: "https://realxmessenger.xcavate.io/messages/my-buckets/?isHeaderVisible=false&primaryColor=%233B4F74",
             propertyChanged: OnUrlChanged);
 
     public string Url
