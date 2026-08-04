@@ -1,5 +1,7 @@
 ﻿using PlutoFrameworkCore.PushNotificationServices.Api;
+using PlutoFrameworkCore.PushNotificationServices.Api.ApiEndpoints;
 using PlutoFrameworkCore.PushNotificationServices.Core.Interfaces;
+using PlutoFrameworkCore.PushNotificationServices.Core.Misc;
 using PlutoFrameworkCore.PushNotificationServices.Core.Utils;
 
 namespace PlutoFrameworkCore.PushNotificationServices.Core;
@@ -73,6 +75,11 @@ public static class DeviceRegisterService
     /// <param name="signMessageAsync">
     /// Canonical link message → base58 signature. Required for Solana, null for Polkadot.
     /// </param>
+    /// <param name="force">
+    /// Link even when this address is already recorded as linked. The cached record is an
+    /// optimisation, not a source of truth - if the server has since lost the link, only a
+    /// forced call can put it back.
+    /// </param>
     /// <remarks>
     /// This app holds one account slot per chain, so linking an address first unlinks any
     /// different address previously linked on the same chain - otherwise a replaced account
@@ -81,7 +88,8 @@ public static class DeviceRegisterService
     public static async Task<bool> LinkWalletAsync(
         string chain,
         string address,
-        Func<string, Task<string>>? signMessageAsync = null)
+        Func<string, Task<string>>? signMessageAsync = null,
+        bool force = false)
     {
         await _updateLock.WaitAsync();
 
@@ -95,13 +103,15 @@ public static class DeviceRegisterService
 
             var linked = await SecureStorageManager.Storage.GetLinkedWalletsAsync();
 
-            if (linked.Any(w => w.Chain == chain && w.Address == address))
+            if (!force && linked.Any(w => w.Chain == chain && w.Address == address))
             {
                 Console.WriteLine($"[PlutoNotifications] {chain} wallet is already linked, skipping.");
                 return true;
             }
 
-            foreach (var stale in linked.Where(w => w.Chain == chain))
+            // Unlinking the address being relinked would undo the link this call is about
+            // to make, so a forced relink only clears genuinely different addresses.
+            foreach (var stale in linked.Where(w => w.Chain == chain && w.Address != address))
             {
                 Console.WriteLine($"[PlutoNotifications] Unlinking replaced {chain} wallet...");
                 await RetryHelper.RunWithRetryAsync(async () =>
@@ -187,6 +197,56 @@ public static class DeviceRegisterService
         var linked = await SecureStorageManager.Storage.GetLinkedWalletsAsync();
 
         return linked.Any(w => w.Chain == chain && w.Address == address);
+    }
+
+    /// <summary>
+    /// Asks the API what it holds for this device, so a user can see whether notifications
+    /// would actually reach them rather than infer it from cached local flags.
+    /// </summary>
+    /// <remarks>
+    /// Never throws: every failure is an outcome the caller is expected to display.
+    /// </remarks>
+    public static async Task<RegistrationCheck> CheckRegistrationAsync()
+    {
+        if (!SecureStorageManager.IsInitialized)
+        {
+            Console.WriteLine("[PlutoNotifications] Notification services never started.");
+            return new RegistrationCheck(RegistrationCheckOutcome.ServicesNotStarted);
+        }
+
+        if (!(await SecureStorageManager.Storage.GetIsRegisteredAsync() ?? false))
+        {
+            Console.WriteLine("[PlutoNotifications] Device is not registered, nothing to check.");
+            return new RegistrationCheck(RegistrationCheckOutcome.NotRegisteredLocally);
+        }
+
+        try
+        {
+            var data = await ApiClient.GetRegistrationRequestAsync();
+
+            Console.WriteLine("[PlutoNotifications] Registration checked.");
+            return new RegistrationCheck(RegistrationCheckOutcome.Registered, data);
+        }
+        catch (DeviceNotFoundException)
+        {
+            // The token outlived its device row. Nothing this device sends will land until
+            // it registers again, so the local flag is corrected here rather than left
+            // claiming a registration the server has forgotten.
+            Console.WriteLine("[PlutoNotifications] Server does not know this device.");
+            await SecureStorageManager.Storage.SaveIsRegisteredAsync(false);
+
+            return new RegistrationCheck(RegistrationCheckOutcome.DeviceUnknownToServer);
+        }
+        catch (UnauthorizedException e)
+        {
+            Console.WriteLine("[PlutoNotifications] Registration check was not authorized.");
+            return new RegistrationCheck(RegistrationCheckOutcome.Unauthorized, Detail: e.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[PlutoNotifications] Registration check failed: {e.Message}");
+            return new RegistrationCheck(RegistrationCheckOutcome.Failed, Detail: e.Message);
+        }
     }
 
     public static async Task<bool> UpdateUserIdAsync(string newUserId)

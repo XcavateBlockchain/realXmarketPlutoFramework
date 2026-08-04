@@ -157,6 +157,18 @@ public static class ApiClient
         );
     }
 
+    /// <summary>
+    /// Asks the API what it holds for this device: its id, platform, user id, whether an
+    /// FCM token is on file, and which wallets are linked. The one endpoint that reports
+    /// server-side state rather than pushing client-side state at it.
+    /// </summary>
+    public static async Task<RegistrationData> GetRegistrationRequestAsync()
+    {
+        return await RequestWithAuthAsync(async () =>
+            await RegistrationEndpoint.GetAsync(AuthenticatedClient)
+        );
+    }
+
     public static async Task<T> RequestWithAuthAsync<T>(Func<Task<T>> apiCall)
     {
         if (!await SetAuthHeaderAsync()) throw new UnauthorizedException("Not authorized");
@@ -173,13 +185,16 @@ public static class ApiClient
                 throw;
             }
 
-            if (await RefreshAccessTokenRequestAsync(tokenPair) || await DeviceRegisterService.RegisterDeviceAsync())
+            // Renewing stores a new access token but leaves the client carrying the old
+            // one, so the header has to be rewritten or the retry repeats the 401.
+            if ((await RefreshAccessTokenRequestAsync(tokenPair) || await DeviceRegisterService.RegisterDeviceAsync())
+                && await SetAuthHeaderAsync())
                 return await apiCall();
 
             throw;
         }
     }
-    
+
     public static async Task RequestWithAuthAsync(Func<Task> apiCall)
     {
         if (!await SetAuthHeaderAsync()) throw new UnauthorizedException("Not authorized");
@@ -198,6 +213,11 @@ public static class ApiClient
             }
 
             if (!await RefreshAccessTokenRequestAsync(tokenPair) && !await DeviceRegisterService.RegisterDeviceAsync())
+                throw;
+
+            // See the generic overload: the refreshed token has to reach the header before
+            // the retry, otherwise it goes out with the token that was just rejected.
+            if (!await SetAuthHeaderAsync())
                 throw;
 
             await apiCall();

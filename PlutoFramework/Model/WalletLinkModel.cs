@@ -12,37 +12,15 @@ namespace PlutoFramework.Model
     /// Links the user's wallet addresses to this device on the notifications API, so
     /// notifications targeted at an address reach the device that holds its key.
     ///
-    /// Solana links must carry an Ed25519 signature over the canonical link message;
-    /// Polkadot links are recorded without ownership proof until the server implements
-    /// sr25519 verification. Every entry point here is safe to fire and forget: failures
-    /// are logged, never thrown, and a failed link is retried the next time the account
+    /// Only Solana wallets are linked, each carrying an Ed25519 signature over the
+    /// canonical link message. Polkadot wallets are deliberately not registered: the
+    /// server records their links without ownership proof until it implements sr25519
+    /// verification. Every entry point here is safe to fire and forget: failures are
+    /// logged, never thrown, and a failed link is retried the next time the account
     /// passes through <see cref="PlutoFrameworkSolanaAccount.ResolveAsync"/> unlocked.
     /// </summary>
     public static class WalletLinkModel
     {
-        /// <summary>
-        /// Links the stored Polkadot address. No signature, no unlock, no prompt.
-        /// </summary>
-        public static async Task<bool> LinkPolkadotAsync()
-        {
-            try
-            {
-                if (!KeysModel.HasSubstrateKey())
-                {
-                    return false;
-                }
-
-                return await DeviceRegisterService.LinkWalletAsync(
-                    WalletChain.Polkadot,
-                    KeysModel.GetSubstrateKey());
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"[PlutoNotifications] Polkadot wallet link failed: {e.Message}");
-                return false;
-            }
-        }
-
         /// <summary>
         /// Links a Solana address using the mnemonic phrase the caller already holds -
         /// the one moment signing needs no unlock prompt. Used at account creation and
@@ -79,32 +57,37 @@ namespace PlutoFramework.Model
         /// collide with it. They link through <see cref="TryLinkSolanaMwaAsync"/> at
         /// moments when no session is open instead.
         /// </remarks>
-        public static async Task TryLinkResolvedSolanaAccountAsync(PlutoFrameworkSolanaAccount account)
+        /// <param name="force">Relink even when this address is already recorded as linked.</param>
+        public static async Task<bool> TryLinkResolvedSolanaAccountAsync(
+            PlutoFrameworkSolanaAccount account,
+            bool force = false)
         {
             try
             {
                 if (!account.CanSignLocally)
                 {
-                    return;
+                    return false;
                 }
 
-                if (await DeviceRegisterService.IsWalletLinkedAsync(WalletChain.Solana, account.Address))
+                if (!force && await DeviceRegisterService.IsWalletLinkedAsync(WalletChain.Solana, account.Address))
                 {
-                    return;
+                    return true;
                 }
 
-                await DeviceRegisterService.LinkWalletAsync(
+                return await DeviceRegisterService.LinkWalletAsync(
                     WalletChain.Solana,
                     account.Address,
                     async message => SolanaBase58.Encode(
                         await account.SignMessageAsync(
                             Encoding.UTF8.GetBytes(message),
                             "Enable notifications for your Solana wallet",
-                            CancellationToken.None)));
+                            CancellationToken.None)),
+                    force);
             }
             catch (Exception e)
             {
                 Console.WriteLine($"[PlutoNotifications] Solana wallet link retry failed: {e.Message}");
+                return false;
             }
         }
 
@@ -121,21 +104,24 @@ namespace PlutoFramework.Model
         /// wallet trip is expected: right after a connect completes, and right after
         /// another signature session has closed.
         /// </summary>
-        public static async Task TryLinkSolanaMwaAsync(PlutoFrameworkSolanaAccount account)
+        /// <param name="force">Relink even when this address is already recorded as linked.</param>
+        public static async Task<bool> TryLinkSolanaMwaAsync(
+            PlutoFrameworkSolanaAccount account,
+            bool force = false)
         {
             if (Interlocked.Exchange(ref mwaLinkInProgress, 1) == 1)
             {
-                return;
+                return false;
             }
 
             try
             {
-                if (await DeviceRegisterService.IsWalletLinkedAsync(WalletChain.Solana, account.Address))
+                if (!force && await DeviceRegisterService.IsWalletLinkedAsync(WalletChain.Solana, account.Address))
                 {
-                    return;
+                    return true;
                 }
 
-                await DeviceRegisterService.LinkWalletAsync(
+                return await DeviceRegisterService.LinkWalletAsync(
                     WalletChain.Solana,
                     account.Address,
                     async message =>
@@ -153,15 +139,46 @@ namespace PlutoFramework.Model
                             // so the retry loop stops instead of relaunching the wallet.
                             throw new OperationCanceledException(e.Message, e);
                         }
-                    });
+                    },
+                    force);
             }
             catch (Exception e)
             {
                 Console.WriteLine($"[PlutoNotifications] Solana wallet link failed: {e.Message}");
+                return false;
             }
             finally
             {
                 Interlocked.Exchange(ref mwaLinkInProgress, 0);
+            }
+        }
+
+        /// <summary>
+        /// Relinks the Solana address on demand, even when a link is already recorded.
+        /// Unlike every other entry point here this one is user-initiated, so the signature
+        /// prompt - or the trip out to the wallet app under Mobile Wallet Adapter - is
+        /// expected rather than a surprise.
+        /// </summary>
+        public static async Task<bool> RelinkSolanaAsync()
+        {
+            try
+            {
+                var account = await PlutoFrameworkSolanaAccount.ResolveAsync(
+                    "Enable notifications for your Solana wallet");
+
+                if (account is null)
+                {
+                    return false;
+                }
+
+                return account.CanSignLocally
+                    ? await TryLinkResolvedSolanaAccountAsync(account, force: true)
+                    : await TryLinkSolanaMwaAsync(account, force: true);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"[PlutoNotifications] Solana wallet relink failed: {e.Message}");
+                return false;
             }
         }
 

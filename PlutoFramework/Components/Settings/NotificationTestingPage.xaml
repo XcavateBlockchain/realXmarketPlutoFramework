@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<template:PageTemplate xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                       xmlns:template="clr-namespace:PlutoFramework.Templates.PageTemplate"
+                       xmlns:settings="clr-namespace:PlutoFramework.Components.Settings"
+                       xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+                       x:Class="PlutoFramework.Components.Settings.NotificationTestingPage"
+                       x:Name="notificationTestingPage"
+                       Title="Notification testing">
+    <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+            AbsoluteLayout.LayoutFlags="All">
+        <VerticalStackLayout HorizontalOptions="Center"
+                         Padding="20, 10, 20, 100"
+                         Spacing="15">
+
+            <!-- The verdict, kept first: the whole page exists to answer "would a
+                 notification actually arrive on this device?" -->
+            <card:Card>
+                <card:Card.View>
+                    <VerticalStackLayout Padding="15, 12, 15, 12"
+                                         Spacing="8">
+                        <Label Text="{Binding Summary}"
+                               FontAttributes="Bold"
+                               FontSize="16"
+                               AutomationId="notificationTestingSummary">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label"
+                                             Binding="{Binding HasProblem}"
+                                             Value="True">
+                                    <Setter Property="TextColor"
+                                            Value="{StaticResource DangerousRed}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+
+                        <Label Text="{Binding SummaryDetail}"
+                               IsVisible="{Binding HasSummaryDetail}"
+                               FontSize="12"
+                               TextColor="#A6A6A6" />
+
+                        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                           IsVisible="{Binding IsBusy}"
+                                           HorizontalOptions="Start"
+                                           Color="{StaticResource Primary}" />
+                    </VerticalStackLayout>
+                </card:Card.View>
+            </card:Card>
+
+            <!-- What this device believes, straight out of its own secure storage. Shown
+                 next to the server's answer because the two disagreeing is the failure
+                 this page is here to catch. -->
+            <card:Card>
+                <card:Card.View>
+                    <VerticalStackLayout Padding="15, 12, 15, 12"
+                                         Spacing="8">
+                        <Label Text="On this device"
+                               FontAttributes="Bold"
+                               FontSize="14" />
+
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding DeviceRows}"
+                                             Spacing="6">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="120, *"
+                                          ColumnSpacing="10">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Label}"
+                                               FontSize="12"
+                                               TextColor="#A6A6A6" />
+
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Value}"
+                                               FontSize="12"
+                                               LineBreakMode="CharacterWrap" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </card:Card.View>
+            </card:Card>
+
+            <card:Card IsVisible="{Binding HasServerData}">
+                <card:Card.View>
+                    <VerticalStackLayout Padding="15, 12, 15, 12"
+                                         Spacing="8">
+                        <Label Text="On the notifications server"
+                               FontAttributes="Bold"
+                               FontSize="14" />
+
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding ServerRows}"
+                                             Spacing="6">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="120, *"
+                                          ColumnSpacing="10">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Label}"
+                                               FontSize="12"
+                                               TextColor="#A6A6A6" />
+
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Value}"
+                                               FontSize="12"
+                                               LineBreakMode="CharacterWrap" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <Label Text="Linked wallets"
+                               IsVisible="{Binding HasServerWallets}"
+                               FontAttributes="Bold"
+                               FontSize="12"
+                               Margin="0, 6, 0, 0" />
+
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding ServerWallets}"
+                                             IsVisible="{Binding HasServerWallets}"
+                                             Spacing="6">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="120, *"
+                                          ColumnSpacing="10">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Label}"
+                                               FontSize="12"
+                                               TextColor="#A6A6A6" />
+
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Value}"
+                                               FontSize="12"
+                                               LineBreakMode="CharacterWrap" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </card:Card.View>
+            </card:Card>
+
+            <Label Text="{Binding LastAction}"
+                   IsVisible="{Binding HasLastAction}"
+                   FontSize="12"
+                   TextColor="#A6A6A6"
+                   AutomationId="notificationTestingLastAction" />
+
+            <!-- Disabled while a check runs: attestation is slow enough that a second tap
+                 is a real risk, and it would queue another wallet trip behind the first. -->
+            <settings:GenericButton Title="Check again"
+                                    IsEnabled="{Binding IsIdle}"
+                                    AutomationId="notificationTestingCheck">
+                <settings:GenericButton.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CheckCommand}" />
+                </settings:GenericButton.GestureRecognizers>
+            </settings:GenericButton>
+
+            <settings:GenericButton Title="Register device again"
+                                    IsEnabled="{Binding IsIdle}"
+                                    AutomationId="notificationTestingRegister">
+                <settings:GenericButton.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ReRegisterCommand}" />
+                </settings:GenericButton.GestureRecognizers>
+            </settings:GenericButton>
+
+            <settings:GenericButton Title="Link Solana wallet"
+                                    IsEnabled="{Binding IsIdle}"
+                                    AutomationId="notificationTestingLinkSolana">
+                <settings:GenericButton.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding RelinkSolanaCommand}" />
+                </settings:GenericButton.GestureRecognizers>
+            </settings:GenericButton>
+
+            <Label Text="Registering again re-attests this device and resends its push token. Linking a Solana wallet asks for a signature, and opens your wallet app if the account lives there."
+                   FontSize="11"
+                   TextColor="#A6A6A6" />
+        </VerticalStackLayout>
+    </ScrollView>
+</template:PageTemplate>

@@ -53,24 +53,50 @@ public static class PushNotificationsAppInitializer
 #endif
         Console.WriteLine($"[PlutoNotifications] Platform type set: {NotificationsPlatform.Current.ToStringValue()}");
 
+        await SyncAsync();
+
+        Console.WriteLine($"[PlutoNotifications] Background jobs processed.");
+    }
+
+    /// <summary>
+    /// Brings the notifications API up to date with this device: registration, FCM token
+    /// and user id. Safe to call repeatedly - each step skips itself when local state
+    /// says it is already done.
+    /// </summary>
+    /// <param name="force">
+    /// Redo every step regardless of local state. For when the device looks registered but
+    /// the server disagrees, which is exactly what those cached flags cannot tell you.
+    /// </param>
+    /// <remarks>
+    /// Requires <see cref="Initialize"/> to have run first - it sets the API base URL, the
+    /// secure storage and the platform attestation service this depends on.
+    /// </remarks>
+    public static async Task SyncAsync(bool force = false)
+    {
         var isRegistered = await SecureStorageManager.Storage.GetIsRegisteredAsync() ?? false;
 
-        if (isRegistered || await DeviceRegisterService.RegisterDeviceAsync())
+        if ((isRegistered && !force) || await DeviceRegisterService.RegisterDeviceAsync())
+        {
+            // UpdateFcmTokenAsync skips a token it believes is current, so a forced sync
+            // has to mark it stale first or the push it exists to make never happens.
+            if (force)
+                await SecureStorageManager.Storage.SaveFcmTokenExpiredAsync(true);
+
             await DeviceRegisterService.UpdateFcmTokenAsync();
+        }
 
         var hasAddress = KeysModel.HasSubstrateKey();
         var isUserIdUpdated = await SecureStorageManager.Storage.GetIsUserIdUpdatedAsync() ?? false;
-        if (!isUserIdUpdated && hasAddress)
+        if ((force || !isUserIdUpdated) && hasAddress)
             await DeviceRegisterService.UpdateUserIdAsync(KeysModel.GetSubstrateKey());
 
-        // Polkadot needs no ownership signature yet, so a missing link can be made good
-        // silently on every start. Solana is absent on purpose: its link must be signed,
-        // and neither prompting to unlock a mnemonic key nor launching an external wallet
-        // belongs at app start - so Solana links happen at account creation/connect and
-        // ride on later unlocks and wallet sessions (PlutoFrameworkSolanaAccount,
-        // MwaSolanaAccount).
-        await WalletLinkModel.LinkPolkadotAsync();
-
-        Console.WriteLine($"[PlutoNotifications] Background jobs processed.");
+        // No wallet link here. Only Solana wallets register for notifications, and a
+        // Solana link must be signed - neither prompting to unlock a mnemonic key nor
+        // launching an external wallet belongs in a background sync - so Solana links
+        // happen at account creation/connect and ride on later unlocks and wallet
+        // sessions (PlutoFrameworkSolanaAccount, MwaSolanaAccount), or on demand through
+        // WalletLinkModel.RelinkSolanaAsync. Polkadot wallets are not registered at all:
+        // the server would record their links without ownership proof (sr25519
+        // verification is not implemented yet).
     }
 }
