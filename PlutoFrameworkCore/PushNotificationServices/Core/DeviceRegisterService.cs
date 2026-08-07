@@ -47,9 +47,12 @@ public static class DeviceRegisterService
             }
 
             Console.WriteLine("[PlutoNotifications] Trying to update FCM token...");
+            // A null token means Firebase itself is unavailable - posting it anyway
+            // would just make the server reject a token that was never fetched.
             await RetryHelper.RunWithRetryAsync(async () =>
                 await ApiClient.UpdateFcmTokenRequestAsync(
-                    (await FcmTokenService.GetTokenAsync())!
+                    await FcmTokenService.GetTokenAsync()
+                        ?? throw new InvalidOperationException("No FCM token available.")
                 )
             );
 

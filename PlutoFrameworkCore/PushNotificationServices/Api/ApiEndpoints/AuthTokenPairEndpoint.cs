@@ -43,8 +43,8 @@ public abstract class AuthTokenPairEndpoint: IApiEndpoint
     {
         StringContent jsonContent = new(JsonSerializer.Serialize(input), Encoding.UTF8, "application/json");
         
-        var response = (await httpClient.PostAsync(EndpointPath, jsonContent)).EnsureSuccessStatusCode();
-        
+        var response = await (await httpClient.PostAsync(EndpointPath, jsonContent)).EnsureSuccessWithBodyAsync();
+
         var tokens = await response.Content.ReadFromJsonAsync<TokenPair>();
         
         if (tokens == null) throw new HttpRequestException();
@@ -62,8 +62,8 @@ public abstract class AuthTokenPairEndpoint: IApiEndpoint
             Encoding.UTF8,
             "application/json");
         
-        var response = (await httpClient.PostAsync(RefreshEndpointPath, jsonContent)).EnsureSuccessStatusCode();
-        
+        var response = await (await httpClient.PostAsync(RefreshEndpointPath, jsonContent)).EnsureSuccessWithBodyAsync();
+
         var accessTokenObj = await response.Content.ReadFromJsonAsync<AccessTokenObject>();
         
         if (accessTokenObj == null) throw new HttpRequestException();

@@ -1,6 +1,7 @@
 ﻿using Android.Gms.Extensions;
 using Xamarin.Google.Android.Play.Core.Integrity;
 using PlutoFrameworkCore.PushNotificationServices.Core.Interfaces;
+using PlutoFrameworkCore.PushNotificationServices.Core.Utils;
 
 namespace PlutoFramework.Platforms.Android.Attestation;
 
@@ -15,7 +16,7 @@ public class PlayIntegrityService (IPushNotificationsSecureStorage secureStorage
         if (builder is null)
             throw new InvalidOperationException("Invalid Play Integrity response type.");
 
-        var request = builder.SetNonce(nonce)!.Build();
+        var request = builder.SetNonce(PlayIntegrityNonce.Pad(nonce))!.Build();
         var objResponse = await integrityManager.RequestIntegrityToken(request)!;
 
         if (objResponse is not IntegrityTokenResponse response)

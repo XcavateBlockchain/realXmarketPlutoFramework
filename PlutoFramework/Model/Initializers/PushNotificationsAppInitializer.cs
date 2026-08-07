@@ -33,6 +33,12 @@ public static class PushNotificationsAppInitializer
 
         Console.WriteLine($"[PlutoNotifications] Trying to request notification permission ...");
 #if ANDROID
+        // Mirrors Firebase.Core.App.Configure() in the iOS branch. Normally the
+        // FirebaseInitProvider auto-initializes from the GoogleServicesJson-generated
+        // resources; a null here means those resources are missing from the build.
+        if (FirebaseApp.InitializeApp(global::Android.App.Application.Context) == null)
+            Console.WriteLine("[PlutoNotifications] FirebaseApp did not initialize - google-services.json was not processed into the build.");
+
         try
         {
             await Permissions.RequestAsync<NotificationPermission>();
