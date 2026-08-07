@@ -108,7 +108,7 @@
                             </BindableLayout.ItemTemplate>
                         </VerticalStackLayout>
 
-                        <Label Text="Linked wallets"
+                        <Label Text="Registered wallets"
                                IsVisible="{Binding HasServerWallets}"
                                FontAttributes="Bold"
                                FontSize="12"
@@ -162,7 +162,7 @@
                 </settings:GenericButton.GestureRecognizers>
             </settings:GenericButton>
 
-            <settings:GenericButton Title="Link Solana wallet"
+            <settings:GenericButton Title="Register Solana wallet"
                                     IsEnabled="{Binding IsIdle}"
                                     AutomationId="notificationTestingLinkSolana">
                 <settings:GenericButton.GestureRecognizers>
@@ -170,7 +170,7 @@
                 </settings:GenericButton.GestureRecognizers>
             </settings:GenericButton>
 
-            <Label Text="Registering again re-attests this device and resends its push token. Linking a Solana wallet asks for a signature, and opens your wallet app if the account lives there."
+            <Label Text="Registering again re-attests this device, resends its push token, and re-registers your Polkadot wallet automatically. Registering the Solana wallet asks for a signature, and opens your wallet app if the account lives there."
                    FontSize="11"
                    TextColor="#A6A6A6" />
         </VerticalStackLayout>

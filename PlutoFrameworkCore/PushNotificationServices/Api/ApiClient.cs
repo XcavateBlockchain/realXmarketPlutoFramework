@@ -84,22 +84,8 @@ public static class ApiClient
         );
     }
 
-    public static async Task UpdateUserIdRequestAsync(string newUserId)
-    {
-        if (Platform.Current == PlatformType.Other) return;
-
-        await RequestWithAuthAsync(async () =>
-            await UserIdEndpoint.UpdateUidAsync(
-                AuthenticatedClient,
-                new UserIdUpdateData
-                {
-                    UserId = newUserId
-                })
-        );
-    }
-
     /// <summary>
-    /// Links a wallet address to this device on the notifications API.
+    /// Registers a wallet address as a main key of this device on the notifications API.
     /// </summary>
     /// <param name="signMessageAsync">
     /// Receives the canonical <see cref="WalletLinkMessage"/> and returns its base58-encoded

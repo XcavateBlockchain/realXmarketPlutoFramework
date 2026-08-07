@@ -813,13 +813,12 @@ namespace PlutoFramework.Model
                 PasswordStorageKey = passwordStorageKey,
             };
 
-            // Update User Id to notifications api. No wallet link here: only Solana
-            // wallets register for notifications - the server records Polkadot links
-            // without ownership proof (no sr25519 verification yet), so onboarding
-            // skips them on purpose.
+            // Register the address as a main key on the notifications api. Signature-less
+            // (the server records Polkadot unverified - no sr25519 verification yet), so
+            // no prompt interrupts the save.
             if (type == KeyTypeEnum.Sr25519 || type == KeyTypeEnum.PolkadotJson)
             {
-                _ = DeviceRegisterService.UpdateUserIdAsync(KeysModel.GetSubstrateKey());
+                _ = WalletLinkModel.LinkPolkadotAsync(KeysModel.GetSubstrateKey());
             }
 
             // The one moment a Solana link can be signed without an unlock prompt: the

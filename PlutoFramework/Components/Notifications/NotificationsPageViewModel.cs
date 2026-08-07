@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 
@@ -6,6 +6,12 @@ using Tab = PlutoFramework.Components.Tabs.Tab;
 
 namespace PlutoFramework.Components.Notifications
 {
+    /// <summary>
+    /// Shows the notifications recorded in <see cref="NotificationsModel"/>. The list
+    /// refreshes while the page is visible - a push can land mid-view - but only
+    /// between appearances, so the model's change event must be attached and detached
+    /// by the page's lifecycle.
+    /// </summary>
     public partial class NotificationsPageViewModel : ObservableObject
     {
         [ObservableProperty]
@@ -34,41 +40,38 @@ namespace PlutoFramework.Components.Notifications
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(Notifications))]
-        private List<Notification> allNotifications = new List<Notification>([
-            new Notification
-            {
-                Title = "New property minted",
-                Message = "You have minted a new property and has been added to your drafts while awaiting verification of documents",
-                Date = DateTime.Now,
-                Type = NotificationType.System,
-                WasRead = false,
-            },
-            new Notification
-            {
-                Title = "Long message test",
-                Message = "Very very long something very long text here this one will be super duper long that nobody will ever believe that somebody can write such a long and useless sentence. Do you believe now",
-                Date = DateTime.Now,
-                Type = NotificationType.Announcement,
-                WasRead = true,
-            },
-            new Notification
-            {
-                Title = "New property minted",
-                Message = "You have minted a new property and has been added to your drafts while awaiting verification of documents",
-                Date = new DateTime(DateTime.Now.Subtract(new DateTime(((long)10000)*3600*24)).Ticks),
-                Type = NotificationType.System,
-                WasRead = false,
-            }]);
+        [NotifyPropertyChangedFor(nameof(HasNoNotifications))]
+        private List<Notification> allNotifications = [.. NotificationsModel.GetAll()];
+
+        /// <summary>Drives the empty state, so a fresh install is not a blank screen.</summary>
+        public bool HasNoNotifications => AllNotifications.Count == 0;
 
         public ObservableCollection<Notification> Notifications => new ObservableCollection<Notification>(
             AllNotifications.Where(n => n.Type == SelectedFilter || SelectedFilter == NotificationType.All)
         );
 
+        public void OnAppearing()
+        {
+            NotificationsModel.Changed += OnStoreChanged;
+            Refresh();
+        }
+
+        public void OnDisappearing()
+        {
+            NotificationsModel.Changed -= OnStoreChanged;
+        }
+
+        /// <summary>
+        /// The store raises its event from Firebase callback threads, so the reload is
+        /// marshalled before it touches bound state.
+        /// </summary>
+        private void OnStoreChanged() => MainThread.BeginInvokeOnMainThread(Refresh);
+
+        private void Refresh() => AllNotifications = [.. NotificationsModel.GetAll()];
+
         [RelayCommand]
         public void SelectTab(object parameter)
         {
-            Console.WriteLine("Select tab");
-
             var filter = parameter as NotificationType?;
 
             if (filter == SelectedFilter)

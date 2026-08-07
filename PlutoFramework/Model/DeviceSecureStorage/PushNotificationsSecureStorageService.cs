@@ -10,7 +10,6 @@
         private const string KeyAuthTokenPair = "auth_token_pair";
         private const string KeyIsRegistered = "device_registered";
         private const string KeyFcmTokenExpired = "fcm_token_expired";
-        private const string KeyIsUserIdUpdated = "uid_updated";
         private const string KeyLinkedWallets = "linked_wallets";
 
         private const string InstallInitializedKey = "install_initialized";
@@ -95,24 +94,6 @@
             try
             {
                 var value = await SecureStorage.Default.GetAsync(KeyFcmTokenExpired);
-                return bool.TryParse(value, out var result) ? result : null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public async Task SaveIsUserIdUpdatedAsync(bool isUpdated)
-        {
-            await SecureStorage.Default.SetAsync(KeyIsUserIdUpdated, isUpdated.ToString());
-        }
-
-        public async Task<bool?> GetIsUserIdUpdatedAsync()
-        {
-            try
-            {
-                var value = await SecureStorage.Default.GetAsync(KeyIsUserIdUpdated);
                 return bool.TryParse(value, out var result) ? result : null;
             }
             catch

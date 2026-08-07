@@ -104,10 +104,10 @@ public partial class NotificationTestingViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Re-runs the whole registration sequence - attestation, FCM token, user id - and
-    /// then reports the result. Deliberately excludes the Solana wallet link, which needs
-    /// a signature and so gets its own button. Polkadot is never linked (see
-    /// <see cref="WalletLinkModel"/>).
+    /// Re-runs the whole registration sequence - attestation, FCM token, and the
+    /// signature-less Polkadot wallet registration - and then reports the result.
+    /// Deliberately excludes the Solana wallet link, which needs a signature and so
+    /// gets its own button.
     /// </summary>
     [RelayCommand]
     private async Task ReRegisterAsync()
@@ -177,13 +177,13 @@ public partial class NotificationTestingViewModel : ObservableObject
 
         try
         {
-            LastAction = "Linking Solana wallet ...";
+            LastAction = "Registering Solana wallet ...";
 
             var linked = await WalletLinkModel.RelinkSolanaAsync();
 
             LastAction = linked
-                ? "Solana wallet linked."
-                : "Solana wallet link failed or was declined.";
+                ? "Solana wallet registered."
+                : "Solana wallet registration failed or was declined.";
 
             await LoadDeviceRowsAsync();
 
@@ -214,7 +214,6 @@ public partial class NotificationTestingViewModel : ObservableObject
         var isRegistered = await storage.GetIsRegisteredAsync() ?? false;
         var deviceId = await storage.GetDeviceIdAsync();
         var fcmTokenExpired = await storage.GetFcmTokenExpiredAsync();
-        var isUserIdUpdated = await storage.GetIsUserIdUpdatedAsync() ?? false;
         var linkedWallets = await storage.GetLinkedWalletsAsync();
 
         DeviceRows.Add(new DiagnosticRow("Registered", isRegistered ? "Yes" : "No"));
@@ -225,9 +224,8 @@ public partial class NotificationTestingViewModel : ObservableObject
             true => "Needs sending",
             false => "Sent",
         }));
-        DeviceRows.Add(new DiagnosticRow("User ID sent", isUserIdUpdated ? "Yes" : "No"));
         DeviceRows.Add(new DiagnosticRow(
-            "Linked wallets",
+            "Registered wallets",
             linkedWallets.Count == 0
                 ? "None"
                 : string.Join("\n", linkedWallets.Select(w => $"{w.Chain}: {Shorten(w.Address)}"))));
@@ -288,7 +286,9 @@ public partial class NotificationTestingViewModel : ObservableObject
 
         ServerRows.Add(new DiagnosticRow("Device ID", data.DeviceId ?? "Unknown"));
         ServerRows.Add(new DiagnosticRow("Platform", data.Platform ?? "Unknown"));
-        ServerRows.Add(new DiagnosticRow("User ID", string.IsNullOrEmpty(data.Uid) ? "Not set" : data.Uid));
+        // Wallet registrations are the main keys now; the uid only appears on installs
+        // that set it before that change, so it is labelled for what it is.
+        ServerRows.Add(new DiagnosticRow("Legacy user ID", string.IsNullOrEmpty(data.Uid) ? "Not set" : data.Uid));
         ServerRows.Add(new DiagnosticRow(
             "Delivery",
             data.NotificationsEnabled ? "Enabled" : "No FCM token on file"));
@@ -328,16 +328,16 @@ public partial class NotificationTestingViewModel : ObservableObject
         if (ServerWallets.Count == 0)
         {
             SetProblem(
-                "Registered, but no wallet is linked",
-                "General notifications will arrive; anything addressed to your wallet will not.");
+                "No wallet is registered",
+                "The device itself is registered, so general notifications will arrive - but anything addressed to your wallet will not.");
             return;
         }
 
         HasProblem = false;
         Summary = "Ready to receive notifications";
         SummaryDetail = ServerWallets.Count == 1
-            ? "This device is registered and one wallet is linked to it."
-            : $"This device is registered and {ServerWallets.Count} wallets are linked to it.";
+            ? "This device is registered with one wallet."
+            : $"This device is registered with {ServerWallets.Count} wallets.";
     }
 
     private void SetProblem(string summary, string detail)

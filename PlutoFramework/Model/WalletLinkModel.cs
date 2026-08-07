@@ -9,18 +9,43 @@ using System.Text;
 namespace PlutoFramework.Model
 {
     /// <summary>
-    /// Links the user's wallet addresses to this device on the notifications API, so
-    /// notifications targeted at an address reach the device that holds its key.
+    /// Registers the user's wallet addresses as main keys of this device on the
+    /// notifications API: a registered address targets the device directly, with or
+    /// without a chain qualifier, standing equal to the legacy uid. Chains are recorded
+    /// independently, so Polkadot and Solana registrations sit side by side.
     ///
-    /// Only Solana wallets are linked, each carrying an Ed25519 signature over the
-    /// canonical link message. Polkadot wallets are deliberately not registered: the
-    /// server records their links without ownership proof until it implements sr25519
-    /// verification. Every entry point here is safe to fire and forget: failures are
-    /// logged, never thrown, and a failed link is retried the next time the account
-    /// passes through <see cref="PlutoFrameworkSolanaAccount.ResolveAsync"/> unlocked.
+    /// Solana registrations carry an Ed25519 signature over the canonical link message
+    /// and are stored verified. Polkadot registrations carry no signature - the server
+    /// records them unverified until it implements sr25519 verification - which also
+    /// means they need no user interaction and can run in the background. Every entry
+    /// point here is safe to fire and forget: failures are logged, never thrown, and a
+    /// failed Solana link is retried the next time the account passes through
+    /// <see cref="PlutoFrameworkSolanaAccount.ResolveAsync"/> unlocked.
     /// </summary>
     public static class WalletLinkModel
     {
+        /// <summary>
+        /// Registers a Polkadot address. No signature and therefore no prompt, so this is
+        /// safe anywhere - key save, background sync - unlike the Solana entry points
+        /// below, which each pick their moment for the signature ceremony.
+        /// </summary>
+        /// <param name="force">Relink even when this address is already recorded as linked.</param>
+        public static async Task<bool> LinkPolkadotAsync(string address, bool force = false)
+        {
+            try
+            {
+                return await DeviceRegisterService.LinkWalletAsync(
+                    WalletChain.Polkadot,
+                    address,
+                    force: force);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"[PlutoNotifications] Polkadot wallet link failed: {e.Message}");
+                return false;
+            }
+        }
+
         /// <summary>
         /// Links a Solana address using the mnemonic phrase the caller already holds -
         /// the one moment signing needs no unlock prompt. Used at account creation and

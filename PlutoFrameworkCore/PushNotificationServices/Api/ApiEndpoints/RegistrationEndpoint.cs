@@ -57,7 +57,10 @@ public record RegistrationData
     public string? Platform { get; init; }
 
     /// <summary>
-    /// The identifier set by <see cref="UserIdEndpoint"/>; null if never set.
+    /// The legacy generic identifier (<c>/api/user/uid-update/</c>); null if never set.
+    /// This app no longer sets it - registered wallet addresses are the main keys - but
+    /// installs that predate that change may still carry the Polkadot address an earlier
+    /// version stored here.
     /// </summary>
     [JsonPropertyName("uid")]
     public string? Uid { get; init; }

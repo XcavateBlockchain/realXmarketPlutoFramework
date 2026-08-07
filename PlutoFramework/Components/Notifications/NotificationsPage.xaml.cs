@@ -4,10 +4,26 @@ namespace PlutoFramework.Components.Notifications;
 
 public partial class NotificationsPage : PageTemplate
 {
-	public NotificationsPage()
+    private readonly NotificationsPageViewModel viewModel = new();
+
+    public NotificationsPage()
 	{
 		InitializeComponent();
 
-		BindingContext = new NotificationsPageViewModel();
+		BindingContext = viewModel;
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        viewModel.OnAppearing();
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        viewModel.OnDisappearing();
     }
 }

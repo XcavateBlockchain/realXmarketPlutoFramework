@@ -72,8 +72,11 @@ public static class DeviceRegisterService
     }
 
     /// <summary>
-    /// Links a wallet address to this device on the notifications API, so notifications
-    /// targeted at that chain + address reach this device.
+    /// Registers a wallet address as a main key of this device on the notifications API:
+    /// notifications addressed to the bare address (<c>user_id</c> targeting, no chain
+    /// qualifier) or scoped to chain + address both reach this device. Chains are recorded
+    /// independently, so a device registered for Polkadot and Solana holds both keys side
+    /// by side.
     /// </summary>
     /// <param name="signMessageAsync">
     /// Canonical link message → base58 signature. Required for Solana, null for Polkadot.
@@ -249,40 +252,6 @@ public static class DeviceRegisterService
         {
             Console.WriteLine($"[PlutoNotifications] Registration check failed: {e.Message}");
             return new RegistrationCheck(RegistrationCheckOutcome.Failed, Detail: e.Message);
-        }
-    }
-
-    public static async Task<bool> UpdateUserIdAsync(string newUserId)
-    {
-        await _updateLock.WaitAsync();
-
-        try
-        {
-            if (!(await SecureStorageManager.Storage.GetIsRegisteredAsync() ?? false))
-            {
-                Console.WriteLine("[PlutoNotifications] Device is not registered, cannot update user ID.");
-                return false;
-            }
-
-            await SecureStorageManager.Storage.SaveIsUserIdUpdatedAsync(false);
-
-            Console.WriteLine("[PlutoNotifications] Trying to update user ID...");
-            await RetryHelper.RunWithRetryAsync(async () =>
-                await ApiClient.UpdateUserIdRequestAsync(newUserId)
-            );
-
-            await SecureStorageManager.Storage.SaveIsUserIdUpdatedAsync(true);
-            Console.WriteLine("[PlutoNotifications] User ID has been updated.");
-            return true;
-        }
-        catch
-        {
-            Console.WriteLine("[PlutoNotifications] User ID update failed.");
-            return false;
-        }
-        finally
-        {
-            _updateLock.Release();
         }
     }
 }

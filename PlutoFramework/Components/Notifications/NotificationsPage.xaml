@@ -11,6 +11,12 @@
         <VerticalStackLayout>
             <tabs:MultiTabView Margin="20, 10, 20, 10" />
 
+            <Label Text="No notifications yet"
+                   IsVisible="{Binding HasNoNotifications}"
+                   TextColor="Gray"
+                   HorizontalOptions="Center"
+                   Margin="20, 40, 20, 20" />
+
             <VerticalStackLayout BindableLayout.ItemsSource="{Binding Notifications}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate>

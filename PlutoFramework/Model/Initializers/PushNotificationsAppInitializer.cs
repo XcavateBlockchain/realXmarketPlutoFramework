@@ -1,4 +1,6 @@
-﻿using PlutoFramework.Model.DeviceSecureStorage;
+﻿using Plugin.Firebase.CloudMessaging;
+using PlutoFramework.Components.Notifications;
+using PlutoFramework.Model.DeviceSecureStorage;
 using PlutoFrameworkCore.PushNotificationServices.Api;
 using PlutoFrameworkCore.PushNotificationServices.Core;
 using PlutoFrameworkCore.PushNotificationServices.Core.Misc;
@@ -59,6 +61,14 @@ public static class PushNotificationsAppInitializer
 #endif
         Console.WriteLine($"[PlutoNotifications] Platform type set: {NotificationsPlatform.Current.ToStringValue()}");
 
+        // Feed the on-device notification list (NotificationsPage). The API keeps no
+        // history, so the only record is what this device observes: pushes delivered in
+        // the foreground, and tray notifications the user taps.
+        CrossFirebaseCloudMessaging.Current.NotificationReceived += (_, e) =>
+            NotificationsModel.AddReceived(e.Notification.Title, e.Notification.Body);
+        CrossFirebaseCloudMessaging.Current.NotificationTapped += (_, e) =>
+            NotificationsModel.AddTapped(e.Notification.Title, e.Notification.Body);
+
         await SyncAsync();
 
         Console.WriteLine($"[PlutoNotifications] Background jobs processed.");
@@ -66,8 +76,8 @@ public static class PushNotificationsAppInitializer
 
     /// <summary>
     /// Brings the notifications API up to date with this device: registration, FCM token
-    /// and user id. Safe to call repeatedly - each step skips itself when local state
-    /// says it is already done.
+    /// and the Polkadot wallet registration. Safe to call repeatedly - each step skips
+    /// itself when local state says it is already done.
     /// </summary>
     /// <param name="force">
     /// Redo every step regardless of local state. For when the device looks registered but
@@ -91,18 +101,16 @@ public static class PushNotificationsAppInitializer
             await DeviceRegisterService.UpdateFcmTokenAsync();
         }
 
-        var hasAddress = KeysModel.HasSubstrateKey();
-        var isUserIdUpdated = await SecureStorageManager.Storage.GetIsUserIdUpdatedAsync() ?? false;
-        if ((force || !isUserIdUpdated) && hasAddress)
-            await DeviceRegisterService.UpdateUserIdAsync(KeysModel.GetSubstrateKey());
+        // A Polkadot registration is signature-less (the server records it unverified -
+        // no sr25519 verification yet), so it can run in a background sync. LinkWalletAsync
+        // skips an address already recorded as linked unless forced.
+        if (KeysModel.HasSubstrateKey())
+            await WalletLinkModel.LinkPolkadotAsync(KeysModel.GetSubstrateKey(), force);
 
-        // No wallet link here. Only Solana wallets register for notifications, and a
-        // Solana link must be signed - neither prompting to unlock a mnemonic key nor
-        // launching an external wallet belongs in a background sync - so Solana links
-        // happen at account creation/connect and ride on later unlocks and wallet
-        // sessions (PlutoFrameworkSolanaAccount, MwaSolanaAccount), or on demand through
-        // WalletLinkModel.RelinkSolanaAsync. Polkadot wallets are not registered at all:
-        // the server would record their links without ownership proof (sr25519
-        // verification is not implemented yet).
+        // No Solana link here. It must be signed - neither prompting to unlock a
+        // mnemonic key nor launching an external wallet belongs in a background sync -
+        // so Solana links happen at account creation/connect and ride on later unlocks
+        // and wallet sessions (PlutoFrameworkSolanaAccount, MwaSolanaAccount), or on
+        // demand through WalletLinkModel.RelinkSolanaAsync.
     }
 }
