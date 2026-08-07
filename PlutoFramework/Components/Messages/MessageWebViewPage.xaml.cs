@@ -9,11 +9,20 @@ public partial class MessageWebViewPage : PageTemplate
 {
     private const string DefaultTitle = "Messages";
 
-    public MessageWebViewPage()
+    public MessageWebViewPage() : this(null)
+    {
+    }
+
+    public MessageWebViewPage(string? url)
     {
         InitializeComponent();
 
         webView.HeaderChanged += OnWebHeaderChanged;
+
+        if (url is not null)
+        {
+            webView.Url = url;
+        }
     }
 
     protected override void OnApplyTemplate()
