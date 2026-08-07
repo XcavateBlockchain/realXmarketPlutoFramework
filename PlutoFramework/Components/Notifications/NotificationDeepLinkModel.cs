@@ -1,4 +1,5 @@
 using PlutoFramework.Components.Messages;
+using PlutoFramework.Model;
 using PlutoFramework.Model.Xcavate;
 
 namespace PlutoFramework.Components.Notifications;
@@ -25,15 +26,26 @@ public static class NotificationDeepLinkModel
 
         pendingBucketId = bucketId;
 
-        _ = TryOpenPendingAsync();
+        try
+        {
+            _ = TryOpenPendingAsync();
+        }
+        catch (Exception e)
+        {
+            // Called from Android activity callbacks - a broken deep link must
+            // never take down the launch.
+            Console.WriteLine($"[PlutoNotifications] Deep link handling failed: {e.Message}");
+        }
     }
 
     /// <summary>
     /// Opens the pending deep link if the app is in a state to show it. With no shell
     /// yet (still booting behind the loading page) the link stays pending for the
-    /// caller that runs after the shell is set. A user who has not finished onboarding
-    /// must not land in the messenger, so their link is dropped - not kept, or it
-    /// would fire out of nowhere when onboarding completes much later.
+    /// caller that runs after the shell is set. The drop-gate below must mirror
+    /// `App.InitializeAsync`'s shell-selection predicate exactly: a user who has not
+    /// finished onboarding, or has finished onboarding but holds no wallet key, is
+    /// routed to `OnboardingShell`, not the messenger, so their link is dropped - not
+    /// kept, or it would fire out of nowhere once the missing condition is met later.
     /// </summary>
     public static Task TryOpenPendingAsync()
     {
@@ -44,7 +56,7 @@ public static class NotificationDeepLinkModel
             return Task.CompletedTask;
         }
 
-        if (!OnboardingModel.IsOnboardingCompleted())
+        if (!OnboardingModel.IsOnboardingCompleted() || !(KeysModel.HasSolanaKey() || KeysModel.HasSubstrateKey()))
         {
             pendingBucketId = null;
 
