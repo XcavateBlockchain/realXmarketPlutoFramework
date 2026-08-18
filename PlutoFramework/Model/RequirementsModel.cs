@@ -9,7 +9,6 @@ using PlutoFramework.Constants;
 using PlutoFramework.Model.Sumsub;
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Keys;
-using XcavatePaseo.NetApi.Generated;
 
 namespace PlutoFramework.Model
 {
@@ -88,27 +87,22 @@ namespace PlutoFramework.Model
 
         public static async Task<bool> CheckXcavateRoleAsync(XcavateRole role, CancellationToken token)
         {
-            // Roles live in the XcavatePaseo whitelist pallet, keyed by Substrate address.
-            if (!KeysModel.HasSubstrateKey())
+            // Roles live in the Xcavate whitelist Solana program, keyed by Solana address. A
+            // Substrate-only account has none, which is the same answer as "not whitelisted".
+            var address = KeysModel.GetSolanaAddress();
+
+            if (address is null)
             {
                 DependencyService.Get<NotWhitelistedPopupViewModel>().IsVisible = true;
 
                 return false;
             }
 
-            var address = KeysModel.GetSubstrateKey();
-
             var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
-
-            fullPageLoadingViewModel.Message = "Connecting to Substrate";
-
-            var xcavateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, token);
 
             fullPageLoadingViewModel.Message = "Querying roles";
 
-            var roles = await WhitelistModel.GetRolesAsync((SubstrateClientExt)xcavateClient.SubstrateClient, address, token);
-
-            if (!roles.Contains(role))
+            if (!await WhitelistModel.HasRoleAsync(address, role, token))
             {
                 var notWhitelistedPopupViewModel = DependencyService.Get<NotWhitelistedPopupViewModel>();
 

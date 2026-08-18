@@ -257,9 +257,13 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 viewModel.TokensOwned = tokensOwned;
 
-                var roles = await WhitelistModel.GetRolesAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)substrateClient.SubstrateClient, KeysModel.GetSubstrateKey(), token);
+                // Roles are held by the Solana whitelist program, not by the Substrate account
+                // that owns the property tokens above, so this reads the Solana address.
+                var solanaAddress = KeysModel.GetSolanaAddress();
 
-                viewModel.Roles = roles;
+                viewModel.Roles = solanaAddress is null
+                    ? []
+                    : await WhitelistModel.GetRolesAsync(solanaAddress, token);
 
                 Console.WriteLine("Getting Full On-Chain property finished");
             }

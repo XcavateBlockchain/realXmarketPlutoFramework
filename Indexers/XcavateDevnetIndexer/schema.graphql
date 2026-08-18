@@ -1,0 +1,833 @@
+schema {
+  query: QueryRoot
+}
+
+enum ActionType {
+  CONFIG_INITIALIZED
+  AUTHORITY_UPDATE_PROPOSED
+  AUTHORITY_UPDATED
+  ADMIN_ADDED
+  ADMIN_REMOVED
+  ROLE_ASSIGNED
+  ROLE_REMOVED
+  ROLE_RENOUNCED
+  PERMISSION_UPDATED
+}
+
+"`marketplace_listing.developer_lawyer_doc_status` / `spv_lawyer_doc_status`\n(`DocumentStatus` on chain)."
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+"`marketplace_listing.status` (`ListingStatus` on chain; borsh order load-bearing there)."
+enum ListingStatus {
+  PENDING_ASSETS
+  LISTED
+  SOLD_OUT
+  LEGAL
+  FINALIZED
+  EXPIRED
+  CANCELLED
+  REFUNDING
+}
+
+enum Permission {
+  COMPLIANT
+  REVOKED
+}
+
+"The four indexed programs, for `programInstructions(program: ...)` filtering and\nattribution. `as_program_id_bytes` mirrors `addresses.json` / the indexer's registry."
+enum ProgramName {
+  XCAVATE_WHITELIST
+  REGIONS
+  MARKETPLACE
+  PROPERTY
+}
+
+"`regions_region_state.status` (`RegionStatus` on chain)."
+enum RegionStatus {
+  PROPOSING
+  PASSED
+  REJECTED
+}
+
+"`regions_vote_record.vote` (`Vote` on chain). Named `RegionVote` to leave room for other\nprograms' vote enums."
+enum RegionVote {
+  YES
+  NO
+  ABSTAIN
+}
+
+enum RemovalKind {
+  "Removed by an admin (`remove_role`)."
+  REMOVED
+  "Given up by the holder (`renounce_role`)."
+  RENOUNCED
+}
+
+enum Role {
+  REGIONAL_OPERATOR
+  REAL_ESTATE_INVESTOR
+  REAL_ESTATE_DEVELOPER
+  LAWYER
+  LETTING_AGENT
+  SPV_CONFIRMATION
+}
+
+"Combined date and time (with time zone) in [RFC 3339][0] format.\n\nRepresents a description of an exact instant on the time-line (such as the\ninstant that a user account was created).\n\n[`DateTime` scalar][1] compliant.\n\nSee also [`chrono::DateTime`][2] for details.\n\n[0]: https://datatracker.ietf.org/doc/html/rfc3339#section-5\n[1]: https://graphql-scalars.dev/docs/scalars/date-time\n[2]: https://docs.rs/chrono/latest/chrono/struct.DateTime.html"
+scalar DateTime
+
+scalar I64
+
+"`checkAccess(user, role)` (ruling R17): preserves the dropped grpc-api's primary integration\nquery. `hasRole` = an active assignment exists; `compliant` = `hasRole` AND\n`permission == COMPLIANT`."
+type AccessCheck {
+  hasRole: Boolean!
+  compliant: Boolean!
+}
+
+"A whitelist admin (`id` = admin address). Removal soft-deletes (`active = false`)."
+type Admin {
+  id: ID!
+  active: Boolean!
+  addedBy: String!
+  addedAtSlot: I64!
+  addedAt: DateTime!
+  addedInTx: String!
+  removedAtSlot: I64
+  removedAt: DateTime
+  removedInTx: String
+}
+
+type AdminConnection {
+  nodes: [Admin!]!
+  totalCount: Int!
+}
+
+"A letting-agent candidacy for one property's election round."
+type AgentCandidacy {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  round: I64!
+  agent: String!
+  votePower: I64!
+  rentPayer: String!
+}
+
+type AgentCandidacyConnection {
+  nodes: [AgentCandidacy!]!
+  totalCount: Int!
+}
+
+"One voter's vote in a letting-agent election round."
+type AgentVote {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  round: I64!
+  voter: String!
+  choice: String!
+  power: I64!
+  rentPayer: String!
+}
+
+type AgentVoteConnection {
+  nodes: [AgentVote!]!
+  totalCount: Int!
+}
+
+"Singleton (`id = \"config\"`): the sudo authority that manages whitelist admins."
+type Config {
+  id: ID!
+  authority: String!
+  pendingAuthority: String
+  updatedAtSlot: I64!
+  updatedAt: DateTime!
+  updatedInTx: String!
+}
+
+"One investor's position in one listing: bought/reserved share counts and the funds, tax and\nfee amounts paid or reserved for them. Closed and routinely re-created at the same address\nby the next buy/reserve."
+type InvestorPosition {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  listingId: I64!
+  investor: String!
+  paymentMint: String!
+  paymentAccount: String!
+  shareAmount: I64!
+  reservedShareAmount: I64!
+  paidFunds: I64!
+  paidTax: I64!
+  paidFee: I64!
+  reservedFunds: I64!
+  reservedTax: I64!
+  reservedFee: I64!
+  cancelled: Boolean!
+}
+
+type InvestorPositionConnection {
+  nodes: [InvestorPosition!]!
+  totalCount: Int!
+}
+
+"A lawyer registered with the marketplace (the registry PDA keyed by the lawyer's wallet)."
+type Lawyer {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  lawyer: String!
+  regionId: Int!
+  deposit: I64!
+  activeCases: I64!
+}
+
+"A lawyer's candidacy for one listing's SPV-lawyer election round."
+type LawyerCandidacy {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  listingId: I64!
+  round: I64!
+  lawyer: String!
+  costs: I64!
+  votePower: I64!
+  rentPayer: String!
+}
+
+type LawyerCandidacyConnection {
+  nodes: [LawyerCandidacy!]!
+  totalCount: Int!
+}
+
+type LawyerConnection {
+  nodes: [Lawyer!]!
+  totalCount: Int!
+}
+
+"One voter's vote in a listing's SPV-lawyer election round."
+type LawyerVote {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  listingId: I64!
+  round: I64!
+  voter: String!
+  choice: String!
+  power: I64!
+  rentPayer: String!
+}
+
+type LawyerVoteConnection {
+  nodes: [LawyerVote!]!
+  totalCount: Int!
+}
+
+"A registered letting agent. `locations` is the raw JSON of the on-chain location list\n(`[{\"postcode\": \"...\", \"assigned_count\": N, \"deposit\": N}, ...]` -- see migration 0010)."
+type LettingAgent {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  wallet: String!
+  regionId: Int!
+  locations: String!
+  rentPayer: String!
+}
+
+type LettingAgentConnection {
+  nodes: [LettingAgent!]!
+  totalCount: Int!
+}
+
+"A property listing: sale terms, progress counters, the two flattened `LawyerAssignment`s,\nthe flattened `SpvElection` and per-mint collected totals. `collected` is the raw JSON\n`[{\"mint\": \"<base58>\", \"funds\": N, \"fee\": N, \"tax\": N}, ...]` (see migration 0009)."
+type Listing {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  listingId: I64!
+  developer: String!
+  assetId: I64!
+  sharePrice: I64!
+  listedShareAmount: I64!
+  soldShareAmount: I64!
+  reservedShareAmount: I64!
+  taxPaidByDeveloper: Boolean!
+  taxBps: Int!
+  marketplaceFeeBps: Int!
+  investorFeeBps: Int!
+  maxOwnershipBps: Int!
+  listingExpiry: I64!
+  claimingTime: I64!
+  claimDeadline: I64!
+  legalProcessTime: I64!
+  lawyerVotingTime: I64!
+  minVotingQuorumBps: Int!
+  positionCount: I64!
+  legalDeadline: I64!
+  deposit: I64!
+  developerLawyer: String!
+  developerLawyerCosts: I64!
+  developerLawyerDocStatus: DocumentStatus!
+  developerLawyerDocumentsHash: String!
+  spvLawyer: String!
+  spvLawyerCosts: I64!
+  spvLawyerDocStatus: DocumentStatus!
+  spvLawyerDocumentsHash: String!
+  secondAttempt: Boolean!
+  developerEngaged: Boolean!
+  spvCostsDue: I64!
+  spvCostsPayee: String!
+  collected: String!
+  spvElectionExpiry: I64!
+  spvElectionCandidateCount: I64!
+  spvElectionRound: I64!
+  status: ListingStatus!
+}
+
+type ListingConnection {
+  nodes: [Listing!]!
+  totalCount: Int!
+}
+
+"A Location PDA: one registered postcode within a region. `postcode` is the on-chain byte\nstring (1-10 bytes of uppercase ASCII) rendered as UTF-8."
+type Location {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  regionId: Int!
+  postcode: String!
+  deposit: I64!
+}
+
+type LocationConnection {
+  nodes: [Location!]!
+  totalCount: Int!
+}
+
+"The marketplace program's Config PDA (singleton). `null` until `initialize_config` has been\nindexed. `accepted_payment_mints` is the raw JSON of the accepted mint list\n(`[\"<base58>\", ...]` -- see migration 0009)."
+type MarketplaceConfig {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  authority: String!
+  pendingAuthority: String
+  xcavMint: String!
+  treasury: String!
+  rentCollector: String!
+  acceptedPaymentMints: String!
+  listingDeposit: I64!
+  lawyerDeposit: I64!
+  minPropertyShares: I64!
+  maxPropertyShares: I64!
+  marketplaceFeeBps: Int!
+  investorFeeBps: Int!
+  maxOwnershipBps: Int!
+  claimingTime: I64!
+  legalProcessTime: I64!
+  lawyerVotingTime: I64!
+  minVotingQuorumBps: Int!
+  nextListingId: I64!
+}
+
+"One row of the shared `program_instructions` history: every successfully indexed\ninstruction of every indexed program, with its decoded args as JSON. `id` is\n`\"<txSignature>-<ixIndex>\"` for a top-level instruction and\n`\"<txSignature>-<ixIndex>.<innerIndex>\"` for a CPI."
+type ProgramInstruction {
+  id: ID!
+  program: ProgramName!
+  txSignature: String!
+  ixIndex: Int!
+  innerIndex: Int!
+  slot: I64!
+  blockTime: DateTime!
+  ixName: String!
+  "The instruction's account list, in order, base58."
+  accounts: [String!]!
+  "The decoded instruction args as JSON text (the decoder enum's serde shape)."
+  data: String!
+}
+
+type ProgramInstructionConnection {
+  nodes: [ProgramInstruction!]!
+  totalCount: Int!
+}
+
+"One program's `sync_state` row."
+type ProgramSyncStatus {
+  program: ProgramName!
+  lastContiguousSlot: I64!
+  backfillComplete: Boolean!
+  backfillFloorSlot: I64!
+  snapshotSlot: I64
+}
+
+"The tokenised property behind one listing (`asset_id == listing_id` in current source).\n`core_asset` keeps the on-chain all-zero pubkey verbatim (base58\n`11111111111111111111111111111111`) -- it is only ever that today."
+type PropertyAsset {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  coreAsset: String!
+  shareMint: String!
+  regionId: Int!
+  location: String!
+  shareAmount: I64!
+  spvCreated: Boolean!
+  finalized: Boolean!
+  holderCount: I64!
+}
+
+type PropertyAssetConnection {
+  nodes: [PropertyAsset!]!
+  totalCount: Int!
+}
+
+"The property program's Config PDA (singleton). `null` until `initialize_config` has been\nindexed."
+type PropertyConfig {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  authority: String!
+  pendingAuthority: String
+  xcavMint: String!
+  treasury: String!
+  rentCollector: String!
+  agentDeposit: I64!
+  agentVotingTime: I64!
+  minVotingQuorumBps: Int!
+  agentNoticePeriod: I64!
+}
+
+"One property's letting seat and current election. `agent` keeps the on-chain all-zero\npubkey \"seat vacant\" sentinel verbatim (base58 `11111111111111111111111111111111`)."
+type PropertyLetting {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  agent: String!
+  electionExpiry: I64!
+  electionCandidateCount: I64!
+  electionRound: I64!
+  electionQuorumBps: Int!
+  rentPayer: String!
+}
+
+type PropertyLettingConnection {
+  nodes: [PropertyLetting!]!
+  totalCount: Int!
+}
+
+type QueryRoot {
+  "Singleton config row. `null` before `initialize_config` has ever been indexed."
+  config: Config
+  "`active` filters; omit for both active and removed admins."
+  admins(active: Boolean, first: Int, offset: Int): AdminConnection!
+  "Single `(user, role)` lookup. Soft-deleted (inactive) assignments are returned too --\nmirrors the old grpc-api's `GetRoleAssignment` semantic."
+  roleAssignment(user: String!, role: Role!): RoleAssignment
+  roleAssignments(
+    user: String
+    role: Role
+    permission: Permission
+    active: Boolean
+    first: Int
+    offset: Int
+  ): RoleAssignmentConnection!
+  whitelistActions(
+    subject: String
+    actor: String
+    type: ActionType
+    txSignature: String
+    first: Int
+    offset: Int
+  ): WhitelistActionConnection!
+  "`hasRole` = an active `(user, role)` assignment exists; `compliant` = `hasRole` AND\n`permission == COMPLIANT` (ruling R17)."
+  checkAccess(user: String!, role: Role!): AccessCheck!
+  "Fleet aggregates plus per-program rows -- see [`SyncStatus`]'s doc for the aggregate\nsemantics (min / AND across programs: the stack is only as caught-up as its laggiest\nprogram). Scoped by the api's optional `PROGRAMS` env so subset operation (which\nfreezes excluded programs' rows) does not drag the aggregates."
+  syncStatus: SyncStatus!
+  "The shared instruction history: every successfully indexed instruction of every\nindexed program, newest first, with its decoded args as JSON. `txSignature` filters to\none transaction (base58)."
+  programInstructions(
+    program: ProgramName
+    ixName: String
+    txSignature: String
+    first: Int
+    offset: Int
+  ): ProgramInstructionConnection!
+  "The marketplace program's singleton config PDA."
+  marketplaceConfig: MarketplaceConfig
+  "Property listings on the marketplace."
+  listings(
+    listingId: I64
+    developer: String
+    status: ListingStatus
+    active: Boolean
+    first: Int
+    offset: Int
+  ): ListingConnection!
+  "Investors' per-listing positions."
+  investorPositions(
+    listingId: I64
+    investor: String
+    cancelled: Boolean
+    active: Boolean
+    first: Int
+    offset: Int
+  ): InvestorPositionConnection!
+  "The marketplace's lawyer registry."
+  lawyers(lawyer: String, active: Boolean, first: Int, offset: Int): LawyerConnection!
+  "SPV-lawyer election candidacies."
+  lawyerCandidacies(
+    listingId: I64
+    lawyer: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): LawyerCandidacyConnection!
+  "SPV-lawyer election votes."
+  lawyerVotes(
+    listingId: I64
+    voter: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): LawyerVoteConnection!
+  "Tokenised property assets backing listings."
+  propertyAssets(
+    assetId: I64
+    regionId: Int
+    active: Boolean
+    first: Int
+    offset: Int
+  ): PropertyAssetConnection!
+  "Per-token-account reservation totals."
+  reservations(tokenAccount: String, active: Boolean, first: Int, offset: Int): ReservationConnection!
+  "Investors' share holdings per asset."
+  shareHoldings(
+    assetId: I64
+    owner: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): ShareHoldingConnection!
+  "The property program's singleton config PDA."
+  propertyConfig: PropertyConfig
+  "Letting-agent election candidacies."
+  agentCandidacies(
+    assetId: I64
+    agent: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): AgentCandidacyConnection!
+  "Letting-agent election votes."
+  agentVotes(
+    assetId: I64
+    voter: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): AgentVoteConnection!
+  "Registered letting agents."
+  lettingAgents(
+    wallet: String
+    regionId: Int
+    active: Boolean
+    first: Int
+    offset: Int
+  ): LettingAgentConnection!
+  "Per-property letting seats and elections."
+  propertyLettings(
+    assetId: I64
+    agent: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): PropertyLettingConnection!
+  "Letting agents' resignation notices."
+  resignationNotices(
+    assetId: I64
+    agent: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): ResignationNoticeConnection!
+  "The regions program's singleton config PDA."
+  regionsConfig: RegionsConfig
+  "Governed regions."
+  regions(
+    regionId: Int
+    owner: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): RegionConnection!
+  "Registered locations (postcodes) within regions."
+  locations(regionId: Int, active: Boolean, first: Int, offset: Int): LocationConnection!
+  "Region-creation proposals."
+  regionProposals(
+    regionId: Int
+    proposalId: I64
+    proposer: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): RegionProposalConnection!
+  "Per-region proposal-cycle state machines."
+  regionStates(
+    regionId: Int
+    status: RegionStatus
+    active: Boolean
+    first: Int
+    offset: Int
+  ): RegionStateConnection!
+  "Votes on region proposals."
+  voteRecords(
+    proposalId: I64
+    voter: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): VoteRecordConnection!
+}
+
+"A Region PDA: one created region with its owner, collateral and listing parameters."
+type Region {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  regionId: Int!
+  owner: String!
+  collateral: I64!
+  locationCollateral: I64!
+  nextOwnerChange: I64!
+  listingDuration: I64!
+  taxBps: Int!
+  locationCount: I64!
+}
+
+type RegionConnection {
+  nodes: [Region!]!
+  totalCount: Int!
+}
+
+"A RegionProposal PDA: one proposal to create a region, with its vote tallies. `proposal_id`\nis the global monotonic `config.proposal_counter`, not the region id."
+type RegionProposal {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  proposalId: I64!
+  proposer: String!
+  regionId: Int!
+  createdAt: I64!
+  expiry: I64!
+  voteCutoff: I64!
+  yesPower: I64!
+  noPower: I64!
+  abstainPower: I64!
+}
+
+type RegionProposalConnection {
+  nodes: [RegionProposal!]!
+  totalCount: Int!
+}
+
+"A RegionState PDA: the per-region proposal-cycle state machine, closed and re-created at\nthe same address across proposal cycles."
+type RegionState {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  regionId: Int!
+  status: RegionStatus!
+  proposalId: I64!
+  proposer: String!
+  deposit: I64!
+  claimDeadline: I64!
+}
+
+type RegionStateConnection {
+  nodes: [RegionState!]!
+  totalCount: Int!
+}
+
+"The regions program's Config PDA (singleton). `null` until `initialize_config` has been\nindexed."
+type RegionsConfig {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  authority: String!
+  pendingAuthority: String
+  xcavMint: String!
+  minimumVotingAmount: I64!
+  votingPeriod: I64!
+  ownerChangePeriod: I64!
+  thresholdBps: Int!
+  quorum: I64!
+  noticePeriod: I64!
+  minVoteHold: I64!
+  maxListingDuration: I64!
+  maxTaxBps: Int!
+  locationDeposit: I64!
+  proposalCounter: I64!
+}
+
+"A reservation total keyed by the investor's payment token account (shared across listings).\nClosed at zero and re-created by the next reserve."
+type Reservation {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  tokenAccount: String!
+  amount: I64!
+}
+
+type ReservationConnection {
+  nodes: [Reservation!]!
+  totalCount: Int!
+}
+
+"A letting agent's notice of resignation from one property."
+type ResignationNotice {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  agent: String!
+  dueTs: I64!
+  rentPayer: String!
+}
+
+type ResignationNoticeConnection {
+  nodes: [ResignationNotice!]!
+  totalCount: Int!
+}
+
+"One `(user, role)` assignment. Removal soft-deletes; a later re-assignment reactivates the\nrow and resets its audit fields -- full history is in `WhitelistAction`."
+type RoleAssignment {
+  id: ID!
+  user: String!
+  role: Role!
+  permission: Permission!
+  active: Boolean!
+  rentPayer: String!
+  assignedBy: String!
+  assignedAtSlot: I64!
+  assignedAt: DateTime!
+  assignedInTx: String!
+  updatedAtSlot: I64!
+  updatedAt: DateTime!
+  removedAtSlot: I64
+  removedAt: DateTime
+  removedInTx: String
+  removalKind: RemovalKind
+  removedBy: String
+}
+
+type RoleAssignmentConnection {
+  nodes: [RoleAssignment!]!
+  totalCount: Int!
+}
+
+"One owner's share holding in one property asset."
+type ShareHolding {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  owner: String!
+  amount: I64!
+  lockedAmount: I64!
+}
+
+type ShareHoldingConnection {
+  nodes: [ShareHolding!]!
+  totalCount: Int!
+}
+
+"Replaces the old SubQuery `_metadata` surface. With four programs indexed, the top-level\nfields are fleet aggregates -- the stack is only as caught-up as its laggiest program:\n`lastContiguousSlot` is the minimum across programs, `backfillComplete` is true only when\nevery program's backfill is complete, `snapshotSlot` is the oldest snapshot (null if any\nprogram has never been snapshotted). Per-program detail is in `programs`."
+type SyncStatus {
+  lastContiguousSlot: I64!
+  backfillComplete: Boolean!
+  snapshotSlot: I64
+  chainTipSlot: I64!
+  slotLag: I64!
+  programs: [ProgramSyncStatus!]!
+}
+
+"A VoteRecord PDA: one voter's vote on one region proposal."
+type VoteRecord {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  proposalId: I64!
+  voter: String!
+  regionId: Int!
+  vote: RegionVote!
+  power: I64!
+  expiry: I64!
+}
+
+type VoteRecordConnection {
+  nodes: [VoteRecord!]!
+  totalCount: Int!
+}
+
+"Append-only audit log entry: one row per successfully indexed whitelist instruction."
+type WhitelistAction {
+  id: ID!
+  type: ActionType!
+  subject: String
+  role: Role
+  permission: Permission
+  actor: String!
+  slot: I64!
+  blockTime: DateTime!
+  txSignature: String!
+  instructionIndex: String!
+}
+
+type WhitelistActionConnection {
+  nodes: [WhitelistAction!]!
+  totalCount: Int!
+}

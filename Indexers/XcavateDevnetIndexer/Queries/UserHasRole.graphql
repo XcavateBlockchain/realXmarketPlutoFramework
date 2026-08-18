@@ -1,0 +1,12 @@
+# Whether one wallet holds one role, answered by the indexer rather than by fetching
+# every assignment and filtering client-side.
+#
+# `hasRole` only says an active assignment exists; `compliant` additionally requires
+# the permission to still be COMPLIANT. Gate on `compliant` - a revoked holder is not
+# whitelisted, and the program rejects their instructions.
+query UserHasRole($user: String!, $role: Role!) {
+  checkAccess(user: $user, role: $role) {
+    hasRole
+    compliant
+  }
+}

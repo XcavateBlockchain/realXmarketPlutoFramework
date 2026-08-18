@@ -66,6 +66,13 @@
     <ProjectReference Include="..\Generated\Kilt\Kilt.NetApi\Kilt.NetApi.csproj" />
     <ProjectReference Include="..\Generated\PolkadotPeople\PolkadotPeople.NetApi\PolkadotPeople.NetApi.csproj" />
     <ProjectReference Include="..\Generated\Polkadot\Polkadot.NetApi\Polkadot.NetApi.csproj" />
+    <!--
+      The Xcavate whitelist lives in a Solana program, and its roles are read through this
+      GraphQL indexer rather than by scanning program accounts over RPC. Referenced
+      here, not via UniqueryPlus like the Substrate-era indexers, because nothing
+      NFT-related needs it.
+    -->
+    <ProjectReference Include="..\Indexers\XcavateDevnetIndexer\XcavateDevnetIndexer.csproj" />
     <ProjectReference Include="..\Substrate.NET.Wallet\Substrate.NET.Wallet\Substrate.NET.Wallet.csproj" />
     <ProjectReference Include="..\UniqueryPlus\UniqueryPlus.csproj" />
   </ItemGroup>
