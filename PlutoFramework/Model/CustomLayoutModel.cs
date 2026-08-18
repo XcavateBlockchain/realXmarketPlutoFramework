@@ -3,27 +3,18 @@ using PlutoFramework.Components.AwesomeAjunaAvatars;
 using PlutoFramework.Components.AzeroId;
 using PlutoFramework.Components.Balance;
 using PlutoFramework.Components.Buttons;
-using PlutoFramework.Components.Contract;
 using PlutoFramework.Components.DAppConnection;
 using PlutoFramework.Components.Faucet;
 using PlutoFramework.Components.GalaxyLogicGame;
-using PlutoFramework.Components.HydraDX;
-using PlutoFramework.Components.Identity;
-using PlutoFramework.Components.Kilt;
 using PlutoFramework.Components.MessagePopup;
 using PlutoFramework.Components.Mnemonics;
 using PlutoFramework.Components.NetworkSelect;
-using PlutoFramework.Components.Nft;
-using PlutoFramework.Components.OpenGov;
 using PlutoFramework.Components.PredefinedLayouts;
-using PlutoFramework.Components.Referenda;
 using PlutoFramework.Components.Table;
 using PlutoFramework.Components.UpdateView;
-using PlutoFramework.Components.VTokens;
 using PlutoFramework.Components.Xcavate;
 using PlutoFramework.Components.XcavateProperty;
 using PlutoFramework.Components.XcavateProperty.Cells;
-using PlutoFramework.Components.Xcm;
 using PlutoFramework.Constants;
 using System.Collections.ObjectModel;
 
@@ -46,20 +37,8 @@ namespace PlutoFramework.Model
         ChaK,
         AAALeaderboard,
         AZEROPrimaryName,
-        HDXOmniLiquidity,
-        HDXDCA,
-        id,
-        Ref,
-        contract,
         BMnR,
-        NftG,
-        NftOG,
-        NftFG,
-        VDot,
         GLGPowerups,
-        xTrnsfr,
-        mainDid,
-        OpenGovDel,
         XcavatePaseoFaucet,
         XcPaseoOwnedProperties,
         XcTableInvestmentSummary,
@@ -349,40 +328,16 @@ namespace PlutoFramework.Model
                     return new SeasonCountdownView();*/
                 case ComponentId.AAALeaderboard:
                     return new AAALeaderboard();
-                case ComponentId.contract:
-                    return new ContractView();
                 case ComponentId.AZEROPrimaryName:
                     return new AzeroPrimaryNameView();
-                case ComponentId.HDXOmniLiquidity:
-                    return new OmnipoolLiquidityView();
-                case ComponentId.HDXDCA:
-                    return new DCAView();
-                case ComponentId.id:
-                    return new IdentityView();
-                case ComponentId.Ref:
-                    return new ReferendaView();
                 case ComponentId.BMnR:
                     return new BackupMnemonicsReminderView();
                 case ComponentId.RnT:
                     return new ReceiveAndTransferView();
-                case ComponentId.NftG:
-                    return new NftFavouriteGalleryView();
-                case ComponentId.NftOG:
-                    return new NftOwnedGalleryView();
-                case ComponentId.NftFG:
-                    return new NftFavouriteGalleryView();
                 /*case ComponentId.FeeA:
                     return new FeeAssetView();*/
-                case ComponentId.VDot:
-                    return new VDotTokenView();
                 case ComponentId.GLGPowerups:
                     return new GLGPowerupsView();
-                case ComponentId.xTrnsfr:
-                    return new XcmTransferView();
-                case ComponentId.mainDid:
-                    return new MainDidView();
-                case ComponentId.OpenGovDel:
-                    return new VotingDelegationView();
                 case ComponentId.XcavatePaseoFaucet:
                     return new FaucetButtonView(EndpointEnum.XcavatePaseo);
                 case ComponentId.XcPaseoOwnedProperties:
@@ -471,41 +426,11 @@ namespace PlutoFramework.Model
                         Name = "AAA Leaderboard",
                         ComponentId = ComponentId.AAALeaderboard,
                     };
-                case ComponentId.contract:
-                    return new ComponentInfo
-                    {
-                        Name = "Contract",
-                        ComponentId = ComponentId.contract,
-                    };
                 case ComponentId.AZEROPrimaryName:
                     return new ComponentInfo
                     {
                         Name = "AZERO.ID Primary Name",
                         ComponentId = ComponentId.AZEROPrimaryName,
-                    };
-                case ComponentId.HDXOmniLiquidity:
-                    return new ComponentInfo
-                    {
-                        Name = "Hydration Omnipool Liquidity",
-                        ComponentId = ComponentId.HDXOmniLiquidity,
-                    };
-                case ComponentId.HDXDCA:
-                    return new ComponentInfo
-                    {
-                        Name = "Hydration DCA Position",
-                        ComponentId = ComponentId.HDXDCA,
-                    };
-                case ComponentId.id:
-                    return new ComponentInfo
-                    {
-                        Name = "Identity",
-                        ComponentId = ComponentId.id,
-                    };
-                case ComponentId.Ref:
-                    return new ComponentInfo
-                    {
-                        Name = "Referenda",
-                        ComponentId = ComponentId.Ref,
                     };
                 case ComponentId.BMnR:
                     return new ComponentInfo
@@ -519,59 +444,17 @@ namespace PlutoFramework.Model
                         Name = "Receive and Transfer",
                         ComponentId = ComponentId.RnT,
                     };
-                case ComponentId.NftG:
-                    return new ComponentInfo
-                    {
-                        Name = "Nft Galery",
-                        ComponentId = ComponentId.NftG,
-                    };
-                case ComponentId.NftOG:
-                    return new ComponentInfo
-                    {
-                        Name = "Onwed Nfts Galery",
-                        ComponentId = ComponentId.NftOG,
-                    };
-                case ComponentId.NftFG:
-                    return new ComponentInfo
-                    {
-                        Name = "Favourite Nfts Galery",
-                        ComponentId = ComponentId.NftFG,
-                    };
                 /*case ComponentId.FeeA:
                     return new ComponentInfo
                     {
                         Name = "Fee Asset",
                         ComponentId = ComponentId.FeeA,
                     };*/
-                case ComponentId.VDot:
-                    return new ComponentInfo
-                    {
-                        Name = "vDOT staking",
-                        ComponentId = ComponentId.VDot,
-                    };
                 case ComponentId.GLGPowerups:
                     return new ComponentInfo
                     {
                         Name = "Galaxy Logic Game Powerups",
                         ComponentId = ComponentId.GLGPowerups,
-                    };
-                case ComponentId.xTrnsfr:
-                    return new ComponentInfo
-                    {
-                        Name = "XCM Transfer",
-                        ComponentId = ComponentId.xTrnsfr,
-                    };
-                case ComponentId.mainDid:
-                    return new ComponentInfo
-                    {
-                        Name = "Main Kilt DID",
-                        ComponentId = ComponentId.mainDid,
-                    };
-                case ComponentId.OpenGovDel:
-                    return new ComponentInfo
-                    {
-                        Name = "OpenGov Voting Delegation",
-                        ComponentId = ComponentId.OpenGovDel,
                     };
                 case ComponentId.XcavatePaseoFaucet:
                     return new ComponentInfo

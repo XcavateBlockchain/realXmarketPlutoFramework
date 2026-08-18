@@ -1,13 +1,6 @@
-﻿using UniqueryPlus.Collections;
-using UniqueryPlus.Ipfs;
-using UniqueryPlus.Metadata;
-using UniqueryPlus;
-using XcavateSubquery;
-using XcavatePaseo.NetApi.Generated;
+﻿using XcavateSubquery;
 using StrawberryShake;
 using UniqueryPlus.Nfts;
-using System.Text.Json;
-using System.Numerics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace PlutoFramework.Model.Xcavate
@@ -25,8 +18,8 @@ namespace PlutoFramework.Model.Xcavate
             IServiceProvider services = serviceCollection.BuildServiceProvider();
 
             return services.GetRequiredService<IXcavateSubquery>();
-        }        
-        public static async Task<IEnumerable<INftBase>> GetPropertiesForSaleAsync(SubstrateClientExt client, int limit = 25, int offset = 0, CancellationToken token = default)
+        }
+        public static async Task<IEnumerable<INftBase>> GetPropertiesForSaleAsync(int limit = 25, int offset = 0, CancellationToken token = default)
         {
             var subqueryClient = GetXcavateSubqueryClient();
 
@@ -41,46 +34,6 @@ namespace PlutoFramework.Model.Xcavate
             }
 
             return [];
-            
-            /*result.Data.PropertyListings.Nodes.Select(property =>
-            {
-                var fileUrls = JsonSerializer.Deserialize<List<string>>(property.Files);
-
-                return new XcavatePaseoNftsPalletNft(client)
-                {
-                    CollectionId = BigInteger.Parse(property.PropertyId),
-                    Owner = property.Signer,
-                    Metadata = new MetadataBase
-                    {
-                        Name = property.PropertyName ?? "Unknown",
-                        Description = property.PropertyDescription ?? "",
-                        Image = IpfsModel.ToIpfsLink(fileUrls?.ElementAtOrDefault(0) ?? "")
-                    },
-                    XcavateMetadata = new PropertyMetadata
-                    {
-                        PropertyName = property.PropertyName ?? "Unknown",
-                        PropertyDescription = property.PropertyDescription ?? "",
-                        PropertyId = long.Parse(property.PropertyId),
-                        PropertyType = property.PropertyType,
-                        PropertyPrice = long.Parse(property.PropertyPrice),
-                        Location = 1,
-                        Area = property.Area,
-                        NoOfBedrooms = property.NoOfBedrooms.ToString(),
-                        NoOfBathrooms = property.NoOfBedrooms.ToString(),
-                        ConstructionDate = property.ConstructionDate,
-                        OffStreetParking = property.OffStreetParking,
-                        OutdoorSpace = property.OutdoorSpace,
-                        PlanningPermissionCode = property.PlanningPermissionCode,
-                        Region = property.Region,
-                        TitleDeedNumber = property.TitleDeedNumber,
-                        AddressStreet = property.AddressStreet,
-                        AddressTownCity = property.AddressTownCity,
-                        Files = fileUrls ?? [],
-                        Images = fileUrls ?? []
-                    }
-                };
-            });
-            */
         }
     }
 }

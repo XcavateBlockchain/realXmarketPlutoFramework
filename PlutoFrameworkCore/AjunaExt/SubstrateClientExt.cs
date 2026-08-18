@@ -222,23 +222,7 @@ namespace PlutoFramework.Model.AjunaExt
 
         private SubstrateClient GetSubstrateClient(EndpointEnum endpointKey, Uri websocket)
         {
-            return endpointKey switch
-            {
-                EndpointEnum.Polkadot => new Polkadot.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.PolkadotAssetHub => new PolkadotAssetHub.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.Hydration => new Hydration.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.Bifrost => new BifrostPolkadot.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.Opal => new Opal.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.Bajun => new Bajun.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.PolkadotPeople => new PolkadotPeople.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.KusamaAssetHub => new KusamaAssetHub.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.Unique => new Unique.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.Mythos => new Mythos.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.XcavatePaseo => new XcavatePaseo.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-                EndpointEnum.Kilt => new Kilt.NetApi.Generated.SubstrateClientExt(websocket, ChargeTransactionPayment.Default()),
-
-                _ => new SubstrateClient(websocket, ChargeTransactionPayment.Default()),
-            };
+            return new SubstrateClient(websocket, ChargeTransactionPayment.Default());
         }
     }
 }

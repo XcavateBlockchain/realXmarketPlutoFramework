@@ -1,5 +1,4 @@
 ﻿using PlutoFrameworkCore.Xcavate;
-using XcavatePaseo.NetApi.Generated.Model.pallet_xcavate_whitelist.pallet;
 
 namespace PlutoFramework.Model.Xcavate
 {
@@ -16,18 +15,6 @@ namespace PlutoFramework.Model.Xcavate
 
     public static class UserRoleEnumExtensions
     {
-        public static Role ToWhitelistRole(this UserRoleEnum role)
-        {
-            return role switch
-            {
-                UserRoleEnum.Developer => Role.RealEstateDeveloper,
-                UserRoleEnum.Investor => Role.RealEstateInvestor,
-                UserRoleEnum.LettingAgent => Role.LettingAgent,
-                UserRoleEnum.Lawyer => Role.Lawyer,
-                _ => Role.RealEstateInvestor
-            };
-        }
-
         public static string ToSumsubVerificationLevel(this UserRoleEnum role)
         {
             return role switch

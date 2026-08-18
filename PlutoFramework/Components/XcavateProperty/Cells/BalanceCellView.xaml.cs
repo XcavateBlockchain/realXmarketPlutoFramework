@@ -35,24 +35,6 @@ public partial class BalanceCellView : ContentView, ISetEmptyView, ISubstrateCli
             return;
         }
 
-        if (client is not null && client.Endpoint.Key == Constants.EndpointEnum.Hydration && client.SubstrateClient.IsConnected)
-        {
-            try
-            {
-                await Sdk.GetAssetsAsync((Hydration.NetApi.Generated.SubstrateClientExt)client.SubstrateClient, null, token);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            AssetsModel.UpdateUsdBalance();
-        }
-
-        await Model.AssetsModel.GetBalanceAsync(client, KeysModel.GetSubstrateKey(), token, false);
-
-        Console.Write("Balance loaded for " + client.Endpoint.Key);
-
         cell.Value = Model.AssetsModel.UsdSum.ToCurrencyString();
     }
 

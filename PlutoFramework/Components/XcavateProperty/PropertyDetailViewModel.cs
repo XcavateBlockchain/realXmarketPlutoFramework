@@ -13,7 +13,6 @@ using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Xcavate;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
-using XcavatePaseo.NetApi.Generated.Storage;
 using PropertyModel = PlutoFramework.Model.Xcavate.XcavatePropertyModel;
 
 namespace PlutoFramework.Components.XcavateProperty

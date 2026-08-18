@@ -149,10 +149,6 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
-    <Compile Update="Components\AssetSelect\NativeAssetInputView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
     <Compile Update="Components\AssetSelect\UsdButtonView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
@@ -234,10 +230,6 @@
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\ChangeLayoutRequest\ChangeLayoutRequestView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Contract\ContractView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -397,31 +389,11 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
-    <Compile Update="Components\HydraDX\AssetLiquidityView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\HydraDX\DCAOrderView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\HydraDX\DCAView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\HydraDX\OmnipoolLiquidityView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
     <Compile Update="Components\Hyperlink\Link.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\Identity\IdentityAddressView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Identity\IdentityView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -438,10 +410,6 @@
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\Kilt\ImportDidPage.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Kilt\MainDidView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -521,59 +489,7 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
-    <Compile Update="Components\Nft\CollectionDetailPage.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\CollectionListPage.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\CollectionMintConfigView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\CollectionStatsView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\CollectionThumbnailView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NestNftSelectView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftAttributesView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
     <Compile Update="Components\Nft\NftAttributeView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftBuyView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftDescriptionView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftDetailPage.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftFavouriteGalleryView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftGalleryView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftIdView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -582,22 +498,6 @@
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\Nft\NftImageView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftListPage.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftLittleThumbnailView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftLoadingView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftMainPage.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -610,53 +510,6 @@
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\Nft\NftMultiImageView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftNestedNftsView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftNestedParentNftView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftOwnedGalleryView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftPictureView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftSellView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftSoldForView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftOwnedListView.xaml.cs">
-      <DependentUpon>NftOwnedListView.xaml</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftThumbnailView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftTitleView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftTradingStats.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Nft\NftTransferView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\OpenGov\VotingDelegationView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -677,14 +530,6 @@
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\PredefinedLayouts\HydrationOmnipoolLayoutItem.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Referenda\ReferendaView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Referenda\ReferendumInfoView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -824,10 +669,6 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
-    <Compile Update="Components\VTokens\VDotTokenView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
     <Compile Update="Components\WebView\AdvancedWebView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
@@ -897,10 +738,6 @@
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\XcavateProperty\SliderView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\XcavateProperty\XcavatePropertyMarketplacePage.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -1001,30 +838,6 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
-    <Compile Update="Components\Xcm\XcmNetworkSelectButton.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Xcm\XcmNetworkSelectorView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Xcm\XcmNetworkSelectPopup.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Xcm\XcmNetworkSelectView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Xcm\XcmTransferPage.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="Components\Xcm\XcmTransferView.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
     <Compile Update="Components\XcavateProperty\PropertyDocumentsPage.xaml.cs">
       <DependentUpon>PropertyDocumentsPage.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -1078,9 +891,6 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\AssetSelect\AssetSelectView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\AssetSelect\NativeAssetInputView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\AssetSelect\UsdButtonView.xaml">
@@ -1146,9 +956,6 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\ChangeLayoutRequest\ChangeLayoutRequestView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Contract\ContractView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Credits\CreditsPage.xaml">
@@ -1270,28 +1077,10 @@
     <None Update="Components\GalaxyLogicGame\PowerupView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="Components\HydraDX\AssetLiquidityView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\HydraDX\DCAOrderView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\HydraDX\DCAView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\HydraDX\OmnipoolLiquidityView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Components\Hyperlink\Link.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Identity\IdentityAddressView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Identity\IdentityView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Kilt\CreateNewDidPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Kilt\DidExplanationPage.xaml">
@@ -1300,16 +1089,10 @@
     <None Update="Components\Kilt\DidListView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="Components\Kilt\DidManagementPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Components\Kilt\DidView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Kilt\ImportDidPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Kilt\MainDidView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Kilt\NoDidPage.xaml">
@@ -1346,9 +1129,6 @@
     <None Update="Components\Mnemonics\MnemonicsView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="Components\Mnemonics\NoMnemonicsPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Components\Mnemonics\SuccessfulImportPopupView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
@@ -1375,64 +1155,13 @@
     <None Update="Components\NetworkSelect\NetworkSelectPopup.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="Components\Nft\CollectionDetailPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\CollectionListPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\CollectionMintConfigView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\CollectionStatsView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\CollectionThumbnailView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NestNftSelectView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftAttributesView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Components\Nft\NftAttributeView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftBuyView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftDescriptionView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftDetailPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftFavouriteGalleryView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftGalleryView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftIdView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Nft\NftImageFullScreenPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Nft\NftImageView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftListPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftLittleThumbnailView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftLoadingView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftMainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Nft\NftModifyImageView.xaml">
@@ -1442,42 +1171,6 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Nft\NftMultiImageView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftNestedNftsView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftNestedParentNftView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftOwnedGalleryView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftOwnerView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftPictureView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftSellView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftSoldForView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftThumbnailView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftTitleView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftTradingStats.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Nft\NftTransferView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\OpenGov\VotingDelegationView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Password\EnterPasswordPopupView.xaml">
@@ -1493,12 +1186,6 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\PredefinedLayouts\HydrationOmnipoolLayoutItem.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Referenda\ReferendaView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Referenda\ReferendumInfoView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\SearchBar\SearchBarView.xaml">
@@ -1520,9 +1207,6 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Settings\QuestionAnswerView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Settings\SettingsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Settings\ShowMnemonic.xaml">
@@ -1612,9 +1296,6 @@
     <None Update="Components\Vault\VaultSignView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="Components\VTokens\VDotTokenView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Components\WebView\AdvancedWebView.xaml">
       <SubType></SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -1673,9 +1354,6 @@
     <None Update="Components\XcavateProperty\SliderView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="Components\XcavateProperty\XcavatePropertyMarketplacePage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Components\Xcavate\AboutUsView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
@@ -1700,15 +1378,6 @@
     <None Update="Components\Xcavate\ModifyCompanyPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="Components\Xcavate\ModifyUserProfilePage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcavate\ModifyUserProfilePopupView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcavate\OnboardingShell.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Components\Xcavate\PageBottomBarButtonView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
@@ -1724,28 +1393,13 @@
     <None Update="Components\Xcavate\UserProfileHeaderView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="Components\Xcavate\UserProfilePage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Components\Xcavate\UserTypeBadgeView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcavate\UserTypeSelectionPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Xcavate\VerificationBadgeView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="Components\Xcavate\WelcomePage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcavate\XcavateAppShell.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Components\Xcavate\XcavateCell.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcavate\XcavateMainPageTopNavigationBarView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Xcavate\XcavateNavigationBarButtonView.xaml">
@@ -1755,24 +1409,6 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Xcavate\XcavateTopNavigationBarView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcm\XcmNetworkSelectButton.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcm\XcmNetworkSelectorView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcm\XcmNetworkSelectPopup.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcm\XcmNetworkSelectView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcm\XcmTransferPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Components\Xcm\XcmTransferView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Templates\PageTemplate\Page.xaml">
@@ -1787,7 +1423,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="..\Generated\%2a%2a\%2a%2a.NetApi\bin\Debug\net10.0\%2a.dll" />
     <None Remove="..\UniqueryPlus\bin\Debug\net10.0-ios\UniqueryPlus.dll" />
     <None Remove="AjunaExt\" />
     <None Remove="AzeroId\" />

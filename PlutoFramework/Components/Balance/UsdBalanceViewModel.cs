@@ -34,13 +34,7 @@ namespace PlutoFramework.Components.Balance
 
             ReloadIsVisible = false;
 
-            
-            foreach (var client in Model.SubstrateClientModel.Clients.Values)
-            {
-                await Model.AssetsModel.GetBalanceAsync(await client, KeysModel.GetSubstrateKey(), token, true);
-
-                UpdateBalances();
-            }
+            UpdateBalances();
 
             ReloadIsVisible = true;
         }

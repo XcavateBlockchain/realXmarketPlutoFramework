@@ -19,24 +19,8 @@ namespace PlutoFramework.Model.SQLite
         public BigInteger Id { get; set; }
         public string Owner { get; set; }
         public MetadataBase Metadata { get; set; }
-        public async Task<ICollectionBase> GetCollectionAsync(CancellationToken token)
-        {
-            var endpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(Type);
-
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(endpointKey, token);
-
-            return await UniqueryPlus.Collections.CollectionModel.GetCollectionByCollectionIdAsync(client.SubstrateClient, Type, (uint)CollectionId, token).ConfigureAwait(false);
-        }
-        public async Task<INftBase> GetFullAsync(CancellationToken token)
-        {
-            var endpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(Type);
-
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(endpointKey, token);
-
-            var nft = await UniqueryPlus.Nfts.NftModel.GetNftByIdAsync(client.SubstrateClient, Type, (uint)CollectionId, (uint)Id, token).ConfigureAwait(false);
-
-            return await nft.GetFullAsync(token);
-        }
+        public Task<ICollectionBase> GetCollectionAsync(CancellationToken token) => throw new NotSupportedException();
+        public Task<INftBase> GetFullAsync(CancellationToken token) => Task.FromResult<INftBase>(this);
     }
     public record XcavatePropertyDatabaseItem
     {

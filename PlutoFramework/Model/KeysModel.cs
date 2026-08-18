@@ -10,7 +10,6 @@ using PlutoFramework.Model.SQLite;
 using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Keys;
 using PlutoFrameworkCore.PushNotificationServices.Core;
-using Polkadot.NetApi.Generated.Model.sp_core.crypto;
 using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
@@ -755,16 +754,8 @@ namespace PlutoFramework.Model
             }
         }
 
-        public static AccountId32 GetAccountId32()
-        {
-            var accountId = new AccountId32();
-            accountId.Create(GetPublicKeyBytes());
-
-            return accountId;
-        }
-
         /// <summary>
-        /// Source: https://learn.microsoft.com/en-us/dotnet/communitytoolkit/maui/essentials/file-saver?tabs=macos 
+        /// Source: https://learn.microsoft.com/en-us/dotnet/communitytoolkit/maui/essentials/file-saver?tabs=macos
         /// </summary>
         public static async Task ExportJsonFileAsync(string json, CancellationToken token)
         {

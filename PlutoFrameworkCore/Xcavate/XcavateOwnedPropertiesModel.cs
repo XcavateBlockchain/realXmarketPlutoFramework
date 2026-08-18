@@ -13,8 +13,6 @@ namespace PlutoFramework.Model.Xcavate
 
         public static bool Loading = false;
 
-        private static IAsyncEnumerator<PropertyOwnership> uniqueryNftEnumerator = null;
-
         public static async Task LoadAsync(SubstrateClientExt client, string address, CancellationToken token, bool forceReload = false)
         {
             // If it has been used <1 minute ago, do not load again
@@ -32,29 +30,40 @@ namespace PlutoFramework.Model.Xcavate
 
             waitUsedDict[client.Endpoint.Key] = new TaskCompletionSource();
 
-
-            var uniqueryNftEnumerable = PropertyMarketplaceModel.GetPropertiesOwnedByAsync(
-                (XcavatePaseo.NetApi.Generated.SubstrateClientExt)client.SubstrateClient, // Needs to be improved for mainnet
-                address,
-                limit: 10
-            );
-
-            uniqueryNftEnumerator = uniqueryNftEnumerable.GetAsyncEnumerator(token);
-
             Loading = true;
 
-            for (uint i = 0; i < LIMIT; i++)
+            try
             {
-                Console.WriteLine("Loading more");
+                var properties = await XcavateIndexerModel.GetOwnedAndBoughtPropertiesAsync(
+                    first: LIMIT,
+                    tokenOwner: address
+                ).ConfigureAwait(false);
 
-                if (token.IsCancellationRequested)
+                foreach (var property in properties)
                 {
-                    break;
-                }
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
 
-                if (uniqueryNftEnumerator != null && await uniqueryNftEnumerator.MoveNextAsync())
-                {
-                    var propertyOwnership = uniqueryNftEnumerator.Current;
+                    uint tokensBought = 0;
+                    if (property.OngoingObjectListingDetails?.ShareOwners.TryGetValue(address, out var boughtShareOwner) ?? false)
+                    {
+                        tokensBought = boughtShareOwner.ShareAmount;
+                    }
+
+                    uint tokensOwned = 0;
+                    if (property.RealWorldAssetDetails?.ShareOwners.TryGetValue(address, out var ownedShareOwner) ?? false)
+                    {
+                        tokensOwned = ownedShareOwner.ShareAmount;
+                    }
+
+                    var propertyOwnership = new PropertyOwnership
+                    {
+                        TokensBought = tokensBought,
+                        TokensOwned = tokensOwned,
+                        NftBase = property,
+                    };
 
                     if (!ItemsDict.ContainsKey(propertyOwnership.Key))
                     {
@@ -62,6 +71,10 @@ namespace PlutoFramework.Model.Xcavate
                         ItemsDict.Add(propertyOwnership.Key, propertyOwnership);
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
             }
 
             Loading = false;

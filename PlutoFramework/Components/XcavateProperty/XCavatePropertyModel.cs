@@ -8,9 +8,7 @@ using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Xcavate;
-using Substrate.NetApi.Model.Types.Primitive;
 using UniqueryPlus.Nfts;
-using XcavatePaseo.NetApi.Generated;
 
 namespace PlutoFramework.Components.XcavateProperty
 {
@@ -136,10 +134,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             var ownerAddress = KeysModel.GetSubstrateKey(ss58prefix: 0);
 
-            var substrateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(nft.Endpoint.Key, token);
-
             var indexedProperty = await XcavateIndexerModel.GetPropertyFullInfoAsync(
-                    (SubstrateClientExt)substrateClient.SubstrateClient,
                     checked((int)nft.Key.Item3),
                     ownerAddress)
                 .ConfigureAwait(false);
@@ -212,65 +207,6 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 await NavigationModel.PushAsync(new PropertyDetailPage(viewModel));
             });
-
-            // Did not work so far...
-            // Tried hybrid data loading
-            //await LoadPropertyDetailFromOnChainAsync(nft, viewModel, token);
-        }
-
-
-        public static async Task LoadPropertyDetailFromOnChainAsync(XcavateNftWrapper nft, PropertyDetailViewModel viewModel, CancellationToken token)
-        {
-            Console.WriteLine("Getting full property from onchain");
-            try
-            {
-                var substrateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(nft.Endpoint.Key, token);
-
-                var nftBase = await XcavatePaseoNftModel.GetNftNftsPalletByIdAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)substrateClient.SubstrateClient, (uint)nft.NftBase.CollectionId, (uint)nft.NftBase.Id, token);
-                nft.NftBase = await nftBase!.GetFullAsync(token);
-
-                Console.WriteLine("Got full");
-
-                viewModel.SpvCreated = (((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails)?.SpvCreated ?? false;
-
-                if (nft.NftBase is not INftXcavateMetadata || ((INftXcavateMetadata)nft.NftBase).XcavateMetadata is null || nft.NftBase is not INftXcavateNftMarketplace)
-                {
-                    Console.WriteLine("It was null probably?");
-
-                    return;
-                }
-
-                viewModel.Endpoint = nft.Endpoint!;
-                viewModel.NftWrapper = nft;
-                viewModel.Metadata = ((INftXcavateMetadata)nft.NftBase).XcavateMetadata;
-                viewModel.ListingDetails = ((INftXcavateOngoingObjectListing)nft.NftBase).OngoingObjectListingDetails;
-                viewModel.Region = nft.Region;
-                viewModel.SpvCreated = (((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails)?.SpvCreated ?? true;
-
-                if (XcavateOwnedPropertiesModel.ItemsDict.TryGetValue(nft.Key, out PropertyOwnership? tokenInfo))
-                {
-                    viewModel.TokensOwned = tokenInfo?.TokensOwned ?? 0;
-                    viewModel.TokensBought = tokenInfo?.TokensBought ?? 0;
-                }
-
-                var tokensOwned = await RealWorldAssetsModel.GetRealWorldAssetTokensOwnedAsync((XcavatePaseo.NetApi.Generated.SubstrateClientExt)substrateClient.SubstrateClient, new U32((uint)nft.Key.Item3), KeysModel.GetSubstrateKey(), token);
-
-                viewModel.TokensOwned = tokensOwned;
-
-                // Roles are held by the Solana whitelist program, not by the Substrate account
-                // that owns the property tokens above, so this reads the Solana address.
-                var solanaAddress = KeysModel.GetSolanaAddress();
-
-                viewModel.Roles = solanaAddress is null
-                    ? []
-                    : await WhitelistModel.GetRolesAsync(solanaAddress, token);
-
-                Console.WriteLine("Getting Full On-Chain property finished");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
         }
     }
 }

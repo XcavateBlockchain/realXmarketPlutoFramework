@@ -5,8 +5,6 @@
         public static Task DeleteAllDatabasesAsync()
         {
             return Task.WhenAll(
-                NftDatabase.DeleteAllAsync(),
-                CollectionDatabase.DeleteAllAsync(),
                 XcavatePropertyDatabase.DeleteAllAsync(),
                 BalancesDatabase.DeleteAllAsync(),
                 XcavateUserDatabase.DeleteAllAsync(),

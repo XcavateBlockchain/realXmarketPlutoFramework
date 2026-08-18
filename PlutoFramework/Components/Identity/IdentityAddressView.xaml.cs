@@ -103,25 +103,7 @@ public partial class IdentityAddressView : ContentView
 
                 control.subscanIcon.IsVisible = true;
 
-
-                var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(Constants.EndpointEnum.PolkadotPeople, token);
-
-                if (!await client.IsConnectedAsync())
-                {
-                    control.identityLabel.Text = "Loading";
-                    if (Application.Current.RequestedTheme == AppTheme.Light)
-                    {
-                        control.identityJundgementIcon.Source = "unknownblack.png";
-                    }
-                    else
-                    {
-                        control.identityJundgementIcon.Source = "unknownwhite.png";
-                    }
-
-                    return;
-                }
-
-                var identity = await Model.IdentityModel.GetIdentityForAddressAsync((PolkadotPeople.NetApi.Generated.SubstrateClientExt)client.SubstrateClient, (string)newValue, token);
+                OnChainIdentity? identity = null;
 
                 if (identity == null)
                 {

@@ -7,7 +7,6 @@ using PlutoFramework.Model.SQLite;
 using PlutoFrameworkCore.Xcavate;
 using System.Collections.ObjectModel;
 using UniqueryPlus.Nfts;
-using XcavatePaseo.NetApi.Generated;
 using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 
 namespace PlutoFramework.Components.XcavateProperty
@@ -23,7 +22,7 @@ namespace PlutoFramework.Components.XcavateProperty
         private string searchText = string.Empty;
 
         private readonly PropertyMarketplaceFilterPopupViewModel filterPopupViewModel;
-        private SubstrateClientExt? substrateClient;
+        private bool clientLoaded;
         private int offset = 0;
         private bool hasMore = true;
 
@@ -55,7 +54,7 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             token.ThrowIfCancellationRequested();
 
-            if (!hasMore || substrateClient is null)
+            if (!hasMore || !clientLoaded)
             {
                 return;
             }
@@ -64,7 +63,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             try
             {
-                if (Loading || !hasMore || substrateClient is null)
+                if (Loading || !hasMore || !clientLoaded)
                 {
                     return;
                 }
@@ -72,7 +71,6 @@ namespace PlutoFramework.Components.XcavateProperty
                 Loading = true;
 
                 var results = await XcavateIndexerModel.GetMarketplaceListedPropertiesAsync(
-                        substrateClient,
                         first: (int)LIMIT,
                         offset: offset,
                         includesTownCity: includesTownCity,
@@ -157,10 +155,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             try
             {
-                if (substrateClient is null)
-                {
-                    substrateClient = (SubstrateClientExt)(await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, token).ConfigureAwait(false)).SubstrateClient;
-                }
+                clientLoaded = true;
 
                 token.ThrowIfCancellationRequested();
 

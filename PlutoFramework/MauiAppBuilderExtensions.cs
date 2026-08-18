@@ -28,11 +28,9 @@ using PlutoFramework.Components.TransactionAnalyzer;
 using PlutoFramework.Components.TransactionRequest;
 using PlutoFramework.Components.TransferView;
 using PlutoFramework.Components.Vault;
-using PlutoFramework.Components.VTokens;
 using PlutoFramework.Components.WebView;
 using PlutoFramework.Components.Xcavate;
 using PlutoFramework.Components.XcavateProperty;
-using PlutoFramework.Components.Xcm;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate.Profile;
@@ -196,25 +194,11 @@ namespace PlutoFramework
 
             DependencyService.Register<FeeAssetViewModel>();
 
-            DependencyService.Register<VDotTokenViewModel>();
-
-            DependencyService.Register<XcmTransferViewModel>();
-
-            DependencyService.Register<XcmNetworkSelectPopupViewModel>();
-
-            DependencyService.Register<XcmNetworkSelectViewModel>();
-
             DependencyService.Register<AnalyzedOutcomeViewModel>();
 
             DependencyService.Register<TransactionAnalyzerConfirmationViewModel>();
 
             DependencyService.Register<AssetInputViewModel>();
-
-            DependencyService.Register<NftTransferViewModel>();
-
-            DependencyService.Register<NftSellViewModel>();
-
-            DependencyService.Register<NestNftSelectViewModel>();
 
             DependencyService.Register<EnterPasswordPopupViewModel>();
 
@@ -245,8 +229,6 @@ namespace PlutoFramework
             DependencyService.Register<NoDidPopupViewModel>();
 
             DependencyService.Register<NoKYCPopupViewModel>();
-
-            DependencyService.Register<XcavatePropertyMarketplaceViewModel>();
 
             DependencyService.Register<XcavateIndexedPropertyMarketplaceViewModel>();
 

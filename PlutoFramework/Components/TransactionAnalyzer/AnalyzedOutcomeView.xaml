@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              xmlns:balance="clr-namespace:PlutoFramework.Components.Balance"
-             xmlns:nft="clr-namespace:PlutoFramework.Components.Nft"
              xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
              x:Class="PlutoFramework.Components.TransactionAnalyzer.AnalyzedOutcomeView"
              HeightRequest="{Binding HeightRequest}">
@@ -54,24 +53,6 @@
                                                         UsdColor="{Binding UsdColor}"
                                                          IsFrozen="{Binding IsFrozen}"
                                                          IsReserved="{Binding IsRezerved}"/>
-
-                            </DataTemplate>
-
-                        </BindableLayout.ItemTemplate>
-
-
-                    </VerticalStackLayout>
-                    <VerticalStackLayout WidthRequest="{Binding Source={x:Reference absoluteLayout}, Path=Width}"
-                                         BindableLayout.ItemsSource="{Binding Nfts}"
-                                         IsVisible="{Binding NftsIsVisible}"
-                                         Spacing="5">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate>
-                                <nft:NftLittleThumbnailView NftBase="{Binding NftBase}"
-                                                            Favourite="{Binding Favourite}"
-                                                            Endpoint="{Binding Endpoint}"
-                                                            Price="{Binding Price}" 
-                                                            Operation="{Binding Operation}"/>
 
                             </DataTemplate>
 

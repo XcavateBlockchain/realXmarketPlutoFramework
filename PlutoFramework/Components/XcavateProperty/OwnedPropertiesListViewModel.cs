@@ -5,14 +5,13 @@ using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Xcavate;
 using System.Collections.ObjectModel;
 using UniqueryPlus.Nfts;
-using XcavatePaseo.NetApi.Generated;
 using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 
 namespace PlutoFramework.Components.XcavateProperty
 {
     public partial class OwnedPropertiesListViewModel : BaseListViewModel<NftKey, XcavateNftWrapper>
     {
-        private SubstrateClientExt? substrateClient;
+        private bool loaded;
         private string ownerAddress = string.Empty;
         private int offset;
         private bool hasMore;
@@ -29,7 +28,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public override async Task InitialLoadAsync(CancellationToken token)
         {
-            if (substrateClient is null || string.IsNullOrWhiteSpace(ownerAddress))
+            if (string.IsNullOrWhiteSpace(ownerAddress))
             {
                 Loading = false;
                 return;
@@ -42,7 +41,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public override async Task LoadMoreAsync(CancellationToken token)
         {
-            if (Loading || !hasMore || substrateClient is null)
+            if (Loading || !hasMore)
             {
                 return;
             }
@@ -52,7 +51,6 @@ namespace PlutoFramework.Components.XcavateProperty
             try
             {
                 var page = await XcavateIndexerModel.GetOwnedAndBoughtPropertiesAsync(
-                        substrateClient,
                         first: (int)LIMIT,
                         offset: offset,
                         tokenOwner: ownerAddress)
@@ -112,10 +110,9 @@ namespace PlutoFramework.Components.XcavateProperty
             }
 
             var loadedAddress = KeysModel.GetSubstrateKey();
-            var newClient = (SubstrateClientExt)client.SubstrateClient;
-            var shouldReload = substrateClient is null || ownerAddress != loadedAddress || !ReferenceEquals(substrateClient, newClient);
+            var shouldReload = !loaded || ownerAddress != loadedAddress;
 
-            substrateClient = newClient;
+            loaded = true;
             ownerAddress = loadedAddress;
 
             if (shouldReload)

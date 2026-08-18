@@ -1,7 +1,6 @@
 ﻿using PlutoFramework.Constants;
 using PlutoFramework.Model.AjunaExt;
 using PlutoFramework.Types;
-using Polkadot.NetApi.Generated.Model.sp_runtime.multiaddress;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Extrinsics;
 using Substrate.NetApi.Model.Meta;
@@ -125,31 +124,7 @@ namespace PlutoFramework.Model
 
         public static BaseType? GetCall(EndpointEnum endpointKey, byte[] encodedCall)
         {
-            BaseType? runtimeCall = endpointKey switch
-            {
-                EndpointEnum.Polkadot => new Polkadot.NetApi.Generated.Model.polkadot_runtime.EnumRuntimeCall(),
-                EndpointEnum.PolkadotAssetHub => new PolkadotAssetHub.NetApi.Generated.Model.asset_hub_polkadot_runtime.EnumRuntimeCall(),
-                EndpointEnum.Hydration => new Hydration.NetApi.Generated.Model.hydradx_runtime.EnumRuntimeCall(),
-                EndpointEnum.Bifrost => new BifrostPolkadot.NetApi.Generated.Model.bifrost_polkadot_runtime.EnumRuntimeCall(),
-                EndpointEnum.Bajun => new Bajun.NetApi.Generated.Model.bajun_runtime.EnumRuntimeCall(),
-                EndpointEnum.PolkadotPeople => new PolkadotPeople.NetApi.Generated.Model.people_polkadot_runtime.EnumRuntimeCall(),
-                EndpointEnum.KusamaAssetHub => new KusamaAssetHub.NetApi.Generated.Model.asset_hub_kusama_runtime.EnumRuntimeCall(),
-                EndpointEnum.Unique => new Unique.NetApi.Generated.Model.unique_runtime.EnumRuntimeCall(),
-                EndpointEnum.Opal => new Opal.NetApi.Generated.Model.opal_runtime.EnumRuntimeCall(),
-                EndpointEnum.Mythos => new Mythos.NetApi.Generated.Model.mainnet_runtime.EnumRuntimeCall(),
-                EndpointEnum.XcavatePaseo => new XcavatePaseo.NetApi.Generated.Model.xcavate_runtime.EnumRuntimeCall(),
-                _ => null,
-            };
-
-            if (runtimeCall is null)
-            {
-                return null;
-            }
-
-            int p = 0;
-            runtimeCall.Decode(encodedCall, ref p);
-            return runtimeCall;
-
+            return null;
         }
 
 
@@ -304,27 +279,8 @@ namespace PlutoFramework.Model
                             break;
 
                         case TypeDef.Variant:
-                            switch (typeField.TypeName)
-                            {
-                                case "AccountIdLookupOf<T>":
-                                    var multiAddress = new EnumMultiAddress();
-                                    multiAddress.Decode(method.ParametersBytes, ref p);
-
-                                    if (multiAddress.Value != MultiAddress.Index)
-                                    {
-                                        data = Utils.GetAddressFrom(multiAddress.Value2.Encode());
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        parameters = "Unable to show";
-                                        goto Unsupported;
-                                    }
-                                default:
-                                    parameters = "Unable to show";
-                                    goto Unsupported;
-                            }
-                            break;
+                            parameters = "Unable to show";
+                            goto Unsupported;
 
                         default:
                             parameters = "Unable to show";

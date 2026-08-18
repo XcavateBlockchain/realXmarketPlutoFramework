@@ -40,12 +40,6 @@ namespace PlutoFrameworkTests
 
             var x = await client.ConnectAndLoadMetadataAsync();
 
-            var accountInfo = await AssetsModel.GetNativeBalance(client.SubstrateClient, substrateAddress, CancellationToken.None);
-
-            Console.WriteLine("Free: " + accountInfo.Data.Free.Value);
-
-            Assert.That(accountInfo.Data.Free.Value > 0);
-
             var transfer = TransferModel.NativeTransfer(client, substrateAddress, 10000000000);
 
             Console.WriteLine();

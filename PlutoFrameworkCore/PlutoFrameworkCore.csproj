@@ -59,13 +59,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Generated\Bajun\Bajun.NetApi\Bajun.NetApi.csproj" />
-    <ProjectReference Include="..\Generated\BifrostPolkadot\BifrostPolkadot.NetApi\BifrostPolkadot.NetApi.csproj" />
-    <ProjectReference Include="..\Generated\Hydration\Hydration.NetApi\Hydration.NetApi.csproj" />
-    <ProjectReference Include="..\Generated\InvArch\InvArch.NetApi\InvArch.NetApi.csproj" />
-    <ProjectReference Include="..\Generated\Kilt\Kilt.NetApi\Kilt.NetApi.csproj" />
-    <ProjectReference Include="..\Generated\PolkadotPeople\PolkadotPeople.NetApi\PolkadotPeople.NetApi.csproj" />
-    <ProjectReference Include="..\Generated\Polkadot\Polkadot.NetApi\Polkadot.NetApi.csproj" />
     <!--
       The Xcavate whitelist lives in a Solana program, and its roles are read through this
       GraphQL indexer rather than by scanning program accounts over RPC. Referenced

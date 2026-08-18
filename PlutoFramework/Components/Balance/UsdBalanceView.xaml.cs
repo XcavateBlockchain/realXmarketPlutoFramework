@@ -34,22 +34,6 @@ public partial class UsdBalanceView : ContentView, ISubstrateClientLoadableAsync
             return;
         }
 
-        if (client is not null && client.Endpoint.Key == Constants.EndpointEnum.Hydration && client.SubstrateClient.IsConnected)
-        {
-            try
-            {
-                await Sdk.GetAssetsAsync((Hydration.NetApi.Generated.SubstrateClientExt)client.SubstrateClient, null, token);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            AssetsModel.UpdateUsdBalance();
-        }
-
-        await Model.AssetsModel.GetBalanceAsync(client, KeysModel.GetSubstrateKey(), token, false);
-
         var viewModel = (UsdBalanceViewModel)BindingContext;
         viewModel.UpdateBalances();
     }

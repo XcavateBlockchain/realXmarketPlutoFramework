@@ -174,13 +174,9 @@ namespace PlutoFramework.Components.Balance
 
         public async Task LoadAsync(CancellationToken token)
         {
-            var hydrationClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(Constants.EndpointEnum.Hydration, token);
+            Prices = [];
 
-            Prices = await Sdk.GetRestrospectiveSpotPricesAsync(hydrationClient, ChartInterval, AssetInfo.Symbol, CHART_STEPS, token);
-
-            Console.WriteLine("Prices: " + Prices.Count());
-
-            PricePerTokenText = ((double)Sdk.GetSpotPrice(AssetInfo.Symbol)).ToCurrencyString(currencyFormat: "{0:0.00}");
+            PricePerTokenText = (Sdk.GetSpotPrice(AssetInfo.Symbol) ?? 0).ToCurrencyString(currencyFormat: "{0:0.00}");
         }
 
         private IEnumerable<ChartEntry> GetChartEntries()

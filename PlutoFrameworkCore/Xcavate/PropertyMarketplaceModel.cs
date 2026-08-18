@@ -1,17 +1,10 @@
 ﻿using PlutoFramework.Constants;
 using PlutoFramework.Types;
 using PlutoFrameworkCore.Xcavate;
-using Substrate.NetApi;
 using Substrate.NetApi.Model.Extrinsics;
-using Substrate.NetApi.Model.Types.Base;
 using Substrate.NetApi.Model.Types.Primitive;
 using System.Numerics;
-using UniqueryPlus;
 using UniqueryPlus.Nfts;
-using XcavatePaseo.NetApi.Generated;
-using XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types;
-using XcavatePaseo.NetApi.Generated.Model.sp_core.crypto;
-using XcavatePaseo.NetApi.Generated.Storage;
 using AssetKey = (PlutoFramework.Constants.EndpointEnum, PlutoFramework.Types.AssetPallet, System.Numerics.BigInteger);
 using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 
@@ -40,12 +33,47 @@ namespace PlutoFramework.Model.Xcavate
         public required XcavatePropertyOperation Operation { get; set; }
     }
 
+    /// <summary>
+    /// Hand-encoded calls of the XcavatePaseo Marketplace pallet (index 25),
+    /// previously provided by the generated XcavatePaseo.NetApi bindings.
+    /// </summary>
+    public static class MarketplaceCalls
+    {
+        private const byte PALLET_INDEX = 25;
+        private const string PALLET_NAME = "Marketplace";
+
+        public static Method BuyPropertyShares(U32 listingId, U32 amount, U32 paymentAsset) => new Method(PALLET_INDEX, PALLET_NAME, 1, "buy_property_shares",
+            new List<byte>()
+                .Concat(listingId.Encode())
+                .Concat(amount.Encode())
+                .Concat(paymentAsset.Encode())
+                .ToArray());
+
+        public static Method ClaimPropertyShares(U32 listingId) => new Method(PALLET_INDEX, PALLET_NAME, 2, "claim_property_shares", listingId.Encode());
+
+        public static Method CreateSpv(U32 listingId) => new Method(PALLET_INDEX, PALLET_NAME, 4, "create_spv", listingId.Encode());
+
+        public static Method RelistShares(U32 assetId, U128 sharePrice, U32 amount) => new Method(PALLET_INDEX, PALLET_NAME, 5, "relist_shares",
+            new List<byte>()
+                .Concat(assetId.Encode())
+                .Concat(sharePrice.Encode())
+                .Concat(amount.Encode())
+                .ToArray());
+
+        public static Method CancelPropertyPurchase(U32 listingId) => new Method(PALLET_INDEX, PALLET_NAME, 7, "cancel_property_purchase", listingId.Encode());
+
+        public static Method WithdrawExpired(U32 listingId) => new Method(PALLET_INDEX, PALLET_NAME, 13, "withdraw_expired", listingId.Encode());
+
+        public static Method WithdrawClaimingExpired(U32 listingId) => new Method(PALLET_INDEX, PALLET_NAME, 15, "withdraw_claiming_expired", listingId.Encode());
+
+        public static Method WithdrawUnclaimed(U32 listingId) => new Method(PALLET_INDEX, PALLET_NAME, 16, "withdraw_unclaimed", listingId.Encode());
+    }
+
     public class PropertyMarketplaceModel
     {
         public static IEnumerable<AssetKey> GetAcceptedAssets(EndpointEnum endpointKey) => endpointKey switch
         {
-            EndpointEnum.XcavatePaseo => /*new MarketplaceConstants().AcceptedAssets().Value*/
-                                         new List<U32>() { new U32(1337), new U32(1984) }
+            EndpointEnum.XcavatePaseo => new List<U32>() { new U32(1337), new U32(1984) }
                                          .Select(u32 => (EndpointEnum.XcavatePaseo, AssetPallet.Assets, new BigInteger(u32.Value))),
             _ => [],
         };
@@ -61,177 +89,5 @@ namespace PlutoFramework.Model.Xcavate
             EndpointEnum.XcavatePaseo => MarketplaceCalls.RelistShares(new U32(assetId), new U128(pricePerToken), new U32(amount)),
             _ => throw new NotImplementedException($"RelistPropertyTokens not implemented for {endpointKey}"),
         };
-
-        public static async Task<RecursiveReturn<PropertyOwnership>> GetPropertiesOwnedByAsync(SubstrateClientExt client, string address, uint limit, byte[]? lastKey, CancellationToken token)
-        {
-            Console.WriteLine($"Finding properties owned by {address}.");
-
-            // 0x + Twox64 pallet + Twox64 storage + Blake2_128Concat accountId32
-            var keyPrefixLength = 162;
-
-            var accountId = new AccountId32();
-            accountId.Create(Utils.GetPublicKeyFrom(address));
-
-            var keyPrefix = Utils.HexToByteArray(MarketplaceStorage.ShareOwnerParams(new BaseTuple<AccountId32, U32>(accountId, new U32(0))).Substring(0, keyPrefixLength));
-
-            var fullKeys = await client.State.GetKeysPagedAsync(keyPrefix, limit, lastKey, string.Empty, token).ConfigureAwait(false);
-
-            // No more nfts found
-            if (fullKeys == null || !fullKeys.Any())
-            {
-                return new RecursiveReturn<PropertyOwnership>
-                {
-                    Items = [],
-                    LastKey = lastKey,
-                };
-            }
-
-            var idKeys = fullKeys.Select(p => p.ToString().Substring(keyPrefixLength));
-
-            var storageChangeSets = await client.State.GetQueryStorageAtAsync(fullKeys.Select(p => Utils.HexToByteArray(p.ToString())).ToList(), string.Empty, token).ConfigureAwait(false);
-
-            var shareOwnerDetails = new List<ShareOwnerDetails>();
-
-            foreach (var change in storageChangeSets.First().Changes)
-            {
-                if (change[1] == null)
-                {
-                    continue;
-                }
-
-                var details = new ShareOwnerDetails();
-                details.Create(change[1]);
-
-                shareOwnerDetails.Add(details);
-
-                // Combine the amount owned with the rest of the property details
-            }
-
-            var propertyAssetDetails = await GetPropertyAssetDetailsAsync(client, idKeys, lastKey, token);
-
-            return new RecursiveReturn<PropertyOwnership>
-            {
-                Items = propertyAssetDetails.Items.Zip(shareOwnerDetails, (propertyDetails, ownerDetails) => new PropertyOwnership
-                {
-                    TokensBought = ownerDetails.ShareAmount,
-                    TokensOwned = 0,
-                    NftBase = propertyDetails,
-                }),
-                LastKey = Utils.HexToByteArray(fullKeys.Last().ToString())
-            };
-        }
-
-        public static async Task<RecursiveReturn<INftXcavateBase>> GetPropertiesAsync(SubstrateClientExt client, uint limit, byte[]? lastKey, CancellationToken token)
-        {
-            // 0x + Twox64 pallet + Twox64 storage + Blake2_128Concat U32
-            var keyPrefixLength = 66;
-
-            var keyPrefix = Utils.HexToByteArray(MarketplaceStorage.OngoingObjectListingParams(new U32(0)).Substring(0, keyPrefixLength));
-
-            var fullKeys = await client.State.GetKeysPagedAsync(keyPrefix, limit, lastKey, string.Empty, token).ConfigureAwait(false);
-
-            Console.WriteLine("Keys found: " + fullKeys.Count());
-
-            // No more nfts found
-            if (fullKeys == null || !fullKeys.Any())
-            {
-                return new RecursiveReturn<INftXcavateBase>
-                {
-                    Items = [],
-                    LastKey = lastKey,
-                };
-            }
-
-            var idKeys = fullKeys.Select(p => p.ToString().Substring(keyPrefixLength));
-
-            return await GetPropertyAssetDetailsAsync(client, idKeys, lastKey, token);
-        }
-
-        public static async Task<RecursiveReturn<INftXcavateBase>> GetPropertyAssetDetailsAsync(SubstrateClientExt client, IEnumerable<string> propertyIds, byte[]? lastKey, CancellationToken token)
-        {
-            const int keyPrefixLength = 66;
-
-            var keyPrefix = MarketplaceStorage.OngoingObjectListingParams(new U32(0))
-                .Substring(0, keyPrefixLength);
-
-            var fullKeys = propertyIds.Select(id => keyPrefix + id).ToList();
-
-            var storageChangeSets = await client.State
-                .GetQueryStorageAtAsync(fullKeys.Select(k => Utils.HexToByteArray(k)).ToList(), string.Empty, token)
-                .ConfigureAwait(false);
-
-            var nftIds = new List<(U32 CollectionId, U32 ItemId)>();
-            foreach (var change in storageChangeSets.First().Changes)
-            {
-                if (change[1] == null)
-                {
-                    continue;
-                }
-
-                var listing = new PropertyListingDetails();
-                listing.Create(change[1]);
-
-                nftIds.Add((listing.CollectionId, listing.ItemId));
-            }
-
-            return await XcavatePaseoNftModel
-                .GetNftsNftsPalletAsync(client, nftIds, fullKeys.Last(), token)
-                .ConfigureAwait(false);
-        }
-
-        public static async Task<INftBase> GetPropertyByIdAsync(SubstrateClientExt client, uint propertyId, CancellationToken token)
-        {
-            const int keyPrefixLength = 66;
-            string[] idKeys =
-            [
-                MarketplaceStorage.OngoingObjectListingParams(new U32(propertyId))
-                    .Substring(keyPrefixLength)
-            ];
-
-            var propertyDetails = await GetPropertyAssetDetailsAsync(client, idKeys, null, token);
-            if (!propertyDetails.Items.Any())
-            {
-                throw new Exception("Unexpected failure");
-            }
-
-            return propertyDetails.Items.First();
-        }
-
-        public static IAsyncEnumerable<INftXcavateBase> GetPropertiesAsync(
-            SubstrateClientExt client,
-            uint limit = 25
-        )
-        {
-            return RecursionHelper.ToIAsyncEnumerableAsync(
-                [client],
-                (SubstrateClient client, NftTypeEnum _type, byte[]? lastKey, CancellationToken token) => GetPropertiesAsync((SubstrateClientExt)client, limit, lastKey, token),
-                limit
-            );
-        }
-
-        public static IAsyncEnumerable<PropertyOwnership> GetPropertiesOwnedByAsync(
-            SubstrateClientExt client,
-            string owner,
-            uint limit = 25
-        )
-        {
-            return RecursionHelper.ToIAsyncEnumerableAsync(
-                [client],
-                (SubstrateClient client, NftTypeEnum _type, byte[]? lastKey, CancellationToken token) => GetPropertiesOwnedByAsync((SubstrateClientExt)client, owner, limit, lastKey, token),
-                limit
-            );
-        }
-
-        public static IAsyncEnumerable<INftBase> GetIndexedPropertiesForSaleAsync(
-            SubstrateClientExt client,
-            uint limit = 25
-        )
-        {
-            return RecursionHelper.ToIAsyncEnumerableAsync(
-                [client],
-                (SubstrateClient client, NftTypeEnum _type, int limit, int offset, CancellationToken token) => XcavateSubqueryModel.GetPropertiesForSaleAsync((SubstrateClientExt)client, limit, offset, token),
-                (int)limit
-            );
-        }
     }
 }

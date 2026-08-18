@@ -5,7 +5,6 @@ using System.Numerics;
 using System.Text.Json;
 using UniqueryPlus.Metadata;
 using XcavateIndexer;
-using XcavatePaseo.NetApi.Generated;
 
 namespace UniqueryPlus.Nfts
 {
@@ -14,7 +13,6 @@ namespace UniqueryPlus.Nfts
         public const string DefaultOwnerAddress = "14XAmaujtAthi7KdWsJrKh1QEjiNXwabW1YdYUCbAM6TeGk";
 
         public static async Task<IReadOnlyList<XcavatePaseoNftsPalletNft>> GetMarketplaceListedPropertiesAsync(
-            SubstrateClientExt client,
             int first = 10,
             int offset = 0,
             string includesTownCity = "",
@@ -36,14 +34,13 @@ namespace UniqueryPlus.Nfts
             }
 
             return listings
-                .Select(listing => MapListing(client, listing))
+                .Select(listing => MapListing(listing))
                 .Where(nft => nft is not null)
                 .Cast<XcavatePaseoNftsPalletNft>()
                 .ToList();
         }
 
         public static async Task<IReadOnlyList<XcavatePaseoNftsPalletNft>> GetOwnedAndBoughtPropertiesAsync(
-            SubstrateClientExt client,
             int first = 10,
             int offset = 0,
             string tokenOwner = DefaultOwnerAddress)
@@ -63,14 +60,13 @@ namespace UniqueryPlus.Nfts
             }
 
             return properties
-                .Select(property => MapOwnedAndBoughtProperty(client, property, tokenOwner))
+                .Select(property => MapOwnedAndBoughtProperty(property, tokenOwner))
                 .Where(nft => nft is not null)
                 .Cast<XcavatePaseoNftsPalletNft>()
                 .ToList();
         }
 
         public static async Task<IReadOnlyList<XcavatePaseoNftsPalletNft>> GetOwnedAndBoughtPropertiesWithFilterAsync(
-            SubstrateClientExt client,
             int first = 10,
             int offset = 0,
             string tokenOwner = DefaultOwnerAddress,
@@ -93,14 +89,13 @@ namespace UniqueryPlus.Nfts
             }
 
             return properties
-                .Select(property => MapOwnedAndBoughtProperty(client, property, tokenOwner))
+                .Select(property => MapOwnedAndBoughtProperty(property, tokenOwner))
                 .Where(nft => nft is not null)
                 .Cast<XcavatePaseoNftsPalletNft>()
                 .ToList();
         }
 
         public static async Task<IReadOnlyList<XcavatePaseoNftsPalletNft>> GetOwnedPropertiesAsync(
-            SubstrateClientExt client,
             int first = 10,
             int offset = 0,
             string tokenOwner = DefaultOwnerAddress)
@@ -120,14 +115,13 @@ namespace UniqueryPlus.Nfts
             }
 
             return properties
-                .Select(property => MapOwnedProperty(client, property, tokenOwner))
+                .Select(property => MapOwnedProperty(property, tokenOwner))
                 .Where(nft => nft is not null)
                 .Cast<XcavatePaseoNftsPalletNft>()
                 .ToList();
         }
 
         public static async Task<IReadOnlyList<XcavatePaseoNftsPalletNft>> GetBoughtPropertiesAsync(
-            SubstrateClientExt client,
             int first = 10,
             int offset = 0,
             string tokenOwner = DefaultOwnerAddress)
@@ -147,14 +141,13 @@ namespace UniqueryPlus.Nfts
             }
 
             return properties
-                .Select(property => MapBoughtProperty(client, property, tokenOwner))
+                .Select(property => MapBoughtProperty(property, tokenOwner))
                 .Where(nft => nft is not null)
                 .Cast<XcavatePaseoNftsPalletNft>()
                 .ToList();
         }
 
         public static async Task<XcavatePaseoNftsPalletNft?> GetPropertyFullInfoAsync(
-            SubstrateClientExt client,
             int itemId,
             string tokenOwner = DefaultOwnerAddress)
         {
@@ -168,10 +161,10 @@ namespace UniqueryPlus.Nfts
 
             var property = result.Data?.RealEstateNfts?.Nodes?.FirstOrDefault();
 
-            return MapPropertyFullInfo(client, property, tokenOwner);
+            return MapPropertyFullInfo(property, tokenOwner);
         }
 
-        private static XcavatePaseoNftsPalletNft? MapListing(SubstrateClientExt client, IMarketplaceListedProperties_MarketplaceOngoingObjectListings_Nodes? listing)
+        private static XcavatePaseoNftsPalletNft? MapListing(IMarketplaceListedProperties_MarketplaceOngoingObjectListings_Nodes? listing)
         {
             if (listing is null)
             {
@@ -241,7 +234,7 @@ namespace UniqueryPlus.Nfts
                 }
             };
 
-            return new XcavatePaseoNftsPalletNft(client)
+            return new XcavatePaseoNftsPalletNft()
             {
                 CollectionId = ToBigIntegerOrDefault(realEstateNft?.Collection, listing.CollectionId),
                 Id = ToBigIntegerOrDefault(realEstateNft?.Item, listing.ItemId),
@@ -265,7 +258,6 @@ namespace UniqueryPlus.Nfts
         }
 
         private static XcavatePaseoNftsPalletNft? MapOwnedAndBoughtProperty(
-            SubstrateClientExt client,
             IOwnedAndBoughtProperties_RealEstateNfts_Nodes? property,
             string tokenOwner)
         {
@@ -339,7 +331,7 @@ namespace UniqueryPlus.Nfts
                 }
             };
 
-            return new XcavatePaseoNftsPalletNft(client)
+            return new XcavatePaseoNftsPalletNft()
             {
                 CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
                 Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
@@ -397,7 +389,6 @@ namespace UniqueryPlus.Nfts
         }
 
         private static XcavatePaseoNftsPalletNft? MapOwnedAndBoughtProperty(
-            SubstrateClientExt client,
             IOwnedAndBoughtPropertiesWithFilter_RealEstateNfts_Nodes? property,
             string tokenOwner)
         {
@@ -471,7 +462,7 @@ namespace UniqueryPlus.Nfts
                 }
             };
 
-            return new XcavatePaseoNftsPalletNft(client)
+            return new XcavatePaseoNftsPalletNft()
             {
                 CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
                 Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
@@ -530,7 +521,6 @@ namespace UniqueryPlus.Nfts
         }
 
         private static XcavatePaseoNftsPalletNft? MapOwnedProperty(
-            SubstrateClientExt client,
             IOwnedProperties_RealEstateNfts_Nodes? property,
             string tokenOwner)
         {
@@ -604,7 +594,7 @@ namespace UniqueryPlus.Nfts
                 }
             };
 
-            return new XcavatePaseoNftsPalletNft(client)
+            return new XcavatePaseoNftsPalletNft()
             {
                 CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
                 Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
@@ -663,7 +653,6 @@ namespace UniqueryPlus.Nfts
         }
 
         private static XcavatePaseoNftsPalletNft? MapBoughtProperty(
-            SubstrateClientExt client,
             IBoughtProperties_RealEstateNfts_Nodes? property,
             string tokenOwner)
         {
@@ -737,7 +726,7 @@ namespace UniqueryPlus.Nfts
                 }
             };
 
-            return new XcavatePaseoNftsPalletNft(client)
+            return new XcavatePaseoNftsPalletNft()
             {
                 CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
                 Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
@@ -796,7 +785,6 @@ namespace UniqueryPlus.Nfts
         }
 
         private static XcavatePaseoNftsPalletNft? MapPropertyFullInfo(
-            SubstrateClientExt client,
             IPropertyFullInfo_RealEstateNfts_Nodes? property,
             string tokenOwner)
         {
@@ -870,7 +858,7 @@ namespace UniqueryPlus.Nfts
                 }
             };
 
-            return new XcavatePaseoNftsPalletNft(client)
+            return new XcavatePaseoNftsPalletNft()
             {
                 CollectionId = ToBigIntegerOrDefault(property.Collection, listing?.CollectionId, realWorldAsset?.CollectionId),
                 Id = ToBigIntegerOrDefault(property.Item, listing?.ItemId, realWorldAsset?.ItemId),
