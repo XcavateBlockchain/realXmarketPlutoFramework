@@ -8,7 +8,6 @@ using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
 using PlutoFramework.Model.Xcavate.Profile;
-using XcavatePaseo.NetApi.Generated;
 using XcavateProfile.Client;
 
 namespace PlutoFramework.Components.Menu
@@ -76,18 +75,17 @@ namespace PlutoFramework.Components.Menu
         {
             User = await XcavateUserDatabase.GetUserInformationAsync();
 
-            // Roles come from a XcavatePaseo pallet query, so they follow the Substrate key
-            // rather than the main one. A Solana-only user simply has none, and the badge
-            // layout renders nothing for an empty list.
-            if (!KeysModel.HasSubstrateKey())
+            // Roles come from the Xcavate whitelist Solana program, so they follow the Solana
+            // key rather than the main one. A Substrate-only user simply has none, and the
+            // badge layout renders nothing for an empty list.
+            var address = KeysModel.GetSolanaAddress();
+
+            if (address is null)
             {
                 return;
             }
 
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, CancellationToken.None);
-            var address = KeysModel.GetSubstrateKey();
-
-            Roles = [.. await WhitelistModel.GetRolesCachedAsync((SubstrateClientExt)client.SubstrateClient, address, CancellationToken.None)];
+            Roles = [.. await WhitelistModel.GetRolesCachedAsync(address, CancellationToken.None)];
         }
 
         /// <summary>

@@ -1,0 +1,24 @@
+# Every role the whitelist program currently grants this wallet.
+#
+# `active: true` drops assignments an admin removed or the holder renounced;
+# `permission: COMPLIANT` drops the ones revoked for non-compliance. Together they are
+# the on-chain definition of "whitelisted for this role", so a role that comes back
+# from this query needs no further checking.
+#
+# `first` and `offset` deliberately carry no GraphQL default: this indexer rejects a
+# default on a non-null variable outright ("Argument `first` has type `Int!` and is not
+# nullable, so it can't have a default value"). The caller passes both.
+query UserRoles($user: String!, $first: Int!, $offset: Int!) {
+  roleAssignments(
+    user: $user
+    permission: COMPLIANT
+    active: true
+    first: $first
+    offset: $offset
+  ) {
+    nodes {
+      id
+      role
+    }
+  }
+}
