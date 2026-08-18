@@ -4,7 +4,7 @@ using Substrate.NetApi;
 namespace PlutoFrameworkTests
 {
     /// <summary>
-    /// Onboarding derives the Substrate account and DID that KYC, the questionnaire and the
+    /// Onboarding derives the Substrate account and DID that the questionnaire and the
     /// XcavatePaseo whitelist are keyed to from the Solana account's own seed phrase, so both
     /// come off the same backup. That runs a Solana phrase through Substrate's keyring, which
     /// is only safe because both chains use plain BIP39 - the assumption these tests hold in
@@ -41,8 +41,8 @@ namespace PlutoFrameworkTests
 
         /// <summary>
         /// The DID must be its own key, not the account key over again. A keyring that ignored
-        /// the derivation suffix would hand Sumsub an ExternalUserId identical to the UserId,
-        /// silently and without failing anywhere.
+        /// the derivation suffix would silently produce a DID identical to the account address,
+        /// without failing anywhere.
         /// </summary>
         [Test]
         public void DerivesADidDistinctFromTheAccount()

@@ -19,11 +19,19 @@ namespace PlutoFramework.Components.Kilt
                 return;
             }
 
-            var did = didLockedKey.PublicKey;
+            // Sumsub applicants are keyed by the Solana wallet address, never the DID.
+            var solanaAddress = KeysModel.GetSolanaAddress();
+
+            if (solanaAddress is null)
+            {
+                await unverifiedNavigation.Invoke();
+
+                return;
+            }
 
             var secrets = SumsubSecretModel.GetSecrets();
 
-            var applicantData = await SumsubModel.GetApplicantDataAsync(did, secrets.SecretKey, secrets.AppToken, token);
+            var applicantData = await SumsubModel.GetApplicantDataAsync(solanaAddress, secrets.SecretKey, secrets.AppToken, token);
 
             if (applicantData is not null)
             {

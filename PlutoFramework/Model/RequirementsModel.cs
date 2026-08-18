@@ -29,16 +29,6 @@ namespace PlutoFramework.Model
         {
             var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
 
-            // KYC, DID and the profile are all keyed to a Substrate address. A Solana-only
-            // account has none, so this reports "account required" rather than sending the
-            // GetSubstrateKey() placeholder string to Sumsub.
-            if (!KeysModel.HasSubstrateKey())
-            {
-                DependencyService.Get<NoAccountPopupViewModel>().IsVisible = true;
-
-                return false;
-            }
-
             fullPageLoadingViewModel.Message = "Getting Account";
 
             if (!CheckAccountExists())
@@ -46,19 +36,10 @@ namespace PlutoFramework.Model
                 return false;
             }
 
-            fullPageLoadingViewModel.Message = "Checking DID";
-
-            if (!CheckDidExists())
-            {
-                return false;
-            }
-
             #region Sumsub
             fullPageLoadingViewModel.Message = "Verifying on Sumsub";
 
-            var address = KeysModel.GetSubstrateKey();
-
-            Console.WriteLine("REAL WALLET Address: " + address);
+            var address = KeysModel.GetSolanaAddress();
 
             var sumsubSecrets = SumsubSecretModel.GetSecrets();
 
@@ -78,8 +59,6 @@ namespace PlutoFramework.Model
 
                 return false;
             }
-
-            Console.WriteLine("applicantData was good");
             #endregion
 
             return true;
@@ -118,7 +97,7 @@ namespace PlutoFramework.Model
         {
             var onboardingCompleted = OnboardingModel.IsOnboardingCompleted();
 
-            if ((!KeysModel.HasSolanaKey() && !KeysModel.HasSubstrateKey()) || !onboardingCompleted)
+            if (!KeysModel.HasSolanaKey() || !onboardingCompleted)
             {
                 var noAccountPopupViewModel = DependencyService.Get<NoAccountPopupViewModel>();
 

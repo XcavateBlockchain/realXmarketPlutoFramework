@@ -48,7 +48,7 @@ namespace PlutoFramework.Components.Sumsub
             if (viewModelInput.StatusType != SumsubStatusType.NeedsResubmit)
                 throw new InvalidOperationException("Expected needsResubmit status data");
 
-            currentUserAddress = KeysModel.GetSubstrateKey();
+            currentUserAddress = KeysModel.GetSolanaAddress();
 
             ShowReason = !string.IsNullOrEmpty(viewModelInput.Reason);
             Reason = viewModelInput.Reason;
@@ -74,9 +74,9 @@ namespace PlutoFramework.Components.Sumsub
         private async Task ResubmitAsync()
         {
             if (string.IsNullOrEmpty(currentUserAddress))
-                currentUserAddress = KeysModel.GetSubstrateKey();
+                currentUserAddress = KeysModel.GetSolanaAddress();
 
-            if (string.IsNullOrEmpty(currentUserAddress) || currentUserAddress == "Substrate key does not exist")
+            if (string.IsNullOrEmpty(currentUserAddress))
                 return;
 
             var userInfo = await XcavateUserDatabase.GetUserInformationAsync();
@@ -89,10 +89,10 @@ namespace PlutoFramework.Components.Sumsub
                 {
                     Email = userInfo?.Email ?? "",
                     Phone = userInfo?.PhoneNumber ?? "",
-                    ExternalUserId = KeysModel.GetSubstrateKey()
+                    ExternalUserId = currentUserAddress
                 },
                 totalInSeconds = 600,
-                UserId = KeysModel.GetSubstrateKey(),
+                UserId = currentUserAddress,
                 LevelName = normalizedLevel
             };
 

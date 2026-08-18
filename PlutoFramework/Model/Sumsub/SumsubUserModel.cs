@@ -8,7 +8,13 @@ namespace PlutoFramework.Model.Sumsub
     {
         public static async Task LoadAndSaveUserInfoAsync(CancellationToken token)
         {
-            var address = Model.KeysModel.GetSubstrateKey();
+            // Sumsub applicants are keyed by the Solana wallet address, never Polkadot.
+            var address = Model.KeysModel.GetSolanaAddress();
+
+            if (address is null)
+            {
+                return;
+            }
 
             var secrets = SumsubSecretModel.GetSecrets();
 
@@ -49,14 +55,14 @@ namespace PlutoFramework.Model.Sumsub
         }
 
         /// <summary>
-        /// Fetches the current verification status for the Substrate key owned by this user.
+        /// Fetches the current verification status for the Solana wallet address owned by this user.
         /// Returns null when the applicant does not exist in Sumsub.
         /// </summary>
         public static async Task<SumsubStatusData?> GetCurrentStatusAsync(CancellationToken token)
         {
-            var address = Model.KeysModel.GetSubstrateKey();
+            var address = Model.KeysModel.GetSolanaAddress();
 
-            if (string.IsNullOrEmpty(address) || address == "Substrate key does not exist")
+            if (string.IsNullOrEmpty(address))
             {
                 return null;
             }
