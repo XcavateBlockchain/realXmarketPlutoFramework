@@ -1,0 +1,216 @@
+using PlutoFramework.Components.Solana;
+using PlutoFrameworkCore.Keys;
+using PlutoFrameworkCore.Solana;
+using PlutoFrameworkCore.Solana.Mwa;
+using Solnet.Rpc.Builders;
+
+namespace PlutoFramework.Model.Solana
+{
+    /// <summary>
+    /// A Solana account held by a separate wallet app, reached over Mobile Wallet Adapter.
+    ///
+    /// Every operation is a fresh association: a session ends when the wallet hands control
+    /// back, so nothing can be reused between calls. Each operation therefore authorizes and
+    /// then does its real work inside that one session, which keeps it to a single trip
+    /// through the wallet app.
+    /// </summary>
+    public sealed class MwaSolanaAccount : PlutoFrameworkSolanaAccount
+    {
+        private readonly GenericLockedKey lockedKey;
+
+        private SolanaMwaKey key;
+
+        internal MwaSolanaAccount(GenericLockedKey lockedKey, SolanaMwaKey key)
+        {
+            this.lockedKey = lockedKey;
+            this.key = key;
+        }
+
+        public override string Address => key.Address;
+
+        public override string DisplayName => key.DisplayName;
+
+        public override KeyTypeEnum KeyType => KeyTypeEnum.SolanaMwa;
+
+        public override bool CanSignLocally => false;
+
+        /// <summary>
+        /// The network this authorization was granted on, which may lag the app-wide
+        /// <see cref="PlutoFrameworkSolanaAccount.Cluster"/> if the user changed it since.
+        /// Signing reauthorizes onto the app-wide network rather than using this.
+        /// </summary>
+        public SolanaCluster AuthorizedCluster => key.Cluster;
+
+        public override Task<byte[]> SignMessageAsync(byte[] message, string reason, CancellationToken token) =>
+            RunAuthorizedAsync(
+                Cluster,
+                reason,
+                async (client, operationToken) =>
+                {
+                    var signedPayloads = await client.SignMessagesAsync(Address, [message], operationToken);
+
+                    if (signedPayloads.Count == 0)
+                    {
+                        throw new MwaProtocolException("The wallet returned no signed payload");
+                    }
+
+                    // sign_messages returns each message with its signature appended.
+                    return SolanaTransactionFramer.ExtractSignature(signedPayloads[0]);
+                },
+                token);
+
+        protected override Task<string> SignAndSubmitAsync(
+            TransactionBuilder builder,
+            SolanaCluster cluster,
+            string reason,
+            CancellationToken token) =>
+            RunAuthorizedAsync(
+                cluster,
+                reason,
+                async (client, operationToken) =>
+                {
+                    // The wallet needs a wire-format transaction with an empty signature slot
+                    // to fill in, which is not what Solnet's Serialize() produces unsigned.
+                    var payload = SolanaTransactionFramer.FrameUnsigned(builder.CompileMessage(), REQUIRED_SIGNATURES);
+
+                    var signatures = await client.SignAndSendTransactionsAsync([payload], operationToken);
+
+                    if (signatures.Count == 0)
+                    {
+                        throw new MwaProtocolException("The wallet returned no transaction signature");
+                    }
+
+                    // The wallet submitted it; this app makes no RPC call for the send.
+                    // Not PublicKey: that type rejects anything but 32 bytes, and a
+                    // signature is 64.
+                    return SolanaBase58.Encode(signatures[0]);
+                },
+                token);
+
+        /// <summary>
+        /// Not available under Mobile Wallet Adapter, which is why the injected wallet does
+        /// not advertise <c>solana:signTransaction</c> for this key type.
+        /// </summary>
+        /// <remarks>
+        /// MWA 2.0 deprecated <c>sign_transactions</c> and made <c>sign_and_send_transactions</c>
+        /// mandatory instead, so a wallet app may simply refuse to sign without submitting.
+        /// </remarks>
+        public override Task<byte[]> SignWireTransactionAsync(
+            byte[] wireTransaction,
+            string reason,
+            CancellationToken token) =>
+            throw new NotSupportedException(
+                "Signing without submitting is not available under Mobile Wallet Adapter");
+
+        /// <summary>
+        /// Hands the transaction over exactly as it arrived. The wallet fills in its signature
+        /// and submits, so this app makes no RPC call for the send.
+        /// </summary>
+        public override Task<byte[]> SignAndSendWireTransactionAsync(
+            byte[] wireTransaction,
+            SolanaCluster cluster,
+            string reason,
+            CancellationToken token) =>
+            RunAuthorizedAsync(
+                cluster,
+                reason,
+                async (client, operationToken) =>
+                {
+                    var signatures = await client.SignAndSendTransactionsAsync([wireTransaction], operationToken);
+
+                    if (signatures.Count == 0)
+                    {
+                        throw new MwaProtocolException("The wallet returned no transaction signature");
+                    }
+
+                    return signatures[0];
+                },
+                token);
+
+        /// <summary>
+        /// Opens a session, authorizes on <paramref name="cluster"/> using the stored token,
+        /// keeps any refreshed authorization, then runs the operation in that same session.
+        ///
+        /// Passing the stored token lets the wallet reauthorize without reprompting. When the
+        /// stored network differs from the requested one, this is also what moves the
+        /// authorization across, rather than failing and asking the user to reconnect.
+        ///
+        /// The waiting popup covers the whole session, and cancelling it cancels the session.
+        /// There is deliberately no local password/biometric gate anywhere on this path:
+        /// the user approves every request inside the wallet app itself, which is the
+        /// stronger check, so a second local prompt would only double-ask.
+        /// </summary>
+        /// <param name="cluster">
+        /// Usually <see cref="PlutoFrameworkSolanaAccount.Cluster"/>, but a dapp relaying
+        /// through the injected wallet names its own network and that choice wins.
+        /// </param>
+        private async Task<T> RunAuthorizedAsync<T>(
+            SolanaCluster cluster,
+            string reason,
+            Func<MwaClient, CancellationToken, Task<T>> operation,
+            CancellationToken token)
+        {
+            var popup = DependencyService.Get<MwaSignPopupViewModel>();
+
+            var result = await popup.ShowWhileAsync(
+                reason,
+                (progress, operationToken) => MwaConnectFlow.WithAuthorizedSessionAsync(
+                    SolanaMwaModel.BuildIdentity(),
+                    cluster,
+                    key.AuthToken,
+                    async (client, authorization, innerToken) =>
+                    {
+                        await PersistIfRefreshedAsync(authorization);
+
+                        return await operation(client, innerToken);
+                    },
+                    progress,
+                    operationToken),
+                token);
+
+            // The session above is closed, so a follow-up wallet trip cannot collide with
+            // it. This is how an address that missed its notifications link (connected
+            // before the feature, or offline at the time) gets one: riding on a signature
+            // the user asked for. No-ops once linked, and drops itself while a link is
+            // already running - including the one whose own signature just returned here.
+            _ = WalletLinkModel.TryLinkSolanaMwaAsync(this);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Writes the authorization back when the wallet issued a new token, moved us to a
+        /// different network, or switched account. Skipped when nothing changed, to avoid a
+        /// secure-storage write on every signature.
+        /// </summary>
+        private async Task PersistIfRefreshedAsync(MwaAuthorizationResult authorization)
+        {
+            if (authorization.AuthToken == key.AuthToken &&
+                authorization.Chain == key.Chain &&
+                authorization.Address == key.Address)
+            {
+                return;
+            }
+
+            var refreshed = new SolanaMwaKey
+            {
+                AuthToken = authorization.AuthToken,
+                Address = authorization.Address,
+                Chain = authorization.Chain,
+                WalletUriBase = authorization.WalletUriBase ?? key.WalletUriBase,
+                AccountLabel = authorization.AccountLabel ?? key.AccountLabel,
+            };
+
+            // A changed address means a different account, and the database keys rows by
+            // address, so the old row has to go rather than leaving two Solana keys behind.
+            if (refreshed.Address != key.Address)
+            {
+                await lockedKey.RemoveAsync();
+            }
+
+            await KeysModel.SaveSolanaMwaKeyAsync(refreshed);
+
+            key = refreshed;
+        }
+    }
+}

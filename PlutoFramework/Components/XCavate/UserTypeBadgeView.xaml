@@ -3,12 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PlutoFramework.Components.Xcavate.UserTypeBadgeView">
     <Border Padding="0"
-            HeightRequest="20"
+            HeightRequest="24"
             StrokeThickness="0"
             x:Name="border"
             BackgroundColor="#88888888">
         <Border.StrokeShape>
-            <RoundRectangle CornerRadius="4" />
+            <RoundRectangle CornerRadius="12" />
 
         </Border.StrokeShape>
 
@@ -17,7 +17,7 @@
                 x:Name="roleLabel"
                 AbsoluteLayout.LayoutBounds="0.5, .5, autosize, autosize"
                 AbsoluteLayout.LayoutFlags="PositionProportional"
-                Margin="10, 5, 10, 5"
+                Margin="12, 5, 12, 5"
                 Text="None"
                 TextColor="White"
                 VerticalTextAlignment="Center"

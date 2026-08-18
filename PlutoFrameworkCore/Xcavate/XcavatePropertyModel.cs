@@ -2,6 +2,7 @@
 {
     public class XcavatePropertyModel
     {
+
         public static double GetAreaPricesPercentage(decimal price)
         {
             // TODO

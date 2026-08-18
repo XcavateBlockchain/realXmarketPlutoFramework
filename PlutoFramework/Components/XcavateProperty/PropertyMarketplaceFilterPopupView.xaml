@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.XcavateProperty.PropertyMarketplaceFilterPopupView"
+                      xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+         xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+         xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
+         xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
+         xmlns:form="clr-namespace:PlutoFramework.Components.Form"
+         IsVisible="{Binding IsVisible}"
+         AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+         AbsoluteLayout.LayoutFlags="All">
+    <card:BottomPopupCard Title="Filter"
+                            IsShown="{Binding IsVisible}"
+                            AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                            AbsoluteLayout.LayoutFlags="All">
+        <card:BottomPopupCard.View>
+            <AbsoluteLayout>
+
+                <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
+                                     AbsoluteLayout.LayoutFlags="WidthProportional"
+                                     x:Name="verticalStackLayout"
+                                     Spacing="20"
+                                     Padding="10, 10, 10, 10">
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Search" />
+                        <form:FormInputView Placeholder="Find by property name or ID"
+                                            Text="{Binding SearchText}" />
+                    </VerticalStackLayout>
+
+                    <Grid ColumnSpacing="15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <VerticalStackLayout Grid.Column="0" Spacing="8">
+                            <Label Text="Town City" />
+                            <Border StrokeThickness="0"
+                                    Padding="12,10"
+                                    BackgroundColor="{AppThemeBinding Light=#fdfdfd, Dark={StaticResource Black}}"
+                                    Shadow="{StaticResource Key=CardShadow}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="14" />
+                                </Border.StrokeShape>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding SelectedTownCity}"
+                                           VerticalTextAlignment="Center" />
+                                    <Label Grid.Column="1"
+                                           Text=">"
+                                           Rotation="90"
+                                           VerticalTextAlignment="Center"
+                                           TextColor="#888888" />
+                                </Grid>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenTownCitySelectorCommand}" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="8">
+                            <Label Text="Property Type" />
+                            <Border StrokeThickness="0"
+                                    Padding="12,10"
+                                    BackgroundColor="{AppThemeBinding Light=#fdfdfd, Dark={StaticResource Black}}"
+                                    Shadow="{StaticResource Key=CardShadow}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="14" />
+                                </Border.StrokeShape>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding SelectedPropertyType}"
+                                           VerticalTextAlignment="Center" />
+                                    <Label Grid.Column="1"
+                                           Text=">"
+                                           Rotation="90"
+                                           VerticalTextAlignment="Center"
+                                           TextColor="#888888" />
+                                </Grid>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenPropertyTypeSelectorCommand}" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                </VerticalStackLayout>
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                  AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                  ColumnSpacing="15"
+                  Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <buttons:BasicGrayButton Text="Cancel" Grid.Column="0"
+                                                 Command="{Binding CancelCommand}"/>
+
+                        <buttons:ElevatedButton Text="Continue"
+                                                Grid.Column="1"
+                                                Command="{Binding ContinueCommand}"
+                                                ButtonState="{Binding ContinueButtonState}"/>
+                    </Grid>
+                </AbsoluteLayout>
+
+            </AbsoluteLayout>
+
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+</ContentView>

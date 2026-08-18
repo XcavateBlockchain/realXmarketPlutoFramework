@@ -1,6 +1,7 @@
 using CommunityToolkit.Maui.Alerts;
 using PlutoFramework.Components.Kilt;
 using PlutoFramework.Components.Mnemonics;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFrameworkCore.Keys;
@@ -41,6 +42,59 @@ public partial class NewKeyView : ContentView
         set => SetValue(KeyTypeProperty, value);
     }
 
+    /// <summary>
+    /// Opens the popup that creates a Solana account from a new seed phrase. The Solana flows
+    /// do not create the key inline, so the buttons can only be re-evaluated once the popup
+    /// reports back - not when the tap is handled.
+    /// </summary>
+    private void ShowCreateSolanaMnemonicsPopup()
+    {
+        var popup = DependencyService.Get<CreateSolanaMnemonicsPopupViewModel>();
+
+        popup.Completed = ChangeButtonsIfKeyExistsAsync;
+
+        popup.IsVisible = true;
+    }
+
+    private void ShowEnterSolanaMnemonicsPopup()
+    {
+        var popup = DependencyService.Get<EnterSolanaMnemonicsPopupViewModel>();
+
+        popup.Completed = (mnemonics) => ChangeButtonsIfKeyExistsAsync();
+
+        popup.IsVisible = true;
+    }
+
+    /// <summary>
+    /// The popup reports the authorization without persisting it, so this saves it. There is
+    /// already a password here - this screen is only reachable once the app is set up.
+    /// </summary>
+    private void ShowConnectMwaPopup()
+    {
+        var popup = DependencyService.Get<ConnectMwaPopupViewModel>();
+
+        popup.Completed = async (key) =>
+        {
+            // SaveSolanaMwaKeyAsync deletes the existing Solana key before it can fail, so a
+            // failure here must not be reported as success - it can leave the account slot
+            // empty rather than unchanged.
+            try
+            {
+                await KeysModel.SaveSolanaMwaKeyAsync(key);
+            }
+            catch (Exception ex)
+            {
+                await Toast.Make($"Could not save your wallet: {ex.Message}").Show();
+
+                return;
+            }
+
+            await ChangeButtonsIfKeyExistsAsync();
+        };
+
+        popup.IsVisible = true;
+    }
+
     private async Task ChangeButtonsIfKeyExistsAsync()
     {
         if (!await CheckKeyExistsAsync(disableToast: true))
@@ -56,17 +110,17 @@ public partial class NewKeyView : ContentView
     {
         var allSavedKeys = await KeysDatabase.GetAllKeysAsync();
 
-        var keyIsPolkadotType = KeyType == KeyTypeEnum.Sr25519 || KeyType == KeyTypeEnum.PolkadotJson;
+        var keyIsPolkadotType = KeyType.IsPolkadotAccountType();
+
+        // The two Solana variants share one account slot, exactly as the two Polkadot
+        // ones do, so either occupying it blocks both.
+        var keyIsSolanaType = KeyType.IsSolanaAccountType();
 
         if (allSavedKeys.Where(key => key.Type == KeyType ||
-            (keyIsPolkadotType && (key.Type == KeyTypeEnum.Sr25519 || key.Type == KeyTypeEnum.PolkadotJson))).Any())
+            (keyIsPolkadotType && key.Type.IsPolkadotAccountType()) ||
+            (keyIsSolanaType && key.Type.IsSolanaAccountType())).Any())
         {
-            if (keyIsPolkadotType && !disableToast)
-            {
-                var toast = Toast.Make($"{KeyType.GetName()} already exists.");
-                await toast.Show();
-            }
-            else if (!disableToast)
+            if (!disableToast)
             {
                 var toast = Toast.Make($"{KeyType.GetName()} already exists.");
                 await toast.Show();
@@ -108,6 +162,16 @@ public partial class NewKeyView : ContentView
                 await encryptionX25519Toast.Show();
 
                 break;
+            case KeyTypeEnum.SolanaMnemonic:
+                // Asks rather than generating inline, so the seed phrase is shown for
+                // backup before it becomes the only copy of the key.
+                ShowCreateSolanaMnemonicsPopup();
+
+                return;
+            case KeyTypeEnum.SolanaMwa:
+                ShowConnectMwaPopup();
+
+                return;
             default:
                 var toast = Toast.Make($"Creating {KeyType.GetName()} keys is not supported yet.");
                 await toast.Show();
@@ -132,7 +196,12 @@ public partial class NewKeyView : ContentView
             case KeyTypeEnum.Sr25519:
                 await Shell.Current.Navigation.PushAsync(new EnterMnemonicsPage(new EnterMnemonicsViewModel
                 {
-                    Navigation = Shell.Current.Navigation.PopAsync,
+                    Navigation = async (mnemonics) =>
+                    {
+                        await KeysModel.SaveSr25519KeyAsync(mnemonics);
+
+                        await Shell.Current.Navigation.PopAsync();
+                    },
                 }));
 
                 break;
@@ -155,6 +224,18 @@ public partial class NewKeyView : ContentView
                 {
                     Navigation = Shell.Current.Navigation.PopAsync,
                 }));
+
+                break;
+
+            case KeyTypeEnum.SolanaMnemonic:
+                ShowEnterSolanaMnemonicsPopup();
+
+                break;
+
+            case KeyTypeEnum.SolanaMwa:
+                // Connecting an existing wallet is both the create and the import path,
+                // since there is no local key to generate either way.
+                ShowConnectMwaPopup();
 
                 break;
 

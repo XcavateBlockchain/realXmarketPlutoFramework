@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<template:PageTemplate xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                       xmlns:template="clr-namespace:PlutoFramework.Templates.PageTemplate"
+                       xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+                       xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                       xmlns:password="clr-namespace:PlutoFramework.Components.Password"
+                       xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+                       x:Class="PlutoFramework.Components.Solana.ImportSolanaWalletPage"
+                       Title="ImportSolanaWalletPage"
+                       NavigationBarIsVisible="False">
+    <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                AbsoluteLayout.LayoutFlags="All">
+        <VerticalStackLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, AutoSize"
+                             AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                             Padding="20, 20, 20, 20"
+                             Spacing="15">
+
+            <Label Text="Import your Solana wallet"
+                   FontAttributes="Bold"
+                   FontSize="18"
+                   HorizontalTextAlignment="Center" />
+
+            <solana:SolanaMnemonicsEntryView x:Name="mnemonicsEntry" />
+
+            <card:Card CardPadding="0">
+                <card:Card.View>
+                    <password:SetPasswordView x:Name="setPasswordView"
+                                              Margin="10"
+                                              ValidityChanged="OnPasswordValidityChanged" />
+                </card:Card.View>
+            </card:Card>
+
+            <buttons:ElevatedButton Text="Continue"
+                                    x:Name="continueButton"
+                                    ButtonState="Disabled"
+                                    Clicked="ContinueClicked"
+                                    AutomationId="ImportSolanaWalletContinue"
+                                    AutomationProperties.IsInAccessibleTree="True"
+                                    SemanticProperties.Description="ImportSolanaWalletContinue" />
+        </VerticalStackLayout>
+    </ScrollView>
+</template:PageTemplate>

@@ -12,6 +12,9 @@ namespace PlutoFramework.Model.AjunaExt
 	public class SubstrateClientExt
 	{
         private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly SemaphoreSlim connectionLock = new(1, 1);
+        private readonly Uri websocket;
+        private readonly EndpointEnum clientEndpointKey;
 
         public ChargeType DefaultCharge;
 
@@ -20,27 +23,41 @@ namespace PlutoFramework.Model.AjunaExt
         public Metadata CustomMetadata { get; set; }
         public SubstrateClient SubstrateClient { get; set; }
 
-        private TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
+        private TaskCompletionSource<bool> taskCompletionSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private bool hasConnectionAttempted;
         public async Task<bool> IsConnectedAsync()
         {
+            if (SubstrateClient.IsConnected)
+            {
+                return true;
+            }
+
+            if (!hasConnectionAttempted)
+            {
+                return false;
+            }
+
             var timeoutTask = Task.Delay(TimeSpan.FromSeconds(5));
             var completedTask = await Task.WhenAny(taskCompletionSource.Task, timeoutTask);
 
             if (completedTask == taskCompletionSource.Task)
             {
-                // Task completed within timeout.
-                return await taskCompletionSource.Task;
+                // Task completed within timeout. Also verify the current websocket state because
+                // the mobile OS can disconnect it after a successful connection while backgrounded.
+                return await taskCompletionSource.Task && SubstrateClient.IsConnected;
             }
             else
             {
                 // Timeout occurred.
-                return false;
+                return SubstrateClient.IsConnected;
             }
         }
 
         public SubstrateClientExt(Endpoint endpoint, Uri fastestWebSocket, Substrate.NetApi.Model.Extrinsics.ChargeType chargeType) 
         {
             Endpoint = endpoint;
+            websocket = fastestWebSocket;
+            clientEndpointKey = endpoint.Key;
 
             SubstrateClient = GetSubstrateClient(endpoint.Key, fastestWebSocket);
         }
@@ -51,8 +68,38 @@ namespace PlutoFramework.Model.AjunaExt
         public SubstrateClientExt(EndpointEnum mockKey, Endpoint endpoint, Uri fastestWebSocket, Substrate.NetApi.Model.Extrinsics.ChargeType chargeType)
         {
             Endpoint = endpoint;
+            websocket = fastestWebSocket;
+            clientEndpointKey = mockKey;
 
             SubstrateClient = GetSubstrateClient(mockKey, fastestWebSocket);
+        }
+
+        public async Task<bool> EnsureConnectedAsync(CancellationToken token = default)
+        {
+            token.ThrowIfCancellationRequested();
+
+            if (await IsConnectedAsync())
+            {
+                return true;
+            }
+
+            await connectionLock.WaitAsync(token);
+
+            try
+            {
+                token.ThrowIfCancellationRequested();
+
+                if (await IsConnectedAsync())
+                {
+                    return true;
+                }
+
+                return await ConnectAndLoadMetadataAsync();
+            }
+            finally
+            {
+                connectionLock.Release();
+            }
         }
 
         /// <summary>
@@ -64,6 +111,21 @@ namespace PlutoFramework.Model.AjunaExt
             try
             {
                 Console.WriteLine("Connect base");
+
+                if (hasConnectionAttempted && !SubstrateClient.IsConnected)
+                {
+                    try
+                    {
+                        SubstrateClient.Dispose();
+                    }
+                    catch
+                    {
+                    }
+
+                    SubstrateClient = GetSubstrateClient(clientEndpointKey, websocket);
+                }
+
+                hasConnectionAttempted = true;
 
                 await SubstrateClient.ConnectAsync();
 
@@ -92,14 +154,7 @@ namespace PlutoFramework.Model.AjunaExt
                     Console.WriteLine(signedExtension.SignedIdentifier);
                 }
 
-
-                var trial = taskCompletionSource.TrySetResult(SubstrateClient.IsConnected);
-
-                if (!trial)
-                {
-                    taskCompletionSource = new TaskCompletionSource<bool>();
-                    taskCompletionSource.SetResult(SubstrateClient.IsConnected);
-                }
+                SetConnectionResult(SubstrateClient.IsConnected);
 
                 Console.WriteLine($"Actually connected: {Endpoint.Key} - {SubstrateClient.IsConnected}");
 
@@ -109,16 +164,20 @@ namespace PlutoFramework.Model.AjunaExt
             {
                 Console.WriteLine("SubstrateClientExt error: ");
                 Console.WriteLine(e);
-                var trial = taskCompletionSource.TrySetResult(false);
-
-                if (!trial)
-                {
-                    taskCompletionSource = new TaskCompletionSource<bool>();
-                    taskCompletionSource.SetResult(false);
-                }
+                SetConnectionResult(false);
 
                 return false;
             }
+        }
+
+        private void SetConnectionResult(bool connected)
+        {
+            if (taskCompletionSource.Task.IsCompleted)
+            {
+                taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
+
+            taskCompletionSource.TrySetResult(connected);
         }
 
         public virtual async Task<string> SubmitExtrinsicAsync(Method method, Account account, TaskCompletionSource<string?> txHash, Action<string, ExtrinsicStatus> callback, uint lifeTime = 64, CancellationToken token = default)

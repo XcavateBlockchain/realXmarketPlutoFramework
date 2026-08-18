@@ -62,6 +62,16 @@ public partial class FormInputView : ContentView
             control.entry.Keyboard = (Keyboard)newValue;
         });
 
+    public static readonly BindableProperty ReturnTypeProperty = BindableProperty.Create(
+        nameof(ReturnType), typeof(ReturnType), typeof(FormInputView),
+        defaultValue: ReturnType.Default,
+        defaultBindingMode: BindingMode.OneWay,
+        propertyChanged: (bindable, oldValue, newValue) =>
+        {
+            var control = (FormInputView)bindable;
+            control.entry.ReturnType = (ReturnType)newValue;
+        });
+
     public static readonly BindableProperty MaxValueProperty = BindableProperty.Create(
         nameof(MaxValue), typeof(string), typeof(FormInputView),
         propertyChanged: (bindable, oldValue, newValue) =>
@@ -82,6 +92,12 @@ public partial class FormInputView : ContentView
     {
         get => (Keyboard)GetValue(KeyboardTypeProperty);
         set => SetValue(KeyboardTypeProperty, value);
+    }
+
+    public ReturnType ReturnType
+    {
+        get => (ReturnType)GetValue(ReturnTypeProperty);
+        set => SetValue(ReturnTypeProperty, value);
     }
 
     public string? MaxValue

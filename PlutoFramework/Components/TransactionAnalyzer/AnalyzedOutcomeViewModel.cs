@@ -146,9 +146,18 @@ namespace PlutoFramework.Components.TransactionAnalyzer
             {
                 tempProperties.Add(new PropertyTokenOwnershipChangeInfo
                 {
+                    Endpoint = property.Endpoint,
+                    Region = property.Region,
                     NftBase = (await PlutoFramework.Components.XcavateProperty.XcavatePropertyModel.ToXcavateNftWrapperAsync((XcavatePaseoNftsPalletNft)property.NftBase, CancellationToken.None)).NftBase,
                     Operation = property.Operation,
                     Amount = property.Amount,
+                    TokensBought = property.TokensBought,
+                    TokensOwned = property.TokensOwned,
+                    TimeLeftToBuy = property.TimeLeftToBuy,
+                    TimeLeftToClaim = property.TimeLeftToClaim,
+                    ListingHasExpired = property.ListingHasExpired,
+                    ClaimHasExpired = property.ClaimHasExpired,
+                    SpvCreated = property.SpvCreated,
                     Favourite = false // Does not matter
                 });
             }
@@ -168,7 +177,7 @@ namespace PlutoFramework.Components.TransactionAnalyzer
     {
         public Color UsdColor { get; set; }
     }
-    public class NftAssetWrapperExpanded : NftWrapper
+    public record NftAssetWrapperExpanded : NftWrapper
     {
         public NftOperation Operation { get; set; }
         public AssetInfoExpanded Price { get; set; }

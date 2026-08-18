@@ -53,7 +53,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(calls.Encode());
-            return new Method(5, "Utility", 0, "batch", byteArray.ToArray());
+            return new Method(16, "Utility", 0, "batch", byteArray.ToArray());
         }
         
         /// <summary>
@@ -65,7 +65,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(index.Encode());
             byteArray.AddRange(call.Encode());
-            return new Method(5, "Utility", 1, "as_derivative", byteArray.ToArray());
+            return new Method(16, "Utility", 1, "as_derivative", byteArray.ToArray());
         }
         
         /// <summary>
@@ -76,7 +76,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(calls.Encode());
-            return new Method(5, "Utility", 2, "batch_all", byteArray.ToArray());
+            return new Method(16, "Utility", 2, "batch_all", byteArray.ToArray());
         }
         
         /// <summary>
@@ -88,7 +88,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(as_origin.Encode());
             byteArray.AddRange(call.Encode());
-            return new Method(5, "Utility", 3, "dispatch_as", byteArray.ToArray());
+            return new Method(16, "Utility", 3, "dispatch_as", byteArray.ToArray());
         }
         
         /// <summary>
@@ -99,7 +99,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(calls.Encode());
-            return new Method(5, "Utility", 4, "force_batch", byteArray.ToArray());
+            return new Method(16, "Utility", 4, "force_batch", byteArray.ToArray());
         }
         
         /// <summary>
@@ -111,7 +111,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(call.Encode());
             byteArray.AddRange(weight.Encode());
-            return new Method(5, "Utility", 5, "with_weight", byteArray.ToArray());
+            return new Method(16, "Utility", 5, "with_weight", byteArray.ToArray());
         }
         
         /// <summary>
@@ -123,7 +123,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(main.Encode());
             byteArray.AddRange(fallback.Encode());
-            return new Method(5, "Utility", 6, "if_else", byteArray.ToArray());
+            return new Method(16, "Utility", 6, "if_else", byteArray.ToArray());
         }
         
         /// <summary>
@@ -135,7 +135,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(as_origin.Encode());
             byteArray.AddRange(call.Encode());
-            return new Method(5, "Utility", 7, "dispatch_as_fallible", byteArray.ToArray());
+            return new Method(16, "Utility", 7, "dispatch_as_fallible", byteArray.ToArray());
         }
     }
     

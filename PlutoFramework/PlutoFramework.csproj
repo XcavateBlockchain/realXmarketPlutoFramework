@@ -61,24 +61,29 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="3.7.412.1" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
-    <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.10" />
+    <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
     <PackageReference Include="Plugin.Fingerprint" Version="3.0.0-beta.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
     <PackageReference Include="AcrylicView.Maui" Version="2.1.3" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="FFImageLoading.Maui" Version="1.2.9" />
+    <PackageReference Include="Bertuzzi.MAUI.PinchZoomImage" Version="1.0.0" />
+    <PackageReference Include="FFImageLoading.Maui" Version="1.3.2" />
     <PackageReference Include="Microcharts.Maui" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
     <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.119.0" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="3.119.0" />
     <PackageReference Include="CommunityToolkit.Maui" Version="12.3.0" />
-    <PackageReference Include="ZXing.Net.Maui.Controls" Version="0.4.0" />
-    <PackageReference Include="ZXing.Net.Maui" Version="0.4.0" />
+    <PackageReference Include="ZXing.Net.Maui.Controls" Version="0.10.2" />
+    <PackageReference Include="ZXing.Net.Maui" Version="0.10.2" />
     <PackageReference Include="Markdig" Version="0.41.3" />
     <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="10.0.0" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.0" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.0" />
-
+  </ItemGroup>
+  
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <PackageReference Include="Xamarin.Google.Android.Play.Integrity" Version="1.5.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -101,6 +106,10 @@
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\Account\NoAccountPopup.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Update="Components\Onboarding\OnboardingInProgressPopup.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -456,6 +465,10 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
+    <Compile Update="Components\Map\PropertyMapView.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
     <Compile Update="Components\MessagePopup\MessagePopupView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
@@ -476,10 +489,6 @@
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
-    <Compile Update="Components\Mnemonics\NoMnemonicsPage.xaml.cs">
-      <SubType>Code</SubType>
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
     <Compile Update="Components\Mnemonics\SuccessfulImportPopupView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
@@ -489,6 +498,10 @@
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\NavigationBar\TopNavigationBar.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Update="Components\NavigationBar\TopNavigationStepperBar.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -680,6 +693,14 @@
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
     <Compile Update="Components\Settings\DeveloperSettingsPage.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Update="Components\Settings\LoggedOutPage.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Update="Components\Settings\LogOutPopup.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
     </Compile>
@@ -935,6 +956,15 @@
     <Compile Update="Components\Xcavate\QuestionnairePassPage.xaml.cs">
       <DependentUpon>QuestionnairePassPage.xaml</DependentUpon>
     </Compile>
+    <Compile Update="Components\Xcavate\QuestionnaireV2ConditionsPage.xaml.cs">
+      <DependentUpon>QuestionnaireV2ConditionsPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Components\Xcavate\QuestionnaireV2DeclarationPage.xaml.cs">
+      <DependentUpon>QuestionnaireV2DeclarationPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Update="Components\Xcavate\QuestionnaireV2QuestionsPage.xaml.cs">
+      <DependentUpon>QuestionnaireV2QuestionsPage.xaml</DependentUpon>
+    </Compile>
     <Compile Update="Components\Xcavate\RiskWarningView.xaml.cs">
       <SubType>Code</SubType>
       <DependentUpon>%(Filename)</DependentUpon>
@@ -1016,6 +1046,9 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Account\NoAccountPopup.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Components\Onboarding\OnboardingInProgressPopup.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\AddressView\AddressQrCodeView.xaml">
@@ -1325,6 +1358,9 @@
     <None Update="Components\NavigationBar\TopNavigationBar.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
+    <None Update="Components\NavigationBar\TopNavigationStepperBar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
     <None Update="Components\NetworkSelect\MultiNetworkSelectView.xaml">
       <SubType></SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -1469,6 +1505,12 @@
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Settings\DeveloperSettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Components\Settings\LoggedOutPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Components\Settings\LogOutPopup.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
     <None Update="Components\Settings\GenericButton.xaml">
@@ -1842,14 +1884,10 @@
     <None Remove="Resources\Images\uniqueblack.svg" />
     <None Remove="Resources\Images\uniquewhite.svg" />
     <None Remove="Resources\Images\xblack.png" />
-    <None Remove="Resources\Images\xcavateaccountselected.png" />
-    <None Remove="Resources\Images\xcavateaccountunselected.png" />
     <None Remove="Resources\Images\xcavatebackarrow.png" />
     <None Remove="Resources\Images\xcavatecellarrow.png" />
     <None Remove="Resources\Images\xcavatedeveloper.png" />
     <None Remove="Resources\Images\xcavateemail.png" />
-    <None Remove="Resources\Images\xcavatehelpselected.png" />
-    <None Remove="Resources\Images\xcavatehelpunselected.png" />
     <None Remove="Resources\Images\xcavateiconwhite.png" />
     <None Remove="Resources\Images\xcavateinvestor.png" />
     <None Remove="Resources\Images\xcavatelaunchbg1.jpg" />
@@ -1858,10 +1896,6 @@
     <None Remove="Resources\Images\xcavatelettingagent.png" />
     <None Remove="Resources\Images\xcavateloanevaluator.png" />
     <None Remove="Resources\Images\xcavatemappin.png" />
-    <None Remove="Resources\Images\xcavatemarketplace.png" />
-    <None Remove="Resources\Images\xcavatemarketplaceselected.png" />
-    <None Remove="Resources\Images\xcavatemarketplaceunselected.png" />
-    <None Remove="Resources\Images\xcavatemenu.png" />
     <None Remove="Resources\Images\xcavateqr.png" />
     <None Remove="Resources\Images\xcavatergb.png" />
     <None Remove="Resources\Images\xcavateshare.png" />
@@ -1894,8 +1928,7 @@
   <ItemGroup>
     <MauiFont Include="Resources\Fonts\OpenSans-Regular.ttf" />
     <MauiFont Include="Resources\Fonts\OpenSans-Semibold.ttf" />
-    <MauiFont Include="Resources\Fonts\xcavatefont.ttf" />
-    <MauiFont Include="Resources\Fonts\dmsans.ttf" Alias="XcavateFont" />
+    <MauiFont Include="Resources\Fonts\xcavatefont.ttf" Alias="XcavateFont" />
   </ItemGroup>
 
   <ItemGroup>
@@ -1987,14 +2020,10 @@
     <MauiImage Include="Resources\Images\uniqueblack.svg" />
     <MauiImage Include="Resources\Images\uniquewhite.svg" />
     <MauiImage Include="Resources\Images\xblack.png" />
-    <MauiImage Include="Resources\Images\xcavateaccountselected.png" />
-    <MauiImage Include="Resources\Images\xcavateaccountunselected.png" />
     <MauiImage Include="Resources\Images\xcavatebackarrow.png" />
     <MauiImage Include="Resources\Images\xcavatecellarrow.png" />
     <MauiImage Include="Resources\Images\xcavatedeveloper.png" />
     <MauiImage Include="Resources\Images\xcavateemail.png" />
-    <MauiImage Include="Resources\Images\xcavatehelpselected.png" />
-    <MauiImage Include="Resources\Images\xcavatehelpunselected.png" />
     <MauiImage Include="Resources\Images\xcavateiconwhite.png" />
     <MauiImage Include="Resources\Images\xcavateinvestor.png" />
     <MauiImage Include="Resources\Images\xcavatelaunchbg1.jpg" />
@@ -2003,10 +2032,6 @@
     <MauiImage Include="Resources\Images\xcavatelettingagent.png" />
     <MauiImage Include="Resources\Images\xcavateloanevaluator.png" />
     <MauiImage Include="Resources\Images\xcavatemappin.png" />
-    <MauiImage Include="Resources\Images\xcavatemarketplace.png" />
-    <MauiImage Include="Resources\Images\xcavatemarketplaceselected.png" />
-    <MauiImage Include="Resources\Images\xcavatemarketplaceunselected.png" />
-    <MauiImage Include="Resources\Images\xcavatemenu.png" />
     <MauiImage Include="Resources\Images\xcavateqr.png" />
     <MauiImage Include="Resources\Images\xcavatergb.png" />
     <MauiImage Include="Resources\Images\xcavateshare.png" />
@@ -2028,6 +2053,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\Account\NoAccountPopup.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Components\Onboarding\OnboardingInProgressPopup.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\AddressView\AddressQrCodeView.xaml">
@@ -2261,9 +2289,6 @@
     <MauiXaml Update="Components\Mnemonics\MnemonicsView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-    <MauiXaml Update="Components\Mnemonics\NoMnemonicsPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
     <MauiXaml Update="Components\Mnemonics\SuccessfulImportPopupView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
@@ -2384,6 +2409,12 @@
     <MauiXaml Update="Components\Settings\GenericSwitch.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Components\Settings\LoggedOutPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Components\Settings\LogOutPopup.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Components\Settings\QuestionAnswerView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
@@ -2444,6 +2475,9 @@
     <MauiXaml Update="Components\WebView\WebViewNavigationBarView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Components\XcavateProperty\BoughtPropertyTokensView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Components\XcavateProperty\BuyPropertyTokensView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
@@ -2483,6 +2517,9 @@
     <MauiXaml Update="Components\XcavateProperty\PropertyLittleThumbnailView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="Components\XcavateProperty\PropertyMarketplaceFilterPopupView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Components\XcavateProperty\PropertyThumbnailView.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
@@ -2496,6 +2533,9 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\Xcavate\AboutUsView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Components\NavigationBar\TopNavigationStepperBar.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\Xcavate\CompanyPage.xaml">
@@ -2538,6 +2578,15 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\Xcavate\QuestionnairePassPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Components\Xcavate\QuestionnaireV2ConditionsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Components\Xcavate\QuestionnaireV2DeclarationPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Components\Xcavate\QuestionnaireV2QuestionsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Components\Xcavate\QuestionnaireWarningPage.xaml">
@@ -2594,5 +2643,9 @@
     <MauiXaml Update="Components\XcavateProperty\PropertyActionsPage.xaml">
       <SubType>Designer</SubType>
     </MauiXaml>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\Onboarding\" />
   </ItemGroup>
 </Project>

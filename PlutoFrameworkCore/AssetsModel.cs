@@ -2,6 +2,7 @@
 using PlutoFramework.Constants;
 using PlutoFramework.Model.AjunaExt;
 using PlutoFramework.Types;
+using PlutoFrameworkCore;
 using Polkadot.NetApi.Generated.Model.sp_core.crypto;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types.Primitive;
@@ -31,6 +32,51 @@ namespace PlutoFramework.Model
 
         public static Dictionary<AssetKey, Asset> AssetsDict = new Dictionary<AssetKey, Asset>();
 
+        // Check whether the given asset is allowed by the whitelist.
+        public static bool IsAssetWhitelisted(Asset asset)
+        {
+            var whitelist = PlutoConfigurationModel.WhitelistedTokens;
+            if (whitelist == null || whitelist.Count == 0)
+            {
+                return true; // no whitelisting applied
+            }
+
+            var key = (asset.Endpoint.Key, asset.Pallet, asset.AssetId);
+            return whitelist.Contains(key);
+        }
+
+        // Add or update an asset only if it passes whitelist checks.
+        public static void AddOrUpdateAsset(Asset asset, bool overwrite = true)
+        {
+            if (!IsAssetWhitelisted(asset))
+            {
+                return;
+            }
+
+            var key = (asset.Endpoint.Key, asset.Pallet, asset.AssetId);
+
+            if (!AssetsDict.ContainsKey(key) || overwrite)
+            {
+                AssetsDict[key] = asset;
+            }
+        }
+
+        // Remove any assets that are not on the current whitelist.
+        public static void EnforceWhitelist()
+        {
+            var whitelist = PlutoConfigurationModel.WhitelistedTokens;
+            if (whitelist == null || whitelist.Count == 0)
+            {
+                return; // no whitelisting applied
+            }
+
+            var keysToRemove = AssetsDict.Where(kv => !IsAssetWhitelisted(kv.Value)).Select(kv => kv.Key).ToList();
+            foreach (var key in keysToRemove)
+            {
+                AssetsDict.Remove(key);
+            }
+        }
+
         public static IEnumerable<Asset> GetAssetsWithSymbol(string symbol)
         {
             return AssetsDict.Values
@@ -41,12 +87,7 @@ namespace PlutoFramework.Model
         {
             foreach (var asset in assets)
             {
-                var key = (asset.Endpoint.Key, asset.Pallet, asset.AssetId);
-
-                if (!AssetsDict.ContainsKey(key) || overwrite)
-                {
-                    AssetsDict[key] = asset;
-                }
+                AddOrUpdateAsset(asset, overwrite);
             }
 
             CalculateTotalUsdBalance();
@@ -54,28 +95,39 @@ namespace PlutoFramework.Model
 
         public static Asset? GetFirstOwnedAsset(IEnumerable<AssetKey> assetKeys)
         {
-            if (assetKeys.Count() == 0)
+            var assetKeysList = assetKeys.ToList();
+
+            if (assetKeysList.Count == 0)
             {
                 return null;
             }
 
             var filteredAssets = AssetsDict
                 .Where((pair) => pair.Value.Amount > 0)
-                .Where((pair) => assetKeys.Contains(pair.Key));
+                .Where((pair) => assetKeysList.Contains(pair.Key));
 
-            if (filteredAssets.Count() == 0 && AssetsDict.TryGetValue(assetKeys.First(), out Asset? value))
+            var firstOwnedAsset = filteredAssets
+                .Select(pair => pair.Value)
+                .FirstOrDefault();
+
+            if (firstOwnedAsset is not null)
+            {
+                return firstOwnedAsset;
+            }
+
+            if (AssetsDict.TryGetValue(assetKeysList.First(), out Asset? value))
             {
                 return value;
             }
 
-            return filteredAssets.First().Value;
+            return null;
         }
 
         public static async Task GetBalanceAsync(SubstrateClientExt client, string substrateAddress, CancellationToken token, bool forceReload = false)
         {
             async Task SaveAsync(Asset asset)
             {
-                AssetsDict[(asset.Endpoint.Key, asset.Pallet, asset.AssetId)] = asset;
+                AddOrUpdateAsset(asset, true);
 
                 /*if (DatabaseSaver is not null)
                 {
@@ -207,7 +259,7 @@ namespace PlutoFramework.Model
 
                         await SaveAsync(new Asset
                         {
-                            Amount = assetBalance - assetReservedBalance,
+                            Amount = assetBalance,
                             Symbol = symbol,
                             ChainIcon = endpoint.Icon,
                             DarkChainIcon = endpoint.DarkIcon,
@@ -227,7 +279,7 @@ namespace PlutoFramework.Model
                                 ChainIcon = endpoint.Icon,
                                 DarkChainIcon = endpoint.DarkIcon,
                                 Endpoint = endpoint,
-                                Pallet = AssetPallet.AssetsFrozen,
+                                Pallet = AssetPallet.AssetsReserved,
                                 AssetId = asset.Item1,
                                 UsdValue = assetReservedBalance * spotPrice,
                                 Decimals = asset.Item3.Decimals.Value,
@@ -409,7 +461,7 @@ namespace PlutoFramework.Model
         {
             double usdSumValue = 0.0;
 
-            foreach (var asset in AssetsDict.Values)
+            foreach (var asset in AssetsDict.Values.Where(a => a.Pallet == AssetPallet.Native || a.Pallet == AssetPallet.Assets || a.Pallet == AssetPallet.Tokens))
             {
                 double spotPrice = Model.HydraDX.Sdk.GetSpotPrice(asset.Symbol) ?? 0;
                 asset.UsdValue = asset.Amount * spotPrice;
@@ -423,7 +475,7 @@ namespace PlutoFramework.Model
         {
             double usdSumValue = 0.0;
 
-            foreach (var asset in AssetsDict.Values)
+            foreach (var asset in AssetsDict.Values.Where(a => a.Pallet == AssetPallet.Native || a.Pallet == AssetPallet.Assets || a.Pallet == AssetPallet.Tokens))
             {
                 try
                 {

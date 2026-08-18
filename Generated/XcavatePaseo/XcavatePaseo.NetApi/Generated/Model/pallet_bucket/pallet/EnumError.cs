@@ -101,44 +101,50 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_bucket.pallet
         DanglingContributors = 12,
         
         /// <summary>
+        /// >> DanglingViewers
+        /// There are dangling viewers
+        /// </summary>
+        DanglingViewers = 13,
+        
+        /// <summary>
         /// >> DanglingAdmins
         /// There are dangling admins
         /// </summary>
-        DanglingAdmins = 13,
+        DanglingAdmins = 14,
         
         /// <summary>
         /// >> DanglingManagers
         /// There are dangling managers
         /// </summary>
-        DanglingManagers = 14,
+        DanglingManagers = 15,
         
         /// <summary>
         /// >> ArithmeticOverflow
         /// Overflow in arithmetic operations.
         /// </summary>
-        ArithmeticOverflow = 15,
+        ArithmeticOverflow = 16,
         
         /// <summary>
         /// >> ArithmeticUnderflow
         /// Underflow in arithmetic operations.
         /// </summary>
-        ArithmeticUnderflow = 16,
+        ArithmeticUnderflow = 17,
         
         /// <summary>
         /// >> LastManagerRemoval
         /// Cannot remove the last manager of a namespace.
         /// </summary>
-        LastManagerRemoval = 17,
+        LastManagerRemoval = 18,
         
         /// <summary>
         /// >> DanglingTags
         /// There are dangling Tags.
         /// </summary>
-        DanglingTags = 18,
+        DanglingTags = 19,
     }
     
     /// <summary>
-    /// >> 796 - Variant[pallet_bucket.pallet.Error]
+    /// >> 400 - Variant[pallet_bucket.pallet.Error]
     /// The `Error` enum of this pallet.
     /// </summary>
     public sealed class EnumError : BaseEnum<Error>

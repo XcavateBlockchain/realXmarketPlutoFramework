@@ -30,6 +30,26 @@ public partial class NftAttributeView : ContentView
 
             control.border.BackgroundColor = (Color)newValue;
         });
+
+    public static readonly BindableProperty HasShadowProperty = BindableProperty.Create(
+        nameof(HasShadow), typeof(bool), typeof(NftAttributeView), true,
+        propertyChanging: (bindable, oldValue, newValue) =>
+        {
+            var control = (NftAttributeView)bindable;
+
+            if (newValue is null)
+            {
+                return;
+            }
+            control.border.Shadow = (bool)newValue ? (Shadow)Application.Current.Resources["CardShadow"] : new()
+            {
+                Brush = Brush.Black,
+                Offset = new Point(0, 0),
+                Radius = 0,
+                Opacity = 0,
+            };
+        });
+
     public NftAttributeView()
     {
         InitializeComponent();
@@ -51,5 +71,11 @@ public partial class NftAttributeView : ContentView
     {
         get => (Color)GetValue(CardBackgroundColorProperty);
         set => SetValue(CardBackgroundColorProperty, value);
+    }
+
+    public bool HasShadow
+    {
+        get => (bool)GetValue(HasShadowProperty);
+        set => SetValue(HasShadowProperty, value);
     }
 }

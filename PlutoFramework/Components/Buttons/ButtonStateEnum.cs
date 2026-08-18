@@ -5,6 +5,7 @@ namespace PlutoFramework.Components.Buttons
     {
         None,
         Enabled,
+        GrayEnabled,
         Disabled,
         Warning,
         Invisible,

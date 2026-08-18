@@ -1,42 +1,31 @@
-using PlutoFramework.Model.Constants;
-using PlutoFramework.Model.Xcavate;
-
 namespace PlutoFramework.Components.Menu;
 
 public partial class UserProfilePictureView : ContentView
 {
-	private bool hasProfilePicture = false;
-	public static readonly BindableProperty AddressProperty = 
-		BindableProperty.Create(nameof(Address), typeof(string), typeof(UserProfilePictureView), default(string),
-			propertyChanged: (bindable, oldValue, newValue) =>
-			{
-				var control = (UserProfilePictureView)bindable;
+    private static ImageSource DefaultImageSource => ImageSource.FromFile("xcavateprofilepicture.png");
 
-				if (control.hasProfilePicture || newValue == null)
-				{
-					Console.WriteLine("Has profile picture or new value is null");
-                    return;
-				}
+    public static readonly BindableProperty ImageSourceProperty =
+        BindableProperty.Create(nameof(ImageSource), typeof(ImageSource), typeof(UserProfilePictureView), default(ImageSource),
+            propertyChanged: (bindable, oldValue, newValue) =>
+            {
+                var control = (UserProfilePictureView)bindable;
 
-				control.image.Source = ImageSource.FromUri(new Uri($"{PlutoExpress.PLUTO_EXPRESS_API_URL}/avatars/{(string)newValue}.png"));
+                // Back to the placeholder rather than leaving what is on screen. Null is not
+                // "nothing to do": it is a user with no picture, or a profile that has just
+                // stopped being this user's - a main key change swaps chains - and holding the
+                // last picture there shows them a face that is no longer theirs.
+                control.image.Source = (ImageSource?)newValue ?? DefaultImageSource;
             });
     public UserProfilePictureView()
-	{
-		InitializeComponent();
+    {
+        InitializeComponent();
 
-		var profilePicture = XcavateFileModel.GetSavedProfilePicture();
-
-		if (profilePicture is not null) {
-			Console.WriteLine("Has profile picture");
-
-			image.Source = profilePicture;
-			hasProfilePicture = true;
-        }
+        image.Source = DefaultImageSource;
     }
 
-	public string Address
-	{
-		get => (string)GetValue(AddressProperty);
-		set => SetValue(AddressProperty, value);
+    public ImageSource ImageSource
+    {
+        get => (ImageSource)GetValue(ImageSourceProperty);
+        set => SetValue(ImageSourceProperty, value);
     }
 }

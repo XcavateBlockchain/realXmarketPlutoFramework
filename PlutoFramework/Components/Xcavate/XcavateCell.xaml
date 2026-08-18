@@ -14,30 +14,22 @@
                 <Image Source="xcavatexgray.png"
                        Opacity="0.2"
                        AbsoluteLayout.LayoutBounds="1, 1, 60, 60"
-                       AbsoluteLayout.LayoutFlags="PositionProportional" />
-
+                       AbsoluteLayout.LayoutFlags="PositionProportional"
+                       InputTransparent="True"/>
                 <StackLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 70"
                     AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
                              Margin="10,0,10,0"
+                       InputTransparent="True"
                     >
                     <xcavateproperty:PropertyTitleWithInfoView x:Name="titleView"
                                                                HeightRequest="28"
                                                                Margin="0, 5, 0, 0"/>
 
-                    <Label HeightRequest="30"
-                           VerticalTextAlignment="Center"
-                           HorizontalTextAlignment="Start"
-                           TextColor="{StaticResource Primary}"
-                           HorizontalOptions="Start"
-                           Margin="10, 0, 0, 0"
-                           FontSize="20">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span x:Name="valueText"
-                                      FontAttributes="Bold"/>
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
+                    <HorizontalStackLayout x:Name="valueContainer"
+                                           HeightRequest="30"
+                                           Margin="10, 0, 0, 0"
+                                           Spacing="0">
+                    </HorizontalStackLayout>
                 </StackLayout>
 
 
@@ -47,7 +39,9 @@
                        AbsoluteLayout.LayoutBounds="1, 0, 20, 20"
                        AbsoluteLayout.LayoutFlags="PositionProportional"
                        x:Name="arrow"
-                       IsVisible="False"/>
+                       InputTransparent="True"
+                       IsVisible="False">
+                </Image>
             </AbsoluteLayout>
         </card:ClickableCard.View>
 

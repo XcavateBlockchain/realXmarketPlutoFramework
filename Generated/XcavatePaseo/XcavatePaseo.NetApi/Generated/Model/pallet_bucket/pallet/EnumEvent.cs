@@ -41,87 +41,99 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_bucket.pallet
         ContributorRemoved = 2,
         
         /// <summary>
+        /// >> ViewerAdded
+        /// A viewer is assigned to a bucket.
+        /// </summary>
+        ViewerAdded = 3,
+        
+        /// <summary>
+        /// >> ViewerRemoved
+        /// A viewer is removed from a bucket.
+        /// </summary>
+        ViewerRemoved = 4,
+        
+        /// <summary>
         /// >> AdminAdded
         /// A new admin is assigned to a bucket.
         /// </summary>
-        AdminAdded = 3,
+        AdminAdded = 5,
         
         /// <summary>
         /// >> AdminRemoved
         /// An admin is removed from a bucket.
         /// </summary>
-        AdminRemoved = 4,
+        AdminRemoved = 6,
         
         /// <summary>
         /// >> ManagerAdded
         /// A new manager is assigned to an namespace.
         /// </summary>
-        ManagerAdded = 5,
+        ManagerAdded = 7,
         
         /// <summary>
         /// >> ManagerRemoved
         /// A manager is removed from an namespace.
         /// </summary>
-        ManagerRemoved = 6,
+        ManagerRemoved = 8,
         
         /// <summary>
         /// >> BucketCreated
         /// A new bucket has been created.
         /// </summary>
-        BucketCreated = 7,
+        BucketCreated = 9,
         
         /// <summary>
         /// >> PausedBucket
         /// A bucket has been paused for writing.
         /// </summary>
-        PausedBucket = 8,
+        PausedBucket = 10,
         
         /// <summary>
         /// >> BucketWritableWithKey
         /// A bucket is writable with a specific key.
         /// This event is independent of the bucket being previously paused or not.
         /// </summary>
-        BucketWritableWithKey = 9,
+        BucketWritableWithKey = 11,
         
         /// <summary>
         /// >> NewTag
         /// A new tag has been created.
         /// </summary>
-        NewTag = 10,
+        NewTag = 12,
         
         /// <summary>
         /// >> NewMessage
         /// A new message has been written.
         /// </summary>
-        NewMessage = 11,
+        NewMessage = 13,
         
         /// <summary>
         /// >> NamespaceDeleted
         /// An namespace has been deleted.
         /// </summary>
-        NamespaceDeleted = 12,
+        NamespaceDeleted = 14,
         
         /// <summary>
         /// >> BucketDeleted
         /// A bucket has been deleted.
         /// </summary>
-        BucketDeleted = 13,
+        BucketDeleted = 15,
         
         /// <summary>
         /// >> TagDeleted
         /// A tag has been deleted.
         /// </summary>
-        TagDeleted = 14,
+        TagDeleted = 16,
         
         /// <summary>
         /// >> MessageDeleted
         /// A message has been deleted.
         /// </summary>
-        MessageDeleted = 15,
+        MessageDeleted = 17,
     }
     
     /// <summary>
-    /// >> 220 - Variant[pallet_bucket.pallet.Event]
+    /// >> 99 - Variant[pallet_bucket.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>
@@ -135,6 +147,8 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_bucket.pallet
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.NamespaceMetadata, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.NamespaceCreated);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.ContributorAdded);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.ContributorRemoved);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.X25519PublicKey, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.ViewerAdded);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.X25519PublicKey, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.ViewerRemoved);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.AdminAdded);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.AdminRemoved);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.ManagerAdded);
@@ -142,11 +156,11 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_bucket.pallet
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Bucket, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.BucketCreated);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Bucket, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.PausedBucket);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.BucketPublicKey, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Bucket, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.BucketWritableWithKey);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT17, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.NewTag);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT10, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>>(Event.NewTag);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Message, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>(Event.NewMessage);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.NamespaceMetadata>>(Event.NamespaceDeleted);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Bucket>>(Event.BucketDeleted);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT17>>(Event.TagDeleted);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT10>>(Event.TagDeleted);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Primitive.U128, XcavatePaseo.NetApi.Generated.Model.pallet_bucket.types.Message>>(Event.MessageDeleted);
         }
     }

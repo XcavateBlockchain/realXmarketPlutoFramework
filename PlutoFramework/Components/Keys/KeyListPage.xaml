@@ -18,6 +18,11 @@
         <VerticalStackLayout Spacing="15">
 
             <!-- Other content -->
+            <Label Text="This page is incomplete and untested. Bugs are to be expected."
+                   TextColor="#A6A6A6"
+                   HorizontalOptions="Center"
+                   Margin="20, 40, 20, 40"
+                   HorizontalTextAlignment="Center"/>
 
             <VerticalStackLayout Margin="20, 20, 20, 100"
                              BindableLayout.ItemsSource="{Binding Keys}"

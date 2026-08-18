@@ -8,14 +8,48 @@
 
 
   <ItemGroup>
-      <PackageReference Include="Plugin.Firebase.CloudMessaging" Version="3.1.2" />
-      <PackageReference Include="jose-jwt" Version="5.2.0" />
-      <PackageReference Include="NSec.Cryptography" Version="25.4.0" />
-      <PackageReference Include="Substrate.NET.API" Version="0.9.24-rc6" />
-      <PackageReference Include="Uniquery" Version="1.0.1" />
-      <PackageReference Include="Plutonication" Version="2.6.0" />
-      <PackageReference Include="AzeroIdResolver" Version="1.0.2" />
-      <PackageReference Include="Substrate.NET.Wallet" Version="1.0.8" />
+    <PackageReference Include="Plugin.Firebase.CloudMessaging" Version="3.1.2" />
+    <PackageReference Include="jose-jwt" Version="5.2.0" />
+    <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
+    <!--
+      0.9.24 final, not the rc6 the generated projects pin. XcavateProfileApiClient 1.0.61
+      requires >= 0.9.24, and NuGet ranks a prerelease below the release it precedes, so rc6
+      here is a downgrade (NU1605). Raising this one direct reference lifts the whole graph:
+      the generated projects' rc6 is transitive from here and unifies upward.
+    -->
+    <PackageReference Include="Substrate.NET.API" Version="0.9.24" />
+    <!--
+      Solnet, Solana's .NET SDK. Note the package id: the repository at
+      github.com/bmresearch/Solnet publishes under the Solana.* ids. The older
+      Solnet.* ids are stuck at 6.1.0 (2022) and pull Portable.BouncyCastle 1.9.0,
+      which conflicts with the BouncyCastle.Cryptography 2.6.0 aliased as bc26 below.
+      The assembly and namespace are still Solnet.Wallet.
+    -->
+    <PackageReference Include="Solana.Wallet" Version="8.7.0" />
+    <!--
+      Needed to fetch a recent blockhash and submit signed transactions. Depends only on
+      Solana.Wallet and Microsoft.Extensions.Logging 9.0.0, which resolves up to the 10.x
+      already present via MAUI.
+    -->
+    <PackageReference Include="Solana.Rpc" Version="8.7.0" />
+    <!--
+      The instruction builders: SystemProgram, TokenProgram and
+      AssociatedTokenAccountProgram. A separate package from Solana.Rpc, and the only
+      source of them. Its nuspec declares just Solana.Rpc 8.7.0 and
+      System.Runtime.Extensions, so it does not reintroduce the Portable.BouncyCastle
+      conflict described above.
+    -->
+    <PackageReference Include="Solana.Programs" Version="8.7.0" />
+    <PackageReference Include="Uniquery" Version="1.0.1" />
+    <PackageReference Include="Plutonication" Version="2.6.0" />
+    <PackageReference Include="AzeroIdResolver" Version="1.0.2" />
+    <!--
+      Signs profile writes with sr25519 or Solana ed25519. Do not also reference
+      XcavateProfileApiSolanaClient: it defines the same types in the same namespaces, and its
+      only advantage - dropping Substrate.NET.API - buys nothing here, since the Polkadot side
+      needs that package anyway.
+    -->
+    <PackageReference Include="XcavateProfileApiClient" Version="1.0.61" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +66,7 @@
     <ProjectReference Include="..\Generated\Kilt\Kilt.NetApi\Kilt.NetApi.csproj" />
     <ProjectReference Include="..\Generated\PolkadotPeople\PolkadotPeople.NetApi\PolkadotPeople.NetApi.csproj" />
     <ProjectReference Include="..\Generated\Polkadot\Polkadot.NetApi\Polkadot.NetApi.csproj" />
+    <ProjectReference Include="..\Substrate.NET.Wallet\Substrate.NET.Wallet\Substrate.NET.Wallet.csproj" />
     <ProjectReference Include="..\UniqueryPlus\UniqueryPlus.csproj" />
   </ItemGroup>
 </Project>

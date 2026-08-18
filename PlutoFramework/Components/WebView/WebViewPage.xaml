@@ -12,6 +12,5 @@
         </Grid.RowDefinitions>
 
         <webview:PolkadotExtensionWebView x:Name="webView" />
-
     </Grid>
 </template:PageTemplate>

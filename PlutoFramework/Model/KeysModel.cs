@@ -2,19 +2,21 @@
 using bc26::Org.BouncyCastle.Crypto.Parameters;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Storage;
+using Microsoft.AspNetCore.WebUtilities;
 using Plugin.Fingerprint;
 using Plugin.Fingerprint.Abstractions;
 using PlutoFramework.Components.Password;
 using PlutoFramework.Model.SQLite;
-using PlutoFrameworkCore;
 using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Keys;
+using PlutoFrameworkCore.PushNotificationServices.Core;
 using Polkadot.NetApi.Generated.Model.sp_core.crypto;
 using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using System.Text.Json;
-﻿using Microsoft.AspNetCore.WebUtilities;
+// Solnet and Substrate both define an Account type, and this file uses the Substrate one.
+using SolanaAccount = Solnet.Wallet.Account;
 
 namespace PlutoFramework.Model
 {
@@ -48,6 +50,111 @@ namespace PlutoFramework.Model
 
             return SaveEncryptionX25519KeyAsync(keyPair.PrivateKey);
         }
+
+        public static async Task<bool> HasEncryptionX25519KeyAsync() =>
+            (await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519)).Any();
+
+        /// <summary>
+        /// Ensures an X25519 encryption key exists, which the profile API requires and no
+        /// Solana onboarding path creates. Derives it from the seed phrase when there is one,
+        /// so it is recoverable from the same backup as the account, and generates a fresh one
+        /// for Mobile Wallet Adapter, which keeps no phrase on the device.
+        /// </summary>
+        /// <remarks>
+        /// Returns without touching anything when a key already exists. That guard is the
+        /// point: <see cref="SaveEncryptionX25519KeyAsync(byte[])"/> deletes every existing
+        /// X25519 key before writing, so calling this unguarded when a Substrate user later
+        /// adds a Solana key would silently destroy the messaging key they already have.
+        /// </remarks>
+        /// <param name="mnemonics">
+        /// The Solana phrase, when the caller already holds it. Saves unlocking the stored key
+        /// again, which would mean a second authentication prompt.
+        /// </param>
+        public static async Task EnsureEncryptionX25519KeyAsync(
+            string reason = "Set up your encryption key",
+            string? mnemonics = null)
+        {
+            if (await HasEncryptionX25519KeyAsync())
+            {
+                return;
+            }
+
+            if (mnemonics is not null)
+            {
+                await SaveEncryptionX25519KeyAsync(mnemonics);
+
+                return;
+            }
+
+            var lockedKey = (await KeysDatabase.GetAllKeysOfTypeAsync(
+                KeyTypeEnum.SolanaMnemonic, KeyTypeEnum.SolanaMwa)).FirstOrDefault();
+
+            switch (lockedKey?.Type)
+            {
+                case KeyTypeEnum.SolanaMnemonic:
+                    var solanaKey = await lockedKey.ToSolanaMnemonicKeyAsync(reason);
+
+                    await SaveEncryptionX25519KeyAsync(solanaKey.Mnemonics);
+
+                    break;
+
+                // Nothing to derive from: either an MWA wallet, which never hands over a
+                // phrase, or no Solana key at all, which is a Substrate-only user - and their
+                // key has always been random, generated alongside the account.
+                default:
+                    await GenerateNewEncryptionX25519KeyAsync();
+
+                    break;
+            }
+        }
+
+        /// <summary>Whether a Polkadot account key of either stored kind exists.</summary>
+        public static async Task<bool> HasSubstrateAccountAsync() =>
+            (await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Sr25519, KeyTypeEnum.PolkadotJson)).Any();
+
+        public static async Task<bool> HasDidKeyAsync() =>
+            (await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Did)).Any();
+
+        /// <summary>
+        /// Ensures the Substrate account and DID that the rest of onboarding is keyed to
+        /// exist. Sumsub applicants are identified by SS58 address and DID, the questionnaire
+        /// submits one, and roles live in the XcavatePaseo whitelist pallet - so a Solana-only
+        /// account cannot complete verification, and cannot invest once it has.
+        /// </summary>
+        /// <remarks>
+        /// Each key is guarded separately, and an existing one is never rewritten:
+        /// <see cref="SaveSr25519KeyAsync"/> and <see cref="SaveDidKeyAsync"/> both delete
+        /// before they write, so calling this unguarded for a user who already holds a
+        /// Polkadot account would destroy it. Same shape as
+        /// <see cref="EnsureEncryptionX25519KeyAsync"/>, which guards the third key of the set.
+        /// </remarks>
+        /// <param name="mnemonics">
+        /// The phrase to derive from, when the caller has one. Both keys then come off the
+        /// same backup as the account itself. Null for a Mobile Wallet Adapter wallet, which
+        /// keeps its phrase in the wallet app and never hands it over; a fresh phrase is
+        /// generated for those, exactly as the X25519 key already is.
+        /// </param>
+        public static async Task EnsureSubstrateIdentityAsync(string? mnemonics = null)
+        {
+            var seed = string.IsNullOrWhiteSpace(mnemonics) ? null : mnemonics.Trim();
+
+            if (!await HasSubstrateAccountAsync())
+            {
+                seed ??= MnemonicsModel.GenerateMnemonics();
+
+                await SaveSr25519KeyAsync(seed);
+            }
+
+            if (!await HasDidKeyAsync())
+            {
+                seed ??= MnemonicsModel.GenerateMnemonics();
+
+                // An independent key derived from the same phrase, matching what the Polkadot
+                // onboarding flow has always written.
+                await SaveDidKeyAsync($"{seed}//did");
+            }
+        }
+
         public static async Task RegisterBiometricAuthenticationAsync()
         {
             if (Preferences.Get(PreferencesModel.BIOMETRICS_ENABLED, false))
@@ -83,6 +190,9 @@ namespace PlutoFramework.Model
 
         public static async Task SaveSr25519KeyAsync(string mnemonics)
         {
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.Sr25519);
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.PolkadotJson);
+
             Account account = MnemonicsModel.GetAccountFromMnemonics(mnemonics);
 
             Preferences.Set(
@@ -103,6 +213,8 @@ namespace PlutoFramework.Model
 
         public static async Task SaveDidKeyAsync(string mnemonics)
         {
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.Did);
+
             Account account = MnemonicsModel.GetAccountFromMnemonics(mnemonics);
 
             // Just get and use the same main password without asking the user again
@@ -114,6 +226,145 @@ namespace PlutoFramework.Model
                 password: password!,
                 type: KeyTypeEnum.Did
             );
+        }
+
+        public static Task GenerateNewSolanaAccountAsync()
+        {
+            string mnemonics = SolanaMnemonicsModel.GenerateMnemonics();
+
+            return SaveSolanaMnemonicKeyAsync(mnemonics);
+        }
+
+        /// <summary>
+        /// Both Solana key types occupy a single account slot, so adding either one
+        /// clears the other. This mirrors how <see cref="SaveSr25519KeyAsync"/> treats
+        /// Sr25519 and PolkadotJson as one Polkadot account.
+        /// </summary>
+        private static Task DeleteExistingSolanaKeysAsync() => Task.WhenAll(
+            KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.SolanaMnemonic),
+            KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.SolanaMwa)
+        );
+
+        public static async Task SaveSolanaMnemonicKeyAsync(string mnemonics)
+        {
+            if (!SolanaMnemonicsModel.ValidateMnemonics(mnemonics))
+            {
+                throw new ArgumentException("The mnemonic phrase is not a valid BIP39 phrase", nameof(mnemonics));
+            }
+
+            await DeleteExistingSolanaKeysAsync();
+
+            string address = SolanaMnemonicsModel.GetAddressFromMnemonics(mnemonics);
+
+            // Just get and use the same main password without asking the user again
+            var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
+
+            await SaveKeyAsync(
+                publicKey: address,
+                secret: mnemonics.Trim(),
+                password: password!,
+                type: KeyTypeEnum.SolanaMnemonic
+            );
+
+            // Written only once the key is actually persisted. Mirrors PUBLIC_KEY for Substrate:
+            // app start decides its shell before it can await, so key presence has to be
+            // readable synchronously - which makes a preference claiming a key that the save
+            // never stored strictly worse than no preference at all.
+            Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, address);
+
+            // Derived from the phrase the caller already has, so the user is not asked to
+            // authenticate a second time and the key is recoverable from the same backup.
+            await EnsureEncryptionX25519KeyAsync(mnemonics: mnemonics.Trim());
+        }
+
+        /// <summary>
+        /// Persists a Mobile Wallet Adapter authorization. The whole record is stored as
+        /// the secret because the auth token it carries grants signing access.
+        /// </summary>
+        public static async Task SaveSolanaMwaKeyAsync(SolanaMwaKey key)
+        {
+            await DeleteExistingSolanaKeysAsync();
+
+            // Just get and use the same main password without asking the user again
+            var password = await SecureStorage.Default.GetAsync(PreferencesModel.PASSWORD);
+
+            await SaveKeyAsync(
+                publicKey: key.Address,
+                secret: JsonSerializer.Serialize(key),
+                password: password!,
+                type: KeyTypeEnum.SolanaMwa
+            );
+
+            // Written only once the key is actually persisted - see SaveSolanaMnemonicKeyAsync.
+            Preferences.Set(PreferencesModel.SOLANA_PUBLIC_KEY, key.Address);
+
+            // No phrase to derive from - the wallet keeps the key - so this one is random.
+            await EnsureEncryptionX25519KeyAsync();
+        }
+
+        public static async Task<bool> HasSolanaKeyAsync() =>
+            (await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.SolanaMnemonic, KeyTypeEnum.SolanaMwa)).Any();
+
+        /// <summary>
+        /// The Solana address for whichever variant is configured. Available for both,
+        /// since the MWA key stores the authorized address alongside its token.
+        /// </summary>
+        public static async Task<string?> GetSolanaAddressAsync()
+        {
+            var keys = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.SolanaMnemonic, KeyTypeEnum.SolanaMwa);
+
+            return keys.FirstOrDefault()?.PublicKey;
+        }
+
+        /// <summary>
+        /// A signing account, which only the mnemonic variant can produce. Under Mobile
+        /// Wallet Adapter the private key never leaves the wallet app, so this returns
+        /// null and callers must sign through <c>MwaClient</c> instead.
+        /// </summary>
+        public static async Task<SolanaAccount?> GetSolanaAccountAsync(string reason = "Get access to Solana key")
+        {
+            var keys = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.SolanaMnemonic);
+
+            var lockedKey = keys.FirstOrDefault();
+
+            if (lockedKey is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                return (await lockedKey.ToSolanaMnemonicKeyAsync(reason)).Account;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// The stored Mobile Wallet Adapter authorization, or null when the configured
+        /// Solana key is a local mnemonic one.
+        /// </summary>
+        public static async Task<SolanaMwaKey?> GetSolanaMwaKeyAsync(string reason = "Get access to Solana wallet")
+        {
+            var keys = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.SolanaMwa);
+
+            var lockedKey = keys.FirstOrDefault();
+
+            if (lockedKey is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                return await lockedKey.ToSolanaMwaKeyAsync(reason);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         [Obsolete("For migration purposes only")]
@@ -140,9 +391,13 @@ namespace PlutoFramework.Model
 
         public static async Task SaveJsonKeyAsync(string json)
         {
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.Sr25519);
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.PolkadotJson);
+
             var viewModel = DependencyService.Get<EnterPasswordPopupViewModel>();
 
             viewModel.IsVisible = true;
+            viewModel.Reason = "Unlock JSON account";
 
             string correctPassword = "";
             string publicKey = "";
@@ -160,12 +415,7 @@ namespace PlutoFramework.Model
 
                 var wallet = MnemonicsModel.ImportJson(json, password);
 
-                if (wallet is null)
-                {
-                    continue;
-                }
-
-                if (wallet.IsUnlocked)
+                if (wallet is not null && wallet.IsUnlocked)
                 {
                     correctPassword = password;
                     publicKey = wallet.Account.Value;
@@ -202,8 +452,46 @@ namespace PlutoFramework.Model
             );
         }
 
+        public static Task SaveEncryptionX25519KeyAsync(string mnemonics)
+        {
+
+            // Derive X25519 private key from mnemonic via Ed25519 seed conversion.
+            var account = MnemonicsModel.GetAccountFromMnemonics(mnemonics, Substrate.NetApi.Model.Types.KeyType.Ed25519);
+
+            byte[] seed = account.PrivateKey;
+
+            if (seed is null || seed.Length < 32)
+            {
+                throw new ArgumentException("Derived private key seed is too short to derive X25519 key");
+            }
+
+            if (seed.Length > 32)
+            {
+                // If representation contains extra data, take the first 32 bytes as seed
+                var tmp = new byte[32];
+                Array.Copy(seed, 0, tmp, 0, 32);
+                seed = tmp;
+            }
+
+            // Hash the seed with SHA-512 and clamp to produce X25519 private scalar per RFC7748
+            using var sha512 = System.Security.Cryptography.SHA512.Create();
+            var hashed = sha512.ComputeHash(seed);
+
+            var x25519 = new byte[32];
+            Array.Copy(hashed, 0, x25519, 0, 32);
+
+            // Clamp
+            x25519[0] &= 248;
+            x25519[31] &= 127;
+            x25519[31] |= 64;
+
+            return SaveEncryptionX25519KeyAsync(x25519);
+        }
+
         public static async Task SaveEncryptionX25519KeyAsync(byte[] privateKey)
         {
+            await KeysDatabase.DeleteKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519);
+
             var key = new X25519PrivateKeyParameters(privateKey);
 
             var publicKey = key.GeneratePublicKey();
@@ -248,13 +536,14 @@ namespace PlutoFramework.Model
             {
                 await KeysModel.SaveJsonKeyAsync(json);
 
-                await PlutoConfigurationModel.AfterAccountImportAsync();
-
                 var toast = Toast.Make($"JSON key imported successfully.");
                 await toast.Show();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine("JSON import exception: ");
+                Console.WriteLine(ex);
+
                 var toast = Toast.Make($"Failed to import JSON key.");
                 await toast.Show();
             }
@@ -328,6 +617,28 @@ namespace PlutoFramework.Model
             return Preferences.Get(PreferencesModel.PUBLIC_KEY, "Substrate key does not exist");
         }
 
+        public static string GetSubstrateKey(short ss58prefix)
+        {
+            return Utils.GetAddressFrom(Utils.GetPublicKeyFrom(KeysModel.GetSubstrateKey()), ss58prefix);
+        }
+
+        public static bool HasSolanaKey()
+        {
+            return Preferences.ContainsKey(PreferencesModel.SOLANA_PUBLIC_KEY);
+        }
+
+        /// <summary>
+        /// The stored Solana address, or null when no Solana key is configured. Returns null
+        /// rather than a placeholder string: <see cref="GetSubstrateKey()"/>'s placeholder
+        /// habit is what makes <c>GetSubstrateKey(0)</c> throw further down the call chain.
+        /// </summary>
+        public static string? GetSolanaAddress()
+        {
+            return Preferences.ContainsKey(PreferencesModel.SOLANA_PUBLIC_KEY)
+                ? Preferences.Get(PreferencesModel.SOLANA_PUBLIC_KEY, string.Empty)
+                : null;
+        }
+
         public static async Task<string> GetDidAddressAsync(CancellationToken token)
         {
             var dids = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Did);
@@ -353,7 +664,7 @@ namespace PlutoFramework.Model
             return Utils.GetPublicKeyFrom(GetSubstrateKey());
         }
 
-        public static async Task<Account?> GetAccountAsync()
+        public static async Task<Account?> GetAccountAsync(string reason = "..")
         {
             var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Sr25519, KeyTypeEnum.PolkadotJson);
 
@@ -366,9 +677,12 @@ namespace PlutoFramework.Model
 
             try
             {
-                var accountKey = await accountLockedKey.ToSr25519KeyAsync();
 
-                return accountKey.Account;
+                return accountLockedKey.Type switch
+                {
+                    KeyTypeEnum.Sr25519 => (await accountLockedKey.ToSr25519KeyAsync(reason)).Account,
+                    KeyTypeEnum.PolkadotJson => (await accountLockedKey.ToPolkadotJsonKeyAsync(reason)).Account,
+                };
             }
             catch
             {
@@ -401,7 +715,7 @@ namespace PlutoFramework.Model
 
         public static async Task<EncryptionX25519Key?> GetX25519KeyAsync()
         {
-            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Did);
+            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519);
 
             if (!accounts.Any())
             {
@@ -413,6 +727,27 @@ namespace PlutoFramework.Model
             try
             {
                 return await accountLockedKey.ToEncryptionX25519KeyAsync();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static async Task<EncryptionX25519Key?> GetX25519KeyNoAuthAsync()
+        {
+            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.EncryptionX25519);
+
+            if (!accounts.Any())
+            {
+                return null;
+            }
+
+            var accountLockedKey = accounts.First();
+
+            try
+            {
+                return await accountLockedKey.ToEncryptionX25519KeyNoAuthAsync();
             }
             catch
             {
@@ -478,11 +813,48 @@ namespace PlutoFramework.Model
                 PasswordStorageKey = passwordStorageKey,
             };
 
+            // Register the address as a main key on the notifications api. Signature-less
+            // (the server records Polkadot unverified - no sr25519 verification yet), so
+            // no prompt interrupts the save.
+            if (type == KeyTypeEnum.Sr25519 || type == KeyTypeEnum.PolkadotJson)
+            {
+                _ = WalletLinkModel.LinkPolkadotAsync(KeysModel.GetSubstrateKey());
+            }
+
+            // The one moment a Solana link can be signed without an unlock prompt: the
+            // phrase is right here in hand. SolanaMwa is deliberately absent - its saves
+            // also happen mid-session when a signature refreshes the authorization, and
+            // launching a second wallet trip from there would collide with the open one.
+            // MWA links from the connect flow and after signature sessions instead
+            // (WalletLinkModel.TryLinkSolanaMwaAsync).
+            if (type == KeyTypeEnum.SolanaMnemonic)
+            {
+                _ = WalletLinkModel.LinkSolanaMnemonicAsync(publicKey, secret);
+            }
+
             return Task.WhenAll(
                 SecureStorage.SetAsync(secretStorageKey, secret),
                 SecureStorage.SetAsync(passwordStorageKey, password),
                 KeysDatabase.SaveKeyAsync(lockedKey)
             );
+        }
+
+        public static Task ClearAsync()
+        {
+            // A device that no longer holds these keys must stop receiving their
+            // notifications. Uses the stored link list, so key deletion below can proceed.
+            _ = WalletLinkModel.UnlinkAllAsync();
+
+            Preferences.Remove(PreferencesModel.PUBLIC_KEY);
+            Preferences.Remove(PreferencesModel.SOLANA_PUBLIC_KEY);
+
+            // A choice of main key outliving both keys would silently apply to whatever the
+            // next account turns out to be. Resolution tolerates that, but the next user of
+            // this device should start from the default rather than the last one's preference.
+            Preferences.Remove(PreferencesModel.SETTINGS_MAIN_KEY_CHAIN);
+
+            return KeysDatabase.DeleteAllAsync();
+
         }
 
         public static async Task TempConvertMainKeysIntoDbAsync()

@@ -26,6 +26,10 @@
 
         public const string SETTINGS_ALLOW_PRIVATE_KEY = "settingsAllowPrivateKey";
 
-        public const string SHOW_WELCOME_SCREEN = "showWelcomeScreen";
+        public const string SETTINGS_SOLANA_NETWORK = "settingsSolanaNetwork";
+
+        public const string SOLANA_PUBLIC_KEY = "solanaPublicKey";
+
+        public const string SETTINGS_MAIN_KEY_CHAIN = "settingsMainKeyChain";
     }
 }

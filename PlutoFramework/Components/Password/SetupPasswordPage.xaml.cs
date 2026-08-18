@@ -1,106 +1,52 @@
-﻿using PlutoFramework.Components.Buttons;
+using CommunityToolkit.Maui.Alerts;
+using PlutoFramework.Components.Buttons;
+using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Model;
+using PlutoFramework.Model.Xcavate;
 using PlutoFramework.Templates.PageTemplate;
-using Substrate.NET.Wallet;
 
 namespace PlutoFramework.Components.Password;
 
 public partial class SetupPasswordPage : PageTemplate
 {
-    public required Func<Task> Navigation; 
+    public required Func<Task> Navigation;
 
-    private bool clicked = false;
+    private bool _clicked = false;
+
     public SetupPasswordPage()
     {
         InitializeComponent();
+
+        BindingContext = new OnboardingStepperViewModel(OnboardingStage.SetupPassword);
+    }
+
+    private void OnPasswordValidityChanged(object? sender, EventArgs e)
+    {
+        continueButton.ButtonState = setPasswordView.IsValid
+            ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
     }
 
     private async void ContinueToMainPageClicked(System.Object sender, System.EventArgs e)
     {
-        if (clicked)
+        if (_clicked || !setPasswordView.IsValid) return;
+
+        _clicked = true;
+
+        try
         {
+            await PasswordSetupModel.SaveNewPasswordAsync(setPasswordView.Password);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make($"Could not save your password: {ex.Message}").Show();
+
+            _clicked = false;
+
             return;
         }
-
-        clicked = true;
-
-        await SecureStorage.Default.SetAsync(
-            PreferencesModel.PASSWORD,
-            passwordEntry.Text
-        );
-       
-        Preferences.Set(PreferencesModel.SHOW_WELCOME_SCREEN, false);
-
-        await KeysModel.RegisterBiometricAuthenticationAsync();
 
         await Navigation.Invoke();
 
-        clicked = false;
-    }
-
-    private void OnEyeballClicked(object sender, TappedEventArgs e)
-    {
-        passwordEntry.IsPassword = !passwordEntry.IsPassword;
-
-        eyeball.IsVisible = passwordEntry.IsPassword;
-        eyeballSlash.IsVisible = !passwordEntry.IsPassword;
-    }
-
-    private async void OnEnterPressedAsync(object sender, EventArgs e)
-    {
-        var entry = (Entry)sender;
-        if (entry.IsSoftInputShowing())
-            await entry.HideSoftInputAsync(System.Threading.CancellationToken.None);
-    }
-
-    private void OnPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName != "Text")
-        {
-            return;
-        }
-
-        if (WordManager.Create().WithMinimumLength(6).WithMaximumLength(20).IsValid(((Entry)sender).Text))
-        {
-            lengthRequirementLabel.TextColor = Colors.Green;
-        }
-        else
-        {
-            lengthRequirementLabel.TextColor = Colors.DarkRed;
-        }
-
-        if (WordManager.Create().Should().AtLeastOneLowercase().IsValid(((Entry)sender).Text))
-        {
-            lowercaseRequirementLabel.TextColor = Colors.Green;
-        }
-        else
-        {
-            lowercaseRequirementLabel.TextColor = Colors.DarkRed;
-        }
-
-        if (WordManager.Create().Should().AtLeastOneUppercase().IsValid(((Entry)sender).Text))
-        {
-            uppercaseRequirementLabel.TextColor = Colors.Green;
-        }
-        else
-        {
-            uppercaseRequirementLabel.TextColor = Colors.DarkRed;
-        }
-
-        if (WordManager.Create().Should().AtLeastOneDigit().IsValid(((Entry)sender).Text))
-        {
-            numberRequirementLabel.TextColor = Colors.Green;
-        }
-        else
-        {
-            numberRequirementLabel.TextColor = Colors.DarkRed;
-        }
-
-        continueButton.ButtonState = WordManager.Create().WithMinimumLength(6).WithMaximumLength(20).Should()
-            .AtLeastOneDigit()
-            .Should()
-            .AtLeastOneLowercase()
-            .Should()
-            .AtLeastOneUppercase().IsValid(((Entry)sender).Text) ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
+        _clicked = false;
     }
 }

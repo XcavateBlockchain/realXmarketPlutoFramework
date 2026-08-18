@@ -88,22 +88,84 @@ namespace PlutoFramework.Model.Sumsub
         public static async Task<SumsubApplicant?> GetApplicantDataAsync(string address, string secretKey, string appToken, CancellationToken token)
         {
             var response = await SendGetAsync($"/resources/applicants/-;externalUserId={address}/one", secretKey, appToken, token);
-
-            Console.WriteLine(ContentToString(response.Content));
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var applicant = JsonSerializer.Deserialize<SumsubApplicant>(ContentToString(response.Content));
-
-            return applicant;
+            return DeserializeResponse<SumsubApplicant>(response);
         }
 
         public static async Task<bool?> GetApplicantVerificationStatusAsync(string address, string secretKey, string appToken, CancellationToken token)
         {
-            // TODO
+            var applicant = await GetApplicantDataAsync(address, secretKey, appToken, token);
+            if (applicant?.Id == null)
+            {
+                return null;
+            }
+
+            var reviewStatus = await GetApplicantReviewStatusAsync(applicant.Id, secretKey, appToken, token);
+            if (reviewStatus?.ReviewStatus == null)
+            {
+                return null;
+            }
+
+            return reviewStatus.ReviewStatus.Equals("completed", StringComparison.OrdinalIgnoreCase)
+                && reviewStatus.ReviewResult?.ReviewAnswer?.Equals("GREEN", StringComparison.OrdinalIgnoreCase) == true;
+        }
+
+        /// <summary>
+        /// https://docs.sumsub.com/reference/get-applicant-review-status
+        /// </summary>
+        public static async Task<SumsubReview?> GetApplicantReviewStatusAsync(
+            string applicantId,
+            string secretKey,
+            string appToken,
+            CancellationToken token)
+        {
+            var response = await SendGetAsync($"/resources/applicants/{applicantId}/status", secretKey, appToken, token);
+            return DeserializeResponse<SumsubReview>(response);
+        }
+
+        /// <summary>
+        /// https://docs.sumsub.com/reference/get-applicant-review-history
+        /// </summary>
+        public static async Task<SumsubReviewHistoryResponse?> GetApplicantReviewHistoryAsync(
+            string applicantId,
+            string secretKey,
+            string appToken,
+            CancellationToken token,
+            string? levelName = null)
+        {
+            var query = string.IsNullOrWhiteSpace(levelName)
+                ? string.Empty
+                : $"?levelName={Uri.EscapeDataString(levelName)}";
+            var response = await SendGetAsync($"/resources/applicants/{applicantId}/review/history{query}", secretKey, appToken, token);
+            return DeserializeResponse<SumsubReviewHistoryResponse>(response);
+        }
+
+        /// <summary>
+        /// https://docs.sumsub.com/reference/get-status-of-verification-steps
+        /// </summary>
+        public static async Task<Dictionary<string, SumsubVerificationStepStatus>?> GetApplicantVerificationStepsStatusAsync(
+            string applicantId,
+            string secretKey,
+            string appToken,
+            CancellationToken token)
+        {
+            var response = await SendGetAsync($"/resources/applicants/{applicantId}/requiredIdDocsStatus", secretKey, appToken, token);
+            return DeserializeResponse<Dictionary<string, SumsubVerificationStepStatus>>(response);
+        }
+
+        /// <summary>
+        /// https://docs.sumsub.com/reference/get-applicant-notes
+        /// </summary>
+        public static async Task<SumsubApplicantNotesResponse?> GetApplicantNotesAsync(
+            string applicantId,
+            string secretKey,
+            string appToken,
+            CancellationToken token,
+            int limit = 100,
+            int offset = 0)
+        {
+            var query = FormattableString.Invariant($"?applicantId={Uri.EscapeDataString(applicantId)}&limit={limit}&offset={offset}");
+            var response = await SendGetAsync($"/resources/api/applicants/notes{query}", secretKey, appToken, token);
+            return DeserializeResponse<SumsubApplicantNotesResponse>(response);
 
             return null;
         }
@@ -279,6 +341,22 @@ namespace PlutoFramework.Model.Sumsub
         {
             return requestBody.Content == null ?
                 new byte[] { } : requestBody.Content.ReadAsByteArrayAsync().Result;
+        }
+
+        private static T? DeserializeResponse<T>(HttpResponseMessage response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                return default;
+            }
+
+            var content = ContentToString(response.Content);
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return default;
+            }
+
+            return JsonSerializer.Deserialize<T>(content);
         }
     }
 }

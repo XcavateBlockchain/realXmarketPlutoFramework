@@ -14,20 +14,25 @@ public record TokenPair
 
 public record DeviceRegistrationData
 {
-    [JsonPropertyName("device_uuid")]
-    public required string DeviceUUID { get; set; }
-
-    [JsonPropertyName("attestation")]
-    public required string Attestation { get; set; }
-
+    [JsonPropertyName("nonce")]
+    public required string Nonce { get; set; }
+    [JsonPropertyName("device_id")]
+    public required string DeviceId { get; set; }
+    
     [JsonPropertyName("platform")]
     public required string Platform { get; set; }
+
+    [JsonPropertyName("attestation")]
+    public string? Attestation { get; set; }
+    
+    [JsonPropertyName("assertion")]
+    public string? Assertion { get; set; }
 }
 
 public abstract class AuthTokenPairEndpoint: IApiEndpoint
 {
-    public static string EndpointPath => "/api/token";
-    public static readonly string RefreshEndpointPath = EndpointPath + "/refresh";
+    public static string EndpointPath => "/api/token/";
+    public static readonly string RefreshEndpointPath = EndpointPath + "refresh/";
     
     private record AccessTokenObject
     {
@@ -38,8 +43,8 @@ public abstract class AuthTokenPairEndpoint: IApiEndpoint
     {
         StringContent jsonContent = new(JsonSerializer.Serialize(input), Encoding.UTF8, "application/json");
         
-        var response = (await httpClient.PostAsync(EndpointPath, jsonContent)).EnsureSuccessStatusCode();
-        
+        var response = await (await httpClient.PostAsync(EndpointPath, jsonContent)).EnsureSuccessWithBodyAsync();
+
         var tokens = await response.Content.ReadFromJsonAsync<TokenPair>();
         
         if (tokens == null) throw new HttpRequestException();
@@ -57,8 +62,8 @@ public abstract class AuthTokenPairEndpoint: IApiEndpoint
             Encoding.UTF8,
             "application/json");
         
-        var response = (await httpClient.PostAsync(RefreshEndpointPath, jsonContent)).EnsureSuccessStatusCode();
-        
+        var response = await (await httpClient.PostAsync(RefreshEndpointPath, jsonContent)).EnsureSuccessWithBodyAsync();
+
         var accessTokenObj = await response.Content.ReadFromJsonAsync<AccessTokenObject>();
         
         if (accessTokenObj == null) throw new HttpRequestException();

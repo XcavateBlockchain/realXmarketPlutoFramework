@@ -23,10 +23,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
     {
         
         /// <summary>
-        /// >> PropertyTokenCreated
+        /// >> PropertySharesCreated
         /// Test
         /// </summary>
-        PropertyTokenCreated = 0,
+        PropertySharesCreated = 0,
         
         /// <summary>
         /// >> PropertyNftBurned
@@ -36,7 +36,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
     }
     
     /// <summary>
-    /// >> 199 - Variant[pallet_real_world_asset.pallet.Event]
+    /// >> 80 - Variant[pallet_real_world_asset.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>
@@ -47,7 +47,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet
         /// </summary>
         public EnumEvent()
         {
-				AddTypeDecoder<Substrate.NetApi.Model.Types.Primitive.U32>(Event.PropertyTokenCreated);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128>>(Event.PropertySharesCreated);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>>(Event.PropertyNftBurned);
         }
     }

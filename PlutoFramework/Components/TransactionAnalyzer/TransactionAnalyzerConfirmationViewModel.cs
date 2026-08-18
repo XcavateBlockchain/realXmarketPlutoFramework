@@ -45,10 +45,12 @@ namespace PlutoFramework.Components.TransactionAnalyzer
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ProcessedPalletCallName))]
-        private string palletCallName;
+        private string palletCallName = "\"unknown call\"";
 
-        public string ProcessedPalletCallName {
-            get {
+        public string ProcessedPalletCallName
+        {
+            get
+            {
                 string palletCallName = (string)Application.Current.Resources["TransactionAnalyzerPalletCallNameSubstitution"];
 
                 return !string.IsNullOrWhiteSpace(palletCallName) ? palletCallName : PalletCallName;
@@ -139,13 +141,17 @@ namespace PlutoFramework.Components.TransactionAnalyzer
             {
                 (var pallet, var call) = PalletCallModel.GetPalletAndCallName(client, method.ModuleIndex, method.CallIndex);
 
-                PalletCallName = pallet + " " + call;
+                PalletCallName = pallet + "." + call;
             }
             catch (Exception ex)
             {
                 PalletCallName = "Unknown call";
             }
             #endregion
+
+            await OnConfirmClickedAsync();
+
+            return "";
 
             IsVisible = true;
 
@@ -252,7 +258,7 @@ namespace PlutoFramework.Components.TransactionAnalyzer
                 loading.IsVisible = true;
             }
 
-            var account = await KeysModel.GetAccountAsync();
+            var account = await KeysModel.GetAccountAsync(reason: $"Sign and submit {PalletCallName} extrinsic.");
 
             if (account is null)
             {

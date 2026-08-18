@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             x:Class="PlutoFramework.Components.Solana.Transfer.SolanaTokenSelectRowView">
+    <card:ClickableCard>
+        <card:ClickableCard.View>
+            <Grid ColumnDefinitions="60, *, Auto"
+                  HeightRequest="60"
+                  Padding="10, 0, 15, 0">
+
+                <Image x:Name="assetIcon"
+                       Grid.Column="0"
+                       Aspect="AspectFit"
+                       HeightRequest="34"
+                       WidthRequest="34" />
+
+                <Label x:Name="symbolLabel"
+                       Grid.Column="1"
+                       FontAttributes="Bold"
+                       FontSize="15"
+                       VerticalTextAlignment="Center" />
+
+                <Label x:Name="amountLabel"
+                       Grid.Column="2"
+                       FontSize="14"
+                       HorizontalTextAlignment="End"
+                       VerticalTextAlignment="Center" />
+            </Grid>
+        </card:ClickableCard.View>
+    </card:ClickableCard>
+
+    <ContentView.GestureRecognizers>
+        <TapGestureRecognizer Tapped="OnClicked" />
+    </ContentView.GestureRecognizers>
+</ContentView>

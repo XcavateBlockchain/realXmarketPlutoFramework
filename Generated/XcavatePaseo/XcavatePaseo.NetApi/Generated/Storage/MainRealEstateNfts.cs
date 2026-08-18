@@ -62,13 +62,13 @@ namespace XcavatePaseo.NetApi.Generated.Storage
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32>, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT7>), typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT8, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.AttributeDeposit>)));
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32>, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT2>), typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT3, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.AttributeDeposit>)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("RealEstateNfts", "ItemPriceOf"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>), typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U128, Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("RealEstateNfts", "ItemAttributesApprovalsOf"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT2)));
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32>), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT1)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("RealEstateNfts", "NextCollectionId"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(null, null, typeof(Substrate.NetApi.Model.Types.Primitive.U32)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("RealEstateNfts", "PendingSwapOf"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
@@ -339,7 +339,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> AttributeParams
         ///  Attributes of a collection.
         /// </summary>
-        public static string AttributeParams(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32>, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT7> key)
+        public static string AttributeParams(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32>, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT2> key)
         {
             return RequestGenerator.GetStorage("RealEstateNfts", "Attribute", Substrate.NetApi.Model.Meta.Storage.Type.Map, new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                         Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
@@ -361,10 +361,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> Attribute
         ///  Attributes of a collection.
         /// </summary>
-        public async Task<Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT8, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.AttributeDeposit>> Attribute(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32>, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT7> key, string blockhash, CancellationToken token)
+        public async Task<Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT3, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.AttributeDeposit>> Attribute(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32>, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT2> key, string blockhash, CancellationToken token)
         {
             string parameters = RealEstateNftsStorage.AttributeParams(key);
-            var result = await _client.GetStorageAsync<Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT8, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.AttributeDeposit>>(parameters, blockhash, token);
+            var result = await _client.GetStorageAsync<Substrate.NetApi.Model.Types.Base.BaseTuple<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT3, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.AttributeDeposit>>(parameters, blockhash, token);
             return result;
         }
         
@@ -423,10 +423,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> ItemAttributesApprovalsOf
         ///  Item attribute approvals.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT2> ItemAttributesApprovalsOf(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32> key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT1> ItemAttributesApprovalsOf(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U32> key, string blockhash, CancellationToken token)
         {
             string parameters = RealEstateNftsStorage.ItemAttributesApprovalsOfParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT2>(parameters, blockhash, token);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_btree_set.BoundedBTreeSetT1>(parameters, blockhash, token);
             return result;
         }
         
@@ -570,7 +570,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(admin.Encode());
             byteArray.AddRange(config.Encode());
-            return new Method(45, "RealEstateNfts", 0, "create", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 0, "create", byteArray.ToArray());
         }
         
         /// <summary>
@@ -582,7 +582,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(owner.Encode());
             byteArray.AddRange(config.Encode());
-            return new Method(45, "RealEstateNfts", 1, "force_create", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 1, "force_create", byteArray.ToArray());
         }
         
         /// <summary>
@@ -594,7 +594,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(witness.Encode());
-            return new Method(45, "RealEstateNfts", 2, "destroy", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 2, "destroy", byteArray.ToArray());
         }
         
         /// <summary>
@@ -608,7 +608,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(mint_to.Encode());
             byteArray.AddRange(witness_data.Encode());
-            return new Method(45, "RealEstateNfts", 3, "mint", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 3, "mint", byteArray.ToArray());
         }
         
         /// <summary>
@@ -622,7 +622,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(mint_to.Encode());
             byteArray.AddRange(item_config.Encode());
-            return new Method(45, "RealEstateNfts", 4, "force_mint", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 4, "force_mint", byteArray.ToArray());
         }
         
         /// <summary>
@@ -634,7 +634,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
-            return new Method(45, "RealEstateNfts", 5, "burn", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 5, "burn", byteArray.ToArray());
         }
         
         /// <summary>
@@ -647,7 +647,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(dest.Encode());
-            return new Method(45, "RealEstateNfts", 6, "transfer", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 6, "transfer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -659,7 +659,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(items.Encode());
-            return new Method(45, "RealEstateNfts", 7, "redeposit", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 7, "redeposit", byteArray.ToArray());
         }
         
         /// <summary>
@@ -671,7 +671,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
-            return new Method(45, "RealEstateNfts", 8, "lock_item_transfer", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 8, "lock_item_transfer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -683,7 +683,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
-            return new Method(45, "RealEstateNfts", 9, "unlock_item_transfer", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 9, "unlock_item_transfer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -695,7 +695,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(lock_settings.Encode());
-            return new Method(45, "RealEstateNfts", 10, "lock_collection", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 10, "lock_collection", byteArray.ToArray());
         }
         
         /// <summary>
@@ -707,7 +707,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(new_owner.Encode());
-            return new Method(45, "RealEstateNfts", 11, "transfer_ownership", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 11, "transfer_ownership", byteArray.ToArray());
         }
         
         /// <summary>
@@ -721,7 +721,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(issuer.Encode());
             byteArray.AddRange(admin.Encode());
             byteArray.AddRange(freezer.Encode());
-            return new Method(45, "RealEstateNfts", 12, "set_team", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 12, "set_team", byteArray.ToArray());
         }
         
         /// <summary>
@@ -733,7 +733,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(owner.Encode());
-            return new Method(45, "RealEstateNfts", 13, "force_collection_owner", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 13, "force_collection_owner", byteArray.ToArray());
         }
         
         /// <summary>
@@ -745,7 +745,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(config.Encode());
-            return new Method(45, "RealEstateNfts", 14, "force_collection_config", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 14, "force_collection_config", byteArray.ToArray());
         }
         
         /// <summary>
@@ -759,7 +759,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(@delegate.Encode());
             byteArray.AddRange(maybe_deadline.Encode());
-            return new Method(45, "RealEstateNfts", 15, "approve_transfer", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 15, "approve_transfer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -772,7 +772,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(@delegate.Encode());
-            return new Method(45, "RealEstateNfts", 16, "cancel_approval", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 16, "cancel_approval", byteArray.ToArray());
         }
         
         /// <summary>
@@ -784,7 +784,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
-            return new Method(45, "RealEstateNfts", 17, "clear_all_transfer_approvals", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 17, "clear_all_transfer_approvals", byteArray.ToArray());
         }
         
         /// <summary>
@@ -798,14 +798,14 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(lock_metadata.Encode());
             byteArray.AddRange(lock_attributes.Encode());
-            return new Method(45, "RealEstateNfts", 18, "lock_item_properties", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 18, "lock_item_properties", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> set_attribute
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method SetAttribute(Substrate.NetApi.Model.Types.Primitive.U32 collection, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32> maybe_item, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace @namespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT7 key, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT8 value)
+        public static Method SetAttribute(Substrate.NetApi.Model.Types.Primitive.U32 collection, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32> maybe_item, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace @namespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT2 key, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT3 value)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
@@ -813,14 +813,14 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(@namespace.Encode());
             byteArray.AddRange(key.Encode());
             byteArray.AddRange(value.Encode());
-            return new Method(45, "RealEstateNfts", 19, "set_attribute", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 19, "set_attribute", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> force_set_attribute
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method ForceSetAttribute(Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32> set_as, Substrate.NetApi.Model.Types.Primitive.U32 collection, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32> maybe_item, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace @namespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT7 key, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT8 value)
+        public static Method ForceSetAttribute(Substrate.NetApi.Model.Types.Base.BaseOpt<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32> set_as, Substrate.NetApi.Model.Types.Primitive.U32 collection, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32> maybe_item, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace @namespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT2 key, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT3 value)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(set_as.Encode());
@@ -829,21 +829,21 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(@namespace.Encode());
             byteArray.AddRange(key.Encode());
             byteArray.AddRange(value.Encode());
-            return new Method(45, "RealEstateNfts", 20, "force_set_attribute", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 20, "force_set_attribute", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> clear_attribute
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method ClearAttribute(Substrate.NetApi.Model.Types.Primitive.U32 collection, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32> maybe_item, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace @namespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT7 key)
+        public static Method ClearAttribute(Substrate.NetApi.Model.Types.Primitive.U32 collection, Substrate.NetApi.Model.Types.Base.BaseOpt<Substrate.NetApi.Model.Types.Primitive.U32> maybe_item, XcavatePaseo.NetApi.Generated.Model.pallet_nfts.types.EnumAttributeNamespace @namespace, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT2 key)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(maybe_item.Encode());
             byteArray.AddRange(@namespace.Encode());
             byteArray.AddRange(key.Encode());
-            return new Method(45, "RealEstateNfts", 21, "clear_attribute", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 21, "clear_attribute", byteArray.ToArray());
         }
         
         /// <summary>
@@ -856,7 +856,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(@delegate.Encode());
-            return new Method(45, "RealEstateNfts", 22, "approve_item_attributes", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 22, "approve_item_attributes", byteArray.ToArray());
         }
         
         /// <summary>
@@ -870,20 +870,20 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(@delegate.Encode());
             byteArray.AddRange(witness.Encode());
-            return new Method(45, "RealEstateNfts", 23, "cancel_item_attributes_approval", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 23, "cancel_item_attributes_approval", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> set_metadata
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method SetMetadata(Substrate.NetApi.Model.Types.Primitive.U32 collection, Substrate.NetApi.Model.Types.Primitive.U32 item, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 data)
+        public static Method SetMetadata(Substrate.NetApi.Model.Types.Primitive.U32 collection, Substrate.NetApi.Model.Types.Primitive.U32 item, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 data)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(data.Encode());
-            return new Method(45, "RealEstateNfts", 24, "set_metadata", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 24, "set_metadata", byteArray.ToArray());
         }
         
         /// <summary>
@@ -895,19 +895,19 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
-            return new Method(45, "RealEstateNfts", 25, "clear_metadata", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 25, "clear_metadata", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> set_collection_metadata
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method SetCollectionMetadata(Substrate.NetApi.Model.Types.Primitive.U32 collection, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 data)
+        public static Method SetCollectionMetadata(Substrate.NetApi.Model.Types.Primitive.U32 collection, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 data)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(data.Encode());
-            return new Method(45, "RealEstateNfts", 26, "set_collection_metadata", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 26, "set_collection_metadata", byteArray.ToArray());
         }
         
         /// <summary>
@@ -918,7 +918,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
-            return new Method(45, "RealEstateNfts", 27, "clear_collection_metadata", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 27, "clear_collection_metadata", byteArray.ToArray());
         }
         
         /// <summary>
@@ -929,7 +929,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(maybe_collection.Encode());
-            return new Method(45, "RealEstateNfts", 28, "set_accept_ownership", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 28, "set_accept_ownership", byteArray.ToArray());
         }
         
         /// <summary>
@@ -941,7 +941,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(max_supply.Encode());
-            return new Method(45, "RealEstateNfts", 29, "set_collection_max_supply", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 29, "set_collection_max_supply", byteArray.ToArray());
         }
         
         /// <summary>
@@ -953,7 +953,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(mint_settings.Encode());
-            return new Method(45, "RealEstateNfts", 30, "update_mint_settings", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 30, "update_mint_settings", byteArray.ToArray());
         }
         
         /// <summary>
@@ -967,7 +967,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(price.Encode());
             byteArray.AddRange(whitelisted_buyer.Encode());
-            return new Method(45, "RealEstateNfts", 31, "set_price", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 31, "set_price", byteArray.ToArray());
         }
         
         /// <summary>
@@ -980,18 +980,18 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(collection.Encode());
             byteArray.AddRange(item.Encode());
             byteArray.AddRange(bid_price.Encode());
-            return new Method(45, "RealEstateNfts", 32, "buy_item", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 32, "buy_item", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> pay_tips
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method PayTips(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT31 tips)
+        public static Method PayTips(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT15 tips)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(tips.Encode());
-            return new Method(45, "RealEstateNfts", 33, "pay_tips", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 33, "pay_tips", byteArray.ToArray());
         }
         
         /// <summary>
@@ -1007,7 +1007,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(maybe_desired_item.Encode());
             byteArray.AddRange(maybe_price.Encode());
             byteArray.AddRange(duration.Encode());
-            return new Method(45, "RealEstateNfts", 34, "create_swap", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 34, "create_swap", byteArray.ToArray());
         }
         
         /// <summary>
@@ -1019,7 +1019,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(offered_collection.Encode());
             byteArray.AddRange(offered_item.Encode());
-            return new Method(45, "RealEstateNfts", 35, "cancel_swap", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 35, "cancel_swap", byteArray.ToArray());
         }
         
         /// <summary>
@@ -1034,7 +1034,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(receive_collection.Encode());
             byteArray.AddRange(receive_item.Encode());
             byteArray.AddRange(witness_price.Encode());
-            return new Method(45, "RealEstateNfts", 36, "claim_swap", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 36, "claim_swap", byteArray.ToArray());
         }
         
         /// <summary>
@@ -1047,7 +1047,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(mint_data.Encode());
             byteArray.AddRange(signature.Encode());
             byteArray.AddRange(signer.Encode());
-            return new Method(45, "RealEstateNfts", 37, "mint_pre_signed", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 37, "mint_pre_signed", byteArray.ToArray());
         }
         
         /// <summary>
@@ -1060,7 +1060,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(data.Encode());
             byteArray.AddRange(signature.Encode());
             byteArray.AddRange(signer.Encode());
-            return new Method(45, "RealEstateNfts", 38, "set_attributes_pre_signed", byteArray.ToArray());
+            return new Method(11, "RealEstateNfts", 38, "set_attributes_pre_signed", byteArray.ToArray());
         }
     }
     

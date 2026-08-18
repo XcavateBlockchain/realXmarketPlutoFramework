@@ -31,7 +31,8 @@ namespace PlutoFramework.Model
 
     public class TransactionAnalyzerModel
     {
-        public static ExtrinsicResult GetExtrinsicResult(IEnumerable<ExtrinsicEvent> events) {
+        public static ExtrinsicResult GetExtrinsicResult(IEnumerable<ExtrinsicEvent> events)
+        {
             if (events.Count() == 0)
                 return ExtrinsicResult.Unknown;
             else
@@ -254,7 +255,7 @@ namespace PlutoFramework.Model
                 IEnumerable<(string, XcavatePropertyKey, XcavatePropertyOperation, uint)> evaluated = e switch
                 {
                     // Nfts
-                    ExtrinsicEvent { PalletName: "Marketplace", EventName: nameof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet.Event.PropertyTokenBought) } => [(e.Parameters[2].Value, (endpoint.Key, uint.Parse(e.Parameters[0].Value)), XcavatePropertyOperation.Buy, uint.Parse(e.Parameters[3].Value))],
+                    ExtrinsicEvent { PalletName: "Marketplace", EventName: nameof(XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.pallet.Event.PropertySharesBought) } => [(e.Parameters[2].Value, (endpoint.Key, uint.Parse(e.Parameters[0].Value)), XcavatePropertyOperation.Buy, uint.Parse(e.Parameters[3].Value))],
 
                     // Handle more events ...
                     _ => []
@@ -281,9 +282,16 @@ namespace PlutoFramework.Model
 
                     result[address][key] = new PropertyTokenOwnershipChangeInfo
                     {
+                        Endpoint = endpoint,
+                        Region = null,
+                        ListingHasExpired = false,
+                        ClaimHasExpired = false,
                         NftBase = cache[key],
                         Operation = operation,
                         Amount = amount,
+                        TokensBought = 0,
+                        TokensOwned = 0,
+                        SpvCreated = false,
                         Favourite = false
                     };
                 }

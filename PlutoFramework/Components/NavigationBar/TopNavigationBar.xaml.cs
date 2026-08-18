@@ -47,6 +47,8 @@ public partial class TopNavigationBar : ContentView
 
     public Func<Task> ExtraFunc { get; set; }
 
+    public Func<Task> BackFunc { get; set; }
+
     public IAsyncRelayCommand ExtraCommand
     {
         get => (IAsyncRelayCommand)GetValue(ExtraCommandProperty);
@@ -62,6 +64,12 @@ public partial class TopNavigationBar : ContentView
     }
     private async void OnBackClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)
     {
+        if (BackFunc is not null)
+        {
+            await BackFunc();
+            return;
+        }
+
         await Navigation.PopAsync();
     }
 

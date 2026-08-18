@@ -10,6 +10,7 @@
         FontAttributes="Bold"
         CornerRadius="{StaticResource ButtonCornerRadius}"
         HeightRequest="{StaticResource ButtonHeight}"
-        FontFamily="{StaticResource ButtonFontFamily}">
+        FontFamily="{StaticResource ButtonFontFamily}"
+        FontSize="14">
     
 </Button>

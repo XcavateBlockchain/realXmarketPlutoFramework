@@ -2,14 +2,13 @@
 using Plugin.Fingerprint.Abstractions;
 using PlutoFramework.Components.Account;
 using PlutoFramework.Components.Kilt;
+using PlutoFramework.Components.Loading;
 using PlutoFramework.Components.Password;
 using PlutoFramework.Components.Xcavate;
 using PlutoFramework.Constants;
-using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Sumsub;
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Keys;
-using PlutoFrameworkCore.Xcavate;
 using XcavatePaseo.NetApi.Generated;
 
 namespace PlutoFramework.Model
@@ -29,10 +28,26 @@ namespace PlutoFramework.Model
 
         public static async Task<bool> CheckRequirementsAsync(CancellationToken token)
         {
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            // KYC, DID and the profile are all keyed to a Substrate address. A Solana-only
+            // account has none, so this reports "account required" rather than sending the
+            // GetSubstrateKey() placeholder string to Sumsub.
+            if (!KeysModel.HasSubstrateKey())
+            {
+                DependencyService.Get<NoAccountPopupViewModel>().IsVisible = true;
+
+                return false;
+            }
+
+            fullPageLoadingViewModel.Message = "Getting Account";
+
             if (!CheckAccountExists())
             {
                 return false;
             }
+
+            fullPageLoadingViewModel.Message = "Checking DID";
 
             if (!CheckDidExists())
             {
@@ -40,6 +55,8 @@ namespace PlutoFramework.Model
             }
 
             #region Sumsub
+            fullPageLoadingViewModel.Message = "Verifying on Sumsub";
+
             var address = KeysModel.GetSubstrateKey();
 
             Console.WriteLine("REAL WALLET Address: " + address);
@@ -55,7 +72,6 @@ namespace PlutoFramework.Model
 
             if (applicantData is null)
             {
-
                 Console.WriteLine("applicantData was null");
                 var userProfileNotCreatedPopupViewModel = DependencyService.Get<UserProfileNotCreatedPopupViewModel>();
 
@@ -67,47 +83,48 @@ namespace PlutoFramework.Model
             Console.WriteLine("applicantData was good");
             #endregion
 
-            #region Whitelist
-            var xcavateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, token);
+            return true;
+        }
 
-            var user = await XcavateUserDatabase.GetUserInformationAsync();
-
-            if (user is null)
+        public static async Task<bool> CheckXcavateRoleAsync(XcavateRole role, CancellationToken token)
+        {
+            // Roles live in the XcavatePaseo whitelist pallet, keyed by Substrate address.
+            if (!KeysModel.HasSubstrateKey())
             {
-                Console.WriteLine("user was null");
-
-                var userProfileNotCreatedPopupViewModel = DependencyService.Get<UserProfileNotCreatedPopupViewModel>();
-
-                userProfileNotCreatedPopupViewModel.IsVisible = true;
+                DependencyService.Get<NotWhitelistedPopupViewModel>().IsVisible = true;
 
                 return false;
             }
 
-            var verification = await WhitelistModel.IsWhitelistedAsync((SubstrateClientExt)xcavateClient.SubstrateClient, user.Role.ToWhitelistRole(), address, CancellationToken.None);
+            var address = KeysModel.GetSubstrateKey();
 
-            switch (verification)
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.Message = "Connecting to Substrate";
+
+            var xcavateClient = await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, token);
+
+            fullPageLoadingViewModel.Message = "Querying roles";
+
+            var roles = await WhitelistModel.GetRolesAsync((SubstrateClientExt)xcavateClient.SubstrateClient, address, token);
+
+            if (!roles.Contains(role))
             {
-                case VerificationEnum.Verified:
+                var notWhitelistedPopupViewModel = DependencyService.Get<NotWhitelistedPopupViewModel>();
 
-                    break;
+                notWhitelistedPopupViewModel.IsVisible = true;
 
-                default:
-
-                    var notWhitelistedPopupViewModel = DependencyService.Get<NotWhitelistedPopupViewModel>();
-
-                    notWhitelistedPopupViewModel.IsVisible = true;
-
-                    return false;
+                return false;
             }
-
-            #endregion
 
             return true;
         }
 
         public static bool CheckAccountExists()
         {
-            if (!KeysModel.HasSubstrateKey())
+            var onboardingCompleted = OnboardingModel.IsOnboardingCompleted();
+
+            if ((!KeysModel.HasSolanaKey() && !KeysModel.HasSubstrateKey()) || !onboardingCompleted)
             {
                 var noAccountPopupViewModel = DependencyService.Get<NoAccountPopupViewModel>();
 
@@ -133,11 +150,11 @@ namespace PlutoFramework.Model
             return true;
         }
 
-        public static async Task<AuthenticationResult> CheckAuthenticationAsync(string passwordStorageKey = PreferencesModel.PASSWORD)
+        public static async Task<AuthenticationResult> CheckAuthenticationAsync(string passwordStorageKey = PreferencesModel.PASSWORD, string reason = "Authentication required")
         {
             var biometricsEnabled = Preferences.Get(PreferencesModel.BIOMETRICS_ENABLED, false);
 
-            var request = new AuthenticationRequestConfiguration("Biometric verification", "..");
+            var request = new AuthenticationRequestConfiguration("Authentication required", reason);
             FingerprintAuthenticationResult result;
 
             if (biometricsEnabled)
@@ -158,6 +175,7 @@ namespace PlutoFramework.Model
             {
                 var viewModel = DependencyService.Get<EnterPasswordPopupViewModel>();
 
+                viewModel.Reason = reason;
                 viewModel.IsVisible = true;
 
                 for (int i = 0; i < 5; i++)

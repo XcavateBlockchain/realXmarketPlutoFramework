@@ -1,8 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
-using PlutoFramework.Model;
-using PlutoFramework.Model.Xcavate;
 
 namespace PlutoFramework.Components.Xcavate
 {
@@ -10,9 +8,18 @@ namespace PlutoFramework.Components.Xcavate
     {
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
-        private bool agreed = false;
+        private bool termsAgreed = false;
 
-        public ButtonStateEnum ContinueButtonState => Agreed ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
+        private bool agreementAgreed = false;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
+        private bool privacyPolicyAgreed = false;
+
+        public ButtonStateEnum ContinueButtonState =>
+            TermsAgreed && AgreementAgreed && PrivacyPolicyAgreed ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
 
         [ObservableProperty]
         private string text = "";
@@ -23,10 +30,10 @@ namespace PlutoFramework.Components.Xcavate
         [RelayCommand]
         public async Task NavigateAsync()
         {
-            await QuestionnaireModel.AcceptTermsAsync(KeysModel.GetPublicKey());
+            //await QuestionnaireModel.AcceptTermsAsync(KeysModel.GetPublicKey());
 
             await Navigation.Invoke();
         }
-       
+
     }
 }

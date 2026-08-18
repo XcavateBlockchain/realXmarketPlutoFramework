@@ -37,7 +37,7 @@ namespace UniqueryPlus.Nfts
             return RealEstateNftsCalls.BuyItem(new U32((uint)CollectionId), new U32((uint)Id), new U128(Price ?? 0));
         }
     }
-    public record XcavatePaseoNftsPalletNft : INftXcavateBase, INftBase, INftTransferable, INftBurnable, INftMarketPrice, INftFractionalization, INftXcavateMetadata, INftXcavateNftMarketplace, INftXcavateOngoingObjectListing
+    public record XcavatePaseoNftsPalletNft : INftXcavateBase, INftBase, INftTransferable, INftBurnable, INftMarketPrice, INftFractionalization, INftXcavateMetadata, INftXcavateNftMarketplace, INftXcavateOngoingObjectListing, INftXcavateRealWorldAssetDetails
     {
         private SubstrateClientExt client;
         public NftTypeEnum Type => NftTypeEnum.XcavatePaseo;
@@ -47,6 +47,8 @@ namespace UniqueryPlus.Nfts
         public NftMarketplaceDetails? NftMarketplaceDetails { get; set; }
 
         public XcavateOngoingObjectListingDetails? OngoingObjectListingDetails { get; set; }
+        public XcavateRealWorldAssetDetails? RealWorldAssetDetails { get; set; }
+
         public MetadataBase? Metadata { get; set; }
         public PropertyMetadata? XcavateMetadata { get; set; }
         public XcavatePaseoNftsPalletNft(SubstrateClientExt client)
@@ -95,10 +97,9 @@ namespace UniqueryPlus.Nfts
             };
         }
     }
-    public class XcavatePaseoNftModel
+    public static class XcavatePaseoNftModel
     {
-
-        public static Task<RecursiveReturn<INftBase>> GetNftsNftsPalletAsync(SubstrateClientExt client, List<(U32, U32)> nftIds, string lastKey, CancellationToken token)
+        public static Task<RecursiveReturn<INftXcavateBase>> GetNftsNftsPalletAsync(SubstrateClientExt client, List<(U32, U32)> nftIds, string lastKey, CancellationToken token)
         {
             var keyPrefixLength = 66;
 
@@ -106,7 +107,7 @@ namespace UniqueryPlus.Nfts
 
             return GetNftsNftsPalletByIdKeysAsync(client, idKeys, lastKey, token);
         }
-        internal static async Task<INftBase?> GetNftNftsPalletByIdAsync(SubstrateClientExt client, uint collectionId, uint id, CancellationToken token)
+        public static async Task<INftBase?> GetNftNftsPalletByIdAsync(SubstrateClientExt client, uint collectionId, uint id, CancellationToken token)
         {
             var keyPrefix = Utils.HexToByteArray(RealEstateNftsStorage.ItemParams(new BaseTuple<U32, U32>(new U32(collectionId), new U32(id))));
 
@@ -123,7 +124,7 @@ namespace UniqueryPlus.Nfts
 
             return (await GetNftsNftsPalletByIdKeysAsync(client, idKeys, fullKeys.Last().ToString(), token).ConfigureAwait(false)).Items.First();
         }
-        internal static async Task<RecursiveReturn<INftBase>> GetNftsNftsPalletInCollectionAsync(SubstrateClientExt client, uint collectionId, uint limit, byte[]? lastKey, CancellationToken token)
+        internal static async Task<RecursiveReturn<INftXcavateBase>> GetNftsNftsPalletInCollectionAsync(SubstrateClientExt client, uint collectionId, uint limit, byte[]? lastKey, CancellationToken token)
         {
             // 0x + Twox64 pallet + Twox64 storage + Blake2_128Concat U32
             var keyPrefixLength = 106;
@@ -135,7 +136,7 @@ namespace UniqueryPlus.Nfts
             // No more nfts found
             if (fullKeys == null || !fullKeys.Any())
             {
-                return new RecursiveReturn<INftBase>
+                return new RecursiveReturn<INftXcavateBase>
                 {
                     Items = [],
                     LastKey = lastKey,
@@ -150,7 +151,20 @@ namespace UniqueryPlus.Nfts
             return await GetNftsNftsPalletByIdKeysAsync(client, idKeys, fullKeys.Last().ToString(), token).ConfigureAwait(false);
         }
 
-        internal static async Task<RecursiveReturn<INftBase>> GetNftsNftsPalletOwnedByAsync(SubstrateClientExt client, string owner, uint limit, byte[]? lastKey, CancellationToken token)
+
+        public static async Task<RecursiveReturn<INftBase>> ToBaseAsync(this Task<RecursiveReturn<INftXcavateBase>> task)
+        {
+            Console.WriteLine("To base being called");
+
+            var recursiveReturn = await task;
+
+            return new RecursiveReturn<INftBase>
+            {
+                Items = recursiveReturn.Items.Cast<INftBase>(),
+                LastKey = recursiveReturn.LastKey,
+            };
+        }
+        internal static async Task<RecursiveReturn<INftXcavateBase>> GetNftsNftsPalletOwnedByAsync(SubstrateClientExt client, string owner, uint limit, byte[]? lastKey, CancellationToken token)
         {
             var accountId32 = new AccountId32();
             accountId32.Create(Utils.GetPublicKeyFrom(owner));
@@ -165,7 +179,7 @@ namespace UniqueryPlus.Nfts
             // No more nfts found
             if (fullKeys == null || !fullKeys.Any())
             {
-                return new RecursiveReturn<INftBase>
+                return new RecursiveReturn<INftXcavateBase>
                 {
                     Items = [],
                     LastKey = lastKey,
@@ -178,7 +192,7 @@ namespace UniqueryPlus.Nfts
             return await GetNftsNftsPalletByIdKeysAsync(client, idKeys, fullKeys.Last().ToString(), token).ConfigureAwait(false);
         }
 
-        internal static async Task<RecursiveReturn<INftBase>> GetNftsNftsPalletInCollectionOwnedByAsync(SubstrateClientExt client, uint collectionId, string owner, uint limit, byte[]? lastKey, CancellationToken token)
+        internal static async Task<RecursiveReturn<INftXcavateBase>> GetNftsNftsPalletInCollectionOwnedByAsync(SubstrateClientExt client, uint collectionId, string owner, uint limit, byte[]? lastKey, CancellationToken token)
         {
             var accountId32 = new AccountId32();
             accountId32.Create(Utils.GetPublicKeyFrom(owner));
@@ -193,7 +207,7 @@ namespace UniqueryPlus.Nfts
             // No more nfts found
             if (fullKeys == null || !fullKeys.Any())
             {
-                return new RecursiveReturn<INftBase>
+                return new RecursiveReturn<INftXcavateBase>
                 {
                     Items = [],
                     LastKey = lastKey,
@@ -209,11 +223,11 @@ namespace UniqueryPlus.Nfts
             return await GetNftsNftsPalletByIdKeysAsync(client, idKeys, fullKeys.Last().ToString(), token).ConfigureAwait(false);
         }
 
-        internal static Task<RecursiveReturn<INftBase>> GetNftsNftsPalletByIdKeysAsync(SubstrateClientExt client, IEnumerable<string> idKeys, string lastKey, CancellationToken token)
+        internal static Task<RecursiveReturn<INftXcavateBase>> GetNftsNftsPalletByIdKeysAsync(SubstrateClientExt client, IEnumerable<string> idKeys, string lastKey, CancellationToken token)
         {
             return GetNftsNftsPalletByIdKeysAsync(client, idKeys, Utils.HexToByteArray(lastKey), token);
         }
-        internal static async Task<RecursiveReturn<INftBase>> GetNftsNftsPalletByIdKeysAsync(SubstrateClientExt client, IEnumerable<string> nftIdKeys, byte[] lastKey, CancellationToken token)
+        internal static async Task<RecursiveReturn<INftXcavateBase>> GetNftsNftsPalletByIdKeysAsync(SubstrateClientExt client, IEnumerable<string> nftIdKeys, byte[] lastKey, CancellationToken token)
         {
             var ids = nftIdKeys.Select(ids => (Helpers.GetBigIntegerFromBlake2_128Concat(ids.Substring(0, 40)), Helpers.GetBigIntegerFromBlake2_128Concat(ids.Substring(40, 40))));
 
@@ -225,7 +239,9 @@ namespace UniqueryPlus.Nfts
 
             var ongoingObjectDetails = await GetOngoingObjectListingDetailsAsync(client, nftIdKeys, token).ConfigureAwait(false);
 
-            return new RecursiveReturn<INftBase>
+            var realWorldAssetDetails = await GetRealWorldAssetDetailsAsync(client, nftIdKeys, token).ConfigureAwait(false);
+
+            return new RecursiveReturn<INftXcavateBase>
             {
                 Items = ids.Zip(nftDetails, ((BigInteger, BigInteger) ids, ItemDetails? details) => details switch
                 {
@@ -268,6 +284,14 @@ namespace UniqueryPlus.Nfts
                     if (details is not null)
                     {
                         nft.OngoingObjectListingDetails = details;
+                    }
+
+                    return nft;
+                }).Zip(realWorldAssetDetails, (XcavatePaseoNftsPalletNft nft, XcavateRealWorldAssetDetails? details) =>
+                {
+                    if (details is not null)
+                    {
+                        nft.RealWorldAssetDetails = details;
                     }
 
                     return nft;
@@ -331,7 +355,7 @@ namespace UniqueryPlus.Nfts
                     AssetId = propertyDetails.ItemId,
                     Region = propertyDetails.Region,
                     Location = Helpers.VecU8ToString(propertyDetails.Location.Value.Value),
-                    Tokens = propertyDetails.TokenAmount,
+                    Tokens = propertyDetails.ShareAmount,
                 });
             }
 
@@ -385,21 +409,79 @@ namespace UniqueryPlus.Nfts
                 var propertyDetails = new XcavatePaseo.NetApi.Generated.Model.pallet_marketplace.types.PropertyListingDetails();
                 propertyDetails.Create(change[1]);
 
-                details.Add(new XcavateOngoingObjectListingDetails
+                try
                 {
-                    RealEstateDeveloper = Utils.GetAddressFrom(propertyDetails.RealEstateDeveloper.Encode()),
-                    TaxPaidByDeveloper = propertyDetails.TaxPaidByDeveloper,
-                    ListingExpiry = propertyDetails.ListingExpiry.Value,
-                    ListedTokens = propertyDetails.ListedTokenAmount,
-                    AssetId = propertyDetails.AssetId,
-                    CollectionId = propertyDetails.CollectionId,
-                    ItemId = propertyDetails.ItemId,
-                });
+                    string realEstateDeveloper = Utils.GetAddressFrom(propertyDetails.RealEstateDeveloper.Encode());
+                    bool taxPaidByDeveloper = propertyDetails.TaxPaidByDeveloper;
+                    uint listingExpiry = propertyDetails.ListingExpiry;
+                    uint? claimExpiry = propertyDetails.ClaimExpiry.OptionFlag && propertyDetails.ClaimExpiry.Value != null
+                        ? propertyDetails.ClaimExpiry.Value.Value
+                        : null;
+                    uint listedTokens = propertyDetails.ListedShareAmount;
+                    uint unclaimedTokens = propertyDetails.UnclaimedShareAmount;
+
+                    details.Add(new XcavateOngoingObjectListingDetails
+                    {
+                        RealEstateDeveloper = realEstateDeveloper,
+                        TaxPaidByDeveloper = taxPaidByDeveloper,
+                        ListingExpiry = listingExpiry,
+                        ClaimExpiry = claimExpiry,
+                        ListedTokens = listedTokens,
+                        UnclaimedTokens = unclaimedTokens,
+                        AssetId = propertyDetails.AssetId,
+                        CollectionId = propertyDetails.CollectionId,
+                        ItemId = propertyDetails.ItemId,
+                        ShareOwners = new Dictionary<string, ShareOwner>(),
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception: ");
+                    Console.WriteLine(ex);
+
+                    details.Add(null);
+                }
             }
 
             return details;
         }
 
+
+        internal static async Task<List<XcavateRealWorldAssetDetails?>> GetRealWorldAssetDetailsAsync(SubstrateClientExt client, IEnumerable<string> idKeys, CancellationToken token)
+        {
+            // 0x + Twox64 pallet + Twox64 storage
+            var keyPrefixLength = 66;
+
+            var keyPrefix = RealWorldAssetStorage.PropertyAssetInfoParams(new U32(0)).Substring(0, keyPrefixLength);
+
+            var nftKeys = idKeys.Select(idKey => Utils.HexToByteArray(keyPrefix + idKey.Substring(40, 40)));
+            var storageChangeSets = await client.State.GetQueryStorageAtAsync(nftKeys.ToList(), string.Empty, token).ConfigureAwait(false);
+
+            var details = new List<XcavateRealWorldAssetDetails?>();
+
+            foreach (var change in storageChangeSets.First().Changes)
+            {
+                if (change[1] == null)
+                {
+                    details.Add(null);
+                    continue;
+                }
+
+                var propertyDetails = new XcavatePaseo.NetApi.Generated.Model.pallet_real_world_asset.pallet.PropertyAssetDetails();
+                propertyDetails.Create(change[1]);
+
+                details.Add(new XcavateRealWorldAssetDetails
+                {
+                    Tokens = propertyDetails.ShareAmount,
+                    Price = propertyDetails.Price.Value,
+                    SpvCreated = propertyDetails.SpvCreated,
+                    Finalized = propertyDetails.Finalized,
+                    ShareOwners = new Dictionary<string, ShareOwner>(),
+                });
+            }
+
+            return details;
+        }
 
         internal static async Task<IEnumerable<(MetadataBase Metadata, PropertyMetadata XcavateMetadata)?>> GetNftMetadataNftsPalletByIdKeysAsync(SubstrateClientExt client, IEnumerable<string> idKeys, CancellationToken token)
         {
@@ -455,7 +537,7 @@ namespace UniqueryPlus.Nfts
                     {
                         Name = propertyMetadata.PropertyName,
                         Description = propertyMetadata.PropertyDescription,
-                        Image = propertyMetadata.FileUrls.Count() > 0 ? propertyMetadata.FileUrls[0] : null,
+                        Image = propertyMetadata.Files.Count() > 0 ? propertyMetadata.Files[0] : null,
                     };
 
                     metadatas.Add((metadata, propertyMetadata));

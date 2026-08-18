@@ -405,13 +405,13 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> create_module
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method CreateModule(Substrate.NetApi.Model.Types.Primitive.U16 region, Substrate.NetApi.Model.Types.Primitive.U32 module_amount, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 data)
+        public static Method CreateModule(Substrate.NetApi.Model.Types.Primitive.U16 region, Substrate.NetApi.Model.Types.Primitive.U32 module_amount, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 data)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(region.Encode());
             byteArray.AddRange(module_amount.Encode());
             byteArray.AddRange(data.Encode());
-            return new Method(62, "RealXEducation", 0, "create_module", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 0, "create_module", byteArray.ToArray());
         }
         
         /// <summary>
@@ -424,20 +424,20 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(module_id.Encode());
             byteArray.AddRange(token_amount.Encode());
             byteArray.AddRange(payment_asset.Encode());
-            return new Method(62, "RealXEducation", 1, "sponsor_module", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 1, "sponsor_module", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> book_module
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method BookModule(Substrate.NetApi.Model.Types.Primitive.U32 module_id, Substrate.NetApi.Model.Types.Primitive.U64 sponsor_id, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 data)
+        public static Method BookModule(Substrate.NetApi.Model.Types.Primitive.U32 module_id, Substrate.NetApi.Model.Types.Primitive.U64 sponsor_id, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 data)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(module_id.Encode());
             byteArray.AddRange(sponsor_id.Encode());
             byteArray.AddRange(data.Encode());
-            return new Method(62, "RealXEducation", 2, "book_module", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 2, "book_module", byteArray.ToArray());
         }
         
         /// <summary>
@@ -449,14 +449,14 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(module_id.Encode());
             byteArray.AddRange(booking_id.Encode());
-            return new Method(62, "RealXEducation", 3, "claim_booking", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 3, "claim_booking", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> submit_impact_score
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method SubmitImpactScore(Substrate.NetApi.Model.Types.Primitive.U32 module_id, Substrate.NetApi.Model.Types.Primitive.U64 booking_id, XcavatePaseo.NetApi.Generated.Model.sp_arithmetic.per_things.Permill score, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 module_sponsor_data, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 module_booker_data, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 module_deliverer_data)
+        public static Method SubmitImpactScore(Substrate.NetApi.Model.Types.Primitive.U32 module_id, Substrate.NetApi.Model.Types.Primitive.U64 booking_id, XcavatePaseo.NetApi.Generated.Model.sp_arithmetic.per_things.Permill score, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 module_sponsor_data, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 module_booker_data, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 module_deliverer_data)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(module_id.Encode());
@@ -465,21 +465,21 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(module_sponsor_data.Encode());
             byteArray.AddRange(module_booker_data.Encode());
             byteArray.AddRange(module_deliverer_data.Encode());
-            return new Method(62, "RealXEducation", 4, "submit_impact_score", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 4, "submit_impact_score", byteArray.ToArray());
         }
         
         /// <summary>
         /// >> mint_recipient_nft
         /// Contains a variant per dispatchable extrinsic that this pallet has.
         /// </summary>
-        public static Method MintRecipientNft(Substrate.NetApi.Model.Types.Primitive.U32 module_id, Substrate.NetApi.Model.Types.Primitive.U64 booking_id, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32 student, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 module_recipient_data)
+        public static Method MintRecipientNft(Substrate.NetApi.Model.Types.Primitive.U32 module_id, Substrate.NetApi.Model.Types.Primitive.U64 booking_id, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32 student, XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 module_recipient_data)
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(module_id.Encode());
             byteArray.AddRange(booking_id.Encode());
             byteArray.AddRange(student.Encode());
             byteArray.AddRange(module_recipient_data.Encode());
-            return new Method(62, "RealXEducation", 5, "mint_recipient_nft", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 5, "mint_recipient_nft", byteArray.ToArray());
         }
         
         /// <summary>
@@ -491,7 +491,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(module_id.Encode());
             byteArray.AddRange(booking_id.Encode());
-            return new Method(62, "RealXEducation", 6, "finish_booking_process", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 6, "finish_booking_process", byteArray.ToArray());
         }
         
         /// <summary>
@@ -503,7 +503,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(module_id.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(62, "RealXEducation", 7, "burn_unsponsored_token", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 7, "burn_unsponsored_token", byteArray.ToArray());
         }
         
         /// <summary>
@@ -514,7 +514,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(module_id.Encode());
-            return new Method(62, "RealXEducation", 8, "remove_module", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 8, "remove_module", byteArray.ToArray());
         }
         
         /// <summary>
@@ -527,7 +527,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(module_id.Encode());
             byteArray.AddRange(sponsor_id.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(62, "RealXEducation", 9, "reclaim_unused_sponsorship", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 9, "reclaim_unused_sponsorship", byteArray.ToArray());
         }
         
         /// <summary>
@@ -539,7 +539,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(module_id.Encode());
             byteArray.AddRange(booking_id.Encode());
-            return new Method(62, "RealXEducation", 10, "cancel_booking", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 10, "cancel_booking", byteArray.ToArray());
         }
         
         /// <summary>
@@ -549,7 +549,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public static Method ClearOldCancellations()
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
-            return new Method(62, "RealXEducation", 11, "clear_old_cancellations", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 11, "clear_old_cancellations", byteArray.ToArray());
         }
         
         /// <summary>
@@ -561,7 +561,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(module_id.Encode());
             byteArray.AddRange(booking_id.Encode());
-            return new Method(62, "RealXEducation", 12, "cancel_claim", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 12, "cancel_claim", byteArray.ToArray());
         }
         
         /// <summary>
@@ -571,7 +571,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public static Method RegisterModuleDeliverer()
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
-            return new Method(62, "RealXEducation", 13, "register_module_deliverer", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 13, "register_module_deliverer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -581,7 +581,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public static Method UnregisterModuleDeliverer()
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
-            return new Method(62, "RealXEducation", 14, "unregister_module_deliverer", byteArray.ToArray());
+            return new Method(22, "RealXEducation", 14, "unregister_module_deliverer", byteArray.ToArray());
         }
     }
     
@@ -694,10 +694,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> AcceptedAssets
         ///  Accepted assets for payments (e.g., USDC, USDT).
         /// </summary>
-        public XcavatePaseo.NetApi.Generated.Types.Base.Arr4U32 AcceptedAssets()
+        public XcavatePaseo.NetApi.Generated.Types.Base.Arr3U32 AcceptedAssets()
         {
-            var result = new XcavatePaseo.NetApi.Generated.Types.Base.Arr4U32();
-            result.Create("0x010000000A00000039050000C0070000");
+            var result = new XcavatePaseo.NetApi.Generated.Types.Base.Arr3U32();
+            result.Create("0x0A00000039050000C0070000");
             return result;
         }
         
@@ -727,9 +727,9 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> NewAssetSymbol
         ///  The newly created asset's symbol.
         /// </summary>
-        public XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 NewAssetSymbol()
+        public XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 NewAssetSymbol()
         {
-            var result = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6();
+            var result = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1();
             result.Create("0x1042524958");
             return result;
         }
@@ -738,9 +738,9 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> NewAssetName
         ///  The newly created asset's name.
         /// </summary>
-        public XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6 NewAssetName()
+        public XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1 NewAssetName()
         {
-            var result = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT6();
+            var result = new XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT1();
             result.Create("0x1042726978");
             return result;
         }

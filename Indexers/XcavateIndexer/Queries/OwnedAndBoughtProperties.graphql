@@ -1,0 +1,120 @@
+﻿query OwnedAndBoughtProperties($first: Int = 10, $offset: Int = 0, $shareOwner: String = "14XAmaujtAthi7KdWsJrKh1QEjiNXwabW1YdYUCbAM6TeGk") {
+  realEstateNfts(
+    offset: $offset
+    first: $first
+    filter: {
+      or: [
+        { marketplaceOngoingObjectListings: { some: { shareOwners: { some: { account: { equalTo: $shareOwner } } } } } },
+        { realWorldAssets: { some: { owners: { some: { account: { equalTo: $shareOwner } } } } } }
+      ]
+    }
+  ) {
+    nodes {
+      propertyType
+      propertyPrice
+      quality
+      propertyName
+      propertyId
+      pricePerShare
+      propertyDescription
+      postCode
+      planningCode
+      outdoorSpace
+      accountAddress
+      annualServiceCharge
+      area
+      buildingControlCode
+      collection
+      companyLogo
+      companyName
+      constructionDate
+      createdAt
+      developerAddress
+      estimatedRentalIncome
+      files
+      flatOrUnit
+      id
+      isStampDutyPaid
+      isAnnualServiceChargePaid
+      item
+      legalRepresentative
+      localAuthority
+      map
+      numberOfBedrooms
+      numberOfBathrooms
+      numberOfShares
+      offStreetParking
+      stampDutyTax
+      status
+      street
+      townCity
+      updatedAt
+      marketplaceOngoingObjectListings(first: 1) {
+        nodes {
+          updatedBlock
+          unclaimedShareAmount
+          sharePrice
+          shareAmount
+          taxPaidByDeveloper
+          relistCount
+          tax
+          realWorldAssetId
+          realEstateNftId
+          realEstateDeveloper
+          listingId
+          listingExpiry
+          listedShareAmount
+          itemId
+          investorFunds
+          id
+          collectedTax
+          collectionId
+          collectedFunds
+          collectedFees
+          claimExpiry
+          assetId
+          shareOwners(first: 1, filter: {account: {equalTo: $shareOwner}}) {
+            nodes {
+              id
+              account
+              shareAmount
+              updatedBlock
+              relistCount
+              paidTax
+              paidFunds
+              ongoingObjectListingId
+              listingId
+            }
+          }
+        }
+      }
+      realWorldAssets(first: 1) {
+        nodes {
+          collectionId
+          assetId
+          finalized
+          id
+          itemId
+          location
+          ownerAccounts
+          price
+          realEstateNftId
+          region
+          spvCreated
+          shareAmount
+          updatedBlock
+          owners(first: 1, filter: {account: {equalTo: $shareOwner}}) {
+            nodes {
+              account
+              assetId
+              id
+              shareAmount
+              assetIdNumber
+              updatedBlock
+            }
+          }
+        }
+      }
+    }
+  }
+}

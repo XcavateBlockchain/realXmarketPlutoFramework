@@ -35,7 +35,7 @@
                                 <Span Text="{Binding TokensOwned}"
                                       FontSize="20"
                                       FontAttributes="Bold"/>
-                                <Span Text=" tokens "
+                                <Span Text=" shares "
                                       FontSize="20"
                                       FontAttributes="Bold"/>
                                 <Span Text="worth "/>

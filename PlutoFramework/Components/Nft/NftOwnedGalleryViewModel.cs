@@ -35,9 +35,9 @@ namespace PlutoFramework.Components.Nft
             // owned Nfts
             foreach (var savedNft in await NftDatabase.GetNftsOwnedByAsync(KeysModel.GetSubstrateKey()).ConfigureAwait(false))
             {
-                if (savedNft.Key is not null && !ownedNftsDict.ContainsKey((NftKey)savedNft.Key))
+                if (!ownedNftsDict.ContainsKey(savedNft.Key))
                 {
-                    ownedNftsDict.Add((NftKey)savedNft.Key, savedNft);
+                    ownedNftsDict.Add(savedNft.Key, savedNft);
 
                     if (ownedNftsDict.Count() <= displayLimit)
                     {

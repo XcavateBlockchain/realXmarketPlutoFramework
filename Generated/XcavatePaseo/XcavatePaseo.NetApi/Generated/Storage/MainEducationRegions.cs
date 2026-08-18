@@ -58,9 +58,9 @@ namespace XcavatePaseo.NetApi.Generated.Storage
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat,
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Base.BaseTuple<Substrate.NetApi.Model.Types.Primitive.U64, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>), typeof(XcavatePaseo.NetApi.Generated.Model.pallet_education_regions.pallet.VoteRecord)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("EducationRegions", "RegionOwnerRoundsExpiring"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT60)));
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT22)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("EducationRegions", "ReplacementAuctionExpiring"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT60)));
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT22)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("EducationRegions", "ProposalCounter"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(null, null, typeof(Substrate.NetApi.Model.Types.Primitive.U64)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("EducationRegions", "RegionProposalId"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
                             Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(Substrate.NetApi.Model.Types.Primitive.U16), typeof(Substrate.NetApi.Model.Types.Primitive.U64)));
@@ -400,10 +400,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> RegionOwnerRoundsExpiring
         ///  Expiring rounds for region owner removal votings.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT60> RegionOwnerRoundsExpiring(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT22> RegionOwnerRoundsExpiring(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
         {
             string parameters = EducationRegionsStorage.RegionOwnerRoundsExpiringParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT60>(parameters, blockhash, token);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT22>(parameters, blockhash, token);
             return result;
         }
         
@@ -431,10 +431,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> ReplacementAuctionExpiring
         ///  Expiring replacement auctions.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT60> ReplacementAuctionExpiring(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT22> ReplacementAuctionExpiring(Substrate.NetApi.Model.Types.Primitive.U32 key, string blockhash, CancellationToken token)
         {
             string parameters = EducationRegionsStorage.ReplacementAuctionExpiringParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT60>(parameters, blockhash, token);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT22>(parameters, blockhash, token);
             return result;
         }
         
@@ -544,7 +544,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(region_identifier.Encode());
-            return new Method(61, "EducationRegions", 0, "propose_new_region", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 0, "propose_new_region", byteArray.ToArray());
         }
         
         /// <summary>
@@ -557,7 +557,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(region_id.Encode());
             byteArray.AddRange(vote.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(61, "EducationRegions", 1, "vote_on_region_proposal", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 1, "vote_on_region_proposal", byteArray.ToArray());
         }
         
         /// <summary>
@@ -568,7 +568,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(proposal_id.Encode());
-            return new Method(61, "EducationRegions", 2, "unlock_region_voting_token", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 2, "unlock_region_voting_token", byteArray.ToArray());
         }
         
         /// <summary>
@@ -580,7 +580,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(region_id.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(61, "EducationRegions", 3, "bid_on_region", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 3, "bid_on_region", byteArray.ToArray());
         }
         
         /// <summary>
@@ -591,7 +591,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(region_id.Encode());
-            return new Method(61, "EducationRegions", 4, "create_new_region", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 4, "create_new_region", byteArray.ToArray());
         }
         
         /// <summary>
@@ -602,7 +602,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(region_id.Encode());
-            return new Method(61, "EducationRegions", 8, "propose_remove_regional_operator", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 8, "propose_remove_regional_operator", byteArray.ToArray());
         }
         
         /// <summary>
@@ -615,7 +615,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(region_id.Encode());
             byteArray.AddRange(vote.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(61, "EducationRegions", 9, "vote_on_remove_owner_proposal", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 9, "vote_on_remove_owner_proposal", byteArray.ToArray());
         }
         
         /// <summary>
@@ -626,7 +626,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(proposal_id.Encode());
-            return new Method(61, "EducationRegions", 10, "unlock_region_owner_removal_voting_token", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 10, "unlock_region_owner_removal_voting_token", byteArray.ToArray());
         }
         
         /// <summary>
@@ -638,7 +638,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(region_id.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(61, "EducationRegions", 11, "bid_on_region_replacement", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 11, "bid_on_region_replacement", byteArray.ToArray());
         }
         
         /// <summary>
@@ -649,7 +649,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(region_id.Encode());
-            return new Method(61, "EducationRegions", 12, "initiate_region_owner_resignation", byteArray.ToArray());
+            return new Method(21, "EducationRegions", 12, "initiate_region_owner_resignation", byteArray.ToArray());
         }
     }
     

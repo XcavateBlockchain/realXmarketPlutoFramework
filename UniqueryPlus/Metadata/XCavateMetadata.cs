@@ -10,15 +10,15 @@ namespace UniqueryPlus.Metadata
     [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
     public record PropertyMetadata
     {
-        public List<string> Images { get; set; } = [];
-
-        [JsonPropertyName("attributes")] public required PropertyAttributes Attributes { get; set; }
-
-        [JsonPropertyName("buildingControlCode")] public string? BuildingControlCode { get; set; }
-
         [JsonPropertyName("status")] public string? Status { get; set; }
 
-        [JsonPropertyName("createdAt")] public DateTime CreatedAt { get; set; }
+        [JsonPropertyName("propertyName")] public string? PropertyName { get; set; }
+
+        [JsonPropertyName("financials")] public required PropertyFinancials Financials { get; set; }
+
+        [JsonPropertyName("files")] public List<string> Files { get; set; } = [];
+
+        [JsonPropertyName("createdAt")] public DateTimeOffset CreatedAt { get; set; }
 
         [JsonPropertyName("address")] public required PropertyAddress Address { get; set; }
 
@@ -26,33 +26,25 @@ namespace UniqueryPlus.Metadata
 
         [JsonPropertyName("propertyDescription")] public string? PropertyDescription { get; set; }
 
-        [JsonPropertyName("financials")] public required PropertyFinancials Financials { get; set; }
-
         [JsonPropertyName("propertyType")] public string? PropertyType { get; set; }
 
         [JsonPropertyName("map")] public string? Map { get; set; }
 
         [JsonPropertyName("developerAddress")] public string? DeveloperAddress { get; set; }
 
-        [JsonPropertyName("propertyName")] public string? PropertyName { get; set; }
-
         [JsonPropertyName("planningCode")] public string? PlanningCode { get; set; }
 
         [JsonPropertyName("propertyId")] public string? PropertyId { get; set; }
-
-        [JsonPropertyName("files")] public List<string>? Files { get; set; }
 
         [JsonPropertyName("id")] public Guid Id { get; set; }
 
         [JsonPropertyName("accountAddress")] public string? AccountAddress { get; set; }
 
-        [JsonPropertyName("updatedAt")] public DateTime UpdatedAt { get; set; }
+        [JsonPropertyName("updatedAt")] public DateTimeOffset UpdatedAt { get; set; }
 
         [JsonPropertyName("legalRepresentative")] public string? LegalRepresentative { get; set; }
 
-        [JsonPropertyName("fileUrls")] public List<string> FileUrls { get; set; } = [];
-
-        public string LocationName => $"{Address?.Street ?? "Unknown street"}, {Address?.TownCity ?? "Unknown town"}";
+        [JsonPropertyName("attributes")] public PropertyAttributes? Attributes { get; set; }
     }
 
     public record PropertyAttributes
@@ -65,13 +57,13 @@ namespace UniqueryPlus.Metadata
 
         [JsonPropertyName("numberOfBedrooms")]
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-        public int NumberOfBedrooms { get; set; }
+        public int? NumberOfBedrooms { get; set; }
 
         [JsonPropertyName("constructionDate")] public string? ConstructionDate { get; set; }
 
         [JsonPropertyName("numberOfBathrooms")]
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-        public int NumberOfBathrooms { get; set; }
+        public int? NumberOfBathrooms { get; set; }
 
         [JsonPropertyName("quality")] public string? Quality { get; set; }
     }

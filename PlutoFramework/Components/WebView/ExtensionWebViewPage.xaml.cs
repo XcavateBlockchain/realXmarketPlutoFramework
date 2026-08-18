@@ -6,7 +6,7 @@ public partial class ExtensionWebViewPage : PageTemplate
 {
     private double lastScrollY = 0;
     private bool scrollingDown = false;
-    public ExtensionWebViewPage(string source)
+    public ExtensionWebViewPage(string source, bool searchbarCanEdit = false)
     {
         InitializeComponent();
 
@@ -16,6 +16,7 @@ public partial class ExtensionWebViewPage : PageTemplate
             SearchSource = source,
             GoBackFunction = webView.GoBack,
             ReloadFunction = webView.Reload,
+            SearchbarCanEdit = searchbarCanEdit,
         };
     }
 

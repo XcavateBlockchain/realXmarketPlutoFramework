@@ -23,9 +23,7 @@ public partial class OwnedPropertiesListView : ContentView, ISubstrateClientLoad
             return;
         }
 
-        await XcavateOwnedPropertiesModel.LoadAsync(client, KeysModel.GetSubstrateKey(), token);
-
-        await ((OwnedPropertiesListViewModel)BindingContext).UpdateAsync(token);
+        await ((OwnedPropertiesListViewModel)BindingContext).LoadAsync(client, token);
     }
 
     public void SetEmpty()

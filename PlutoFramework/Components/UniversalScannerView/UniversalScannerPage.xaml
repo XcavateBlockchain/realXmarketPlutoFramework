@@ -3,31 +3,132 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
              xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             xmlns:templates="clr-namespace:PlutoFramework.Templates.TopNavigationBarTemplate"
              x:Class="PlutoFramework.Components.UniversalScannerView.UniversalScannerPage"
              Title="UniversalScannerPage"
              BackgroundColor="Black">
     <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
                     AbsoluteLayout.LayoutFlags="All">
-        <Image AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-               AbsoluteLayout.LayoutFlags="All"
-               Source="{AppThemeBinding Light=whitebackground.png, Dark=darkbackground.png}"
-               Opacity="{AppThemeBinding Light=0.96}"
-               Aspect="AspectFill"/>
+        <zxing:CameraBarcodeReaderView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                                       AbsoluteLayout.LayoutFlags="All"
+                                       HorizontalOptions="Fill"
+                                       VerticalOptions="Fill"
+                                       x:Name="scanner"
+                                       IsDetecting="True"
+                                       BarcodesDetected="OnDetected" />
 
-        <VerticalStackLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-                             AbsoluteLayout.LayoutFlags="All"
-                             x:Name="stackLayout">
+        <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+              AbsoluteLayout.LayoutFlags="All">
+            <Grid RowDefinitions="*,220,*"
+                  ColumnDefinitions="*,220,*">
+                <AbsoluteLayout Grid.Row="0"
+                                 Grid.ColumnSpan="3"
+                                 Opacity="0.5"
+                                 BackgroundColor="#000000" />
+                <AbsoluteLayout Grid.Row="1"
+                                 Grid.Column="0"
+                                 Opacity="0.5"
+                                 BackgroundColor="#000000" />
+                <AbsoluteLayout Grid.Row="1"
+                                 Grid.Column="2"
+                                 Opacity="0.5"
+                                 BackgroundColor="#000000" />
+                <AbsoluteLayout Grid.Row="2"
+                                 Grid.ColumnSpan="3"
+                                 Opacity="0.5"
+                                 BackgroundColor="#000000" />
+                <Border Grid.Row="1"
+                        Grid.Column="1"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        BackgroundColor="Transparent"
+                        Stroke="#80FFFFFF"
+                        StrokeThickness="2"
+                        Padding="18"
+                        HeightRequest="220"
+                        WidthRequest="220">
+                </Border>
 
-            <zxing:CameraBarcodeReaderView WidthRequest="{Binding Source={x:Reference stackLayout}, Path=Width}"
-                                           HeightRequest="{Binding Source={x:Reference stackLayout}, Path=Height}"
-                                           HorizontalOptions="Center"
-                                           VerticalOptions="Center"
-                                           x:Name="scanner"
-                                           IsDetecting="True"
-                                           BarcodesDetected="OnDetected"/>
 
-        </VerticalStackLayout>
+                <Grid RowDefinitions="*,Auto,Auto,*"
+                      Padding="24,0,24,0"
+                      RowSpacing="14"
+                      Grid.Row="2"
+                      Grid.ColumnSpan="3">
+                    <Label Grid.Row="1"
+                           Text="Place QR code within the frame to scan"
+                           HorizontalTextAlignment="Center"
+                           FontSize="14"
+                           TextColor="White" />
 
-        <navigationbar:TopNavigationBar Title="QR Scanner" />
+                    <Grid Grid.Row="2"
+                          ColumnDefinitions="*,*"
+                          Margin="0,60,0,0">
+                        <StackLayout Grid.Column="0"
+                                     Spacing="6"
+                                     HorizontalOptions="Center">
+                            <Border BackgroundColor="#1AFFFFFF"
+                                    StrokeThickness="0"
+                                    HeightRequest="48"
+                                    WidthRequest="48"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <Image WidthRequest="26"
+                       HeightRequest="26"
+                       VerticalOptions="Center" 
+                       HorizontalOptions="Center"
+                       x:Name="qr">
+
+                                    <Image.Source>
+                                        <FontImageSource Color="White"
+                                                         Glyph="&#xf029;"
+                                                         FontFamily="FontAwesome"
+                                                         Size="26" />
+                                    </Image.Source>
+                                </Image>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnMyQrCodeTapped" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                            <Label Text="My QR Code"
+                                   FontSize="12"
+                                   TextColor="White"
+                                   HorizontalTextAlignment="Center" />
+                        </StackLayout>
+                        <StackLayout Grid.Column="1"
+                                     Spacing="6"
+                                     HorizontalOptions="Center">
+                            <Border BackgroundColor="#1AFFFFFF"
+                                    StrokeThickness="0"
+                                    HeightRequest="48"
+                                    WidthRequest="48"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <Label Text="↓"
+                                       FontSize="26"
+                                       TextColor="White"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center" />
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnUploadQrCodeTapped" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                            <Label Text="Upload QR code"
+                                   FontSize="12"
+                                   TextColor="White"
+                                   HorizontalTextAlignment="Center" />
+                        </StackLayout>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <templates:TopNavigationBarTemplate Title="QR Scanner" />
     </AbsoluteLayout>
 </ContentPage>

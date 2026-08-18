@@ -18,7 +18,10 @@ using PlutoFramework.Components.Mnemonics;
 using PlutoFramework.Components.NavigationBar;
 using PlutoFramework.Components.NetworkSelect;
 using PlutoFramework.Components.Nft;
+using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Components.Password;
+using PlutoFramework.Components.Settings;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Components.Staking;
 using PlutoFramework.Components.Sumsub;
 using PlutoFramework.Components.TransactionAnalyzer;
@@ -32,7 +35,9 @@ using PlutoFramework.Components.XcavateProperty;
 using PlutoFramework.Components.Xcm;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
+using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore;
+using PlutoFrameworkCore.PushNotificationServices.Core.Utils;
 using Xe.AcrylicView;
 using ZXing.Net.Maui.Controls;
 
@@ -97,12 +102,33 @@ namespace PlutoFramework
             });
 
 
+            // Opt-in via RefreshColor="Transparent". That alone already clears the spinner on
+            // iOS, but on Android the CircleImageView still renders regardless of colour, so
+            // it has to be parked off-screen instead.
+            Microsoft.Maui.Handlers.RefreshViewHandler.Mapper.AppendToMapping("HideNativeRefreshSpinner", (handler, view) =>
+            {
+#if ANDROID
+                if (view is RefreshView refreshView && refreshView.RefreshColor?.Alpha == 0f)
+                {
+                    // setProgressViewOffset leaves mTotalDragDistance at its default, so the
+                    // pull threshold is unchanged - only the circle's resting positions move.
+                    handler.PlatformView.SetProgressViewOffset(false, -500, -400);
+
+                    handler.PlatformView.SetColorSchemeColors(Android.Graphics.Color.Transparent.ToArgb());
+                    handler.PlatformView.SetProgressBackgroundColorSchemeColor(
+                        Android.Graphics.Color.Transparent.ToArgb());
+                }
+#endif
+            });
+
+
             AssetsModel.DatabaseSaver = new BalancesDatabaseSaver();
 
-            // TODO: enable later
-            //PushNotificationRegistrar.RegisterPushNotificationServices(builder.Services);
+            PushNotificationRegistrar.RegisterPushNotificationServices(builder.Services);
 
             PlutoConfigurationModel.SecureStorage = new PlutoSecureStorage();
+
+            PlutoConfigurationModel.MwaIntentLauncher = new MwaIntentLauncher();
 
             CustomizeWebViewHandler();
 
@@ -141,6 +167,12 @@ namespace PlutoFramework
             DependencyService.Register<CalamarViewModel>();
 
             DependencyService.Register<ExtrinsicStatusStackViewModel>();
+
+            DependencyService.Register<Components.Solana.Status.SolanaTransactionStatusStackViewModel>();
+
+            DependencyService.Register<Components.Solana.Transfer.SolanaTransferViewModel>();
+
+            DependencyService.Register<Components.Solana.Transfer.SolanaTokenSelectViewModel>();
 
             DependencyService.Register<ExportPlutoLayoutQRViewModel>();
 
@@ -192,11 +224,31 @@ namespace PlutoFramework
 
             DependencyService.Register<NoAccountPopupViewModel>();
 
+            DependencyService.Register<ImportWarningPopupViewModel>();
+
+            DependencyService.Register<ImportMethodPopupViewModel>();
+
+            DependencyService.Register<CreateSolanaMnemonicsPopupViewModel>();
+
+            DependencyService.Register<EnterSolanaMnemonicsPopupViewModel>();
+
+            DependencyService.Register<ConnectMwaPopupViewModel>();
+
+            DependencyService.Register<MwaSignPopupViewModel>();
+
+            DependencyService.Register<LogOutPopupViewModel>();
+
+            DependencyService.Register<CancelReservationPopupViewModel>();
+
+            DependencyService.Register<OnboardingInProgressPopupViewModel>();
+
             DependencyService.Register<NoDidPopupViewModel>();
 
             DependencyService.Register<NoKYCPopupViewModel>();
 
             DependencyService.Register<XcavatePropertyMarketplaceViewModel>();
+
+            DependencyService.Register<XcavateIndexedPropertyMarketplaceViewModel>();
 
             DependencyService.Register<FullPageLoadingViewModel>();
 
@@ -212,9 +264,15 @@ namespace PlutoFramework
 
             DependencyService.Register<UserProfileNotCreatedPopupViewModel>();
 
+            DependencyService.Register<XcavateProfileService>();
+
             DependencyService.Register<WebSignRawPopupViewModel>();
 
             DependencyService.Register<DAppWebViewConnectionRequestPopupViewModel>();
+
+            DependencyService.Register<PropertyMarketplaceFilterPopupViewModel>();
+
+            DependencyService.Register<PropertyMarketplaceSelectionPopupViewModel>();
         }
 
         /// <summary>

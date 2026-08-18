@@ -2,19 +2,18 @@
 using PlutoFramework.Model.AjunaExt;
 using UniqueryPlus.Nfts;
 using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
-
 namespace PlutoFramework.Model.Xcavate
 {
     public static class XcavateOwnedPropertiesModel
     {
         private const int LIMIT = 100;
-        public static Dictionary<NftKey, PropertyTokenOwnershipInfo> ItemsDict = new Dictionary<NftKey, PropertyTokenOwnershipInfo>();
+        public static Dictionary<NftKey, PropertyOwnership> ItemsDict = new Dictionary<NftKey, PropertyOwnership>();
         private static Dictionary<EndpointEnum, DateTime> timeUsedDict = new Dictionary<EndpointEnum, DateTime>();
         private static Dictionary<EndpointEnum, TaskCompletionSource> waitUsedDict = new Dictionary<EndpointEnum, TaskCompletionSource>();
 
         public static bool Loading = false;
 
-        private static IAsyncEnumerator<PropertyTokenOwnershipInfo> uniqueryNftEnumerator = null;
+        private static IAsyncEnumerator<PropertyOwnership> uniqueryNftEnumerator = null;
 
         public static async Task LoadAsync(SubstrateClientExt client, string address, CancellationToken token, bool forceReload = false)
         {
@@ -55,12 +54,12 @@ namespace PlutoFramework.Model.Xcavate
 
                 if (uniqueryNftEnumerator != null && await uniqueryNftEnumerator.MoveNextAsync())
                 {
-                    var newNft = uniqueryNftEnumerator.Current;
+                    var propertyOwnership = uniqueryNftEnumerator.Current;
 
-                    if (newNft.Key is not null && !ItemsDict.ContainsKey((NftKey)newNft.Key))
+                    if (!ItemsDict.ContainsKey(propertyOwnership.Key))
                     {
                         Console.WriteLine("New property added to dict");
-                        ItemsDict.Add((NftKey)newNft.Key, newNft);
+                        ItemsDict.Add(propertyOwnership.Key, propertyOwnership);
                     }
                 }
             }
@@ -70,8 +69,8 @@ namespace PlutoFramework.Model.Xcavate
             waitUsedDict[client.Endpoint.Key].TrySetResult();
         }
 
-        public static long GetTotalPropertiesOwned() => ItemsDict.Values.Sum(x => x.Amount);
+        public static long GetTotalPropertiesOwned() => ItemsDict.Values.Sum(x => x.TokensBought + x.TokensOwned);
 
-        public static long GetTotalInvested() => ItemsDict.Values.Sum(x => (long)(x.Amount * ((INftXcavateMetadata)x.NftBase).XcavateMetadata?.Financials.PricePerToken ?? 0));
+        public static long GetTotalInvested() => ItemsDict.Values.Sum(x => (long)((x.TokensBought + x.TokensOwned) * ((INftXcavateMetadata)x.NftBase).XcavateMetadata?.Financials.PricePerToken ?? 0));
     }
 }

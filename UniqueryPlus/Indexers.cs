@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using UniqueryPlus.OpalSubquery;
-using StrawberryShake.Serialization;
 using UniqueryPlus.Speck;
 using UniqueryPlus.Stick;
 using UniqueryPlus.UniqueSubquery;
+using XcavateIndexer;
 
 namespace UniqueryPlus
 {
@@ -43,8 +43,6 @@ namespace UniqueryPlus
                 .AddUniqueSubquery()
                 .ConfigureHttpClient(client => client.BaseAddress = new Uri("https://api-unique.uniquescan.io/v1/graphql"));
 
-            serviceCollection.AddSerializer(new JsonSerializer("JSON"));
-
             IServiceProvider services = serviceCollection.BuildServiceProvider();
 
             return services.GetRequiredService<IUniqueSubquery>();
@@ -58,11 +56,22 @@ namespace UniqueryPlus
                 .AddOpalSubquery()
                 .ConfigureHttpClient(client => client.BaseAddress = new Uri("https://api-opal.uniquescan.io/v1/graphql"));
 
-            serviceCollection.AddSerializer(new JsonSerializer("JSON"));
-
             IServiceProvider services = serviceCollection.BuildServiceProvider();
 
             return services.GetRequiredService<IOpalSubquery>();
+        }
+
+        public static IXcavateIndexerClient GetXcavateIndexerClient()
+        {
+            var serviceCollection = new ServiceCollection();
+
+            serviceCollection
+                .AddXcavateIndexerClient()
+                .ConfigureHttpClient(client => client.BaseAddress = new Uri("https://indexer.realxmarket.io/"));
+
+            IServiceProvider services = serviceCollection.BuildServiceProvider();
+
+            return services.GetRequiredService<IXcavateIndexerClient>();
         }
     }
 }

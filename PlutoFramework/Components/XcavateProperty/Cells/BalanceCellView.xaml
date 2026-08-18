@@ -6,6 +6,7 @@
             HeightRequest="80">
     <xcavate:XcavateCell Title="Balance"
                         x:Name="cell"
-                        Value="Loading">
+                        Value="Loading"
+                         RollingTicker="True">
     </xcavate:XcavateCell>
 </ContentView>

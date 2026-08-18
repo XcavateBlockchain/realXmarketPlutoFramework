@@ -9,5 +9,6 @@ public partial class PropertyDetailPage : PageTemplate
         InitializeComponent();
 
         BindingContext = viewModel;
+        propertyMapView.PropertyMetadata = viewModel.Metadata;
     }
 }

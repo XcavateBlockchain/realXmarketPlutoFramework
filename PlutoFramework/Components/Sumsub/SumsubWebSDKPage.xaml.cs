@@ -1,12 +1,16 @@
+using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Model.Sumsub;
+using PlutoFramework.Model.Xcavate;
 using PlutoFramework.Templates.PageTemplate;
-using System.Web;
+using System.Text.Json;
 
 namespace PlutoFramework.Components.Sumsub
 {
     public partial class SumsubWebSDKPage : PageTemplate
     {
-        private Func<Task> navigation;
+        private readonly Func<Task> navigation;
+        private bool navigated = false;
+
         public SumsubWebSDKPage(string accessToken, Applicant applicant, Func<Task> navigation)
         {
             NavigationPage.SetHasNavigationBar(this, false);
@@ -14,9 +18,14 @@ namespace PlutoFramework.Components.Sumsub
 
             InitializeComponent();
 
-            var topNavigationBarHeight = (double)Application.Current.Resources["TopNavigationBarHeight"];
+            BindingContext = new OnboardingStepperViewModel(OnboardingStage.KYC);
 
-            webView.Margin = new Thickness(0, topNavigationBarHeight, 0, 0);
+            // Check if user is already approved - if so, navigate immediately
+            _ = CheckApprovalAndNavigateAsync();
+
+            var accessTokenJson = JsonSerializer.Serialize(accessToken);
+            var emailJson = JsonSerializer.Serialize(applicant.ApplicantIdentifiers.Email);
+            var phoneJson = JsonSerializer.Serialize(applicant.ApplicantIdentifiers.Phone);
 
             webView.Source = new HtmlWebViewSource
             {
@@ -38,6 +47,20 @@ namespace PlutoFramework.Components.Sumsub
      * @param applicantPhone - applicant phone (not required)
      * @param customI18nMessages - customized locale messages for current session (not required)
      */
+    function navigateToNextPage() {
+      if (window.sumsubNavigation && window.sumsubNavigation.navigateToNextPage) {
+        window.sumsubNavigation.navigateToNextPage();
+        return;
+      }
+
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.sumsubNavigation) {
+        window.webkit.messageHandlers.sumsubNavigation.postMessage('navigateToNextPage');
+        return;
+      }
+
+      console.warn('Sumsub navigation bridge is unavailable.');
+    }
+
     function launchWebSdk(accessToken, applicantEmail, applicantPhone, customI18nMessages) {
       let snsWebSdkInstance = snsWebSdk
         .init(
@@ -60,12 +83,7 @@ namespace PlutoFramework.Components.Sumsub
         })
         .on(""idCheck.onApplicantSubmitted"", (payload) => {
             console.log(""onApplicantSubmitted"", payload);
-            
-            const temp = window.location.href;
-
-            window.location.href = ""https://google.com/?myoperation=completed"";
-
-            //window.location.href = temp + ""?myoperation=completed"";
+          navigateToNextPage();
         })
         .on(""idCheck.onError"", (error) => {
           console.log(""onError"", error);
@@ -81,14 +99,10 @@ namespace PlutoFramework.Components.Sumsub
       return Promise.resolve(""ahojky""); // get a new token from your backend
     }
 
-    function updateUrl() {
-        window.location.href = ""/someRandomPageDoesntMatter?myoperation=completed"";
-    }
-
     launchWebSdk(
-        """ + accessToken + @""",
-        """ + applicant.ApplicantIdentifiers.Email + @""",
-        """ + applicant.ApplicantIdentifiers.Phone + @"""
+        " + accessTokenJson + @",
+        " + emailJson + @",
+        " + phoneJson + @"
     )
   </script>
 </body>
@@ -100,28 +114,35 @@ namespace PlutoFramework.Components.Sumsub
             this.navigation = navigation;
         }
 
-        private bool navigated = false;
-        private async void OnNavigating(object sender, WebNavigatingEventArgs e)
+        private async void OnNextPageRequested(object sender, EventArgs e)
         {
-            Uri uri = new Uri(e.Url);
-            var queryParams = HttpUtility.ParseQueryString(uri.Query);
-
-            // Check if the 'registrationId' query parameter exists
-            string operation = queryParams.Get("myoperation");
-
-            Console.WriteLine("myoperation: " + operation);
-
-            if (operation == "completed")
+            if (navigated)
             {
-                if (navigated)
+                return;
+            }
+
+            navigated = true;
+
+            await navigation.Invoke();
+        }
+
+        private async Task CheckApprovalAndNavigateAsync()
+        {
+            try
+            {
+                var status = await SumsubUserModel.GetCurrentStatusAsync(CancellationToken.None);
+                if (status?.StatusType == SumsubStatusType.Approved)
                 {
-                    return;
+                    if (!navigated)
+                    {
+                        navigated = true;
+                        await navigation.Invoke();
+                    }
                 }
-
-                navigated = true;
-
-                await navigation.Invoke();
-                //Application.Current.MainPage = new XcavateAppShell();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking Sumsub approval status: {ex.Message}");
             }
         }
     }

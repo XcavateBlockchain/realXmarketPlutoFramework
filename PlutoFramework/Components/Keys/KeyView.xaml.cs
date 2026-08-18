@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Alerts;
+using PlutoFramework.Components.Solana;
 using PlutoFrameworkCore.Keys;
 
 namespace PlutoFramework.Components.Keys;
@@ -27,10 +28,12 @@ public partial class KeyView : ContentView
 
             control.descriptionLabel.Text = key.Type switch
             {
-                KeyTypeEnum.EncryptionX25519 => "Used for AssetDidComm message encryption key",
-                KeyTypeEnum.PolkadotJson => "Your main Polkadot account key",
-                KeyTypeEnum.Sr25519 => "Your main Polkadot account key",
-                KeyTypeEnum.Did => "Decentralised Identifiers powered by Kilt",
+                KeyTypeEnum.EncryptionX25519 => "Used for message encryption/decryption",
+                KeyTypeEnum.PolkadotJson => "Your Account key",
+                KeyTypeEnum.Sr25519 => "Your Account key",
+                KeyTypeEnum.Did => "Decentralised Identifier",
+                KeyTypeEnum.SolanaMnemonic => "Your Solana account",
+                KeyTypeEnum.SolanaMwa => "Connected Solana wallet",
                 _ => "",
             };
 
@@ -56,12 +59,12 @@ public partial class KeyView : ContentView
                 KeyTypeEnum.Sr25519 => new Sr25519KeyDetailPage(new Sr25519KeyDetailPageViewModel
                 {
                     LockedKey = Key,
-                    UnlockedKey = await Key.ToSr25519KeyAsync(),
+                    UnlockedKey = await Key.ToSr25519KeyAsync("Get access to account key"),
                 }),
                 KeyTypeEnum.PolkadotJson => new PolkadotJsonKeyDetailPage(new PolkadotJsonKeyDetailPageViewModel
                 {
                     LockedKey = Key,
-                    UnlockedKey = await Key.ToPolkadotJsonKeyAsync(),
+                    UnlockedKey = await Key.ToPolkadotJsonKeyAsync("Get access to account key"),
                 }),
                 KeyTypeEnum.Did => new DidKeyDetailPage(new DidKeyDetailPageViewModel
                 {
@@ -72,6 +75,16 @@ public partial class KeyView : ContentView
                 {
                     LockedKey = Key,
                     UnlockedKey = await Key.ToEncryptionX25519KeyAsync(),
+                }),
+                KeyTypeEnum.SolanaMnemonic => new SolanaMnemonicKeyDetailPage(new SolanaMnemonicKeyDetailPageViewModel
+                {
+                    LockedKey = Key,
+                    UnlockedKey = await Key.ToSolanaMnemonicKeyAsync("Get access to Solana key"),
+                }),
+                KeyTypeEnum.SolanaMwa => new SolanaMwaKeyDetailPage(new SolanaMwaKeyDetailPageViewModel
+                {
+                    LockedKey = Key,
+                    UnlockedKey = await Key.ToSolanaMwaKeyAsync("Get access to Solana wallet"),
                 }),
                 _ => throw new Exception($"Key {Key.Type} type is missing."),
             };

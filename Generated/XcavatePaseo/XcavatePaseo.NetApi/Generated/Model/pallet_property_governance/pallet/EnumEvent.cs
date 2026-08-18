@@ -95,14 +95,14 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet
         ChallengeProcessingFailed = 11,
         
         /// <summary>
-        /// >> TokenUnfrozen
-        /// A user���s tokens were unfrozen after voting.
+        /// >> SharesUnfrozen
+        /// A user���s shares were unfrozen after voting.
         /// </summary>
-        TokenUnfrozen = 12,
+        SharesUnfrozen = 12,
     }
     
     /// <summary>
-    /// >> 217 - Variant[pallet_property_governance.pallet.Event]
+    /// >> 96 - Variant[pallet_property_governance.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>
@@ -125,7 +125,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_governance.pallet
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U64, XcavatePaseo.NetApi.Generated.Model.sp_arithmetic.per_things.Percent>>(Event.ProposalThresHoldNotReached);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Types.Base.EnumResult>>(Event.ProposalProcessingFailed);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Types.Base.EnumResult>>(Event.ChallengeProcessingFailed);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U64, Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32>>(Event.TokenUnfrozen);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U64, Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32>>(Event.SharesUnfrozen);
         }
     }
 }

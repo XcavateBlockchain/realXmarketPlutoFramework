@@ -17,7 +17,7 @@
   -->
 
   <ItemGroup>
-    <PackageReference Include="Nethereum.Web3" Version="4.26.0" />
+    <PackageReference Include="Nethereum.Web3" Version="6.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +32,7 @@
     <ProjectReference Include="..\Indexers\UniqueryPlus.OpalSubquery\UniqueryPlus.OpalSubquery.csproj" />
     <ProjectReference Include="..\Indexers\UniqueryPlus.UniqueSubquery\UniqueryPlus.UniqueSubquery.csproj" />
     <ProjectReference Include="..\Indexers\XcavateSubquery\XcavateSubquery.csproj" />
+    <ProjectReference Include="..\Indexers\XcavateIndexer\XcavateIndexer.csproj" />
   </ItemGroup>
 
 </Project>

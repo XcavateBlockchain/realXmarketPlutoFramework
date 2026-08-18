@@ -13,14 +13,14 @@
              xmlns:transfer="clr-namespace:PlutoFramework.Components.TransferView"
              xmlns:account="clr-namespace:PlutoFramework.Components.Account"
                 xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
-             HideSoftInputOnTapped="True"
              xmlns:extrinsic="clr-namespace:PlutoFramework.Components.Extrinsic"
              xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
              xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
              xmlns:transactionrequest="clr-namespace:PlutoFramework.Components.TransactionRequest"
              Shell.PresentationMode="ModalNotAnimated"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
-                BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}">
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}"
+             HideSoftInputOnTapped="True">
     <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All">
 
         <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
@@ -56,13 +56,8 @@
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <xcavateproperty:PropertyThumbnailView Endpoint="{Binding Endpoint}"
-                                                                Favourite="{Binding Favourite}"
-                                                                NftBase="{Binding NftBase}"
-                                                                Padding="20, 5, 20, 10"
-                                                               Region="{Binding Region}"
-                                                               ListingHasExpired="{Binding ListingHasExpired}"
-                                                               ShowHasExpired="True" />
+                        <xcavateproperty:PropertyThumbnailView XcavateNftWrapper="{Binding .}"
+                                                               Padding="20, 5, 20, 10" />
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>

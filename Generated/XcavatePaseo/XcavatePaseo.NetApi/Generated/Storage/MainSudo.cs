@@ -83,7 +83,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(call.Encode());
-            return new Method(15, "Sudo", 0, "sudo", byteArray.ToArray());
+            return new Method(6, "Sudo", 0, "sudo", byteArray.ToArray());
         }
         
         /// <summary>
@@ -95,7 +95,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(call.Encode());
             byteArray.AddRange(weight.Encode());
-            return new Method(15, "Sudo", 1, "sudo_unchecked_weight", byteArray.ToArray());
+            return new Method(6, "Sudo", 1, "sudo_unchecked_weight", byteArray.ToArray());
         }
         
         /// <summary>
@@ -106,7 +106,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(@new.Encode());
-            return new Method(15, "Sudo", 2, "set_key", byteArray.ToArray());
+            return new Method(6, "Sudo", 2, "set_key", byteArray.ToArray());
         }
         
         /// <summary>
@@ -118,7 +118,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(who.Encode());
             byteArray.AddRange(call.Encode());
-            return new Method(15, "Sudo", 3, "sudo_as", byteArray.ToArray());
+            return new Method(6, "Sudo", 3, "sudo_as", byteArray.ToArray());
         }
         
         /// <summary>
@@ -128,7 +128,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public static Method RemoveKey()
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
-            return new Method(15, "Sudo", 4, "remove_key", byteArray.ToArray());
+            return new Method(6, "Sudo", 4, "remove_key", byteArray.ToArray());
         }
     }
     

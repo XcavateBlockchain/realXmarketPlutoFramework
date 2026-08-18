@@ -37,7 +37,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             this._client = client;
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Vesting", "Vesting"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(new Substrate.NetApi.Model.Meta.Storage.Hasher[] {
-                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT57)));
+                            Substrate.NetApi.Model.Meta.Storage.Hasher.BlakeTwo128Concat}, typeof(XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32), typeof(XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT21)));
             _client.StorageKeyDict.Add(new System.Tuple<string, string>("Vesting", "StorageVersion"), new System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>(null, null, typeof(XcavatePaseo.NetApi.Generated.Model.pallet_vesting.EnumReleases)));
         }
         
@@ -65,10 +65,10 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         /// >> Vesting
         ///  Information regarding the vesting of a given account.
         /// </summary>
-        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT57> Vesting(XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32 key, string blockhash, CancellationToken token)
+        public async Task<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT21> Vesting(XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32 key, string blockhash, CancellationToken token)
         {
             string parameters = VestingStorage.VestingParams(key);
-            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT57>(parameters, blockhash, token);
+            var result = await _client.GetStorageAsync<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT21>(parameters, blockhash, token);
             return result;
         }
         
@@ -119,7 +119,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         public static Method Vest()
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
-            return new Method(40, "Vesting", 0, "vest", byteArray.ToArray());
+            return new Method(18, "Vesting", 0, "vest", byteArray.ToArray());
         }
         
         /// <summary>
@@ -130,7 +130,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(target.Encode());
-            return new Method(40, "Vesting", 1, "vest_other", byteArray.ToArray());
+            return new Method(18, "Vesting", 1, "vest_other", byteArray.ToArray());
         }
         
         /// <summary>
@@ -142,7 +142,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(target.Encode());
             byteArray.AddRange(schedule.Encode());
-            return new Method(40, "Vesting", 2, "vested_transfer", byteArray.ToArray());
+            return new Method(18, "Vesting", 2, "vested_transfer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -155,7 +155,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(source.Encode());
             byteArray.AddRange(target.Encode());
             byteArray.AddRange(schedule.Encode());
-            return new Method(40, "Vesting", 3, "force_vested_transfer", byteArray.ToArray());
+            return new Method(18, "Vesting", 3, "force_vested_transfer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -167,7 +167,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(schedule1_index.Encode());
             byteArray.AddRange(schedule2_index.Encode());
-            return new Method(40, "Vesting", 4, "merge_schedules", byteArray.ToArray());
+            return new Method(18, "Vesting", 4, "merge_schedules", byteArray.ToArray());
         }
         
         /// <summary>
@@ -179,7 +179,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(target.Encode());
             byteArray.AddRange(schedule_index.Encode());
-            return new Method(40, "Vesting", 5, "force_remove_vesting_schedule", byteArray.ToArray());
+            return new Method(18, "Vesting", 5, "force_remove_vesting_schedule", byteArray.ToArray());
         }
     }
     

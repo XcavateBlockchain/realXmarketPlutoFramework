@@ -8,7 +8,7 @@
              AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
              AbsoluteLayout.LayoutFlags="All">
 
-    <card:BottomPopupCard Title="No Account"
+    <card:BottomPopupCard Title="You are not logged in"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
             <AbsoluteLayout>
@@ -19,7 +19,7 @@
                          Spacing="20"
                                      Padding="10, 10, 10, 10">
 
-                    <Label Text="You are not logged in to your account. Do you want to log in or create a new one?" />
+                    <Label Text="You are not logged in to your account. Do you want to log in to your existing account or create a new one?" />
                 </VerticalStackLayout>
                 <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 145"
                     AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
@@ -28,7 +28,7 @@
                           AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
                           ColumnSpacing="15"
                           RowSpacing="15"
-                          Margin="0, 0, 0, 10">
+                          Margin="10, 0, 10, 10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
@@ -37,16 +37,16 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <buttons:ElevatedButton Text="Create Account"
+                        <buttons:ElevatedButton Text="Create New Account"
                                                                Grid.Column="0"
                                                                 Grid.Row="0"
                                                                Command="{Binding CreateAccountCommand}"
                                                                ButtonState="Enabled"/>
                         <buttons:ElevatedButton Text="Import Account"
-                                                               Grid.Column="0"
-                                                               Grid.Row="1"
-                                                               Command="{Binding ImportAccountCommand}"
-                                                               ButtonState="Enabled"/>
+                                                Grid.Column="0"
+                                                Grid.Row="1"
+                                                Command="{Binding ImportAccountCommand}"
+                                                ButtonState="Enabled"/>
                     </Grid>
 
                 </AbsoluteLayout>

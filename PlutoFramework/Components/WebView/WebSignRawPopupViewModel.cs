@@ -13,6 +13,13 @@ namespace PlutoFramework.Components.WebView
     {
         public TaskCompletionSource<byte[]>? SignatureTask { get; set; } = null;
 
+        /// <summary>
+        /// Produces the signature over the raw message bytes. Left null for Substrate, which
+        /// uses the built-in path below; the injected Solana wallet sets it so the same sheet
+        /// serves both chains rather than a second one being built to look identical.
+        /// </summary>
+        public Func<byte[], Task<byte[]>>? Signer { get; set; } = null;
+
         [ObservableProperty]
         private string signButtonText = "Sign";
 
@@ -52,41 +59,24 @@ namespace PlutoFramework.Components.WebView
             {
                 byte[] msg = Utils.HexToByteArray(Message?.data);
 
-                var account = await Model.KeysModel.GetAccountAsync();
-                if (account is null)
-                {
-                    return;
-                }
-
-                if (msg.Length > 256) msg = HashExtension.Blake2(msg, 256);
-
-                byte[] signature;
-                switch (account.KeyType)
-                {
-                    case KeyType.Ed25519:
-                        signature = Ed25519.Sign(msg, account.PrivateKey);
-                        break;
-
-                    case KeyType.Sr25519:
-                        signature = Sr25519v091.SignSimple(account.Bytes, account.PrivateKey, msg);
-                        break;
-
-                    default:
-                        throw new Exception($"Unknown key type found '{account.KeyType}'.");
-                }
+                byte[] signature = Signer is not null
+                    ? await Signer(msg)
+                    : await SignWithSubstrateAccountAsync(msg);
 
                 if (SignatureTask == null)
                 {
                     return;
                 }
 
-                SignatureTask.SetResult(signature);
+                SignatureTask.TrySetResult(signature);
 
                 // Hide this layout
                 IsVisible = false;
             }
             catch (Exception ex)
             {
+                // Left visible on purpose: the request is still open, so the user can retry
+                // or reject rather than being dropped back into a page that is still waiting.
                 ErrorText = ex.Message;
             }
             finally
@@ -96,9 +86,35 @@ namespace PlutoFramework.Components.WebView
             }
         }
 
+        /// <summary>
+        /// The default signer: the app's Substrate account, hashing anything over the 256-byte
+        /// limit the way the Polkadot extension does. Also used by the bridge's Profile API
+        /// auto-sign path, so a message signs identically with or without the sheet.
+        /// </summary>
+        internal static async Task<byte[]> SignWithSubstrateAccountAsync(byte[] msg)
+        {
+            var account = await Model.KeysModel.GetAccountAsync()
+                ?? throw new Exception("No Substrate account is available to sign with.");
+
+            if (msg.Length > 256) msg = HashExtension.Blake2(msg, 256);
+
+            return account.KeyType switch
+            {
+                KeyType.Ed25519 => Ed25519.Sign(msg, account.PrivateKey),
+                KeyType.Sr25519 => Sr25519v091.SignSimple(account.Bytes, account.PrivateKey, msg),
+                _ => throw new Exception($"Unknown key type found '{account.KeyType}'."),
+            };
+        }
+
         [RelayCommand]
         public void Reject()
         {
+            // Settle the request. Without this the dapp's promise never resolves and its page
+            // waits forever on something the user has already dismissed. TrySet rather than
+            // Set because this view model is a singleton and may still hold a finished task.
+            SignatureTask?.TrySetException(
+                new OperationCanceledException("The signature request was rejected."));
+
             IsVisible = false;
         }
 
@@ -107,6 +123,7 @@ namespace PlutoFramework.Components.WebView
             ErrorText = "";
             IsVisible = false;
             Message = null;
+            Signer = null;
             SignButtonText = "Sign";
             SignButtonState = ButtonStateEnum.Enabled;
         }

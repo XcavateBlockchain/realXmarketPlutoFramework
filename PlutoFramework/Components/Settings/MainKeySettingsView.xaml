@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             x:Class="PlutoFramework.Components.Settings.MainKeySettingsView"
+             x:Name="mainKeySettingsView">
+    <card:Card>
+        <card:Card.View>
+            <VerticalStackLayout Padding="15, 12, 15, 12"
+                                 Spacing="8">
+                <Label Text="Main account"
+                       FontAttributes="Bold"
+                       FontSize="14" />
+
+                <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Chains}"
+                                       Spacing="10">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="20, 8"
+                                    StrokeThickness="1"
+                                    Stroke="{StaticResource Primary}"
+                                    BackgroundColor="Transparent"
+                                    AutomationId="{Binding AutomationId}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="20" />
+                                </Border.StrokeShape>
+
+                                <Label Text="{Binding Text}"
+                                       FontAttributes="Bold"
+                                       FontSize="13"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center"
+                                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource DarkThemeWhite}}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label"
+                                                     Binding="{Binding IsSelected}"
+                                                     Value="True">
+                                            <Setter Property="TextColor"
+                                                    Value="{StaticResource White}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border"
+                                                 Binding="{Binding IsSelected}"
+                                                 Value="True">
+                                        <Setter Property="BackgroundColor"
+                                                Value="{StaticResource Primary}" />
+                                    </DataTrigger>
+
+                                    <!-- No key on this chain: visible so the choice is
+                                         discoverable, but dimmed and inert. -->
+                                    <DataTrigger TargetType="Border"
+                                                 Binding="{Binding IsAvailable}"
+                                                 Value="False">
+                                        <Setter Property="Opacity"
+                                                Value="0.4" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={x:Reference mainKeySettingsView}, Path=BindingContext.SelectChainCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+
+                <Label Text="Which key identifies you across the app. Your public profile is tied to this address, so each account has its own."
+                       FontSize="11"
+                       TextColor="#A6A6A6" />
+            </VerticalStackLayout>
+        </card:Card.View>
+    </card:Card>
+</ContentView>

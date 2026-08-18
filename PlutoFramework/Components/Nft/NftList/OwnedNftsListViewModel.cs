@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.Threading;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
-using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 using UniqueryPlus.Nfts;
+using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 
 namespace PlutoFramework.Components.Nft
 {
@@ -22,7 +22,7 @@ namespace PlutoFramework.Components.Nft
             }
 
             if (clientTasks.Count() == 0 && uniqueryNftEnumerator is null)
-            { 
+            {
                 return;
             }
 
@@ -41,7 +41,7 @@ namespace PlutoFramework.Components.Nft
                     {
                         var newNft = PlutoFrameworkCore.NftModel.ToNftWrapper(uniqueryNftEnumerator.Current);
 
-                        if (newNft.Key is not null && !ItemsDict.ContainsKey((NftKey)newNft.Key))
+                        if (!ItemsDict.ContainsKey(newNft.Key))
                         {
                             ItemsDict.Add((NftKey)newNft.Key, newNft);
 
@@ -79,7 +79,7 @@ namespace PlutoFramework.Components.Nft
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Nft owned list error: ");
                 Console.WriteLine(ex);
@@ -106,7 +106,7 @@ namespace PlutoFramework.Components.Nft
 
                 await LoadMoreAsync(token).ConfigureAwait(false);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Nft owned list error 2: ");
                 Console.WriteLine(ex);
@@ -121,7 +121,7 @@ namespace PlutoFramework.Components.Nft
             {
                 Console.WriteLine("Maybe added, length = " + Items.Count());
 
-                if (savedNft.Key is not null && !ItemsDict.ContainsKey((NftKey)savedNft.Key))
+                if (!ItemsDict.ContainsKey(savedNft.Key))
                 {
                     Console.WriteLine("Added something");
                     ItemsDict.Add((NftKey)savedNft.Key, savedNft);

@@ -1,12 +1,22 @@
 ﻿using PlutoFramework.Components.Nft;
+using PlutoFramework.Constants;
+using PlutoFramework.Model;
 using PlutoFramework.Model.Xcavate;
-using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
+using PlutoFrameworkCore.Xcavate;
+using System.Collections.ObjectModel;
 using UniqueryPlus.Nfts;
+using XcavatePaseo.NetApi.Generated;
+using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 
 namespace PlutoFramework.Components.XcavateProperty
 {
-    public partial class OwnedPropertiesListViewModel : BaseListViewModel<NftKey, PropertyTokenOwnershipInfo>
+    public partial class OwnedPropertiesListViewModel : BaseListViewModel<NftKey, XcavateNftWrapper>
     {
+        private SubstrateClientExt? substrateClient;
+        private string ownerAddress = string.Empty;
+        private int offset;
+        private bool hasMore;
+
         public void UpdateFavourite(INftXcavateBase nftBase, bool newValue)
         {
             if (ItemsDict.ContainsKey((nftBase.Type, nftBase.CollectionId, nftBase.Id)))
@@ -17,73 +27,109 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public override string Title => "Owned properties";
 
-        public override Task InitialLoadAsync(CancellationToken token)
+        public override async Task InitialLoadAsync(CancellationToken token)
         {
-            // Unused
-            throw new NotImplementedException();
-        }
-
-        public override Task LoadMoreAsync(CancellationToken token)
-        {
-            // Unused
-            throw new NotImplementedException();
-        }
-
-        public async Task UpdateAsync(CancellationToken token)
-        {
-            Console.WriteLine("Update owned properties list: " + XcavateOwnedPropertiesModel.ItemsDict.Values.Count());
-
-            foreach (var property in XcavateOwnedPropertiesModel.ItemsDict.Values)
+            if (substrateClient is null || string.IsNullOrWhiteSpace(ownerAddress))
             {
-                Console.WriteLine(property.Amount + " - " + property.NftBase.Metadata.Name);
-
-                var newProperty = await ToWrappedButUnwrappedAsync(property, token);
-
-                if (newProperty.Key is not null && !ItemsDict.ContainsKey((NftKey)newProperty.Key))
-                {
-                    ItemsDict.Add((NftKey)newProperty.Key, newProperty);
-
-                    // Save to DB
-                    //await NftDatabase.SaveItemAsync(newNft).ConfigureAwait(false);
-
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        Items.Add(newProperty);
-                    });
-                }
+                Loading = false;
+                return;
             }
 
-            OnPropertyChanged(nameof(NoItems));
-            OnPropertyChanged(nameof(AnyItems));
+            Clear();
+
+            await LoadMoreAsync(token).ConfigureAwait(false);
         }
 
-        private Task LoadSavedNftsAsync()
+        public override async Task LoadMoreAsync(CancellationToken token)
         {
-            return Task.FromResult(0);
-            /*
-            foreach (var savedNft in await NftDatabase.GetNftsOwnedByAsync(KeysModel.GetSubstrateKey()).ConfigureAwait(false))
+            if (Loading || !hasMore || substrateClient is null)
             {
-                if (savedNft.Key is not null && !ItemsDict.ContainsKey((NftKey)savedNft.Key))
+                return;
+            }
+
+            Loading = true;
+
+            try
+            {
+                var page = await XcavateIndexerModel.GetOwnedAndBoughtPropertiesAsync(
+                        substrateClient,
+                        first: (int)LIMIT,
+                        offset: offset,
+                        tokenOwner: ownerAddress)
+                    .ConfigureAwait(false);
+
+                if (page.Count == 0)
                 {
-                    ItemsDict.Add((NftKey)savedNft.Key, savedNft);
-
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        Items.Add(savedNft);
-                    });
+                    hasMore = false;
+                    return;
                 }
-            }*/
+
+                offset += page.Count;
+
+                foreach (var property in page)
+                {
+                    var newProperty = await XcavatePropertyModel.ToXcavateNftWrapperAsync(property, token);
+
+                    if (!ItemsDict.ContainsKey(newProperty.Key))
+                    {
+                        ItemsDict.Add(newProperty.Key, newProperty);
+
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            Items.Add(newProperty);
+                        });
+                    }
+                }
+
+                if (page.Count < LIMIT)
+                {
+                    hasMore = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Owned indexed properties list error:");
+                Console.WriteLine(ex);
+                hasMore = false;
+            }
+            finally
+            {
+                Loading = false;
+            }
         }
 
-        private async Task<PropertyTokenOwnershipInfo> ToWrappedButUnwrappedAsync(PropertyTokenOwnershipInfo info, CancellationToken token)
+        public async Task LoadAsync(PlutoFrameworkSubstrateClient client, CancellationToken token)
         {
-            var wrapped = await XcavatePropertyModel.ToXcavateNftWrapperAsync((XcavatePaseoNftsPalletNft)info.NftBase, token);
-            return new PropertyTokenOwnershipInfo
+            if (client.Endpoint.Key != EndpointEnum.XcavatePaseo)
             {
-                Amount = info.Amount,
-                NftBase = wrapped.NftBase,
-                Favourite = wrapped.Favourite
-            };
+                return;
+            }
+
+            if (!KeysModel.HasSubstrateKey())
+            {
+                Loading = false;
+                return;
+            }
+
+            var loadedAddress = KeysModel.GetSubstrateKey();
+            var newClient = (SubstrateClientExt)client.SubstrateClient;
+            var shouldReload = substrateClient is null || ownerAddress != loadedAddress || !ReferenceEquals(substrateClient, newClient);
+
+            substrateClient = newClient;
+            ownerAddress = loadedAddress;
+
+            if (shouldReload)
+            {
+                await InitialLoadAsync(token).ConfigureAwait(false);
+            }
+        }
+
+        private void Clear()
+        {
+            offset = 0;
+            hasMore = true;
+            ItemsDict = new Dictionary<NftKey, XcavateNftWrapper>();
+            Items = new ObservableCollection<XcavateNftWrapper>();
         }
     }
 }

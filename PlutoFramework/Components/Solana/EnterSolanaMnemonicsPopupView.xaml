@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+             xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+             x:Class="PlutoFramework.Components.Solana.EnterSolanaMnemonicsPopupView"
+             IsVisible="{Binding IsVisible}"
+             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+             AbsoluteLayout.LayoutFlags="All">
+
+    <card:BottomPopupCard Title="Import your Solana wallet"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
+            <ScrollView>
+                <VerticalStackLayout Spacing="15"
+                                     Padding="10, 10, 10, 20">
+
+                    <solana:SolanaMnemonicsEntryView BindingContext="{Binding Entry}" />
+
+                    <buttons:ElevatedButton Text="Continue"
+                                            AutomationId="ContinueSolanaMnemonics"
+                                            ButtonState="Enabled"
+                                            Command="{Binding ContinueWithMnemonicsCommand}" />
+                </VerticalStackLayout>
+            </ScrollView>
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+</ContentView>

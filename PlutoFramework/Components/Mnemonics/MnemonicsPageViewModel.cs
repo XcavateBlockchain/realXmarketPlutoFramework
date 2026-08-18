@@ -6,7 +6,6 @@ using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.Keys;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
-using PlutoFrameworkCore;
 using PlutoFrameworkCore.Keys;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi.Model.Types;
@@ -37,7 +36,11 @@ public partial class MnemonicsPageViewModel : ObservableObject
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
     public Task GoToEnterMnemonicsAsync() => NavigationModel.PushAsync(new EnterMnemonicsPage(new EnterMnemonicsViewModel
     {
-        Navigation = () => Shell.Current.GoToAsync("../..")
+        Navigation = async (string mnemonics) =>
+        {
+            await KeysModel.SaveSr25519KeyAsync(mnemonics);
+            await Shell.Current.GoToAsync("../..");
+        }
     }));
 
     [RelayCommand]
@@ -70,7 +73,7 @@ public partial class MnemonicsPageViewModel : ObservableObject
             {
                 case KeyTypeEnum.Sr25519:
 
-                    var mnemonics = await accountLockedKey.ToSr25519KeyAsync();
+                    var mnemonics = await accountLockedKey.ToSr25519KeyAsync(reason: "Export main account key.");
 
                     var keyring = new Keyring();
                     var wallet = keyring.AddFromMnemonic(Mnemonics, new Meta() { Name = $"account" }, KeyType.Sr25519);
@@ -81,7 +84,7 @@ public partial class MnemonicsPageViewModel : ObservableObject
 
                     break;
                 case KeyTypeEnum.PolkadotJson:
-                    var jsonKey = await accountLockedKey.ToPolkadotJsonKeyAsync();
+                    var jsonKey = await accountLockedKey.ToPolkadotJsonKeyAsync("Export main account key");
 
                     await ExportJsonAsync(jsonKey.Json, token);
 
@@ -132,7 +135,8 @@ public partial class MnemonicsPageViewModel : ObservableObject
 
         await Model.KeysModel.GenerateNewAccountAsync();
 
-        await PlutoConfigurationModel.AfterAccountImportAsync();
+        // TODO 
+        //await PlutoConfigurationModel.AfterAccountImportAsync();
     }
 }
 

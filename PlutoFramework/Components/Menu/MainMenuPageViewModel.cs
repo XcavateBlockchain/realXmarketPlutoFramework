@@ -1,14 +1,15 @@
-﻿
-using XcavatePaseo.NetApi.Generated;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Components.Keys;
+using PlutoFramework.Components.Xcavate;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
-using PlutoFrameworkCore.Xcavate;
-using PlutoFramework.Components.Xcavate;
-using PlutoFramework.Components.Keys;
+using PlutoFramework.Model.Xcavate.Profile;
+using XcavatePaseo.NetApi.Generated;
+using XcavateProfile.Client;
 
 namespace PlutoFramework.Components.Menu
 {
@@ -16,12 +17,31 @@ namespace PlutoFramework.Components.Menu
     {
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(FullName))]
-        [NotifyPropertyChangedFor(nameof(UserRole))]
         private XcavateUser? user;
 
-        public string FullName => User is not null ? $"{User.FirstName} {User.LastName}" : "None";
+        public string FullName
+        {
+            get
+            {
+                if (Profile is not null && Profile.Nickname is not null)
+                {
+                    return Profile.Nickname;
+                }
+                if (User is not null)
+                {
+                    return $"{User.FirstName} {User.LastName}";
+                }
 
-        public UserRoleEnum UserRole => User is not null ? User.Role : UserRoleEnum.None;
+                return "None";
+            }
+        }
+
+        private IReadOnlyList<XcavateRole> roles = [];
+        public IReadOnlyList<XcavateRole> Roles
+        {
+            get => roles;
+            set => SetProperty(ref roles, value);
+        }
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsLoggedIn))]
@@ -29,14 +49,25 @@ namespace PlutoFramework.Components.Menu
         public bool IsLoggedIn => Address is not null;
 
         [ObservableProperty]
-        private VerificationEnum verification = VerificationEnum.Loading;
-        
+        [NotifyPropertyChangedFor(nameof(FullName))]
+        private Profile? profile;
+
+        [ObservableProperty]
+        private ImageSource? profilePictureImageSource;
+
+        /// <summary>
+        /// Resolved when the profile arrives rather than on every read of the property it
+        /// feeds: the URL carries a cache buster, so re-resolving it would download the
+        /// picture again each time a binding happened to ask.
+        /// </summary>
+        partial void OnProfileChanged(Profile? value) =>
+            ProfilePictureImageSource = ProfilePictureImageSourceModel.Create(value?.ProfilePicture);
+
+        private readonly XcavateProfileService profileService = new();
+
         public MainMenuPageViewModel()
         {
-            if (Preferences.ContainsKey(PreferencesModel.PUBLIC_KEY))
-            {
-                Address = Preferences.Get(PreferencesModel.PUBLIC_KEY, "None");
-            }
+            Address = MainKeyModel.GetAddress();
 
             _ = LoadAsync();
         }
@@ -45,21 +76,51 @@ namespace PlutoFramework.Components.Menu
         {
             User = await XcavateUserDatabase.GetUserInformationAsync();
 
-            if (!Preferences.ContainsKey(PreferencesModel.PUBLIC_KEY)
-                || User is null)
+            // Roles come from a XcavatePaseo pallet query, so they follow the Substrate key
+            // rather than the main one. A Solana-only user simply has none, and the badge
+            // layout renders nothing for an empty list.
+            if (!KeysModel.HasSubstrateKey())
             {
-                Verification = VerificationEnum.None;
-
                 return;
             }
 
             var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointEnum.XcavatePaseo, CancellationToken.None);
-
             var address = KeysModel.GetSubstrateKey();
 
-            var verification = await WhitelistModel.IsWhitelistedAsync((SubstrateClientExt)client.SubstrateClient, User.Role.ToWhitelistRole(), address, CancellationToken.None);
+            Roles = [.. await WhitelistModel.GetRolesCachedAsync((SubstrateClientExt)client.SubstrateClient, address, CancellationToken.None)];
+        }
 
-            Verification = verification;
+        /// <summary>
+        /// Called by the page on navigation, which is also how a change to the main key in
+        /// Settings gets picked up: Settings is pushed over this page, so coming back
+        /// re-resolves the address rather than leaving the previous chain's on screen.
+        /// </summary>
+        public async Task LoadProfileAsync()
+        {
+            var address = MainKeyModel.GetAddress();
+
+            if (address != Address)
+            {
+                Address = address;
+
+                // Belongs to the address we just navigated away from.
+                Profile = null;
+            }
+
+            if (address is null)
+            {
+                return;
+            }
+
+            try
+            {
+                Profile = await profileService.GetProfileAsync(CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load profile: {ex}");
+                Profile = null;
+            }
         }
 
         [RelayCommand]
@@ -78,10 +139,7 @@ namespace PlutoFramework.Components.Menu
         public Task SecurityActionAsync() => Shell.Current.Navigation.PushAsync(new KeyListPage());
 
         [RelayCommand]
-        public Task KYCActionAsync()
-        {
-            return Task.FromResult(0);
-        }
+        public Task KYCActionAsync() => NavigationModel.NavigateToKYCUserPage();
 
         [RelayCommand]
         public Task SupportActionAsync() => Shell.Current.Navigation.PushAsync(new ImportantLinksPage());

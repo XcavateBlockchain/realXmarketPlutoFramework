@@ -35,39 +35,19 @@ namespace XcavatePaseo.NetApi.Generated
         public SystemStorage SystemStorage;
         
         /// <summary>
-        /// ParachainSystemStorage storage calls.
-        /// </summary>
-        public ParachainSystemStorage ParachainSystemStorage;
-        
-        /// <summary>
         /// TimestampStorage storage calls.
         /// </summary>
         public TimestampStorage TimestampStorage;
         
         /// <summary>
-        /// ParachainInfoStorage storage calls.
+        /// AuraStorage storage calls.
         /// </summary>
-        public ParachainInfoStorage ParachainInfoStorage;
+        public AuraStorage AuraStorage;
         
         /// <summary>
-        /// ProxyStorage storage calls.
+        /// GrandpaStorage storage calls.
         /// </summary>
-        public ProxyStorage ProxyStorage;
-        
-        /// <summary>
-        /// UtilityStorage storage calls.
-        /// </summary>
-        public UtilityStorage UtilityStorage;
-        
-        /// <summary>
-        /// MultisigStorage storage calls.
-        /// </summary>
-        public MultisigStorage MultisigStorage;
-        
-        /// <summary>
-        /// WeightReclaimStorage storage calls.
-        /// </summary>
-        public WeightReclaimStorage WeightReclaimStorage;
+        public GrandpaStorage GrandpaStorage;
         
         /// <summary>
         /// BalancesStorage storage calls.
@@ -78,6 +58,16 @@ namespace XcavatePaseo.NetApi.Generated
         /// TransactionPaymentStorage storage calls.
         /// </summary>
         public TransactionPaymentStorage TransactionPaymentStorage;
+        
+        /// <summary>
+        /// SudoStorage storage calls.
+        /// </summary>
+        public SudoStorage SudoStorage;
+        
+        /// <summary>
+        /// ProxyStorage storage calls.
+        /// </summary>
+        public ProxyStorage ProxyStorage;
         
         /// <summary>
         /// RealEstateAssetsStorage storage calls.
@@ -95,59 +85,9 @@ namespace XcavatePaseo.NetApi.Generated
         public EducationAssetsStorage EducationAssetsStorage;
         
         /// <summary>
-        /// SudoStorage storage calls.
+        /// RealEstateNftsStorage storage calls.
         /// </summary>
-        public SudoStorage SudoStorage;
-        
-        /// <summary>
-        /// AuthorshipStorage storage calls.
-        /// </summary>
-        public AuthorshipStorage AuthorshipStorage;
-        
-        /// <summary>
-        /// CollatorSelectionStorage storage calls.
-        /// </summary>
-        public CollatorSelectionStorage CollatorSelectionStorage;
-        
-        /// <summary>
-        /// SessionStorage storage calls.
-        /// </summary>
-        public SessionStorage SessionStorage;
-        
-        /// <summary>
-        /// AuraStorage storage calls.
-        /// </summary>
-        public AuraStorage AuraStorage;
-        
-        /// <summary>
-        /// AuraExtStorage storage calls.
-        /// </summary>
-        public AuraExtStorage AuraExtStorage;
-        
-        /// <summary>
-        /// XcmpQueueStorage storage calls.
-        /// </summary>
-        public XcmpQueueStorage XcmpQueueStorage;
-        
-        /// <summary>
-        /// PolkadotXcmStorage storage calls.
-        /// </summary>
-        public PolkadotXcmStorage PolkadotXcmStorage;
-        
-        /// <summary>
-        /// CumulusXcmStorage storage calls.
-        /// </summary>
-        public CumulusXcmStorage CumulusXcmStorage;
-        
-        /// <summary>
-        /// MessageQueueStorage storage calls.
-        /// </summary>
-        public MessageQueueStorage MessageQueueStorage;
-        
-        /// <summary>
-        /// VestingStorage storage calls.
-        /// </summary>
-        public VestingStorage VestingStorage;
+        public RealEstateNftsStorage RealEstateNftsStorage;
         
         /// <summary>
         /// EducationNftsStorage storage calls.
@@ -155,14 +95,14 @@ namespace XcavatePaseo.NetApi.Generated
         public EducationNftsStorage EducationNftsStorage;
         
         /// <summary>
-        /// AssetsHolderStorage storage calls.
-        /// </summary>
-        public AssetsHolderStorage AssetsHolderStorage;
-        
-        /// <summary>
         /// NftFractionalizationStorage storage calls.
         /// </summary>
         public NftFractionalizationStorage NftFractionalizationStorage;
+        
+        /// <summary>
+        /// AssetsHolderStorage storage calls.
+        /// </summary>
+        public AssetsHolderStorage AssetsHolderStorage;
         
         /// <summary>
         /// AssetsFreezerStorage storage calls.
@@ -170,29 +110,19 @@ namespace XcavatePaseo.NetApi.Generated
         public AssetsFreezerStorage AssetsFreezerStorage;
         
         /// <summary>
-        /// RealEstateNftsStorage storage calls.
+        /// UtilityStorage storage calls.
         /// </summary>
-        public RealEstateNftsStorage RealEstateNftsStorage;
+        public UtilityStorage UtilityStorage;
         
         /// <summary>
-        /// IsmpStorage storage calls.
+        /// MultisigStorage storage calls.
         /// </summary>
-        public IsmpStorage IsmpStorage;
+        public MultisigStorage MultisigStorage;
         
         /// <summary>
-        /// IsmpParachainStorage storage calls.
+        /// VestingStorage storage calls.
         /// </summary>
-        public IsmpParachainStorage IsmpParachainStorage;
-        
-        /// <summary>
-        /// HyperbridgeStorage storage calls.
-        /// </summary>
-        public HyperbridgeStorage HyperbridgeStorage;
-        
-        /// <summary>
-        /// TokenGatewayStorage storage calls.
-        /// </summary>
-        public TokenGatewayStorage TokenGatewayStorage;
+        public VestingStorage VestingStorage;
         
         /// <summary>
         /// XcavateWhitelistStorage storage calls.
@@ -240,77 +170,33 @@ namespace XcavatePaseo.NetApi.Generated
         public BucketsStorage BucketsStorage;
         
         /// <summary>
-        /// CtypeStorage storage calls.
+        /// FaucetStorage storage calls.
         /// </summary>
-        public CtypeStorage CtypeStorage;
-        
-        /// <summary>
-        /// AttestationStorage storage calls.
-        /// </summary>
-        public AttestationStorage AttestationStorage;
-        
-        /// <summary>
-        /// DelegationStorage storage calls.
-        /// </summary>
-        public DelegationStorage DelegationStorage;
-        
-        /// <summary>
-        /// DidStorage storage calls.
-        /// </summary>
-        public DidStorage DidStorage;
-        
-        /// <summary>
-        /// PublicCredentialsStorage storage calls.
-        /// </summary>
-        public PublicCredentialsStorage PublicCredentialsStorage;
-        
-        /// <summary>
-        /// KiltMigrationStorage storage calls.
-        /// </summary>
-        public KiltMigrationStorage KiltMigrationStorage;
-        
-        /// <summary>
-        /// DidLookupStorage storage calls.
-        /// </summary>
-        public DidLookupStorage DidLookupStorage;
+        public FaucetStorage FaucetStorage;
         
         public SubstrateClientExt(System.Uri uri, Substrate.NetApi.Model.Extrinsics.ChargeType chargeType) : 
                 base(uri, chargeType)
         {
             StorageKeyDict = new System.Collections.Generic.Dictionary<System.Tuple<string, string>, System.Tuple<Substrate.NetApi.Model.Meta.Storage.Hasher[], System.Type, System.Type>>();
             this.SystemStorage = new SystemStorage(this);
-            this.ParachainSystemStorage = new ParachainSystemStorage(this);
             this.TimestampStorage = new TimestampStorage(this);
-            this.ParachainInfoStorage = new ParachainInfoStorage(this);
-            this.ProxyStorage = new ProxyStorage(this);
-            this.UtilityStorage = new UtilityStorage(this);
-            this.MultisigStorage = new MultisigStorage(this);
-            this.WeightReclaimStorage = new WeightReclaimStorage(this);
+            this.AuraStorage = new AuraStorage(this);
+            this.GrandpaStorage = new GrandpaStorage(this);
             this.BalancesStorage = new BalancesStorage(this);
             this.TransactionPaymentStorage = new TransactionPaymentStorage(this);
+            this.SudoStorage = new SudoStorage(this);
+            this.ProxyStorage = new ProxyStorage(this);
             this.RealEstateAssetsStorage = new RealEstateAssetsStorage(this);
             this.AssetsStorage = new AssetsStorage(this);
             this.EducationAssetsStorage = new EducationAssetsStorage(this);
-            this.SudoStorage = new SudoStorage(this);
-            this.AuthorshipStorage = new AuthorshipStorage(this);
-            this.CollatorSelectionStorage = new CollatorSelectionStorage(this);
-            this.SessionStorage = new SessionStorage(this);
-            this.AuraStorage = new AuraStorage(this);
-            this.AuraExtStorage = new AuraExtStorage(this);
-            this.XcmpQueueStorage = new XcmpQueueStorage(this);
-            this.PolkadotXcmStorage = new PolkadotXcmStorage(this);
-            this.CumulusXcmStorage = new CumulusXcmStorage(this);
-            this.MessageQueueStorage = new MessageQueueStorage(this);
-            this.VestingStorage = new VestingStorage(this);
-            this.EducationNftsStorage = new EducationNftsStorage(this);
-            this.AssetsHolderStorage = new AssetsHolderStorage(this);
-            this.NftFractionalizationStorage = new NftFractionalizationStorage(this);
-            this.AssetsFreezerStorage = new AssetsFreezerStorage(this);
             this.RealEstateNftsStorage = new RealEstateNftsStorage(this);
-            this.IsmpStorage = new IsmpStorage(this);
-            this.IsmpParachainStorage = new IsmpParachainStorage(this);
-            this.HyperbridgeStorage = new HyperbridgeStorage(this);
-            this.TokenGatewayStorage = new TokenGatewayStorage(this);
+            this.EducationNftsStorage = new EducationNftsStorage(this);
+            this.NftFractionalizationStorage = new NftFractionalizationStorage(this);
+            this.AssetsHolderStorage = new AssetsHolderStorage(this);
+            this.AssetsFreezerStorage = new AssetsFreezerStorage(this);
+            this.UtilityStorage = new UtilityStorage(this);
+            this.MultisigStorage = new MultisigStorage(this);
+            this.VestingStorage = new VestingStorage(this);
             this.XcavateWhitelistStorage = new XcavateWhitelistStorage(this);
             this.EducationRegionsStorage = new EducationRegionsStorage(this);
             this.RealXEducationStorage = new RealXEducationStorage(this);
@@ -320,13 +206,7 @@ namespace XcavatePaseo.NetApi.Generated
             this.PropertyManagementStorage = new PropertyManagementStorage(this);
             this.PropertyGovernanceStorage = new PropertyGovernanceStorage(this);
             this.BucketsStorage = new BucketsStorage(this);
-            this.CtypeStorage = new CtypeStorage(this);
-            this.AttestationStorage = new AttestationStorage(this);
-            this.DelegationStorage = new DelegationStorage(this);
-            this.DidStorage = new DidStorage(this);
-            this.PublicCredentialsStorage = new PublicCredentialsStorage(this);
-            this.KiltMigrationStorage = new KiltMigrationStorage(this);
-            this.DidLookupStorage = new DidLookupStorage(this);
+            this.FaucetStorage = new FaucetStorage(this);
         }
     }
 }

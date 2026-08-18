@@ -17,10 +17,40 @@
                 <Label.FormattedText>
                     <FormattedString>
                         <Span FontAttributes="Bold"
-              Text="{Binding Text}"/>
+              Text="{Binding Title}"/>
                     </FormattedString>
                 </Label.FormattedText>
             </Label>
+
+            <Label HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   LineBreakMode="WordWrap"
+                   Margin="30, 0, 30, 20"
+                   TextColor="#717171"
+                   Text="{Binding Summary}" />
+
+            <CollectionView ItemsSource="{Binding FailedSections}"
+                            IsVisible="{Binding HasFailedSections}"
+                            Margin="20, 0, 20, 20"
+                            SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0, 8, 0, 8"
+                                StrokeThickness="0"
+                                BackgroundColor="#F5F5F5"
+                                Padding="12">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="{Binding Title}"
+                                       FontAttributes="Bold"
+                                       TextColor="#262626" />
+                                <Label Text="{Binding Reason}"
+                                       TextColor="#525252"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
         </VerticalStackLayout>
     </ScrollView>
 

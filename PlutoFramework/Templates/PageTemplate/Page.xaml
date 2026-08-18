@@ -12,6 +12,9 @@
                     xmlns:webview="clr-namespace:PlutoFramework.Components.WebView"
                     xmlns:topnavigationbartemplate="clr-namespace:PlutoFramework.Templates.TopNavigationBarTemplate"
                     xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+                    xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+                    xmlns:solanastatus="clr-namespace:PlutoFramework.Components.Solana.Status"
+                    xmlns:solanatransfer="clr-namespace:PlutoFramework.Components.Solana.Transfer"
                     x:Class="PlutoFramework.Templates.PageTemplate.Page">
 
     <ControlTemplate x:Key="PageTemplate">
@@ -47,6 +50,17 @@
 
             <account:NoAccountPopup ZIndex="10" />
 
+            <!-- Hosted here because NoAccountPopup, which is itself raised from anywhere
+                 (RequirementsModel, the navigation bar, a resumed onboarding), continues its
+                 Import Account button into this popup. Hosting it per-page left that button
+                 dead on every page that had not thought to include it. -->
+            <solana:ImportMethodPopupView ZIndex="10" />
+
+            <!-- Hosted here for the same reason as the popup above: the import-method popup
+                 is raised from anywhere, and its Mobile Wallet Adapter option now continues
+                 into this popup in place rather than into a page that hosted it. -->
+            <solana:ConnectMwaPopupView ZIndex="10" />
+
             <kilt:NoDidPopupView ZIndex="10" />
 
             <xcavate:UserProfileNotCreatedPopupView ZIndex="10" />
@@ -55,9 +69,24 @@
 
             <password:EnterPasswordPopupView ZIndex="10"/>
 
+            <!-- Hosted here rather than per page so the global QR scanner can open a transfer
+                 from wherever the user happens to be. The token picker stacks above it. -->
+            <solanatransfer:SolanaTransferView ZIndex="10" />
+
+            <solanatransfer:SolanaTokenSelectView ZIndex="11" />
+
+            <!-- Every Mobile Wallet Adapter signature shows this, and a signature can be
+                 requested from anywhere - transfers, dapp bridges, notification wallet
+                 linking - so it is hosted here. Above the transfer popups, which are one
+                 of the things that trigger it. -->
+            <solana:MwaSignPopupView ZIndex="12" />
+
             <loading:FullPageLoadingView ZIndex="20" />
 
             <extrinsic:ExtrinsicStatusStackLayout ZIndex="5" />
+
+            <!-- Offsets itself below the Substrate stack, which shares these bounds. -->
+            <solanastatus:SolanaTransactionStatusStackLayout ZIndex="5" />
 
             <card:BottomPillBackgroundView />
 

@@ -15,8 +15,6 @@ namespace PlutoFramework.Components.Settings
             DisplayNetworks = !DisplayNetworks;
 
             Preferences.Set(PreferencesModel.SETTINGS_DISPLAY_NETWORKS, DisplayNetworks);
-
-            //MainPage.NetworksView.IsVisible = DisplayNetworks;
         }
 
         [ObservableProperty]

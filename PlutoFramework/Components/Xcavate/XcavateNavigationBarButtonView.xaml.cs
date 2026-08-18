@@ -4,7 +4,7 @@ namespace PlutoFramework.Components.Xcavate;
 
 public partial class XcavateNavigationBarButtonView : ContentView
 {
-	public static readonly BindableProperty TitleProperty = BindableProperty.Create(
+    public static readonly BindableProperty TitleProperty = BindableProperty.Create(
         nameof(Title), typeof(string), typeof(XcavateNavigationBarButtonView),
         defaultValue: string.Empty, defaultBindingMode: BindingMode.OneWay,
         propertyChanged: (bindable, oldValue, newValue) =>
@@ -40,15 +40,16 @@ public partial class XcavateNavigationBarButtonView : ContentView
             control.iconUnselected.IsVisible = !(bool)newValue;
             control.iconSelected.IsVisible = (bool)newValue;
 
-            control.selectedHighlight.IsVisible = (bool)newValue;
+            // Highlight background
+            // control.selectedHighlight.IsVisible = (bool)newValue;
 
             if ((bool)newValue)
             {
-                control.titleLabel.TextColor = Color.FromArgb("#57A0C5");
+                control.titleLabel.TextColor = (Color)Application.Current.Resources["Primary"];
             }
             else
             {
-                control.titleLabel.TextColor = Color.FromArgb("#3B4F74");
+                control.titleLabel.TextColor = Color.FromArgb("#4E4E4E");
             }
         });
 
@@ -63,9 +64,9 @@ public partial class XcavateNavigationBarButtonView : ContentView
         );
 
     public XcavateNavigationBarButtonView()
-	{
-		InitializeComponent();
-	}
+    {
+        InitializeComponent();
+    }
 
     public string Title
     {

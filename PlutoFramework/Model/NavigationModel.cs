@@ -1,16 +1,21 @@
-﻿using PlutoFramework.Components.Balance;
+﻿using PlutoFramework.Components.Account;
+using PlutoFramework.Components.Balance;
 using PlutoFramework.Components.MessagePopup;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Components.TransferView;
 using PlutoFramework.Components.UniversalScannerView;
 using PlutoFramework.Components.Vault;
+using PlutoFrameworkCore.Keys;
 using Plutonication;
 
 namespace PlutoFramework.Model
 {
     public class NavigationModel
     {
+        public static Func<Task> NavigateToKYCUserPage { get; set; } = () => Task.FromResult(0);
         public static Func<Task> NavigateToKYC { get; set; } = () => Task.FromResult(0);
         public static Func<Task> NavigateAfterAccountCreation { get; set; } = NavigateToKYC;
+        public static Func<ImportAccountFlowMode, Task> StartImportAccount { get; set; } = (flowMode) => Task.FromResult(0);
         public static Func<Task> NavigateToUserPageAsync { get; set; } = () => Task.FromResult(0);
         public static async Task NavigateToBalancesPageAsync()
         {
@@ -18,6 +23,17 @@ namespace PlutoFramework.Model
 
             if (!RequirementsModel.CheckAccountExists())
             {
+                return;
+            }
+
+            // Onboarding writes a Substrate key for every account, because KYC and the
+            // XcavatePaseo whitelist are keyed to one, so its absence no longer identifies a
+            // Solana user. The main key does, and it is what decides whose balances these are;
+            // the Substrate BalancePage is empty by construction for a Solana-main user.
+            if (MainKeyModel.ResolvedChain == MainKeyChain.Solana)
+            {
+                await Shell.Current.Navigation.PushAsync(new SolanaBalancesPage());
+
                 return;
             }
 
@@ -109,6 +125,20 @@ namespace PlutoFramework.Model
                         {
                             viewModel.Address = scannedAddress.Substring(10);
                         }
+                    }
+                    else if (PlutoFrameworkCore.Solana.SolanaUri.TryParseRecipient(scannedValue)
+                        is string solanaRecipient)
+                    {
+                        // The app emits solana: codes from the balances page, the token detail
+                        // page and both key detail pages, so before this branch existed
+                        // scanning its own QR code fell through to "incorrect format".
+                        //
+                        // The popup is hosted by the page template, so unlike the substrate:
+                        // branch above — whose popup only exists on some pages — this always
+                        // has somewhere to appear.
+                        DependencyService
+                            .Get<Components.Solana.Transfer.SolanaTransferViewModel>()
+                            .Appear(recipientAddress: solanaRecipient);
                     }
                     else if (Substrate.NetApi.Utils.Bytes2HexString(e.Results[0].Raw).IndexOf("530102") != -1)
                     {

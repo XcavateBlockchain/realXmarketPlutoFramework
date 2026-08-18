@@ -60,8 +60,11 @@ namespace UniqueryPlus
                         {
                             recursiveReturn = await getter.Invoke(client, nftType, lastKey, token);
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            Console.WriteLine("Exception: ");
+                            Console.WriteLine(ex);
+
                             break;
                         }
 

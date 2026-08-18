@@ -12,7 +12,9 @@ namespace PlutoFramework.Templates.TopNavigationBarTemplate
         [ObservableProperty]
         private bool extra2IsVisible = false;
 
+        public Func<Task>? BackFunc { get; set; }
+
         [RelayCommand]
-        public Task BackAsync() => NavigationModel.PopAsync();
+        public Task BackAsync() => BackFunc?.Invoke() ?? NavigationModel.PopAsync();
     }
 }

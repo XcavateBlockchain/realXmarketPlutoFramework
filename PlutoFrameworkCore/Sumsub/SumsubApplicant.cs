@@ -49,7 +49,67 @@ namespace PlutoFramework.Model.Sumsub
         [JsonPropertyName("levelName")] public string? LevelName { get; init; }
         [JsonPropertyName("levelAutoCheckMode")] public string? LevelAutoCheckMode { get; init; }
         [JsonPropertyName("createDate")] public string? CreateDate { get; init; }
+        [JsonPropertyName("reviewDate")] public string? ReviewDate { get; init; }
         [JsonPropertyName("reviewStatus")] public string? ReviewStatus { get; init; }
+        [JsonPropertyName("reviewResult")] public SumsubReviewResult? ReviewResult { get; init; }
         [JsonPropertyName("priority")] public int? Priority { get; init; }
+    }
+
+    public record SumsubReviewResult
+    {
+        [JsonPropertyName("reviewAnswer")] public string? ReviewAnswer { get; init; }
+        [JsonPropertyName("rejectLabels")] public List<string>? RejectLabels { get; init; }
+        [JsonPropertyName("reviewRejectType")] public string? ReviewRejectType { get; init; }
+        [JsonPropertyName("clientComment")] public string? ClientComment { get; init; }
+        [JsonPropertyName("moderationComment")] public string? ModerationComment { get; init; }
+        [JsonPropertyName("buttonIds")] public List<string>? ButtonIds { get; init; }
+    }
+
+    public record SumsubReviewHistoryResponse
+    {
+        [JsonPropertyName("items")] public List<SumsubReviewHistoryItem>? Items { get; init; }
+        [JsonPropertyName("totalItems")] public int? TotalItems { get; init; }
+    }
+
+    public record SumsubReviewHistoryItem
+    {
+        [JsonPropertyName("attemptId")] public string? AttemptId { get; init; }
+        [JsonPropertyName("levelName")] public string? LevelName { get; init; }
+        [JsonPropertyName("reviewDate")] public string? ReviewDate { get; init; }
+        [JsonPropertyName("reviewResult")] public SumsubReviewResult? ReviewResult { get; init; }
+        [JsonPropertyName("reviewStatus")] public string? ReviewStatus { get; init; }
+    }
+
+    public record SumsubVerificationStepStatus
+    {
+        [JsonPropertyName("reviewResult")] public SumsubReviewResult? ReviewResult { get; init; }
+        [JsonPropertyName("country")] public string? Country { get; init; }
+        [JsonPropertyName("idDocType")] public string? IdDocType { get; init; }
+        [JsonPropertyName("imageIds")] public List<string>? ImageIds { get; init; }
+        [JsonPropertyName("imageReviewResults")] public Dictionary<string, SumsubReviewResult>? ImageReviewResults { get; init; }
+        [JsonPropertyName("reviewStatus")] public string? ReviewStatus { get; init; }
+    }
+
+    public record SumsubApplicantNotesResponse
+    {
+        [JsonPropertyName("list")] public SumsubApplicantNotesList? List { get; init; }
+    }
+
+    public record SumsubApplicantNotesList
+    {
+        [JsonPropertyName("items")] public List<SumsubApplicantNote>? Items { get; init; }
+        [JsonPropertyName("totalItems")] public int? TotalItems { get; init; }
+    }
+
+    public record SumsubApplicantNote
+    {
+        [JsonPropertyName("id")] public string? Id { get; init; }
+        [JsonPropertyName("applicantId")] public string? ApplicantId { get; init; }
+        [JsonPropertyName("note")] public string? Note { get; init; }
+        [JsonPropertyName("createdAt")] public string? CreatedAt { get; init; }
+        [JsonPropertyName("createdBy")] public string? CreatedBy { get; init; }
+        [JsonPropertyName("updatedAt")] public string? UpdatedAt { get; init; }
+        [JsonPropertyName("updatedBy")] public string? UpdatedBy { get; init; }
+        [JsonPropertyName("tags")] public List<string>? Tags { get; init; }
     }
 }

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             x:Class="PlutoFramework.Components.Solana.SolanaAssetView">
+    <card:ClickableCard CardPadding="0, 0, 0, 0">
+        <card:ClickableCard.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnClicked" />
+        </card:ClickableCard.GestureRecognizers>
+        <card:ClickableCard.View>
+            <Grid ColumnDefinitions="70,*,130"
+                  HeightRequest="70">
+
+                <Image x:Name="assetIcon"
+                       Grid.Column="0"
+                       Aspect="AspectFit"
+                       HeightRequest="40"
+                       WidthRequest="40"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+
+                <Label x:Name="symbolLabel"
+                       Grid.Column="1"
+                       FontAttributes="Bold"
+                       FontSize="16"
+                       LineBreakMode="TailTruncation"
+                       VerticalTextAlignment="Center" />
+
+                <VerticalStackLayout Grid.Column="2"
+                                     Spacing="2"
+                                     Margin="0, 0, 15, 0"
+                                     VerticalOptions="Center">
+                    <Label x:Name="amountLabel"
+                           FontAttributes="Bold"
+                           FontSize="15"
+                           HorizontalTextAlignment="End" />
+                    <Label x:Name="usdLabel"
+                           FontAttributes="Bold"
+                           FontSize="13"
+                           TextColor="#888888"
+                           HorizontalTextAlignment="End" />
+                </VerticalStackLayout>
+            </Grid>
+        </card:ClickableCard.View>
+    </card:ClickableCard>
+</ContentView>

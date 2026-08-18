@@ -71,10 +71,10 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
         LettingAgentRejected = 7,
         
         /// <summary>
-        /// >> TokenUnfrozen
-        /// A user���s frozen tokens were released after voting.
+        /// >> SharesUnfrozen
+        /// A user���s frozen shares were released after voting.
         /// </summary>
-        TokenUnfrozen = 8,
+        SharesUnfrozen = 8,
         
         /// <summary>
         /// >> LettingAgentResignationInitiated
@@ -96,7 +96,7 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
     }
     
     /// <summary>
-    /// >> 215 - Variant[pallet_property_management.pallet.Event]
+    /// >> 94 - Variant[pallet_property_management.pallet.Event]
     /// The `Event` enum of this pallet
     /// </summary>
     public sealed class EnumEvent : BaseEnumRust<Event>
@@ -108,14 +108,14 @@ namespace XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet
         public EnumEvent()
         {
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U16, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>(Event.LettingAgentAdded);
-				AddTypeDecoder<BaseTuple<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT11, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>(Event.LettingAgentRemoved);
+				AddTypeDecoder<BaseTuple<XcavatePaseo.NetApi.Generated.Model.bounded_collections.bounded_vec.BoundedVecT4, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>(Event.LettingAgentRemoved);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>(Event.LettingAgentSet);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U128>>(Event.IncomeDistributed);
 				AddTypeDecoder<BaseTuple<XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U128>>(Event.WithdrawFunds);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U64>>(Event.LettingAgentProposed);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, Substrate.NetApi.Model.Types.Primitive.U64, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, XcavatePaseo.NetApi.Generated.Model.pallet_property_management.pallet.EnumVote>>(Event.VotedOnLettingAgent);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>(Event.LettingAgentRejected);
-				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U64, Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32>>(Event.TokenUnfrozen);
+				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U64, Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32>>(Event.SharesUnfrozen);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32, Substrate.NetApi.Model.Types.Primitive.U32>>(Event.LettingAgentResignationInitiated);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Model.sp_core.crypto.AccountId32>>(Event.LettingAgentResignationFinalized);
 				AddTypeDecoder<BaseTuple<Substrate.NetApi.Model.Types.Primitive.U32, XcavatePaseo.NetApi.Generated.Types.Base.EnumResult>>(Event.ResignationProcessingFailed);

@@ -241,7 +241,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(admin.Encode());
             byteArray.AddRange(min_balance.Encode());
-            return new Method(14, "EducationAssets", 0, "create", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 0, "create", byteArray.ToArray());
         }
         
         /// <summary>
@@ -255,7 +255,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(owner.Encode());
             byteArray.AddRange(is_sufficient.Encode());
             byteArray.AddRange(min_balance.Encode());
-            return new Method(14, "EducationAssets", 1, "force_create", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 1, "force_create", byteArray.ToArray());
         }
         
         /// <summary>
@@ -266,7 +266,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
-            return new Method(14, "EducationAssets", 2, "start_destroy", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 2, "start_destroy", byteArray.ToArray());
         }
         
         /// <summary>
@@ -277,7 +277,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
-            return new Method(14, "EducationAssets", 3, "destroy_accounts", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 3, "destroy_accounts", byteArray.ToArray());
         }
         
         /// <summary>
@@ -288,7 +288,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
-            return new Method(14, "EducationAssets", 4, "destroy_approvals", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 4, "destroy_approvals", byteArray.ToArray());
         }
         
         /// <summary>
@@ -299,7 +299,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
-            return new Method(14, "EducationAssets", 5, "finish_destroy", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 5, "finish_destroy", byteArray.ToArray());
         }
         
         /// <summary>
@@ -312,7 +312,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(beneficiary.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(14, "EducationAssets", 6, "mint", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 6, "mint", byteArray.ToArray());
         }
         
         /// <summary>
@@ -325,7 +325,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(who.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(14, "EducationAssets", 7, "burn", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 7, "burn", byteArray.ToArray());
         }
         
         /// <summary>
@@ -338,7 +338,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(target.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(14, "EducationAssets", 8, "transfer", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 8, "transfer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -351,7 +351,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(target.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(14, "EducationAssets", 9, "transfer_keep_alive", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 9, "transfer_keep_alive", byteArray.ToArray());
         }
         
         /// <summary>
@@ -365,7 +365,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(source.Encode());
             byteArray.AddRange(dest.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(14, "EducationAssets", 10, "force_transfer", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 10, "force_transfer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -377,7 +377,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(who.Encode());
-            return new Method(14, "EducationAssets", 11, "freeze", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 11, "freeze", byteArray.ToArray());
         }
         
         /// <summary>
@@ -389,7 +389,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(who.Encode());
-            return new Method(14, "EducationAssets", 12, "thaw", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 12, "thaw", byteArray.ToArray());
         }
         
         /// <summary>
@@ -400,7 +400,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
-            return new Method(14, "EducationAssets", 13, "freeze_asset", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 13, "freeze_asset", byteArray.ToArray());
         }
         
         /// <summary>
@@ -411,7 +411,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
-            return new Method(14, "EducationAssets", 14, "thaw_asset", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 14, "thaw_asset", byteArray.ToArray());
         }
         
         /// <summary>
@@ -423,7 +423,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(owner.Encode());
-            return new Method(14, "EducationAssets", 15, "transfer_ownership", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 15, "transfer_ownership", byteArray.ToArray());
         }
         
         /// <summary>
@@ -437,7 +437,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(issuer.Encode());
             byteArray.AddRange(admin.Encode());
             byteArray.AddRange(freezer.Encode());
-            return new Method(14, "EducationAssets", 16, "set_team", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 16, "set_team", byteArray.ToArray());
         }
         
         /// <summary>
@@ -451,7 +451,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(name.Encode());
             byteArray.AddRange(symbol.Encode());
             byteArray.AddRange(decimals.Encode());
-            return new Method(14, "EducationAssets", 17, "set_metadata", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 17, "set_metadata", byteArray.ToArray());
         }
         
         /// <summary>
@@ -462,7 +462,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
-            return new Method(14, "EducationAssets", 18, "clear_metadata", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 18, "clear_metadata", byteArray.ToArray());
         }
         
         /// <summary>
@@ -477,7 +477,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(symbol.Encode());
             byteArray.AddRange(decimals.Encode());
             byteArray.AddRange(is_frozen.Encode());
-            return new Method(14, "EducationAssets", 19, "force_set_metadata", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 19, "force_set_metadata", byteArray.ToArray());
         }
         
         /// <summary>
@@ -488,7 +488,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
-            return new Method(14, "EducationAssets", 20, "force_clear_metadata", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 20, "force_clear_metadata", byteArray.ToArray());
         }
         
         /// <summary>
@@ -506,7 +506,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(min_balance.Encode());
             byteArray.AddRange(is_sufficient.Encode());
             byteArray.AddRange(is_frozen.Encode());
-            return new Method(14, "EducationAssets", 21, "force_asset_status", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 21, "force_asset_status", byteArray.ToArray());
         }
         
         /// <summary>
@@ -519,7 +519,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(@delegate.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(14, "EducationAssets", 22, "approve_transfer", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 22, "approve_transfer", byteArray.ToArray());
         }
         
         /// <summary>
@@ -531,7 +531,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(@delegate.Encode());
-            return new Method(14, "EducationAssets", 23, "cancel_approval", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 23, "cancel_approval", byteArray.ToArray());
         }
         
         /// <summary>
@@ -544,7 +544,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(owner.Encode());
             byteArray.AddRange(@delegate.Encode());
-            return new Method(14, "EducationAssets", 24, "force_cancel_approval", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 24, "force_cancel_approval", byteArray.ToArray());
         }
         
         /// <summary>
@@ -558,7 +558,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(owner.Encode());
             byteArray.AddRange(destination.Encode());
             byteArray.AddRange(amount.Encode());
-            return new Method(14, "EducationAssets", 25, "transfer_approved", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 25, "transfer_approved", byteArray.ToArray());
         }
         
         /// <summary>
@@ -569,7 +569,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
         {
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
-            return new Method(14, "EducationAssets", 26, "touch", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 26, "touch", byteArray.ToArray());
         }
         
         /// <summary>
@@ -581,7 +581,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(allow_burn.Encode());
-            return new Method(14, "EducationAssets", 27, "refund", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 27, "refund", byteArray.ToArray());
         }
         
         /// <summary>
@@ -593,7 +593,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(min_balance.Encode());
-            return new Method(14, "EducationAssets", 28, "set_min_balance", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 28, "set_min_balance", byteArray.ToArray());
         }
         
         /// <summary>
@@ -605,7 +605,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(who.Encode());
-            return new Method(14, "EducationAssets", 29, "touch_other", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 29, "touch_other", byteArray.ToArray());
         }
         
         /// <summary>
@@ -617,7 +617,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(who.Encode());
-            return new Method(14, "EducationAssets", 30, "refund_other", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 30, "refund_other", byteArray.ToArray());
         }
         
         /// <summary>
@@ -629,7 +629,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             System.Collections.Generic.List<byte> byteArray = new List<byte>();
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(who.Encode());
-            return new Method(14, "EducationAssets", 31, "block", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 31, "block", byteArray.ToArray());
         }
         
         /// <summary>
@@ -642,7 +642,7 @@ namespace XcavatePaseo.NetApi.Generated.Storage
             byteArray.AddRange(id.Encode());
             byteArray.AddRange(dest.Encode());
             byteArray.AddRange(keep_alive.Encode());
-            return new Method(14, "EducationAssets", 32, "transfer_all", byteArray.ToArray());
+            return new Method(10, "EducationAssets", 32, "transfer_all", byteArray.ToArray());
         }
     }
     

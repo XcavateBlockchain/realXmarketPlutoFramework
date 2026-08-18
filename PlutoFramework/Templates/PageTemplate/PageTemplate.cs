@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
-using PlutoFramework.Components.NavigationBar;
 using MauiView = Microsoft.Maui.Controls.View;
+using TopNavigationBarTemplateView = PlutoFramework.Templates.TopNavigationBarTemplate.TopNavigationBarTemplate;
 
 namespace PlutoFramework.Templates.PageTemplate
 {
@@ -108,7 +108,7 @@ namespace PlutoFramework.Templates.PageTemplate
             set => SetValue(NavigationBarHasShadowProperty, value);
         }
 
-        public TopNavigationBar TopNavigationBar { get => this.FindByName<TopNavigationBar>("TopNavigationBar"); }
+        public TopNavigationBarTemplateView? TopNavigationBar { get => GetTemplateChild("TopNavigationBar") as TopNavigationBarTemplateView; }
 
         public PageTemplate()
         {

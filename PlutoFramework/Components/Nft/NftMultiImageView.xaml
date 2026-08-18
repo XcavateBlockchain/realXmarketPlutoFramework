@@ -6,14 +6,23 @@
     <VerticalStackLayout Spacing="10">
         <nft:NftImageView x:Name="mainImage" />
 
-        <ScrollView Orientation="Horizontal"
-                    HorizontalScrollBarVisibility="Never"
-                    VerticalScrollBarVisibility="Never"
-                    HorizontalOptions="Fill">
-            <HorizontalStackLayout Spacing="10"
-                                   x:Name="imagesStackLayout">
-            
-            </HorizontalStackLayout>
-        </ScrollView>
+        <CollectionView x:Name="thumbnailsCollectionView"
+                        HeightRequest="60"
+                        SelectionMode="Single"
+                        SelectionChanged="OnThumbnailSelectionChanged"
+                        HorizontalScrollBarVisibility="Never"
+                        VerticalScrollBarVisibility="Never"
+                        ItemSizingStrategy="MeasureFirstItem">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <nft:NftImageView WidthRequest="60"
+                                      ExtraButtonsVisible="False"
+                                      ImageSource="{Binding .}" />
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
     </VerticalStackLayout>
 </ContentView>

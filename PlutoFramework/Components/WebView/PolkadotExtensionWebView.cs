@@ -275,4 +275,35 @@ public partial class PolkadotExtensionWebView : Microsoft.Maui.Controls.WebView
     {
         Scrolled?.Invoke(this, new Microsoft.Maui.Controls.ScrolledEventArgs(x, y));
     }
+
+    internal bool IsNativeScrolledToBottom(double threshold = 80)
+    {
+#if ANDROID
+        if (_nativeWebView is null)
+        {
+            return false;
+        }
+
+        var contentHeight = _nativeWebView.ContentHeight * _nativeWebView.Scale;
+        var viewportHeight = _nativeWebView.Height;
+        var scrollY = _nativeWebView.ScrollY;
+
+        return contentHeight > 0 && viewportHeight > 0 && scrollY > 0 && scrollY + viewportHeight >= contentHeight - threshold;
+#elif IOS || MACCATALYST
+        var scrollView = _nativeWebView?.ScrollView;
+        if (scrollView is null)
+        {
+            return false;
+        }
+
+        var contentHeight = (double)scrollView.ContentSize.Height;
+        var viewportHeight = (double)scrollView.Bounds.Height;
+        var scrollY = Math.Max(0, (double)scrollView.ContentOffset.Y);
+        var bottomInset = (double)scrollView.AdjustedContentInset.Bottom;
+
+        return contentHeight > 0 && viewportHeight > 0 && scrollY > 0 && scrollY + viewportHeight >= contentHeight + bottomInset - threshold;
+#else
+        return false;
+#endif
+    }
 }

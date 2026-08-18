@@ -1,4 +1,4 @@
-﻿
+
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
 
@@ -46,6 +46,36 @@ namespace PlutoFramework.Model.Sumsub
             };
 
             await XcavateUserDatabase.SaveUserInformationAsync(user);
+        }
+
+        /// <summary>
+        /// Fetches the current verification status for the Substrate key owned by this user.
+        /// Returns null when the applicant does not exist in Sumsub.
+        /// </summary>
+        public static async Task<SumsubStatusData?> GetCurrentStatusAsync(CancellationToken token)
+        {
+            var address = Model.KeysModel.GetSubstrateKey();
+
+            if (string.IsNullOrEmpty(address) || address == "Substrate key does not exist")
+            {
+                return null;
+            }
+
+            var secrets = SumsubSecretModel.GetSecrets();
+
+            var applicant = await SumsubModel.GetApplicantDataAsync(
+                address,
+                secrets.SecretKey,
+                secrets.AppToken,
+                token
+            );
+
+            if (applicant is null)
+            {
+                return null;
+            }
+
+            return SumsubStatusModelParser.ParseStatus(applicant);
         }
     }
 }

@@ -4,17 +4,19 @@
                        xmlns:template="clr-namespace:PlutoFramework.Templates.PageTemplate"
                        xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
                        xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+                       xmlns:webview="clr-namespace:PlutoFramework.Components.WebView"
                        x:Class="PlutoFramework.Components.Xcavate.HelpPage"
                        Title="HelpPage"
+                       Shell.PresentationMode="NotAnimated"
                        NavigationBarIsVisible="False">
     <template:PageTemplate.MainContent>
-        <Image AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-                             AbsoluteLayout.LayoutFlags="All"
-        
-                   VerticalOptions="Center" 
-                   HorizontalOptions="Center"
-               Aspect="AspectFit"
-               Source="aiscreenshot.png" />
+        <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                        AbsoluteLayout.LayoutFlags="All"
+                        Margin="0,0,0,80">
+            <webview:PolkadotExtensionWebView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                                                AbsoluteLayout.LayoutFlags="All"
+                                                Source="https://support.realxmarket.io" />
+        </AbsoluteLayout>
     </template:PageTemplate.MainContent>
 
     <template:PageTemplate.PopupContent>

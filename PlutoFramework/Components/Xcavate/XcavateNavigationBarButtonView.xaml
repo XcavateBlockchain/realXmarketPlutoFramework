@@ -30,7 +30,7 @@
             AbsoluteLayout.LayoutFlags="PositionProportional,WidthProportional"
             VerticalOptions="Center" 
             HorizontalOptions="Center"
-            TextColor="#3B4F74"/>
+            TextColor="#4E4E4E"/>
         <AbsoluteLayout.GestureRecognizers>
             <TapGestureRecognizer x:Name="tapGestureRecognizer" />
         </AbsoluteLayout.GestureRecognizers>
