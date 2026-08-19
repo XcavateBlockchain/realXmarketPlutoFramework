@@ -100,9 +100,10 @@ namespace PlutoFramework
             });
 
 
-            // Opt-in via RefreshColor="Transparent". That alone already clears the spinner on
-            // iOS, but on Android the CircleImageView still renders regardless of colour, so
-            // it has to be parked off-screen instead.
+            // Opt-in via RefreshColor="Transparent". Neither platform honours that colour on
+            // its own: Android's CircleImageView renders regardless, so it is parked
+            // off-screen, and on iOS the UIRefreshControl spinner is an activity indicator
+            // that paints itself rather than following TintColor, so the control is faded out.
             Microsoft.Maui.Handlers.RefreshViewHandler.Mapper.AppendToMapping("HideNativeRefreshSpinner", (handler, view) =>
             {
 #if ANDROID
@@ -115,6 +116,16 @@ namespace PlutoFramework
                     handler.PlatformView.SetColorSchemeColors(Android.Graphics.Color.Transparent.ToArgb());
                     handler.PlatformView.SetProgressBackgroundColorSchemeColor(
                         Android.Graphics.Color.Transparent.ToArgb());
+                }
+#elif IOS || MACCATALYST
+                if (view is RefreshView refreshView && refreshView.RefreshColor?.Alpha == 0f)
+                {
+                    // Alpha rather than Hidden: UIScrollView keeps laying the control out and
+                    // keeps driving the refresh from its content offset, so the pull gesture
+                    // and the content slide-down RefreshView relies on are both untouched.
+                    handler.PlatformView.RefreshControl.Alpha = 0f;
+                    handler.PlatformView.RefreshControl.TintColor = UIKit.UIColor.Clear;
+                    handler.PlatformView.RefreshControl.BackgroundColor = UIKit.UIColor.Clear;
                 }
 #endif
             });
