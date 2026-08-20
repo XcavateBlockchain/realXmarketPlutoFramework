@@ -21,7 +21,25 @@ public static class PushNotificationsAppInitializer
 {
     public static void Initialize(string apiUrl)
     {
-        _ = InitializeAsync(apiUrl);
+        _ = SafeInitializeAsync(apiUrl);
+    }
+
+    /// <summary>
+    /// Nothing awaits the initialization task, so an exception thrown inside it would
+    /// otherwise vanish into an unobserved task and leave notifications silently dead -
+    /// which is how the missing iOS Firebase bundle config stayed invisible for as long
+    /// as it did.
+    /// </summary>
+    private static async Task SafeInitializeAsync(string apiUrl)
+    {
+        try
+        {
+            await InitializeAsync(apiUrl);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"[PlutoNotifications] Initialization failed: {e}");
+        }
     }
 
     private static async Task InitializeAsync(string apiUrl)
@@ -30,17 +48,13 @@ public static class PushNotificationsAppInitializer
         ApiClient.SetBaseUrl(apiUrl);
         Console.WriteLine($"[PlutoNotifications] API URL set: {apiUrl}");
 
+        InitializeFirebaseMessaging();
+
         SecureStorageManager.Storage = new PushNotificationsSecureStorageService();
         await SecureStorageManager.Storage.EnsurePerInstallIsolationAsync();
 
         Console.WriteLine($"[PlutoNotifications] Trying to request notification permission ...");
 #if ANDROID
-        // Mirrors Firebase.Core.App.Configure() in the iOS branch. Normally the
-        // FirebaseInitProvider auto-initializes from the GoogleServicesJson-generated
-        // resources; a null here means those resources are missing from the build.
-        if (FirebaseApp.InitializeApp(global::Android.App.Application.Context) == null)
-            Console.WriteLine("[PlutoNotifications] FirebaseApp did not initialize - google-services.json was not processed into the build.");
-
         try
         {
             await Permissions.RequestAsync<NotificationPermission>();
@@ -53,7 +67,6 @@ public static class PushNotificationsAppInitializer
         NotificationsPlatform.Current = PlatformType.Android;
         NotificationsPlatform.AttestationService = new PlayIntegrityService(SecureStorageManager.Storage);
 #elif IOS
-        Firebase.Core.App.Configure();
         await Platforms.iOS.NotificationPermission.RequestAsync();
 
         NotificationsPlatform.Current = PlatformType.iOS;
@@ -72,6 +85,34 @@ public static class PushNotificationsAppInitializer
         await SyncAsync();
 
         Console.WriteLine($"[PlutoNotifications] Background jobs processed.");
+    }
+
+    /// <summary>
+    /// Brings up the Firebase app and, on iOS, the Plugin.Firebase message delegates.
+    /// Deliberately ahead of the first await in <see cref="InitializeAsync"/> so it still
+    /// runs inside the platform's launch callback - iOS wants the
+    /// UNUserNotificationCenter delegate assigned before the app finishes launching.
+    /// </summary>
+    private static void InitializeFirebaseMessaging()
+    {
+#if ANDROID
+        // Mirrors the iOS branch below. Normally the FirebaseInitProvider auto-initializes
+        // from the GoogleServicesJson-generated resources; a null here means those
+        // resources are missing from the build.
+        if (FirebaseApp.InitializeApp(global::Android.App.Application.Context) == null)
+            Console.WriteLine("[PlutoNotifications] FirebaseApp did not initialize - google-services.json was not processed into the build.");
+#elif IOS
+        // iOS has no FirebaseInitProvider equivalent. Reads GoogleService-Info.plist out of
+        // the app bundle (a BundleResource in the app csproj) and throws without it.
+        Firebase.Core.App.Configure();
+
+        // Installs Plugin.Firebase as the UNUserNotificationCenter and Messaging delegate.
+        // Without it the APNs token never reaches FCM - so no FCM token is ever issued and
+        // the API has nothing to push to - and iOS suppresses every notification that
+        // arrives while the app is in the foreground. Has to follow Configure(): it touches
+        // Messaging.SharedInstance, which needs a configured default FirebaseApp.
+        FirebaseCloudMessagingImplementation.Initialize();
+#endif
     }
 
     /// <summary>
