@@ -1,0 +1,21 @@
+# The tokenised property behind one listing (`asset_id == listing_id` in the current
+# programs, but the join is by the listing's own `assetId` so that staying true is not
+# load-bearing here).
+#
+# A PENDING_ASSETS listing has no PropertyAsset yet - an empty result is a normal
+# answer, not an error.
+query MarketplacePropertyAsset($assetId: I64!) {
+  propertyAssets(assetId: $assetId, active: true, first: 1, offset: 0) {
+    nodes {
+      id
+      assetId
+      shareMint
+      regionId
+      location
+      shareAmount
+      spvCreated
+      finalized
+      holderCount
+    }
+  }
+}

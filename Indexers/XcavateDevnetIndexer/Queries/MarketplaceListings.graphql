@@ -1,0 +1,40 @@
+# The marketplace page's listing feed.
+#
+# `active: true` keeps only listings whose PDA is still open on chain - a closed
+# (fully wound-down) listing has nothing left to show or act on. Every still-open
+# status comes back because `listings` takes at most one `status` value; the page
+# renders SOLD_OUT / LEGAL / EXPIRED as status chips rather than hiding them
+# (matching the old SubQuery `marketplaceOngoingObjectListings` feed) and drops
+# PENDING_ASSETS / CANCELLED / REFUNDING rows client-side.
+#
+# `first` and `offset` deliberately carry no GraphQL default: this indexer rejects a
+# default on a non-null variable outright ("Argument `first` has type `Int!` and is not
+# nullable, so it can't have a default value"). The caller passes both.
+#
+# There is no text filtering here on purpose. This indexer only knows on-chain state,
+# so the old `includesInsensitive` town/type/name filters have no server-side
+# counterpart; the app filters the mapped page client-side instead.
+query MarketplaceListings($first: Int!, $offset: Int!) {
+  listings(active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      ...ListingParts
+    }
+  }
+}
+
+fragment ListingParts on Listing {
+  id
+  listingId
+  developer
+  assetId
+  sharePrice
+  listedShareAmount
+  soldShareAmount
+  reservedShareAmount
+  taxPaidByDeveloper
+  taxBps
+  listingExpiry
+  claimDeadline
+  status
+}

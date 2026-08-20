@@ -1,0 +1,16 @@
+# Every owner's share holding in one property asset, for the detail page's
+# "Shares owned" figure and the share-owner breakdown after claiming.
+#
+# Paged by the caller (holder counts are unbounded in principle); `first`/`offset`
+# are explicit because this indexer rejects defaults on non-null variables.
+query MarketplaceShareHoldings($assetId: I64!, $first: Int!, $offset: Int!) {
+  shareHoldings(assetId: $assetId, active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      id
+      owner
+      amount
+      lockedAmount
+    }
+  }
+}

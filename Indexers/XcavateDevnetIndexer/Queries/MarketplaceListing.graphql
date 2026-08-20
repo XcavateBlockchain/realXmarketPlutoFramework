@@ -1,0 +1,16 @@
+# One listing, refetched fresh when the user opens its detail page. The list feed's
+# data may be minutes old by then; sale progress and status move under it.
+#
+# `active: true` matters here as much as in the feed: a listing wound down after the
+# feed loaded is soft-deleted, and an empty result is how the caller learns to keep
+# its stale-but-live list data instead of presenting a closed listing as current.
+#
+# `listingId` filters exactly (it is the listing's on-chain id, not the row id), so
+# `first: 1` is always the whole answer.
+query MarketplaceListing($listingId: I64!) {
+  listings(listingId: $listingId, active: true, first: 1, offset: 0) {
+    nodes {
+      ...ListingParts
+    }
+  }
+}

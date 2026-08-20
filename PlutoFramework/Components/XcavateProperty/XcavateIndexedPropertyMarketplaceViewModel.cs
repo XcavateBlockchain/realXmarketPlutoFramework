@@ -4,9 +4,9 @@ using PlutoFramework.Components.Nft;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
+using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Xcavate;
 using System.Collections.ObjectModel;
-using UniqueryPlus.Nfts;
 using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
 
 namespace PlutoFramework.Components.XcavateProperty
@@ -70,38 +70,59 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 Loading = true;
 
-                var results = await XcavateIndexerModel.GetMarketplaceListedPropertiesAsync(
-                        first: (int)LIMIT,
-                        offset: offset,
-                        includesTownCity: includesTownCity,
-                        includesPropertyType: includesPropertyType,
-                        includesPropertyName: includesPropertyName)
-                    .ConfigureAwait(false);
+                // The devnet indexer has no server-side text filters, so the old
+                // town/type/name filters apply here, to each fetched page. A raw page can
+                // filter down to nothing while deeper pages still match, and a scroll that
+                // appends nothing never re-fires the CollectionView's remaining-items
+                // threshold - so this keeps fetching raw pages until something passes or
+                // the feed ends.
+                var newItems = new List<XcavateNftWrapper>();
 
-                token.ThrowIfCancellationRequested();
-
-                if (results.Count == 0)
+                while (newItems.Count == 0 && hasMore)
                 {
-                    hasMore = false;
-                    Loading = false;
-                    return;
-                }
+                    var results = await XcavateMarketplaceIndexerModel.GetMarketplaceListedPropertiesAsync(
+                            first: (int)LIMIT,
+                            offset: offset,
+                            token)
+                        .ConfigureAwait(false);
 
-                offset += results.Count;
+                    token.ThrowIfCancellationRequested();
 
-                var wrappedResults = await Task.WhenAll(
-                    results.Select(result => XcavatePropertyModel.ToXcavateNftWrapperAsync(result, token)))
-                    .ConfigureAwait(false);
-
-                token.ThrowIfCancellationRequested();
-
-                var newItems = new List<XcavateNftWrapper>(wrappedResults.Length);
-                foreach (var newNft in wrappedResults)
-                {
-                    if (!ItemsDict.ContainsKey(newNft.Key))
+                    if (results.Count == 0)
                     {
-                        ItemsDict.Add(newNft.Key, newNft);
-                        newItems.Add(newNft);
+                        hasMore = false;
+                        break;
+                    }
+
+                    offset += results.Count;
+
+                    if (results.Count < LIMIT)
+                    {
+                        hasMore = false;
+                    }
+
+                    var matchingResults = results
+                        .Where(result => result.OpenForSale
+                            && XcavateMarketplaceIndexerModel.MatchesFilter(
+                                result,
+                                includesTownCity,
+                                includesPropertyType,
+                                includesPropertyName))
+                        .ToList();
+
+                    var wrappedResults = await Task.WhenAll(
+                        matchingResults.Select(result => XcavatePropertyModel.ToXcavateNftWrapperAsync(result, token)))
+                        .ConfigureAwait(false);
+
+                    token.ThrowIfCancellationRequested();
+
+                    foreach (var newNft in wrappedResults)
+                    {
+                        if (!ItemsDict.ContainsKey(newNft.Key))
+                        {
+                            ItemsDict.Add(newNft.Key, newNft);
+                            newItems.Add(newNft);
+                        }
                     }
                 }
 
@@ -121,11 +142,6 @@ namespace PlutoFramework.Components.XcavateProperty
                     });
 
                     _ = PersistPropertiesAsync(newItems);
-                }
-
-                if (results.Count < LIMIT)
-                {
-                    hasMore = false;
                 }
             }
             catch (OperationCanceledException)

@@ -120,6 +120,52 @@ namespace PlutoFramework.Components.XcavateProperty
             };
         }
 
+        /// <summary>
+        /// Wraps a listing read from the Xcavate Solana indexer. No S3 (there are no
+        /// off-chain files yet), no Substrate client and no region cache: Solana deadlines
+        /// are unix timestamps, so expiry is plain wall-clock arithmetic.
+        /// </summary>
+        public static async Task<XcavateNftWrapper> ToXcavateNftWrapperAsync(XcavateSolanaListingNft nft, CancellationToken token)
+        {
+            if (nft.Metadata is not null && string.IsNullOrWhiteSpace(nft.Metadata.Image))
+            {
+                nft.Metadata.Image = "noimage.png";
+            }
+
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            // A listing that is not open for sale (pending assets, cancelled, refunding)
+            // counts as expired outright: no countdown chip, nothing offering to buy.
+            var listingHasExpired = !nft.OpenForSale || now > nft.ListingExpiryTimestamp;
+            var claimHasExpired = nft.ClaimDeadlineTimestamp != 0 && now > nft.ClaimDeadlineTimestamp;
+
+            var solanaAddress = KeysModel.GetSolanaAddress();
+
+            var tokensBought = solanaAddress is not null && nft.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareBuyer) == true
+                ? shareBuyer.ShareAmount
+                : 0u;
+            var tokensOwned = solanaAddress is not null && nft.RealWorldAssetDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareOwner) == true
+                ? shareOwner.ShareAmount
+                : 0u;
+
+            return new XcavateNftWrapper
+            {
+                TokensBought = tokensBought,
+                TokensOwned = tokensOwned,
+                Favourite = await XcavatePropertyDatabase.IsPropertyFavouriteAsync(nft.Type, nft.CollectionId, nft.Id).ConfigureAwait(false),
+                NftBase = nft,
+                // Regions live on Solana now; the Substrate region cache has nothing for them.
+                Region = null,
+                ListingHasExpired = listingHasExpired,
+                TimeLeftToBuy = listingHasExpired ? null : TimeSpan.FromSeconds(nft.ListingExpiryTimestamp - now),
+                ClaimHasExpired = claimHasExpired,
+                TimeLeftToClaim = nft.ClaimDeadlineTimestamp == 0 || claimHasExpired ? null : TimeSpan.FromSeconds(nft.ClaimDeadlineTimestamp - now),
+                SpvCreated = nft.RealWorldAssetDetails?.SpvCreated ?? true,
+                // Still the Substrate endpoint: the detail page's buy flow is unmigrated.
+                Endpoint = Endpoints.GetEndpointDictionary[EndpointEnum.XcavatePaseo],
+            };
+        }
+
         public static async Task NavigateToPropertyDetailPageAsync(XcavateNftWrapper nft, CancellationToken token)
         {
             var loadingViewModel = await MainThread.InvokeOnMainThreadAsync(() =>
@@ -132,47 +178,83 @@ namespace PlutoFramework.Components.XcavateProperty
                 return viewModel;
             });
 
-            var ownerAddress = KeysModel.GetSubstrateKey(ss58prefix: 0);
-
-            var indexedProperty = await XcavateIndexerModel.GetPropertyFullInfoAsync(
-                    checked((int)nft.Key.Item3),
-                    ownerAddress)
-                .ConfigureAwait(false);
-
-            if (indexedProperty is not null)
+            if (nft.NftBase is XcavateSolanaListingNft solanaListing)
             {
-                nft.NftBase = indexedProperty;
-                nft.TokensBought = indexedProperty.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareBuyers) == true
-                    ? shareBuyers.ShareAmount
-                    : 0u;
-                nft.TokensOwned = indexedProperty.RealWorldAssetDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareOwner) == true
-                    ? shareOwner.ShareAmount
-                    : 0u;
-                nft.SpvCreated = indexedProperty.RealWorldAssetDetails?.SpvCreated ?? true;
-
-                var s3Client = GetOrCreateS3Client();
-
-                // Handle S3
-                if (s3Client is not null && indexedProperty.XcavateMetadata?.Files is not null)
+                // Solana-sourced items refresh from the Xcavate devnet indexer; the SubQuery
+                // indexer below knows nothing about them. On failure the list-time data is
+                // simply kept - stale beats no detail page.
+                try
                 {
-                    var images = new List<string>();
+                    var solanaAddress = KeysModel.GetSolanaAddress();
 
-                    foreach (var file in indexedProperty.XcavateMetadata.Files.Where(file =>
-                        !string.IsNullOrWhiteSpace(file)
-                        && file.Length > 5
-                        && (file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
-                            || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
-                            || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                        && file[0] == '5'
-                    ))
+                    var freshListing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
+                            solanaListing.ListingId,
+                            solanaAddress,
+                            token)
+                        .ConfigureAwait(false);
+
+                    if (freshListing is not null)
                     {
-                        const string bucketName = "real-marketplace-properties";
-
-                        var presignedUrl = await S3Model.GeneratePresignedURLAsync(s3Client, bucketName, file);
-
-                        images.Add(presignedUrl);
+                        nft.NftBase = freshListing;
+                        nft.TokensBought = solanaAddress is not null && freshListing.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareBuyer) == true
+                            ? shareBuyer.ShareAmount
+                            : 0u;
+                        nft.TokensOwned = solanaAddress is not null && freshListing.RealWorldAssetDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareOwner) == true
+                            ? shareOwner.ShareAmount
+                            : 0u;
+                        nft.SpvCreated = freshListing.RealWorldAssetDetails?.SpvCreated ?? true;
                     }
-                    ((INftXcavateMetadata)nft.NftBase).XcavateMetadata?.Files = images;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to refresh the Solana listing: ");
+                    Console.WriteLine(ex);
+                }
+            }
+            else
+            {
+                var ownerAddress = KeysModel.GetSubstrateKey(ss58prefix: 0);
+
+                var indexedProperty = await XcavateIndexerModel.GetPropertyFullInfoAsync(
+                        checked((int)nft.Key.Item3),
+                        ownerAddress)
+                    .ConfigureAwait(false);
+
+                if (indexedProperty is not null)
+                {
+                    nft.NftBase = indexedProperty;
+                    nft.TokensBought = indexedProperty.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareBuyers) == true
+                        ? shareBuyers.ShareAmount
+                        : 0u;
+                    nft.TokensOwned = indexedProperty.RealWorldAssetDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareOwner) == true
+                        ? shareOwner.ShareAmount
+                        : 0u;
+                    nft.SpvCreated = indexedProperty.RealWorldAssetDetails?.SpvCreated ?? true;
+
+                    var s3Client = GetOrCreateS3Client();
+
+                    // Handle S3
+                    if (s3Client is not null && indexedProperty.XcavateMetadata?.Files is not null)
+                    {
+                        var images = new List<string>();
+
+                        foreach (var file in indexedProperty.XcavateMetadata.Files.Where(file =>
+                            !string.IsNullOrWhiteSpace(file)
+                            && file.Length > 5
+                            && (file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                                || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                                || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                            && file[0] == '5'
+                        ))
+                        {
+                            const string bucketName = "real-marketplace-properties";
+
+                            var presignedUrl = await S3Model.GeneratePresignedURLAsync(s3Client, bucketName, file);
+
+                            images.Add(presignedUrl);
+                        }
+                        ((INftXcavateMetadata)nft.NftBase).XcavateMetadata?.Files = images;
+                    }
                 }
             }
 

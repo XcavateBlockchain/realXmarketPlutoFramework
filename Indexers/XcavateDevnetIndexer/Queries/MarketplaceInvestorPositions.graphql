@@ -1,0 +1,23 @@
+# One investor's open position in one listing: how many shares they have bought or
+# reserved, for the "Shares bought" figure on the detail page.
+#
+# The program keys positions by (listing, investor) and closes them at zero, so one
+# page is always the whole answer; `first`/`offset` are still explicit because this
+# indexer rejects defaults on non-null variables.
+query MarketplaceInvestorPositions($listingId: I64!, $investor: String!, $first: Int!, $offset: Int!) {
+  investorPositions(
+    listingId: $listingId
+    investor: $investor
+    cancelled: false
+    active: true
+    first: $first
+    offset: $offset
+  ) {
+    nodes {
+      id
+      investor
+      shareAmount
+      reservedShareAmount
+    }
+  }
+}
