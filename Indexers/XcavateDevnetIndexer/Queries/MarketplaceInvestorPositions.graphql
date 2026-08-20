@@ -18,6 +18,8 @@ query MarketplaceInvestorPositions($listingId: I64!, $investor: String!, $first:
       investor
       shareAmount
       reservedShareAmount
+      paymentMint
+      paymentAccount
     }
   }
 }

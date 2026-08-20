@@ -256,6 +256,15 @@ namespace PlutoFramework.Components.XcavateProperty
         public string StatusText => NftWrapper?.Status ?? "Unknown";
         public bool StatusIsVisible => NftWrapper?.StatusIsVisible ?? false;
 
+        /// <summary>
+        /// The marketplace listing id the Solana program calls are keyed by. ItemId
+        /// carries it for Solana-sourced items - AssetId is the property asset's id, a
+        /// different id space that only happens to coincide today.
+        /// </summary>
+        private long ListingId => NftWrapper?.NftBase is XcavateSolanaListingNft solanaListing
+            ? solanaListing.ListingId
+            : ListingDetails?.ItemId.Value ?? 0;
+
         [RelayCommand]
         public Task MainActionAsync()
         {
@@ -331,22 +340,11 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            fullPageLoadingViewModel.Message = "Connecting to Substrate";
-
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(Endpoint.Key, token);
-
             fullPageLoadingViewModel.IsVisible = false;
 
-            var method = MarketplaceCalls.CreateSpv(ListingDetails?.AssetId);
-
-            // Submitting the extrinsic
-            var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-            await transactionAnalyzerConfirmationViewModel.LoadAsync(
-                client,
-                method,
-                showDAppView: false,
-                token: token
-            );
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Create SPV",
+                (confirmer, ct) => XcavateMarketplaceCallsModel.CreateSpvAsync(confirmer, ListingId, ct));
         }
 
         public async Task ClaimAsync()
@@ -368,22 +366,11 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            fullPageLoadingViewModel.Message = "Connecting to Substrate";
-
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(Endpoint.Key, token);
-
             fullPageLoadingViewModel.IsVisible = false;
 
-            var method = MarketplaceCalls.ClaimPropertyShares(ListingDetails?.AssetId);
-
-            // Submitting the extrinsic
-            var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-            await transactionAnalyzerConfirmationViewModel.LoadAsync(
-                client,
-                method,
-                showDAppView: false,
-                token: token
-            );
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Claim property shares",
+                (investor, ct) => XcavateMarketplaceCallsModel.ClaimSharesAsync(investor, ListingId, ct));
         }
 
         public async Task RefundBoughtAsync()
@@ -405,22 +392,11 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            fullPageLoadingViewModel.Message = "Connecting to Substrate";
-
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(Endpoint.Key, token);
-
             fullPageLoadingViewModel.IsVisible = false;
 
-            var method = MarketplaceCalls.WithdrawExpired(ListingDetails?.AssetId);
-
-            // Submitting the extrinsic
-            var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-            await transactionAnalyzerConfirmationViewModel.LoadAsync(
-                client,
-                method,
-                showDAppView: false,
-                token: token
-            );
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Refund property shares",
+                (investor, ct) => XcavateMarketplaceCallsModel.WithdrawExpiredAsync(investor, ListingId, ct));
         }
 
         public async Task RefundUnclaimedAsync()
@@ -442,22 +418,14 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            fullPageLoadingViewModel.Message = "Connecting to Substrate";
-
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(Endpoint.Key, token);
-
             fullPageLoadingViewModel.IsVisible = false;
 
-            var method = MarketplaceCalls.WithdrawUnclaimed(ListingDetails?.AssetId);
-
-            // Submitting the extrinsic
-            var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-            await transactionAnalyzerConfirmationViewModel.LoadAsync(
-                client,
-                method,
-                showDAppView: false,
-                token: token
-            );
+            // withdraw_cancelled is the Solana successor to the pallet's
+            // withdraw_unclaimed: the refund path for money stuck in a listing that was
+            // torn down instead of completing.
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Refund property shares",
+                (investor, ct) => XcavateMarketplaceCallsModel.WithdrawCancelledAsync(investor, ListingId, ct));
         }
 
         public async Task RefundClaimedAsync()
@@ -479,22 +447,14 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            fullPageLoadingViewModel.Message = "Connecting to Substrate";
-
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(Endpoint.Key, token);
-
             fullPageLoadingViewModel.IsVisible = false;
 
-            var method = MarketplaceCalls.WithdrawClaimingExpired(ListingDetails?.AssetId);
-
-            // Submitting the extrinsic
-            var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-            await transactionAnalyzerConfirmationViewModel.LoadAsync(
-                client,
-                method,
-                showDAppView: false,
-                token: token
-            );
+            // withdraw_legal_process_expired is the Solana successor to the pallet's
+            // withdraw_claiming_expired: the refund path when the post-sale phase blew
+            // its deadline.
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Refund property shares",
+                (investor, ct) => XcavateMarketplaceCallsModel.WithdrawLegalProcessExpiredAsync(investor, ListingId, ct));
         }
 
         [RelayCommand]
@@ -588,22 +548,13 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            fullPageLoadingViewModel.Message = "Connecting to Substrate";
-
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(Endpoint.Key, CancellationToken.None);
-
             fullPageLoadingViewModel.IsVisible = false;
 
-            var method = MarketplaceCalls.CancelPropertyPurchase(ListingDetails?.AssetId);
-
-            // Submitting the extrinsic
-            var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-            await transactionAnalyzerConfirmationViewModel.LoadAsync(
-                client,
-                method,
-                showDAppView: false,
-                token: CancellationToken.None
-            );
+            // unreserve_shares is the Solana successor to the pallet's
+            // cancel_property_purchase: it releases the investor's reservation.
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Cancel reservation",
+                (investor, ct) => XcavateMarketplaceCallsModel.CancelReservationAsync(investor, ListingId, ct));
         }
 
         [RelayCommand]

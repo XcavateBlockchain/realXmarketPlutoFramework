@@ -34,6 +34,7 @@ fragment ListingParts on Listing {
   reservedShareAmount
   taxPaidByDeveloper
   taxBps
+  investorFeeBps
   listingExpiry
   claimDeadline
   status

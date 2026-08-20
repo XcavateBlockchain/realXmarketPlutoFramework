@@ -1,8 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using PlutoFramework.Components.AssetSelect;
 using PlutoFramework.Components.Buttons;
-using PlutoFramework.Components.TransactionAnalyzer;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
@@ -87,20 +85,10 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public ButtonStateEnum ContinueButtonState => ErrorMessage == "" && Tokens != "" ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
 
-        private EndpointEnum endpointKey;
-
-        public EndpointEnum EndpointKey
-        {
-            get => endpointKey;
-            set
-            {
-                endpointKey = value;
-
-                var assetSelectButtonViewModel = DependencyService.Get<AssetSelectButtonViewModel>();
-                assetSelectButtonViewModel.ChangeAllowedAssets(PropertyMarketplaceModel.GetAcceptedAssets(value));
-                assetSelectButtonViewModel.SelectedAssetKey = (EndpointEnum.XcavatePaseo, Types.AssetPallet.Assets, 10);
-            }
-        }
+        // The payment asset is no longer picked here: the Solana marketplace charges in
+        // an accepted payment mint that XcavateMarketplaceCallsModel resolves from the
+        // program's config when the transaction is built.
+        public EndpointEnum EndpointKey { get; set; }
 
         public void SetToDefault()
         {
@@ -118,8 +106,6 @@ namespace PlutoFramework.Components.XcavateProperty
         [RelayCommand]
         public async Task ContinueAsync()
         {
-            var token = CancellationToken.None;
-
             if (ListingDetails is null)
             {
                 return;
@@ -131,23 +117,18 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointKey, token);
+            // The marketplace program is keyed by the listing id, which ItemId carries -
+            // AssetId is the property asset's id, a different id space.
+            long listingId = ListingDetails.ItemId.Value;
 
-            var assetSelectButtonViewModel = DependencyService.Get<AssetSelectButtonViewModel>();
-
-            var method = PropertyMarketplaceModel.BuyPropertyTokens(EndpointKey, ListingDetails.AssetId, parsedTokens, assetSelectButtonViewModel.SelectedAssetKey);
-
-            // Submitting the extrinsic
-            var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-
-            Task load = transactionAnalyzerConfirmationViewModel.LoadAsync(
-                client, // PlutoFrameworkSubstrateClient
-                method,
-                showDAppView: false,
-                token: token
-            );
-
+            // Closed before submitting: a Mobile Wallet Adapter key launches an intent
+            // and backgrounds the app, and coming back to a stale popup over a toast
+            // that already says "Submitting" reads as a purchase that did not happen.
             SetToDefault();
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                parsedTokens == 1 ? "Buy 1 property share" : $"Buy {parsedTokens} property shares",
+                (investor, ct) => XcavateMarketplaceCallsModel.BuyPropertySharesAsync(investor, listingId, parsedTokens, ct));
         }
 
         [RelayCommand]

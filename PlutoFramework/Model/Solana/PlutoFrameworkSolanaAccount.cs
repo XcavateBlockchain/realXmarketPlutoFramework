@@ -101,13 +101,20 @@ namespace PlutoFramework.Model.Solana
         /// Builds a transaction from the given instructions, has it signed, and submits it.
         /// Returns the base58 transaction signature.
         /// </summary>
+        /// <param name="cluster">
+        /// The network to submit on. Null - the default - means <see cref="Cluster"/>, the
+        /// app-wide selection. A caller transacting with a fixed deployment (the Xcavate
+        /// programs live on devnet whatever network the user picked) passes that cluster
+        /// explicitly so the blockhash and the submission both land there.
+        /// </param>
         /// <remarks>
         /// Returns as soon as the transaction is submitted. It does not wait for confirmation.
         /// </remarks>
         public async Task<string> SendAsync(
             IEnumerable<TransactionInstruction> instructions,
             string reason,
-            CancellationToken token)
+            CancellationToken token,
+            SolanaCluster? cluster = null)
         {
             var instructionList = instructions.ToList();
 
@@ -116,11 +123,11 @@ namespace PlutoFramework.Model.Solana
                 throw new ArgumentException("A transaction needs at least one instruction", nameof(instructions));
             }
 
-            var cluster = Cluster;
+            var targetCluster = cluster ?? Cluster;
 
             // Fetched here rather than in each subclass: both need it, and a transaction
             // without a recent blockhash is rejected regardless of who signs it.
-            var blockHash = await SolanaRpcModel.GetLatestBlockHashAsync(cluster, token);
+            var blockHash = await SolanaRpcModel.GetLatestBlockHashAsync(targetCluster, token);
 
             var builder = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash)
@@ -131,7 +138,7 @@ namespace PlutoFramework.Model.Solana
                 builder.AddInstruction(instruction);
             }
 
-            return await SignAndSubmitAsync(builder, cluster, reason, token);
+            return await SignAndSubmitAsync(builder, targetCluster, reason, token);
         }
 
         /// <summary>

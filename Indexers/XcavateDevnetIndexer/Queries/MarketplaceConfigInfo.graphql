@@ -1,0 +1,19 @@
+# The marketplace program's singleton config, read when building transactions: the
+# rent collector is the sponsor account marketplace instructions expect as their rent
+# payer, and `acceptedPaymentMints` (raw JSON `["<base58>", ...]`) is the list a
+# payment mint must come from.
+#
+# `null` until `initialize_config` has been indexed - callers treat that as "the
+# marketplace is not deployed here", not as an empty config.
+query MarketplaceConfigInfo {
+  marketplaceConfig {
+    id
+    authority
+    rentCollector
+    treasury
+    xcavMint
+    acceptedPaymentMints
+    marketplaceFeeBps
+    investorFeeBps
+  }
+}

@@ -1,13 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using PlutoFramework.Components.AssetSelect;
 using PlutoFramework.Components.Buttons;
-using PlutoFramework.Components.TransactionAnalyzer;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
-using PlutoFramework.Model.Xcavate;
-using System.Numerics;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
 
@@ -64,19 +60,10 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public ButtonStateEnum ContinueButtonState => ErrorMessage == "" && Tokens != "" && PricePerToken != "" ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
 
-        private EndpointEnum endpointKey = EndpointEnum.None;
-
-        public EndpointEnum EndpointKey
-        {
-            get => endpointKey;
-            set
-            {
-                endpointKey = value;
-
-                var assetSelectButtonViewModel = DependencyService.Get<AssetSelectButtonViewModel>();
-                assetSelectButtonViewModel.ChangeAllowedAssets(PropertyMarketplaceModel.GetAcceptedAssets(value), checkOwnership: false);
-            }
-        }
+        // No asset picker to feed any more: the pallet's relist_shares extrinsic is gone
+        // and the Solana marketplace program has nothing to relist with - see
+        // ContinueAsync.
+        public EndpointEnum EndpointKey { get; set; } = EndpointEnum.None;
 
         public void SetToDefault()
         {
@@ -95,56 +82,14 @@ namespace PlutoFramework.Components.XcavateProperty
         public void Cancel() => SetToDefault();
 
         [RelayCommand]
-        public async Task ContinueAsync()
+        public Task ContinueAsync()
         {
-            try
-            {
-                var token = CancellationToken.None;
+            // The pallet's relist_shares extrinsic has no successor in the Solana
+            // marketplace program (idls/devnet/marketplace.json has no share-relisting
+            // instruction), so this popup cannot submit anything yet.
+            ErrorMessage = "Relisting shares is not available on the Solana marketplace yet.";
 
-                var assetSelectButtonViewModel = DependencyService.Get<AssetSelectButtonViewModel>();
-
-
-                if (ListingDetails is null)
-                {
-                    return;
-                }
-
-                uint parsedTokens;
-                if (!uint.TryParse(Tokens, out parsedTokens))
-                {
-                    return;
-                }
-
-                decimal parsedPricePerToken;
-                if (!decimal.TryParse(PricePerToken, out parsedPricePerToken))
-                {
-                    return;
-                }
-
-                BigInteger actualPricePerToken = (BigInteger)(parsedPricePerToken * (decimal)Math.Pow(10, assetSelectButtonViewModel.Decimals));
-
-                var client = await SubstrateClientModel.GetOrAddSubstrateClientAsync(EndpointKey, token);
-
-                var method = PropertyMarketplaceModel.RelistPropertyTokens(EndpointKey, ListingDetails?.AssetId, parsedTokens, actualPricePerToken, assetSelectButtonViewModel.SelectedAssetKey);
-
-                // Submitting the extrinsic
-                var transactionAnalyzerConfirmationViewModel = DependencyService.Get<TransactionAnalyzerConfirmationViewModel>();
-
-                Task load = transactionAnalyzerConfirmationViewModel.LoadAsync(
-                    client, // PlutoFrameworkSubstrateClient
-                    method,
-                    showDAppView: false,
-                    token: token
-                );
-
-                SetToDefault();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error during ContinueAsync: {ex.Message}");
-                ErrorMessage = "An error occurred while processing your request.";
-            }
-
+            return Task.CompletedTask;
         }
         [RelayCommand]
         public void FormChanged()
