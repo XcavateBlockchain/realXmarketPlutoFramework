@@ -52,10 +52,18 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// False for the statuses in which the listing is not something an investor can
         /// engage with at all - PENDING_ASSETS (shares do not exist yet), CANCELLED and
-        /// REFUNDING. The marketplace feed hides these; sold-out and claim-phase listings
-        /// stay true so their status chips still render.
+        /// REFUNDING. Sold-out and claim-phase listings stay true so their status chips
+        /// still render.
         /// </summary>
         public required bool OpenForSale { get; set; }
+
+        /// <summary>
+        /// True for CANCELLED and REFUNDING: the listing died and whatever an investor
+        /// paid in comes back through withdraw_cancelled rather than the legal-deadline
+        /// refund. Distinct from !<see cref="OpenForSale"/>, which also covers the
+        /// pre-sale PENDING_ASSETS state where there is nothing to refund.
+        /// </summary>
+        public required bool IsTornDown { get; set; }
 
         public MetadataBase? Metadata { get; set; }
         public PropertyMetadata? XcavateMetadata { get; set; }

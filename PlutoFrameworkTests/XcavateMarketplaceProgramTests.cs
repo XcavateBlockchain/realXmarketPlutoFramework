@@ -24,6 +24,7 @@ namespace PlutoFrameworkTests
 
         [Test]
         [TestCase("buy_property_shares")]
+        [TestCase("reserve_shares")]
         [TestCase("claim_shares")]
         [TestCase("unreserve_shares")]
         [TestCase("create_spv")]
@@ -37,6 +38,8 @@ namespace PlutoFrameworkTests
             var instruction = instructionName switch
             {
                 "buy_property_shares" => XcavateMarketplaceProgram.BuyPropertyShares(
+                    Programs, SyntheticKey(1), SyntheticKey(2), 7, 5, 1_000, SyntheticKey(3), SyntheticKey(4), new PublicKey(SolanaTokenProgram.Legacy)),
+                "reserve_shares" => XcavateMarketplaceProgram.ReserveShares(
                     Programs, SyntheticKey(1), SyntheticKey(2), 7, 5, 1_000, SyntheticKey(3), SyntheticKey(4), new PublicKey(SolanaTokenProgram.Legacy)),
                 "claim_shares" => XcavateMarketplaceProgram.ClaimShares(
                     Programs, SyntheticKey(1), SyntheticKey(2), 7, SyntheticKey(3), SyntheticKey(4), new PublicKey(SolanaTokenProgram.Legacy)),
@@ -86,6 +89,7 @@ namespace PlutoFrameworkTests
             var legacyToken = new PublicKey(SolanaTokenProgram.Legacy);
 
             var buy = XcavateMarketplaceProgram.BuyPropertyShares(Programs, investor, payer, 7, 5, 1_000, mint, paymentAccount, legacyToken);
+            var reserve = XcavateMarketplaceProgram.ReserveShares(Programs, investor, payer, 7, 5, 1_000, mint, paymentAccount, legacyToken);
             var claim = XcavateMarketplaceProgram.ClaimShares(Programs, investor, payer, 7, mint, paymentAccount, legacyToken);
             var withdraw = XcavateMarketplaceProgram.WithdrawExpired(Programs, investor, 7, payer, mint, paymentAccount, legacyToken);
             var unreserve = XcavateMarketplaceProgram.UnreserveShares(Programs, investor, 7, paymentAccount);
@@ -94,21 +98,22 @@ namespace PlutoFrameworkTests
             Assert.Multiple(() =>
             {
                 Assert.That(buy.Keys, Has.Count.EqualTo(21));
+                Assert.That(reserve.Keys, Has.Count.EqualTo(11));
                 Assert.That(claim.Keys, Has.Count.EqualTo(22));
                 Assert.That(withdraw.Keys, Has.Count.EqualTo(18));
                 Assert.That(unreserve.Keys, Has.Count.EqualTo(4));
                 Assert.That(createSpv.Keys, Has.Count.EqualTo(4));
 
                 // The investor/confirmer leads every instruction and is its signer.
-                foreach (var instruction in new[] { buy, claim, withdraw, unreserve, createSpv })
+                foreach (var instruction in new[] { buy, reserve, claim, withdraw, unreserve, createSpv })
                 {
                     Assert.That(instruction.Keys[0].PublicKey, Is.EqualTo(investor.Key));
                     Assert.That(instruction.Keys[0].IsSigner, Is.True);
                     Assert.That(instruction.Keys[0].IsWritable, Is.False);
                 }
 
-                // The rent-fronting payer co-signs buy and claim, and only those.
-                foreach (var instruction in new[] { buy, claim })
+                // The rent-fronting payer co-signs buy, reserve and claim, and only those.
+                foreach (var instruction in new[] { buy, reserve, claim })
                 {
                     Assert.That(instruction.Keys[1].PublicKey, Is.EqualTo(payer.Key));
                     Assert.That(instruction.Keys[1].IsSigner, Is.True);
@@ -119,6 +124,19 @@ namespace PlutoFrameworkTests
                 Assert.That(unreserve.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
                 Assert.That(createSpv.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
             });
+        }
+
+        [Test]
+        [TestCase(10_400_000u, 6, 10_400_000u)]
+        // The 9-decimal accepted mint: the cap scales up by the decimal difference.
+        [TestCase(10_400_000u, 9, 10_400_000_000u)]
+        // Scaling down rounds up, so the cap never lands under the program's charge.
+        [TestCase(10_400_001u, 5, 1_040_001u)]
+        public void ScaleToMintDecimals_ConvertsByDecimalCountAlone(ulong total, int mintDecimals, ulong expected)
+        {
+            Assert.That(
+                XcavateMarketplaceCallsModel.ScaleToMintDecimals(total, mintDecimals),
+                Is.EqualTo(expected));
         }
 
         [Test]

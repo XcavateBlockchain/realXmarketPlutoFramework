@@ -126,9 +126,12 @@ namespace PlutoFramework.Components.XcavateProperty
             // that already says "Submitting" reads as a purchase that did not happen.
             SetToDefault();
 
+            // reserve_shares, not buy_property_shares: while a listing sells, purchases
+            // are reservations (paid at claim time); the direct buy only opens after the
+            // claim window closes.
             await XcavateMarketplaceTransactionModel.SubmitAsync(
-                parsedTokens == 1 ? "Buy 1 property share" : $"Buy {parsedTokens} property shares",
-                (investor, ct) => XcavateMarketplaceCallsModel.BuyPropertySharesAsync(investor, listingId, parsedTokens, ct));
+                parsedTokens == 1 ? "Reserve 1 property share" : $"Reserve {parsedTokens} property shares",
+                (investor, ct) => XcavateMarketplaceCallsModel.ReserveSharesAsync(investor, listingId, parsedTokens, ct));
         }
 
         [RelayCommand]

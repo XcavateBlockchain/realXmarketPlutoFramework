@@ -420,12 +420,9 @@ namespace PlutoFramework.Components.XcavateProperty
 
             fullPageLoadingViewModel.IsVisible = false;
 
-            // withdraw_cancelled is the Solana successor to the pallet's
-            // withdraw_unclaimed: the refund path for money stuck in a listing that was
-            // torn down instead of completing.
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 "Refund property shares",
-                (investor, ct) => XcavateMarketplaceCallsModel.WithdrawCancelledAsync(investor, ListingId, ct));
+                BuildClaimPhaseRefundAsync);
         }
 
         public async Task RefundClaimedAsync()
@@ -449,12 +446,25 @@ namespace PlutoFramework.Components.XcavateProperty
 
             fullPageLoadingViewModel.IsVisible = false;
 
-            // withdraw_legal_process_expired is the Solana successor to the pallet's
-            // withdraw_claiming_expired: the refund path when the post-sale phase blew
-            // its deadline.
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 "Refund property shares",
-                (investor, ct) => XcavateMarketplaceCallsModel.WithdrawLegalProcessExpiredAsync(investor, ListingId, ct));
+                BuildClaimPhaseRefundAsync);
+        }
+
+        /// <summary>
+        /// The claim-phase refund instruction depends on how the phase ended, not on what
+        /// the caller holds: a torn-down (cancelled/refunding) listing refunds through
+        /// withdraw_cancelled, one whose legal deadline blew out through
+        /// withdraw_legal_process_expired.
+        /// </summary>
+        private Task<List<Solnet.Rpc.Models.TransactionInstruction>> BuildClaimPhaseRefundAsync(
+            string investor, CancellationToken ct)
+        {
+            var isTornDown = (NftWrapper?.NftBase as XcavateSolanaListingNft)?.IsTornDown == true;
+
+            return isTornDown
+                ? XcavateMarketplaceCallsModel.WithdrawCancelledAsync(investor, ListingId, ct)
+                : XcavateMarketplaceCallsModel.WithdrawLegalProcessExpiredAsync(investor, ListingId, ct);
         }
 
         [RelayCommand]

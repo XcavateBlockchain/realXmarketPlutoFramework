@@ -68,5 +68,19 @@ namespace PlutoFrameworkCore.Solana
                 ],
                 Data = [],
             };
+
+        /// <summary>
+        /// The CreateIdempotent variant: same accounts, instruction data <c>[1]</c>. It
+        /// succeeds whether or not the account already exists, so it is safe to prepend
+        /// in front of an instruction that needs the account without racing a concurrent
+        /// creation.
+        /// </summary>
+        public static TransactionInstruction CreateIdempotentInstruction(
+            PublicKey payer, PublicKey owner, PublicKey mint, PublicKey tokenProgramId) => new()
+            {
+                ProgramId = AssociatedTokenAccountProgram.ProgramIdKey.KeyBytes,
+                Keys = CreateInstruction(payer, owner, mint, tokenProgramId).Keys,
+                Data = [1],
+            };
     }
 }

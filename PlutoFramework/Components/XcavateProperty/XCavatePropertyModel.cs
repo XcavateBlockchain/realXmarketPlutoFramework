@@ -135,9 +135,11 @@ namespace PlutoFramework.Components.XcavateProperty
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
             // A listing that is not open for sale (pending assets, cancelled, refunding)
-            // counts as expired outright: no countdown chip, nothing offering to buy.
+            // counts as expired outright: no countdown chip, nothing offering to buy. A
+            // torn-down listing's claim window counts as expired the same way, which is
+            // what routes its holders into the refund states instead of "claim".
             var listingHasExpired = !nft.OpenForSale || now > nft.ListingExpiryTimestamp;
-            var claimHasExpired = nft.ClaimDeadlineTimestamp != 0 && now > nft.ClaimDeadlineTimestamp;
+            var claimHasExpired = nft.IsTornDown || (nft.ClaimDeadlineTimestamp != 0 && now > nft.ClaimDeadlineTimestamp);
 
             var solanaAddress = KeysModel.GetSolanaAddress();
 
@@ -271,6 +273,26 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
+            // The detail page's action states are role-gated (create_spv needs the
+            // SpvConfirmation role); without this the roles stay null and those states
+            // can never be offered.
+            HashSet<XcavateRole>? roles = null;
+
+            try
+            {
+                var rolesAddress = KeysModel.GetSolanaAddress();
+
+                if (rolesAddress is not null)
+                {
+                    roles = await WhitelistModel.GetRolesCachedAsync(rolesAddress, token).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to load the wallet's Xcavate roles: ");
+                Console.WriteLine(ex);
+            }
+
             var viewModel = new PropertyDetailViewModel
             {
                 Endpoint = nft.Endpoint!,
@@ -281,6 +303,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 Region = nft.Region,
                 TokensBought = nft.TokensBought,
                 TokensOwned = nft.TokensOwned,
+                Roles = roles,
             };
 
             await MainThread.InvokeOnMainThreadAsync(async () =>

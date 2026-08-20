@@ -4,8 +4,9 @@
 # (fully wound-down) listing has nothing left to show or act on. Every still-open
 # status comes back because `listings` takes at most one `status` value; the page
 # renders SOLD_OUT / LEGAL / EXPIRED as status chips rather than hiding them
-# (matching the old SubQuery `marketplaceOngoingObjectListings` feed) and drops
-# PENDING_ASSETS / CANCELLED / REFUNDING rows client-side.
+# (matching the old SubQuery `marketplaceOngoingObjectListings` feed), drops
+# PENDING_ASSETS rows client-side, and keeps CANCELLED / REFUNDING rows only while
+# they still hold someone's reservation (the refund path must stay reachable).
 #
 # `first` and `offset` deliberately carry no GraphQL default: this indexer rejects a
 # default on a non-null variable outright ("Argument `first` has type `Int!` and is not

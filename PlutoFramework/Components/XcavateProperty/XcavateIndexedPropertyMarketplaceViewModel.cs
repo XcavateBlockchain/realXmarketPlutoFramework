@@ -101,8 +101,13 @@ namespace PlutoFramework.Components.XcavateProperty
                         hasMore = false;
                     }
 
+                    // Open listings show; so does a torn-down listing that still holds
+                    // someone's reservation - hiding it would hide the refund path.
+                    // Pre-sale (PENDING_ASSETS) rows and fully settled dead listings stay
+                    // out of the feed.
                     var matchingResults = results
-                        .Where(result => result.OpenForSale
+                        .Where(result => (result.OpenForSale
+                                || (result.OngoingObjectListingDetails?.UnclaimedTokens ?? 0) > 0)
                             && XcavateMarketplaceIndexerModel.MatchesFilter(
                                 result,
                                 includesTownCity,

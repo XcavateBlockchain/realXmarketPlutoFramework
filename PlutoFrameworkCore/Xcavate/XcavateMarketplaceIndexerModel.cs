@@ -276,6 +276,7 @@ namespace PlutoFramework.Model.Xcavate
                 ClaimDeadlineTimestamp = ParseInt64(listing.ClaimDeadline),
                 ListingStatus = listing.Status.ToString(),
                 OpenForSale = listing.Status is not (ListingStatus.PendingAssets or ListingStatus.Cancelled or ListingStatus.Refunding),
+                IsTornDown = listing.Status is ListingStatus.Cancelled or ListingStatus.Refunding,
                 Metadata = metadata,
                 XcavateMetadata = propertyMetadata,
                 OngoingObjectListingDetails = new XcavateOngoingObjectListingDetails
@@ -288,7 +289,10 @@ namespace PlutoFramework.Model.Xcavate
                     ListingExpiry = ToUInt32(listing.ListingExpiry),
                     ClaimExpiry = ParseInt64(listing.ClaimDeadline) > 0 ? ToUInt32(listing.ClaimDeadline) : null,
                     ListedTokens = (uint)Math.Clamp(availableShares, 0, uint.MaxValue),
-                    UnclaimedTokens = 0,
+                    // Reserved-but-not-claimed shares are the Solana counterpart of the
+                    // pallet's unclaimed tokens: the claim/refund states downstream key
+                    // off this being non-zero.
+                    UnclaimedTokens = (uint)Math.Clamp(reserved, 0, uint.MaxValue),
                     AssetId = new U32(ToUInt32(listing.AssetId)),
                     CollectionId = new U32(0),
                     ItemId = new U32(ToUInt32(listing.ListingId)),

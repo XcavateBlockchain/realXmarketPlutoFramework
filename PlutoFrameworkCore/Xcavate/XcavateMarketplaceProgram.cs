@@ -20,6 +20,7 @@ namespace PlutoFramework.Model.Xcavate
         // Anchor instruction discriminators: sha256("global:<instruction_name>")[0..8],
         // as listed in the IDL. VerifyDiscriminators in the tests recomputes them.
         private static readonly byte[] BuyPropertySharesDiscriminator = [4, 160, 53, 28, 202, 98, 234, 11];
+        private static readonly byte[] ReserveSharesDiscriminator = [137, 47, 218, 50, 106, 149, 133, 110];
         private static readonly byte[] ClaimSharesDiscriminator = [130, 131, 29, 237, 134, 20, 110, 245];
         private static readonly byte[] UnreserveSharesDiscriminator = [142, 74, 199, 174, 245, 11, 172, 40];
         private static readonly byte[] CreateSpvDiscriminator = [155, 147, 106, 185, 120, 239, 157, 204];
@@ -94,10 +95,12 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
-        /// buy_property_shares(listing_id, amount, max_total_cost): an immediate purchase.
-        /// <paramref name="maxTotalCost"/> caps what the program may charge (funds + fee +
-        /// tax) so a listing repriced between building and landing aborts instead of
-        /// overcharging.
+        /// buy_property_shares(listing_id, amount, max_total_cost): the direct purchase,
+        /// which the program only opens after the claim window closes (until then it
+        /// rejects with DirectBuyNotOpen - the sale phase buys through
+        /// <see cref="ReserveShares"/>). <paramref name="maxTotalCost"/> caps what the
+        /// program may charge (funds + fee + tax) so a listing repriced between building
+        /// and landing aborts instead of overcharging.
         /// </summary>
         /// <param name="payer">
         /// The sponsor wallet fronting rent for the investor's new accounts, which the
@@ -147,6 +150,48 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.ReadOnly(SystemProgram.ProgramIdKey, false),
                 ],
                 Data = Encode(BuyPropertySharesDiscriminator, U64(listingId), U32(amount), U64(maxTotalCost)),
+            };
+        }
+
+        /// <summary>
+        /// reserve_shares(listing_id, amount, max_total_cost): the sale-phase purchase.
+        /// Money stays in the investor's payment account, bound by a reservation keyed to
+        /// that account, until claim_shares pays for it - which is why this, not
+        /// <see cref="BuyPropertyShares"/>, backs the Buy button while a listing sells.
+        /// </summary>
+        /// <param name="payer">
+        /// The sponsor wallet fronting rent, pinned by the program to the config's rent
+        /// collector - the same co-signing gap as on <see cref="BuyPropertyShares"/>.
+        /// </param>
+        public static TransactionInstruction ReserveShares(
+            XcavateProgramSet programs,
+            PublicKey investor,
+            PublicKey payer,
+            ulong listingId,
+            uint amount,
+            ulong maxTotalCost,
+            PublicKey paymentMint,
+            PublicKey investorPaymentAccount,
+            PublicKey paymentTokenProgram)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.ReadOnly(investor, true),
+                    AccountMeta.Writable(payer, true),
+                    AccountMeta.ReadOnly(DeriveConfig(programs), false),
+                    AccountMeta.ReadOnly(DeriveRoleAccount(programs, investor, XcavateRole.RealEstateInvestor), false),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.ReadOnly(DeriveProperty(programs, listingId), false),
+                    AccountMeta.Writable(DerivePosition(programs, listingId, investor), false),
+                    AccountMeta.ReadOnly(paymentMint, false),
+                    AccountMeta.Writable(investorPaymentAccount, false),
+                    AccountMeta.Writable(DeriveReservation(programs, investorPaymentAccount), false),
+                    AccountMeta.ReadOnly(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(ReserveSharesDiscriminator, U64(listingId), U32(amount), U64(maxTotalCost)),
             };
         }
 

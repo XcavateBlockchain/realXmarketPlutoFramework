@@ -70,6 +70,7 @@ namespace PlutoFrameworkTests
                 ClaimDeadlineTimestamp = 0,
                 ListingStatus = "Listed",
                 OpenForSale = true,
+                IsTornDown = false,
                 XcavateMetadata = new PropertyMetadata
                 {
                     PropertyName = "Property AB1 2CD",
