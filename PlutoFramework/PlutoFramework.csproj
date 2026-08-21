@@ -3,6 +3,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>net10.0-ios;net10.0-android</TargetFrameworks>
+    <!-- The iOS workload cannot be installed on Linux (the Android publish CI runs on ubuntu), so only build Android there. -->
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('linux'))">net10.0-android</TargetFrameworks>
     <SingleProject>true</SingleProject>
     <UseMaui>true</UseMaui>
     <ImplicitUsings>enable</ImplicitUsings>
