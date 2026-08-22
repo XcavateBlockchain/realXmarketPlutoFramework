@@ -29,6 +29,29 @@ public partial class MessageWebViewPage : PageTemplate
     {
         base.OnApplyTemplate();
 
+        WireNavigationBarBack();
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        WireNavigationBarBack();
+    }
+
+    /// <summary>
+    /// Points the navigation bar's back button at this page rather than at the template's
+    /// default, which pops the page.
+    /// </summary>
+    /// <remarks>
+    /// Re-applied on every appearance rather than only when the template is applied. The
+    /// bar is reached through the control template, whose one-shot hook runs from the
+    /// PageTemplate constructor - before this page's own constructor body - and a lookup
+    /// that comes back empty there would leave the button silently wired to PopAsync for
+    /// the life of the page, which is exactly the bug this page is meant not to have.
+    /// </remarks>
+    private void WireNavigationBarBack()
+    {
         if (TopNavigationBar is not null)
         {
             TopNavigationBar.BackFunc = NavigateBackAsync;
@@ -135,15 +158,16 @@ public partial class MessageWebViewPage : PageTemplate
 
     private bool NavigateBackInWebView()
     {
-        // CanGoBackInPage rather than the WebView's own CanGoBack: that one is MAUI's
-        // cached copy and does not keep up with the dashboard's in-page routing on iOS,
-        // which sent every tap on the back button straight to PopAsync.
+        // CanGoBackInPage / GoBackInPage rather than the WebView's own CanGoBack and
+        // GoBack: those go through MAUI's cached copy of the back-forward list, which does
+        // not keep up with the dashboard's client-side routing and sent every tap on the
+        // back button straight to PopAsync.
         if (!webView.CanGoBackInPage)
         {
             return false;
         }
 
-        webView.GoBack();
+        webView.GoBackInPage();
 
         return true;
     }

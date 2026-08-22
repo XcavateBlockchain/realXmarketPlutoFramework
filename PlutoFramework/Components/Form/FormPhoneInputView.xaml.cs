@@ -274,30 +274,30 @@ public partial class FormPhoneInputView : ContentView, IFormFocusable
 
     private async void OnCountryTapped(object sender, TappedEventArgs e)
     {
-        // An event handler is async void, so a failed navigation would otherwise take the
-        // process down rather than just leaving the country unchanged.
+        // An event handler is async void, so anything thrown here would take the process down
+        // rather than just leaving the country unchanged.
         try
         {
-            // The picker is a whole page, so the keyboard goes first rather than being
-            // animated away underneath it.
+            // The picker is a bottom card that covers this field, so the keyboard goes first
+            // rather than being left under it.
             if (entry.IsSoftInputShowing())
             {
                 await entry.HideSoftInputAsync(CancellationToken.None);
             }
 
-            var navigation = Shell.Current?.Navigation;
+            var picker = DependencyService.Get<CountrySelectPopupViewModel>();
 
-            if (navigation is null)
+            if (picker is null)
             {
                 return;
             }
 
-            await navigation.PushAsync(new CountrySelectPage(country, selected =>
+            picker.Show(country, selected =>
             {
                 Country = selected;
 
                 ShowValidationProblem();
-            }));
+            });
         }
         catch (Exception ex)
         {

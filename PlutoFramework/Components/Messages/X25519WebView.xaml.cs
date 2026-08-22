@@ -34,6 +34,12 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     private volatile bool _hostIsWhitelistedDApp;
 
     /// <summary>
+    /// How many history entries the hosted page has pushed on top of the one the current
+    /// document loaded with, reported by the injected bridge. See <see cref="CanGoBackInPage"/>.
+    /// </summary>
+    private volatile int _pageHistoryDepth;
+
+    /// <summary>
     /// The wallet icon as a data URI, read once from the packaged asset. Wallet Standard
     /// requires a data URI, and the asset never changes during a run.
     /// </summary>
@@ -84,25 +90,39 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     }
 
     /// <summary>
-    /// Whether the hosted page has an earlier entry to return to, read from the native web
-    /// view instead of from <see cref="Microsoft.Maui.Controls.WebView.CanGoBack"/>.
+    /// Whether the hosted page has an earlier entry to return to. Answered from the page's
+    /// own history depth first and the native back-forward list second, never from
+    /// <see cref="Microsoft.Maui.Controls.WebView.CanGoBack"/>.
     /// </summary>
     /// <remarks>
-    /// MAUI only refreshes its own CanGoBack while handling a cross-document navigation.
-    /// The messenger dashboard is a client-routed SPA, so moving between its screens is a
-    /// history.pushState call, and WebKit reports those only through the private
-    /// same-document navigation callback that MAUI does not implement - leaving CanGoBack
-    /// stuck at whatever the last real page load set it to on iOS. Android's WebViewClient
-    /// raises OnPageFinished for same-document navigations too, which is why the cached
-    /// value happens to keep up there. The native back-forward list is current on both.
+    /// Three lists can disagree about this, so both of the trustworthy ones are consulted.
     ///
-    /// <see cref="Microsoft.Maui.Controls.WebView.GoBack"/> needs no equivalent treatment:
-    /// its handler consults the native list before it moves.
+    /// MAUI refreshes its own CanGoBack only while it is handling a cross-document
+    /// navigation. The messenger dashboard is a client-routed SPA - opening a bucket from
+    /// the list is a vue-router pushState onto /indexed-bucket/..., not a page load - so
+    /// that copy stays stuck at whatever the last real load set it to, which is what sent
+    /// every tap on the back button straight to PopAsync.
+    ///
+    /// The native back-forward list does record pushState entries, but it describes the
+    /// document the native view currently holds: it starts out empty again whenever the
+    /// handler reconnects the view, and on iOS WebKit reports same-document moves only
+    /// through the private navigation callback MAUI does not implement, so on its own it is
+    /// not a dependable answer either.
+    ///
+    /// <see cref="_pageHistoryDepth"/> is the page's own count, stamped into each history
+    /// entry by the injected bridge, and it follows the router exactly. It starts at zero
+    /// again on every document load, which is right: at that moment whatever came before is
+    /// in the native list, and that is the list that answers.
     /// </remarks>
     internal bool CanGoBackInPage
     {
         get
         {
+            if (_pageHistoryDepth > 0)
+            {
+                return true;
+            }
+
 #if ANDROID
             if (_nativeWebView is not null)
             {
@@ -119,6 +139,46 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         }
     }
 
+    /// <summary>
+    /// Moves the hosted page one entry back, mirroring <see cref="CanGoBackInPage"/>: the
+    /// native back-forward list when it holds the entry, and the document's own history
+    /// when only the page knows about it.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Microsoft.Maui.Controls.WebView.GoBack"/> is not enough by itself. Its
+    /// handler asks the native list before it moves, so an entry that list never recorded
+    /// would leave the tap doing nothing at all - and since the caller has by then already
+    /// decided not to pop the page, the back button would simply look dead. Asking the
+    /// document to go back covers that case.
+    /// </remarks>
+    internal void GoBackInPage()
+    {
+#if ANDROID
+        if (_nativeWebView is not null && _nativeWebView.CanGoBack())
+        {
+            _nativeWebView.GoBack();
+
+            return;
+        }
+#elif IOS || MACCATALYST
+        if (_nativeWebView is not null && _nativeWebView.CanGoBack)
+        {
+            _nativeWebView.GoBack();
+
+            return;
+        }
+#endif
+
+        if (_pageHistoryDepth > 0)
+        {
+            _ = DispatchScriptSafeAsync("history.back();");
+
+            return;
+        }
+
+        GoBack();
+    }
+
     private void OnNavigated(object? sender, WebNavigatedEventArgs e)
     {
         if (e.Result != WebNavigationResult.Success)
@@ -131,6 +191,11 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         // Registered before the injections rather than inside one of them: both wallets
         // report the same tab, and they are dispatched concurrently.
         RegisterTab();
+
+        // A new document starts a new count, and the bridge below re-reports from zero.
+        // Whatever the old document had reached is behind us now and belongs to the native
+        // back-forward list, which is where CanGoBackInPage looks once the count is zero.
+        _pageHistoryDepth = 0;
 
         _ = InjectProviderAsync();
         _ = InjectSolanaWalletAsync();
@@ -177,12 +242,16 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
             return;
         }
 
-        var header = TryParseHeader(json);
+        var header = TryParseHeader(json, out var historyDepth);
 
         if (header is null)
         {
             return;
         }
+
+        // Kept off the header record: the depth is not part of what the navigation bar
+        // mirrors, it is what the back button reads. See CanGoBackInPage.
+        _pageHistoryDepth = historyDepth;
 
         // The bridge callback arrives off the UI thread on Android — marshal so
         // subscribers can touch the native navigation bar directly.
@@ -196,8 +265,10 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     internal Task InvokeHeaderActionAsync(int index)
         => DispatchScriptSafeAsync($"if (window.__plutoHeaderClick) {{ window.__plutoHeaderClick({index}); }}");
 
-    private static WebPageHeader? TryParseHeader(string json)
+    private static WebPageHeader? TryParseHeader(string json, out int historyDepth)
     {
+        historyDepth = 0;
+
         try
         {
             using var doc = JsonDocument.Parse(json);
@@ -230,6 +301,13 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
                 }
             }
 
+            if (root.TryGetProperty("historyDepth", out var historyElement)
+                && historyElement.ValueKind == JsonValueKind.Number
+                && historyElement.TryGetInt32(out var depth))
+            {
+                historyDepth = depth < 0 ? 0 : depth;
+            }
+
             return new WebPageHeader(present, title, subtitle, buttons);
         }
         catch (Exception ex)
@@ -245,9 +323,10 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     /// group) into the native navigation bar. It hides the in-page header and reclaims
     /// the space the hosted app reserves for the topbar it is told not to render, reports
     /// the title and the visible text of each action button to native, re-reports on
-    /// SPA navigation via a MutationObserver, and exposes <c>__plutoHeaderClick</c>
-    /// so a native icon tap triggers the matching web button. The transport is
-    /// resolved at call time so the same script works over the Android
+    /// SPA navigation via a MutationObserver, reports how deep the router has pushed so
+    /// the native back button knows whether to move inside the page or pop it, and exposes
+    /// <c>__plutoHeaderClick</c> so a native icon tap triggers the matching web button.
+    /// The transport is resolved at call time so the same script works over the Android
     /// JavascriptInterface and the iOS WKScriptMessageHandler.
     /// </summary>
     private static string BuildHeaderBridgeScript()
@@ -319,13 +398,52 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         }
     };
 
+    // How far the hosted router has pushed past the entry this document loaded with. The
+    // native back button needs it: neither MAUI's cached CanGoBack nor - once the handler
+    // has reconnected the view - the WebView's back-forward list can be trusted to know
+    // about a client-side route change, and the router's own pushState calls can.
+    //
+    // The count lives in each history entry rather than in a variable, so a popstate in
+    // either direction reads the depth of the entry it landed on instead of having to
+    // guess which way the user went.
+    function depthOf(state) {
+        return (state && typeof state.__plutoDepth === 'number') ? state.__plutoDepth : 0;
+    }
+
+    // Left alone when the page stores something that is not an object: overwriting it with
+    // one would change what the hosted app reads back, and a missed stamp only costs this
+    // entry its count.
+    function stamp(state, depth) {
+        if (state !== null && state !== undefined && typeof state !== 'object') {
+            return state;
+        }
+        return Object.assign({}, state || {}, { __plutoDepth: depth });
+    }
+
+    var nativePushState = history.pushState;
+    var nativeReplaceState = history.replaceState;
+
+    history.pushState = function (state, title, url) {
+        var result = nativePushState.call(this, stamp(state, depthOf(history.state) + 1), title, url);
+        scheduleExtract();
+        return result;
+    };
+
+    history.replaceState = function (state, title, url) {
+        var result = nativeReplaceState.call(this, stamp(state, depthOf(history.state)), title, url);
+        scheduleExtract();
+        return result;
+    };
+
+    window.addEventListener('popstate', scheduleExtract);
+
     var lastJson = null;
 
     function extract() {
         var header = document.querySelector('.page-header');
         var payload;
         if (!header) {
-            payload = { present: false, title: '', subtitle: '', buttons: [] };
+            payload = { present: false, title: '', subtitle: '', buttons: [], historyDepth: depthOf(history.state) };
         } else {
             var titleEl = header.querySelector('.page-header__title');
             var subtitleEl = header.querySelector('.page-header__subtitle');
@@ -334,7 +452,8 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
                 present: true,
                 title: titleEl ? (titleEl.textContent || '').trim() : '',
                 subtitle: subtitleEl ? (subtitleEl.textContent || '').trim() : '',
-                buttons: buttons
+                buttons: buttons,
+                historyDepth: depthOf(history.state)
             };
         }
 

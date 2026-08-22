@@ -266,6 +266,8 @@ namespace PlutoFramework
             DependencyService.Register<PropertyMarketplaceFilterPopupViewModel>();
 
             DependencyService.Register<PropertyMarketplaceSelectionPopupViewModel>();
+
+            DependencyService.Register<Components.Form.CountrySelectPopupViewModel>();
         }
 
         /// <summary>

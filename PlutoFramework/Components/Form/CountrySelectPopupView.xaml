@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:form="clr-namespace:PlutoFramework.Components.Form"
+             x:Class="PlutoFramework.Components.Form.CountrySelectPopupView"
+             x:Name="popup"
+             IsVisible="{Binding IsVisible}"
+             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+             AbsoluteLayout.LayoutFlags="All">
+
+    <card:BottomPopupCard Title="Select country"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
+
+            <Grid RowDefinitions="Auto, *"
+                  Padding="10, 0, 10, 0">
+
+                <!--
+                  Outside the list rather than in its header: the filter replaces the item
+                  source on every keystroke, and a header belongs to the list's own recycler,
+                  so the box would lose the keyboard mid-word on Android.
+                -->
+                <form:FormInputView Grid.Row="0"
+                                    Margin="0, 0, 0, 10"
+                                    Placeholder="Search by country, code or +number"
+                                    ReturnType="Search"
+                                    Text="{Binding SearchText}" />
+
+                <!-- Virtualized: the list is every one of the 249 ISO 3166-1 countries. -->
+                <CollectionView Grid.Row="1"
+                                ItemsSource="{Binding Countries}"
+                                SelectionMode="None">
+
+                    <CollectionView.EmptyView>
+                        <Label Text="No country matches that search."
+                               Margin="20, 20, 20, 20"
+                               HorizontalTextAlignment="Center"
+                               TextColor="{StaticResource Gray400}" />
+                    </CollectionView.EmptyView>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="Auto, *, Auto, 25"
+                                  ColumnSpacing="15"
+                                  Padding="10, 12, 10, 12">
+
+                                <!-- Drawn by the system emoji font, so there is no image asset per country. -->
+                                <Label Text="{Binding Flag}"
+                                       Grid.Column="0"
+                                       FontSize="24"
+                                       VerticalTextAlignment="Center" />
+
+                                <Label Text="{Binding Name}"
+                                       Grid.Column="1"
+                                       LineBreakMode="TailTruncation"
+                                       VerticalTextAlignment="Center" />
+
+                                <Label Text="{Binding DialCode}"
+                                       Grid.Column="2"
+                                       TextColor="{StaticResource Gray400}"
+                                       VerticalTextAlignment="Center" />
+
+                                <Label Text="&#x2713;"
+                                       Grid.Column="3"
+                                       IsVisible="{Binding IsSelected}"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource Primary}"
+                                       HorizontalTextAlignment="End"
+                                       VerticalTextAlignment="Center" />
+
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={x:Reference popup}, Path=BindingContext.SelectCommand}"
+                                                          CommandParameter="{Binding .}" />
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+</ContentView>

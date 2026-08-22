@@ -12,6 +12,7 @@
                     xmlns:webview="clr-namespace:PlutoFramework.Components.WebView"
                     xmlns:topnavigationbartemplate="clr-namespace:PlutoFramework.Templates.TopNavigationBarTemplate"
                     xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+                    xmlns:form="clr-namespace:PlutoFramework.Components.Form"
                     xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
                     xmlns:solanastatus="clr-namespace:PlutoFramework.Components.Solana.Status"
                     xmlns:solanatransfer="clr-namespace:PlutoFramework.Components.Solana.Transfer"
@@ -80,6 +81,11 @@
                  linking - so it is hosted here. Above the transfer popups, which are one
                  of the things that trigger it. -->
             <solana:MwaSignPopupView ZIndex="12" />
+
+            <!-- Above the popup layer, not in it: a phone field usually sits inside a bottom
+                 card of its own, and its country picker has to stack over that card the way
+                 the token picker above stacks over the transfer popup. -->
+            <form:CountrySelectPopupView ZIndex="13" />
 
             <loading:FullPageLoadingView ZIndex="20" />
 
