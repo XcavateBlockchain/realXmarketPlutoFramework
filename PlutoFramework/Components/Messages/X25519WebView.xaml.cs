@@ -83,6 +83,42 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         }
     }
 
+    /// <summary>
+    /// Whether the hosted page has an earlier entry to return to, read from the native web
+    /// view instead of from <see cref="Microsoft.Maui.Controls.WebView.CanGoBack"/>.
+    /// </summary>
+    /// <remarks>
+    /// MAUI only refreshes its own CanGoBack while handling a cross-document navigation.
+    /// The messenger dashboard is a client-routed SPA, so moving between its screens is a
+    /// history.pushState call, and WebKit reports those only through the private
+    /// same-document navigation callback that MAUI does not implement - leaving CanGoBack
+    /// stuck at whatever the last real page load set it to on iOS. Android's WebViewClient
+    /// raises OnPageFinished for same-document navigations too, which is why the cached
+    /// value happens to keep up there. The native back-forward list is current on both.
+    ///
+    /// <see cref="Microsoft.Maui.Controls.WebView.GoBack"/> needs no equivalent treatment:
+    /// its handler consults the native list before it moves.
+    /// </remarks>
+    internal bool CanGoBackInPage
+    {
+        get
+        {
+#if ANDROID
+            if (_nativeWebView is not null)
+            {
+                return _nativeWebView.CanGoBack();
+            }
+#elif IOS || MACCATALYST
+            if (_nativeWebView is not null)
+            {
+                return _nativeWebView.CanGoBack;
+            }
+#endif
+
+            return CanGoBack;
+        }
+    }
+
     private void OnNavigated(object? sender, WebNavigatedEventArgs e)
     {
         if (e.Result != WebNavigationResult.Success)
@@ -1196,13 +1232,13 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
 
             var publicKey = X25519Model.DerivePublicKey(encryptionKey.SecretKey);
 
-            var jwkJson = BuildX25519Jwk(encryptionKey.SecretKey, publicKey);
-            var jsLiteral = JsonSerializer.Serialize(jwkJson);
-
-            // Covers both "bridge already installed" and "app still booting".
-            await EvaluateJavaScriptAsync(
-                $"window.assetDidComm ? window.assetDidComm.injectX25519Key({jsLiteral}, {{ persist: false }}) " +
-                $": (window.__assetDidCommPendingX25519Key = {jsLiteral})");
+            // Dispatched through the platform bridge, like every other injection here.
+            // MAUI's EvaluateJavaScriptAsync is not usable for this payload: outside
+            // Android it re-wraps the script inside an eval'd string literal, which
+            // collapses the JWK's escaped quotes and leaves the page a script it cannot
+            // parse - silently, on iOS. See X25519KeyInjection for the detail.
+            await DispatchScriptSafeAsync(
+                X25519KeyInjection.BuildInjectionScript(encryptionKey.SecretKey, publicKey));
 
             System.Diagnostics.Debug.WriteLine("X25519 key injected into dashboard.");
         }
@@ -1212,21 +1248,6 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         }
     }
 
-    private static string BuildX25519Jwk(byte[] secretKey, byte[] publicKey)
-    {
-        var jwk = new Dictionary<string, string>
-        {
-            ["kty"] = "OKP",
-            ["crv"] = "X25519",
-            ["d"] = Base64UrlEncode(secretKey),
-            ["x"] = Base64UrlEncode(publicKey)
-        };
-
-        return JsonSerializer.Serialize(jwk);
-    }
-
-    private static string Base64UrlEncode(byte[] bytes)
-        => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 }
 
 /// <summary>

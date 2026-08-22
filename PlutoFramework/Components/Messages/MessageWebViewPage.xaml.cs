@@ -135,7 +135,10 @@ public partial class MessageWebViewPage : PageTemplate
 
     private bool NavigateBackInWebView()
     {
-        if (!webView.CanGoBack)
+        // CanGoBackInPage rather than the WebView's own CanGoBack: that one is MAUI's
+        // cached copy and does not keep up with the dashboard's in-page routing on iOS,
+        // which sent every tap on the back button straight to PopAsync.
+        if (!webView.CanGoBackInPage)
         {
             return false;
         }
