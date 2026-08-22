@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             x:Class="PlutoFramework.Components.Form.FormPhoneInputView"
+             HorizontalOptions="Fill">
+    <!--
+      No HeightRequest on the ContentView: the field is 40 tall until validation has something
+      to say, and grows by the height of one line of text when it does.
+    -->
+    <VerticalStackLayout Spacing="4">
+        <card:Card HeightRequest="40"
+                   x:Name="card"
+                   IsThin="True"
+                   CardPadding="10,0,10,0">
+            <card:Card.View>
+
+                <Grid HeightRequest="40"
+                      ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <HorizontalStackLayout Grid.Column="0"
+                                           x:Name="countryButton"
+                                           Spacing="5"
+                                           VerticalOptions="Center">
+
+                        <!-- Drawn by the system emoji font, so there is no image asset per country. -->
+                        <Label x:Name="flagLabel"
+                               FontSize="20"
+                               VerticalTextAlignment="Center" />
+
+                        <Label x:Name="dialCodeLabel"
+                               FontAttributes="Bold"
+                               VerticalTextAlignment="Center" />
+
+                        <Image WidthRequest="10"
+                               HeightRequest="10"
+                               VerticalOptions="Center"
+                               Source="{AppThemeBinding Light=dropdownblack.png, Dark=dropdownwhite.png}" />
+
+                        <HorizontalStackLayout.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCountryTapped" />
+                        </HorizontalStackLayout.GestureRecognizers>
+                    </HorizontalStackLayout>
+
+                    <Entry x:Name="entry"
+                           Grid.Column="1"
+                           HorizontalOptions="Fill"
+                           HorizontalTextAlignment="Start"
+                           Keyboard="Telephone"
+                           HeightRequest="40"
+                           FontAttributes="Bold"
+                           IsSpellCheckEnabled="false"
+                           IsTextPredictionEnabled="false"
+                           PropertyChanged="OnPropertyChanged"
+                           Unfocused="OnUnfocused"
+                           Focused="OnFocused"
+                           Completed="OnCompleted"
+                           />
+                </Grid>
+            </card:Card.View>
+        </card:Card>
+
+        <Label x:Name="errorLabel"
+               IsVisible="False"
+               FontSize="12"
+               Margin="10, 0, 10, 0"
+               TextColor="{StaticResource DangerousRed}" />
+    </VerticalStackLayout>
+</ContentView>

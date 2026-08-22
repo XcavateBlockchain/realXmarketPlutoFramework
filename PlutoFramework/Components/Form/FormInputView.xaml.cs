@@ -3,7 +3,7 @@ using PlutoFramework.Model;
 
 namespace PlutoFramework.Components.Form;
 
-public partial class FormInputView : ContentView
+public partial class FormInputView : ContentView, IFormFocusable
 {
     public static readonly BindableProperty CardWidthProperty = BindableProperty.Create(
        nameof(CardWidth), typeof(int), typeof(FormInputView),
@@ -69,6 +69,7 @@ public partial class FormInputView : ContentView
         propertyChanged: (bindable, oldValue, newValue) =>
         {
             var control = (FormInputView)bindable;
+            control.returnTypeWasSetExplicitly = true;
             control.entry.ReturnType = (ReturnType)newValue;
         });
 
@@ -87,6 +88,33 @@ public partial class FormInputView : ContentView
     {
         InitializeComponent();
     }
+
+    private bool returnTypeWasSetExplicitly = false;
+
+    private VisualElement? nextView = null;
+
+    /// <summary>
+    /// Where the keyboard's Next key sends focus. Null - the default - turns that key into a
+    /// Done that only closes the keyboard, which is what the last field of a form wants: the
+    /// user still has to reach for the button to submit.
+    /// </summary>
+    public VisualElement? NextView
+    {
+        get => nextView;
+        set
+        {
+            nextView = value;
+
+            // The key should promise what pressing it actually does, unless the page has
+            // already said what it wants the key to be.
+            if (!returnTypeWasSetExplicitly)
+            {
+                entry.ReturnType = value is null ? ReturnType.Done : ReturnType.Next;
+            }
+        }
+    }
+
+    public void FocusEntry() => entry.Focus();
 
     public Keyboard KeyboardType
     {
@@ -128,6 +156,46 @@ public partial class FormInputView : ContentView
     }
 
     public bool ValidateEmail { get; set; } = false;
+
+    /// <summary>
+    /// Shows why the current text was rejected, or clears the warning when it was not.
+    /// </summary>
+    private void ShowValidationProblem()
+    {
+        var text = entry.Text ?? "";
+
+        // Silent until there is something to disagree with, so a field the user has not filled
+        // in yet does not start out accusing them.
+        if (!ValidateEmail || text == "")
+        {
+            ClearValidationProblem();
+
+            return;
+        }
+
+        var problem = FormModel.DescribeEmailProblem(text);
+
+        errorLabel.Text = problem ?? "";
+        errorLabel.IsVisible = problem is not null;
+
+        if (problem is null)
+        {
+            card.SetDefaultColor();
+        }
+        else
+        {
+            card.SetRedColor();
+        }
+    }
+
+    private void ClearValidationProblem()
+    {
+        errorLabel.Text = "";
+        errorLabel.IsVisible = false;
+
+        card.SetDefaultColor();
+    }
+
     private void OnPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         try
@@ -152,27 +220,41 @@ public partial class FormInputView : ContentView
 
     private void OnUnfocused(object sender, FocusEventArgs e)
     {
-        if (((Entry)sender).Text == "")
-        {
-            return;
-        }
-
-        if (ValidateEmail)
-        {
-            if (FormModel.IsValidEmail(((Entry)sender).Text))
-            {
-                card.SetDefaultColor();
-            }
-            else
-            {
-                card.SetRedColor();
-            }
-        }
+        ShowValidationProblem();
     }
 
     private void OnFocused(object sender, FocusEventArgs e)
     {
-        card.SetDefaultColor();
+        // Nothing to complain about while the user is still typing the answer.
+        ClearValidationProblem();
+    }
+
+    /// <summary>
+    /// The Enter key: on to the next field, or just away with the keyboard on the last one.
+    /// Submitting is left to the button, so Enter can never commit a half filled form.
+    /// </summary>
+    private async void OnCompleted(object? sender, EventArgs e)
+    {
+        ShowValidationProblem();
+
+        if (NextView is IFormFocusable focusable)
+        {
+            focusable.FocusEntry();
+
+            return;
+        }
+
+        if (NextView is not null)
+        {
+            NextView.Focus();
+
+            return;
+        }
+
+        if (entry.IsSoftInputShowing())
+        {
+            await entry.HideSoftInputAsync(CancellationToken.None);
+        }
     }
 
     private void OnMaxClicked(object sender, TappedEventArgs e)

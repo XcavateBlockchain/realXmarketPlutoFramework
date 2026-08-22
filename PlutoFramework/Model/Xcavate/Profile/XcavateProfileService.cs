@@ -1,3 +1,4 @@
+using System.Net;
 using PlutoFramework.Components.Loading;
 using PlutoFrameworkCore.Xcavate;
 using XcavateProfile.Client;
@@ -36,6 +37,40 @@ namespace PlutoFramework.Model.Xcavate.Profile
             return _client.GetProfileAsync(address, cancellationToken);
         }
 
+        /// <summary>
+        /// Whether <paramref name="nickname"/> is free for this user to publish under. True
+        /// when nobody holds it, and true when the holder is this user's own profile.
+        /// </summary>
+        /// <remarks>
+        /// Advisory only - two devices can claim the same nickname between this call and the
+        /// write - but it is what turns a rejected save into something the user can act on
+        /// before they are asked to sign anything.
+        /// </remarks>
+        public async Task<bool> IsNicknameAvailableAsync(string nickname, CancellationToken cancellationToken = default)
+        {
+            XcavateProfile.Client.Profile? holder;
+
+            try
+            {
+                holder = await _client.GetProfileByNicknameAsync(nickname, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                // Nobody holds it. An unclaimed nickname answers 404 rather than an empty
+                // body, and reading that as a failed check would block every save.
+                return true;
+            }
+
+            // Editing keeps the nickname the profile already publishes, so only another
+            // address's claim on it blocks the save.
+            return holder is null || holder.Ss58Address == MainKeyModel.GetAddress();
+        }
+
+        /// <summary>
+        /// Writes the profile and reports whether it went through. False means there was
+        /// nothing to sign with - no key, or a dismissed password prompt; anything that went
+        /// wrong on the wire throws, carrying the server's explanation for the caller to show.
+        /// </summary>
         public async Task<bool> RegisterProfileAsync(
             string? nickname = null,
             Stream? profilePictureStream = null,
@@ -44,13 +79,32 @@ namespace PlutoFramework.Model.Xcavate.Profile
         {
             var loadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
             loadingViewModel.IsVisible = true;
+
+            try
+            {
+                return await RegisterProfileCoreAsync(loadingViewModel, nickname, profilePictureStream, bio, cancellationToken);
+            }
+            finally
+            {
+                // Every exit hides it, including the failures that now travel to the caller
+                // rather than being swallowed here.
+                loadingViewModel.IsVisible = false;
+            }
+        }
+
+        private async Task<bool> RegisterProfileCoreAsync(
+            FullPageLoadingViewModel loadingViewModel,
+            string? nickname,
+            Stream? profilePictureStream,
+            string? bio,
+            CancellationToken cancellationToken)
+        {
             loadingViewModel.Message = "Getting account";
 
             var signer = await MainKeyModel.GetSignerAsync("To register your public profile.", cancellationToken);
 
             if (signer is null)
             {
-                loadingViewModel.IsVisible = false;
                 return false;
             }
 
@@ -65,7 +119,6 @@ namespace PlutoFramework.Model.Xcavate.Profile
 
             if (x25519key is null)
             {
-                loadingViewModel.IsVisible = false;
                 return false;
             }
 
@@ -140,25 +193,14 @@ namespace PlutoFramework.Model.Xcavate.Profile
                 X25519Key = x25519key.PublicKeyString,
             };
 
-            try
-            {
-                loadingViewModel.Message = "Registering profile";
+            loadingViewModel.Message = "Registering profile";
 
-                await _client.UpdateProfileAsync(signer.Address, profile, signer, cancellationToken);
+            // Deliberately uncaught. Reporting a refused write as an ordinary false left the
+            // caller navigating on to a profile that was never stored, and threw away the
+            // reason it was refused along with it.
+            await _client.UpdateProfileAsync(signer.Address, profile, signer, cancellationToken);
 
-                loadingViewModel.IsVisible = false;
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-
-            }
-
-            loadingViewModel.IsVisible = false;
-
-            return false;
+            return true;
         }
     }
 }

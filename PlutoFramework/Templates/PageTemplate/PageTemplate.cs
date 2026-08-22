@@ -86,12 +86,14 @@ namespace PlutoFramework.Templates.PageTemplate
 
         public static readonly BindableProperty NavigationBarIsVisibleProperty =
             BindableProperty.Create(nameof(NavigationBarIsVisible), typeof(bool), typeof(PageTemplate), true,
+                // Re-applied in both directions, not only when the bar appears. A page that
+                // learns whether it needs the bar from its BindingContext - profile
+                // registration, which hides it during onboarding - is padded before that
+                // binding resolves, and would otherwise keep a bar's worth of empty space
+                // above content with no bar over it.
                 propertyChanged: (BindableObject bindable, object oldValue, object newValue) =>
                 {
-                    if ((bool)newValue)
-                    {
-                        ((PageTemplate)bindable).ApplyScrollViewPadding();
-                    }
+                    ((PageTemplate)bindable).ApplyScrollViewPadding();
                 });
         public bool NavigationBarIsVisible
         {

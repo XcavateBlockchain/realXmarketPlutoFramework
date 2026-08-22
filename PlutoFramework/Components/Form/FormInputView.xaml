@@ -3,8 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              x:Class="PlutoFramework.Components.Form.FormInputView"
-             HorizontalOptions="Fill"
-             HeightRequest="40">
+             HorizontalOptions="Fill">
+    <!--
+      No HeightRequest on the ContentView: the field is 40 tall until validation has something
+      to say, and grows by the height of one line of text when it does.
+    -->
+    <VerticalStackLayout Spacing="4">
     <card:Card HeightRequest="40"
                x:Name="card"
                IsThin="True"
@@ -34,6 +38,7 @@
                        PropertyChanged="OnPropertyChanged"
                        Unfocused="OnUnfocused"
                        Focused="OnFocused"
+                       Completed="OnCompleted"
                        />
 
                 <Border HeightRequest="40"
@@ -67,4 +72,11 @@
             </Grid>
         </card:Card.View>
     </card:Card>
+
+    <Label x:Name="errorLabel"
+           IsVisible="False"
+           FontSize="12"
+           Margin="10, 0, 10, 0"
+           TextColor="{StaticResource DangerousRed}" />
+    </VerticalStackLayout>
 </ContentView>

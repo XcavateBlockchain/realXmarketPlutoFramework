@@ -9,7 +9,6 @@ using PlutoFramework.Components.Password;
 using PlutoFramework.Model.SQLite;
 using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Keys;
-using PlutoFrameworkCore.PushNotificationServices.Core;
 using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
@@ -166,7 +165,7 @@ namespace PlutoFramework.Model
                 // Set biometrics
                 for (int i = 0; i < 5; i++)
                 {
-                    var request = new AuthenticationRequestConfiguration("Biometric verification", "..");
+                    var request = new AuthenticationRequestConfiguration("Authentication required", "To enable biometrics for future authentication.");
 
                     var result = await CrossFingerprint.Current.AuthenticateAsync(request);
 
