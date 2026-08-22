@@ -49,7 +49,7 @@
       only advantage - dropping Substrate.NET.API - buys nothing here, since the Polkadot side
       needs that package anyway.
     -->
-    <PackageReference Include="XcavateProfileApiClient" Version="1.0.61" />
+    <PackageReference Include="XcavateProfileApiClient" Version="1.0.67" />
   </ItemGroup>
 
   <ItemGroup>
