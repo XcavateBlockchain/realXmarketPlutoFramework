@@ -1,4 +1,5 @@
 using System.Net;
+using CommunityToolkit.Maui.Alerts;
 using PlutoFramework.Components.Loading;
 using PlutoFrameworkCore.Xcavate;
 using XcavateProfile.Client;
@@ -122,8 +123,44 @@ namespace PlutoFramework.Model.Xcavate.Profile
                 return false;
             }
 
-            string? profilePictureUrl = null;
+            string? existingPictureUrl = null;
 
+            // The update below replaces every field it sends, so it has to carry the URL
+            // already stored or it writes a null over the picture and it disappears from the
+            // menu and the edit page at once.
+            try
+            {
+                loadingViewModel.Message = "Finding profile picture";
+
+                existingPictureUrl = (await GetProfileAsync(cancellationToken))?.ProfilePicture;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to read the stored profile picture: " + ex);
+            }
+
+            var profile = new XcavateProfile.Client.Profile
+            {
+                Ss58Address = signer.Address,
+                Nickname = nickname != string.Empty ? nickname : null,
+                ProfilePicture = ProfilePictureModel.ResolveStoredUrl(null, existingPictureUrl),
+                Bio = bio != string.Empty ? bio : null,
+                X25519Key = x25519key.PublicKeyString,
+            };
+
+            loadingViewModel.Message = "Registering profile";
+
+            // Deliberately uncaught. Reporting a refused write as an ordinary false left the
+            // caller navigating on to a profile that was never stored, and threw away the
+            // reason it was refused along with it.
+            await _client.UpdateProfileAsync(signer.Address, profile, signer, cancellationToken);
+
+            // The picture goes up only after the profile write, never before: the upload
+            // endpoint answers 404 for an address that has no profile yet, which is exactly
+            // the state the first save during onboarding is in - uploading first is how the
+            // picture picked at onboarding used to be lost on the very save that created the
+            // profile. The server stores the uploaded URL on the profile itself, so the
+            // profile write above does not need to know it.
             if (profilePictureStream is not null)
             {
                 try
@@ -149,56 +186,17 @@ namespace PlutoFramework.Model.Xcavate.Profile
                         cancellationToken);
 
                     Console.WriteLine("Upload image result: " + uploadResult);
-                    if (!string.IsNullOrEmpty(uploadResult))
-                    {
-                        profilePictureUrl = uploadResult;
-                    }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Failed to upload profile picture: " + ex);
-                    // Save the rest of the profile anyway. The picture the user already has
-                    // is kept below rather than dropped, so a failed upload costs them the
-                    // new picture and not the old one too.
+
+                    // The profile itself is stored by this point, so the save still counts -
+                    // but losing the picture silently is what hid the onboarding failure, so
+                    // this one is said out loud.
+                    await Toast.Make("Your profile was saved, but the picture could not be uploaded. Please try saving it again.").Show();
                 }
             }
-
-            string? existingPictureUrl = null;
-
-            // The update below replaces every field it sends, so a save that uploaded nothing -
-            // editing only a nickname, or an upload that failed - has to hand back the URL
-            // already stored or it writes a null over the picture and it disappears from the
-            // menu and the edit page at once. Only worth the round trip when there is no fresh
-            // upload to store: a successful one has already replaced the object anyway.
-            if (profilePictureUrl is null)
-            {
-                try
-                {
-                    loadingViewModel.Message = "Finding profile picture";
-
-                    existingPictureUrl = (await GetProfileAsync(cancellationToken))?.ProfilePicture;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Failed to read the stored profile picture: " + ex);
-                }
-            }
-
-            var profile = new XcavateProfile.Client.Profile
-            {
-                Ss58Address = signer.Address,
-                Nickname = nickname != string.Empty ? nickname : null,
-                ProfilePicture = ProfilePictureModel.ResolveStoredUrl(profilePictureUrl, existingPictureUrl),
-                Bio = bio != string.Empty ? bio : null,
-                X25519Key = x25519key.PublicKeyString,
-            };
-
-            loadingViewModel.Message = "Registering profile";
-
-            // Deliberately uncaught. Reporting a refused write as an ordinary false left the
-            // caller navigating on to a profile that was never stored, and threw away the
-            // reason it was refused along with it.
-            await _client.UpdateProfileAsync(signer.Address, profile, signer, cancellationToken);
 
             return true;
         }
