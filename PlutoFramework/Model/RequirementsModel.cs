@@ -132,7 +132,13 @@ namespace PlutoFramework.Model
 
             if (biometricsEnabled)
             {
-                result = await CrossFingerprint.Current.AuthenticateAsync(request).ConfigureAwait(false);
+                // Plugin.Fingerprint's Android BiometricPrompt can only be shown from the
+                // main thread; called from anywhere else (e.g. a WebView bridge signing
+                // request, which arrives on the JavascriptInterface thread) it fails
+                // silently with UnknownError and the user lands on the password popup
+                // without ever being offered biometrics.
+                result = await MainThread.InvokeOnMainThreadAsync(
+                    () => CrossFingerprint.Current.AuthenticateAsync(request)).ConfigureAwait(false);
             }
             else
             {
