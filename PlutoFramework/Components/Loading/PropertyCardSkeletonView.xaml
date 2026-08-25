@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.Loading.PropertyCardSkeletonView"
+             HorizontalOptions="Fill">
+    <Grid>
+        <Border x:Name="cardBorder"
+                HorizontalOptions="Fill"
+                BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}"
+                StrokeThickness="{x:StaticResource CardBorderThickness}"
+                Stroke="{StaticResource CardBorderColor}"
+                Padding="0"
+                Shadow="{StaticResource CardShadow}">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+            </Border.StrokeShape>
+            <VerticalStackLayout HorizontalOptions="Fill"
+                                 Spacing="5">
+                <Grid HeightRequest="200"
+                      HorizontalOptions="Fill">
+                    <Border HorizontalOptions="Fill"
+                            VerticalOptions="Fill"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#dddddd, Dark=#222222}" />
+                </Grid>
+
+                <Grid ColumnSpacing="5"
+                      Margin="10, 5, 10, 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <HorizontalStackLayout Grid.Column="0"
+                                           Spacing="10"
+                                           HorizontalOptions="Start"
+                                           VerticalOptions="Center">
+                        <Border WidthRequest="200"
+                                HeightRequest="14"
+                                VerticalOptions="Center"
+                                StrokeThickness="0"
+                                BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="7" />
+                            </Border.StrokeShape>
+                        </Border>
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <Grid ColumnSpacing="5"
+                      Margin="10, 0, 10, 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0"
+                            HeightRequest="14"
+                            VerticalOptions="Center"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Grid.Column="2"
+                            WidthRequest="100"
+                            HeightRequest="14"
+                            HorizontalOptions="End"
+                            VerticalOptions="Center"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                </Grid>
+
+                <Grid ColumnSpacing="5"
+                      Margin="10, 0, 10, 10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0"
+                            WidthRequest="90"
+                            HeightRequest="14"
+                            HorizontalOptions="Start"
+                            VerticalOptions="Center"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Grid.Column="3"
+                            WidthRequest="70"
+                            HeightRequest="14"
+                            HorizontalOptions="End"
+                            VerticalOptions="Center"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <Border x:Name="shimmerBorder"
+                InputTransparent="True"
+                Padding="0"
+                StrokeThickness="0"
+                IsVisible="False">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+            </Border.StrokeShape>
+        </Border>
+    </Grid>
+</ContentView>
