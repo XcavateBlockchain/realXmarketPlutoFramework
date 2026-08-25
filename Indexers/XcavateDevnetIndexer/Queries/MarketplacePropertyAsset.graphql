@@ -4,11 +4,17 @@
 #
 # A PENDING_ASSETS listing has no PropertyAsset yet - an empty result is a normal
 # answer, not an error.
+#
+# `name` and `metadataUri` are empty strings until `init_property_assets` attaches
+# them; `metadataUri` points at the webapp's property document (images, address,
+# finances - see XcavateSolanaPropertyMetadata).
 query MarketplacePropertyAsset($assetId: I64!) {
   propertyAssets(assetId: $assetId, active: true, first: 1, offset: 0) {
     nodes {
       id
       assetId
+      name
+      metadataUri
       shareMint
       regionId
       location

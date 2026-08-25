@@ -14,11 +14,13 @@ namespace PlutoFramework.Model.Xcavate
     /// Xcavate indexer - the replacement for the SubQuery-backed
     /// <c>UniqueryPlus.Nfts.XcavateIndexerModel</c> marketplace feed.
     /// <para>
-    /// The indexer only carries on-chain state, so there is no off-chain property metadata
-    /// (name, town, type, images) and no server-side text filtering. The mapped records get
-    /// a minimal <see cref="PropertyMetadata"/> synthesized from chain data so the existing
-    /// views render, and the old town/type/name filters are answered client-side by
-    /// <see cref="MatchesFilter"/>.
+    /// The chain carries a <c>metadataUri</c> per property asset pointing at the webapp's
+    /// property document (name, address, images, finances), fetched and mapped through
+    /// <see cref="XcavateSolanaPropertyMetadataClient"/>; when the URI is still empty or the
+    /// fetch fails, the mapped record degrades to a minimal <see cref="PropertyMetadata"/>
+    /// synthesized from chain data so the existing views still render. There is no
+    /// server-side text filtering either way - the old town/type/name filters are answered
+    /// client-side by <see cref="MatchesFilter"/>.
     /// </para>
     /// </summary>
     public static class XcavateMarketplaceIndexerModel
@@ -63,12 +65,14 @@ namespace PlutoFramework.Model.Xcavate
             }
 
             // The flat QueryRoot has no listing -> asset join, so the asset behind each
-            // listing is a second lookup; they are independent, so all run at once.
+            // listing is a second lookup (plus its metadata document); the listings are
+            // independent, so all run at once.
             var mapped = await Task.WhenAll(
                 listings.Select(async listing =>
                 {
                     var asset = await GetPropertyAssetAsync(client, listing.AssetId, token).ConfigureAwait(false);
-                    return MapListing(listing, asset);
+                    var metadata = await XcavateSolanaPropertyMetadataClient.GetAsync(asset?.MetadataUri, token).ConfigureAwait(false);
+                    return MapListing(listing, asset, metadata);
                 }))
                 .ConfigureAwait(false);
 
@@ -103,8 +107,9 @@ namespace PlutoFramework.Model.Xcavate
             }
 
             var asset = await GetPropertyAssetAsync(client, listing.AssetId, token).ConfigureAwait(false);
+            var metadata = await XcavateSolanaPropertyMetadataClient.GetAsync(asset?.MetadataUri, token).ConfigureAwait(false);
 
-            var nft = MapListing(listing, asset);
+            var nft = MapListing(listing, asset, metadata);
 
             if (investor is not null && nft.OngoingObjectListingDetails is not null)
             {
@@ -208,7 +213,8 @@ namespace PlutoFramework.Model.Xcavate
 
         private static XcavateSolanaListingNft MapListing(
             IListingParts listing,
-            IMarketplacePropertyAsset_PropertyAssets_Nodes? asset)
+            IMarketplacePropertyAsset_PropertyAssets_Nodes? asset,
+            XcavateSolanaPropertyMetadata? offchainMetadata)
         {
             var listingId = ParseInt64(listing.ListingId);
             var assetId = ParseInt64(listing.AssetId);
@@ -231,39 +237,44 @@ namespace PlutoFramework.Model.Xcavate
 
             var pricePerShare = SolanaAmount.FromBaseUnits(listing.SharePrice, SharePriceDecimals);
 
-            var propertyName = string.IsNullOrWhiteSpace(asset?.Location)
-                ? $"Listing #{listingId}"
-                : $"Property {asset!.Location}";
+            // Best name available: the webapp document's, then the on-chain asset name
+            // (empty until init_property_assets attaches it), then chain-synthesized.
+            var propertyName = FirstNonEmpty(
+                offchainMetadata?.PropertyName,
+                asset?.Name,
+                string.IsNullOrWhiteSpace(asset?.Location) ? null : $"Property {asset!.Location}",
+                $"Listing #{listingId}")!;
 
             var metadata = new MetadataBase
             {
                 Name = propertyName,
-                Description = string.Empty,
-                Image = string.Empty,
+                Description = offchainMetadata?.PropertyDescription ?? string.Empty,
+                Image = offchainMetadata?.PropertyImages.FirstOrDefault() ?? string.Empty,
             };
 
-            // Synthesized from on-chain state: the indexer carries no off-chain property
-            // details, and the views need a non-null PropertyMetadata to render at all.
-            var propertyMetadata = new PropertyMetadata
+            // The webapp document when the asset carries one, degraded to a minimal
+            // record synthesized from chain state when not - the views need a non-null
+            // PropertyMetadata to render at all.
+            var propertyMetadata = offchainMetadata?.ToPropertyMetadata() ?? new PropertyMetadata
             {
-                Status = listing.Status.ToString(),
-                PropertyName = propertyName,
-                Financials = new PropertyFinancials
-                {
-                    PricePerToken = pricePerShare,
-                    NumberOfTokens = (int)Math.Clamp(totalShares, 0, int.MaxValue),
-                    PropertyPrice = pricePerShare * totalShares,
-                },
+                Financials = new PropertyFinancials(),
                 Files = [],
-                Address = new PropertyAddress
-                {
-                    PostCode = asset?.Location,
-                },
-                DeveloperAddress = listing.Developer,
-                AccountAddress = listing.Developer,
-                PropertyId = listing.Id,
+                Address = new PropertyAddress(),
                 Attributes = new PropertyAttributes(),
             };
+
+            // Chain-authoritative fields win over whatever the document said: the buy flow
+            // prices and counts shares with these, and the sale's status and developer are
+            // on-chain facts.
+            propertyMetadata.Status = listing.Status.ToString();
+            propertyMetadata.PropertyName = propertyName;
+            propertyMetadata.DeveloperAddress = listing.Developer;
+            propertyMetadata.AccountAddress = listing.Developer;
+            propertyMetadata.PropertyId ??= listing.Id;
+            propertyMetadata.Address.PostCode ??= asset?.Location;
+            propertyMetadata.Financials.PricePerToken = pricePerShare;
+            propertyMetadata.Financials.NumberOfTokens = (int)Math.Clamp(totalShares, 0, int.MaxValue);
+            propertyMetadata.Financials.PropertyPrice = pricePerShare * totalShares;
 
             return new XcavateSolanaListingNft
             {
@@ -319,6 +330,11 @@ namespace PlutoFramework.Model.Xcavate
                         ShareOwners = new(),
                     },
             };
+        }
+
+        private static string? FirstNonEmpty(params string?[] values)
+        {
+            return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
         }
 
         private static long ParseInt64(string? value)

@@ -21,6 +21,13 @@ enum DocumentStatus {
   REJECTED
 }
 
+"`property_gov_vote.choice` (`VoteChoice` on chain; borsh order load-bearing there).\nNamed `GovVoteChoice` because the `GovVote` spelling is the entity type."
+enum GovVoteChoice {
+  YES
+  NO
+  ABSTAIN
+}
+
 "`marketplace_listing.status` (`ListingStatus` on chain; borsh order load-bearing there)."
 enum ListingStatus {
   PENDING_ASSETS
@@ -144,6 +151,31 @@ type AgentVoteConnection {
   totalCount: Int!
 }
 
+"A holder's move to strike the sitting agent, backed by an XCAV stake."
+type Challenge {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  challengeId: I64!
+  challenger: String!
+  agent: String!
+  deposit: I64!
+  expiry: I64!
+  tallyYes: I64!
+  tallyNo: I64!
+  tallyAbstain: I64!
+  quorumBps: Int!
+  rentPayer: String!
+}
+
+type ChallengeConnection {
+  nodes: [Challenge!]!
+  totalCount: Int!
+}
+
 "Singleton (`id = \"config\"`): the sudo authority that manages whitelist admins."
 type Config {
   id: ID!
@@ -152,6 +184,44 @@ type Config {
   updatedAtSlot: I64!
   updatedAt: DateTime!
   updatedInTx: String!
+}
+
+"One holder's vote on one proposal OR challenge -- the account data does not say which\n(only the on-chain seed prefix differs); join `voteId` against proposals/challenges to\ndisambiguate (see migration 0012)."
+type GovVote {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  voteId: I64!
+  voter: String!
+  choice: GovVoteChoice!
+  power: I64!
+  rentPayer: String!
+}
+
+type GovVoteConnection {
+  nodes: [GovVote!]!
+  totalCount: Int!
+}
+
+"One holder's income claim state on one property. `entries` is the raw JSON\n`[{\"per_share\": \"<decimal string>\", \"pending\": N}, ...]`, entries[i] tracking the\nincome ledger's streams[i]."
+type IncomeCheckpoint {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  owner: String!
+  entries: String!
+  rentPayer: String!
+}
+
+type IncomeCheckpointConnection {
+  nodes: [IncomeCheckpoint!]!
+  totalCount: Int!
 }
 
 "One investor's position in one listing: bought/reserved share counts and the funds, tax and\nfee amounts paid or reserved for them. Closed and routinely re-created at the same address\nby the next buy/reserve."
@@ -297,6 +367,7 @@ type Listing {
   developerEngaged: Boolean!
   spvCostsDue: I64!
   spvCostsPayee: String!
+  collectedFeeQuote: I64!
   collected: String!
   spvElectionExpiry: I64!
   spvElectionCandidateCount: I64!
@@ -351,6 +422,30 @@ type MarketplaceConfig {
   lawyerVotingTime: I64!
   minVotingQuorumBps: Int!
   nextListingId: I64!
+  nextShareListingId: I64!
+}
+
+"A bid on one share listing, one per bidder per listing; the bid money sits in the\noffer's own vault until accept/reject/cancel. `listingId` is the ShareListing id."
+type Offer {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  listingId: I64!
+  assetId: I64!
+  offeror: String!
+  sharePrice: I64!
+  amount: I64!
+  paymentMint: String!
+  held: I64!
+  nonce: I64!
+  rentPayer: String!
+}
+
+type OfferConnection {
+  nodes: [Offer!]!
+  totalCount: Int!
 }
 
 "One row of the shared `program_instructions` history: every successfully indexed\ninstruction of every indexed program, with its decoded args as JSON. `id` is\n`\"<txSignature>-<ixIndex>\"` for a top-level instruction and\n`\"<txSignature>-<ixIndex>.<innerIndex>\"` for a CPI."
@@ -383,7 +478,19 @@ type ProgramSyncStatus {
   snapshotSlot: I64
 }
 
-"The tokenised property behind one listing (`asset_id == listing_id` in current source).\n`core_asset` keeps the on-chain all-zero pubkey verbatim (base58\n`11111111111111111111111111111111`) -- it is only ever that today."
+"One recorded version boundary of a program (`program_upgrades`, ADR-24): a slot at which\nbytecode became live for that program."
+type ProgramUpgrade {
+  program: ProgramName!
+  "Slot the version's bytecode became live."
+  upgradeSlot: I64!
+  "base58 signature of the upgrade transaction; null for the seeded deploy row."
+  signature: String
+  "`\"deploy\"` (the seeded initial deploy slot) or `\"chain\"` (an observed\nBPFLoaderUpgradeable upgrade). A plain string, not a GraphQL enum, on purpose: it is\nan internal provenance tag with no on-chain borsh order to mirror, and keeping it a\nstring means widening the migration's CHECK never needs an api release in lockstep."
+  source: String!
+  detectedAt: DateTime!
+}
+
+"The tokenised property behind one listing (`asset_id == listing_id` in current source).\n`name` and `metadata_uri` are empty until `init_property_assets` attaches them."
 type PropertyAsset {
   id: ID!
   slot: I64!
@@ -391,7 +498,8 @@ type PropertyAsset {
   active: Boolean!
   closedAtSlot: I64
   assetId: I64!
-  coreAsset: String!
+  name: String!
+  metadataUri: String!
   shareMint: String!
   regionId: Int!
   location: String!
@@ -422,6 +530,30 @@ type PropertyConfig {
   agentVotingTime: I64!
   minVotingQuorumBps: Int!
   agentNoticePeriod: I64!
+  proposalVotingTime: I64!
+  lowProposal: I64!
+  highProposal: I64!
+  highThresholdBps: Int!
+  autoApprovalCooldown: I64!
+  challengeDeposit: I64!
+  agentSlashAmount: I64!
+}
+
+"A property's rental income ledger. `streams` is the raw JSON\n`[{\"mint\": \"<base58>\", \"per_share\": \"<decimal string>\", \"dust\": N}, ...]` (see migration\n0012; `per_share` is u128 on-chain, carried as a decimal string)."
+type PropertyIncome {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  streams: String!
+  rentPayer: String!
+}
+
+type PropertyIncomeConnection {
+  nodes: [PropertyIncome!]!
+  totalCount: Int!
 }
 
 "One property's letting seat and current election. `agent` keeps the on-chain all-zero\npubkey \"seat vacant\" sentinel verbatim (base58 `11111111111111111111111111111111`)."
@@ -437,11 +569,43 @@ type PropertyLetting {
   electionCandidateCount: I64!
   electionRound: I64!
   electionQuorumBps: Int!
+  governanceProposalCount: I64!
+  governanceChallengeCount: I64!
+  governanceActiveProposal: I64!
+  governanceActiveChallenge: I64!
+  governanceStrikes: Int!
+  governanceLastAutoApprovalTs: I64!
   rentPayer: String!
 }
 
 type PropertyLettingConnection {
   nodes: [PropertyLetting!]!
+  totalCount: Int!
+}
+
+"A spending proposal put to a property's holders (only above-low-tier proposals reach\nstorage; auto-approved ones close inside their own instruction). `detailsHash` is the\noff-chain document hash, lowercase hex."
+type Proposal {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  assetId: I64!
+  proposalId: I64!
+  proposer: String!
+  amount: I64!
+  detailsHash: String!
+  expiry: I64!
+  tallyYes: I64!
+  tallyNo: I64!
+  tallyAbstain: I64!
+  quorumBps: Int!
+  thresholdBps: Int!
+  rentPayer: String!
+}
+
+type ProposalConnection {
+  nodes: [Proposal!]!
   totalCount: Int!
 }
 
@@ -472,6 +636,8 @@ type QueryRoot {
   checkAccess(user: String!, role: Role!): AccessCheck!
   "Fleet aggregates plus per-program rows -- see [`SyncStatus`]'s doc for the aggregate\nsemantics (min / AND across programs: the stack is only as caught-up as its laggiest\nprogram). Scoped by the api's optional `PROGRAMS` env so subset operation (which\nfreezes excluded programs' rows) does not drag the aggregates."
   syncStatus: SyncStatus!
+  "Each program's recorded version timeline (`program_upgrades`, ADR-24), oldest boundary\nfirst: the seeded deploy slot plus every BPFLoaderUpgradeable upgrade the indexer has\nobserved on-chain. More than one entry for a program means its bytecode changed after\nthe checked-in IDL's snapshot -- the signal the maintenance loop acts on (RUNBOOK.md\n\"After a program upgrade\"). Unpaginated on purpose: upgrades are rare, operator-driven\nevents (a handful of rows per program, ever). Scoped by the api's optional `PROGRAMS`\nenv like `syncStatus`."
+  programUpgrades(program: ProgramName): [ProgramUpgrade!]!
   "The shared instruction history: every successfully indexed instruction of every\nindexed program, newest first, with its decoded args as JSON. `txSignature` filters to\none transaction (base58)."
   programInstructions(
     program: ProgramName
@@ -536,6 +702,23 @@ type QueryRoot {
     first: Int
     offset: Int
   ): ShareHoldingConnection!
+  "Secondary-market share listings. `shareListingId` filters by the on-chain listing id\n(a separate id space from primary `listings`)."
+  shareListings(
+    shareListingId: I64
+    assetId: I64
+    seller: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): ShareListingConnection!
+  "Bids on secondary-market share listings. `listingId` is the ShareListing id."
+  offers(
+    listingId: I64
+    offeror: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): OfferConnection!
   "The property program's singleton config PDA."
   propertyConfig: PropertyConfig
   "Letting-agent election candidacies."
@@ -578,6 +761,40 @@ type QueryRoot {
     first: Int
     offset: Int
   ): ResignationNoticeConnection!
+  "Holder spending proposals (above-low-tier only; auto-approved ones never reach\nstorage)."
+  proposals(
+    assetId: I64
+    proposer: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): ProposalConnection!
+  "Holder challenges against sitting letting agents."
+  challenges(
+    assetId: I64
+    challenger: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): ChallengeConnection!
+  "Votes on proposals and challenges (one account type behind both -- disambiguate by\njoining `voteId` against `proposals` / `challenges`)."
+  govVotes(
+    assetId: I64
+    voter: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): GovVoteConnection!
+  "Per-property rental income ledgers."
+  propertyIncomes(assetId: I64, active: Boolean, first: Int, offset: Int): PropertyIncomeConnection!
+  "Per-holder income claim checkpoints."
+  incomeCheckpoints(
+    assetId: I64
+    owner: String
+    active: Boolean
+    first: Int
+    offset: Int
+  ): IncomeCheckpointConnection!
   "The regions program's singleton config PDA."
   regionsConfig: RegionsConfig
   "Governed regions."
@@ -765,7 +982,7 @@ type RoleAssignmentConnection {
   totalCount: Int!
 }
 
-"One owner's share holding in one property asset."
+"One owner's share holding in one property asset. The four `lock*` counters mirror the\non-chain per-`LockReason` array (the effective lock is the largest of them); `listed` is\nwhat sits in open secondary listings, still counted in `amount`."
 type ShareHolding {
   id: ID!
   slot: I64!
@@ -775,11 +992,37 @@ type ShareHolding {
   assetId: I64!
   owner: String!
   amount: I64!
-  lockedAmount: I64!
+  lockLawyerElection: I64!
+  lockAgentElection: I64!
+  lockProposal: I64!
+  lockChallenge: I64!
+  listed: I64!
 }
 
 type ShareHoldingConnection {
   nodes: [ShareHolding!]!
+  totalCount: Int!
+}
+
+"A holder's open secondary-market listing of part of their shares."
+type ShareListing {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  shareListingId: I64!
+  assetId: I64!
+  seller: String!
+  sharePrice: I64!
+  amount: I64!
+  feeBps: Int!
+  nextOfferNonce: I64!
+  rentPayer: String!
+}
+
+type ShareListingConnection {
+  nodes: [ShareListing!]!
   totalCount: Int!
 }
 
