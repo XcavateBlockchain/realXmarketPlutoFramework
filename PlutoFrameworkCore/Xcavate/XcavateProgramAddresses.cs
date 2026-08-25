@@ -28,10 +28,10 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>From idls/devnet/: marketplace.json, xcavate_whitelist.json, property.json, regions.json.</summary>
         public static readonly XcavateProgramSet Devnet = new()
         {
-            Marketplace = "B6YRVAmjmhN28smZxNfCnuKc19CamBbAEMXsp5KTfWog",
-            Whitelist = "2vVARM46pPD4rcHdbXHnYA4vTGN14q6skQAzsQWcHUxn",
-            Property = "8f4NHc1wGBM1BAufDFd9dNechLW8pxmStSfxfuJfDzob",
-            Regions = "FYysH5v23qtz4gK4H1yLDHneFwx6PSAT7oQwHcuRyRh",
+            Marketplace = "dj9Q3CpHvDHwexCbkgJ5APDx4JsTxPssNebkvP15g1T",
+            Whitelist = "7TrzjKpdrEhnfhxuw8tWdH1sjxadazscsG5HXCDPLmaY",
+            Property = "deCp9srk9C6P4BXJaFpjR5H6Jsm6DCq8AL2kk338dVq",
+            Regions = "5iupkzVtWxee48UXh3s615V9sXXuYjsSr61VPuduXdPc",
         };
 
         /// <summary>
