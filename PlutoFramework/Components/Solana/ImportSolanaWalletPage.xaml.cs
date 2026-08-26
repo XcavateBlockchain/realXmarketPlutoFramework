@@ -1,5 +1,7 @@
 using PlutoFramework.Components.Buttons;
+using PlutoFramework.Components.Onboarding;
 using PlutoFramework.Model;
+using PlutoFramework.Model.Xcavate;
 using PlutoFramework.Templates.PageTemplate;
 
 namespace PlutoFramework.Components.Solana;
@@ -23,14 +25,37 @@ public partial class ImportSolanaWalletPage : PageTemplate
     public required new Func<string, Task> Navigation;
 
     /// <summary>
+    /// Whether the page is part of the first-run onboarding. Onboarding shows the stepper
+    /// bar in place of the top navigation bar, the way the other onboarding pages do; any
+    /// other host shows the regular bar with the page title.
+    /// </summary>
+    public bool FirstSetup
+    {
+        get => _firstSetup;
+
+        set
+        {
+            _firstSetup = value;
+
+            UpdateNavigationBars();
+        }
+    }
+
+    private bool _firstSetup = false;
+
+    /// <summary>
+    /// The onboarding step this page sits on, so the stepper bar shows where the user is.
+    /// </summary>
+    private readonly OnboardingStepperViewModel _stepper = new(OnboardingStage.SetupPassword);
+
+    /// <summary>
     /// Owned by this page rather than resolved from <see cref="DependencyService"/>, so the
     /// phrase typed here reaches nothing else.
     /// </summary>
     /// <remarks>
-    /// Assigned to the entry view directly in the constructor. Do not give this page a
-    /// <see cref="BindableObject.BindingContext"/> to bind it through: <c>PageTemplate</c>
-    /// pushes the page's context down onto its content, which would overwrite the
-    /// assignment below.
+    /// Assigned to the entry view directly in the constructor. PageTemplate still pushes the
+    /// page's context down onto its content, but an explicit binding context on a child is
+    /// not overridden by the inherited one, so the entry view keeps this instance.
     /// </remarks>
     private readonly SolanaMnemonicsEntryViewModel _entry = new();
 
@@ -40,9 +65,24 @@ public partial class ImportSolanaWalletPage : PageTemplate
     {
         InitializeComponent();
 
+        BindingContext = _stepper;
+
         mnemonicsEntry.BindingContext = _entry;
 
         _entry.PropertyChanged += (_, _) => UpdateContinueState();
+
+        UpdateNavigationBars();
+    }
+
+    /// <summary>
+    /// The stepper bar and the top navigation bar are mutually exclusive: onboarding shows
+    /// the stepper, like the other onboarding pages, and every other host shows the bar.
+    /// </summary>
+    private void UpdateNavigationBars()
+    {
+        stepperBar.IsVisible = FirstSetup;
+
+        NavigationBarIsVisible = !FirstSetup;
     }
 
     private void OnPasswordValidityChanged(object? sender, EventArgs e) => UpdateContinueState();
