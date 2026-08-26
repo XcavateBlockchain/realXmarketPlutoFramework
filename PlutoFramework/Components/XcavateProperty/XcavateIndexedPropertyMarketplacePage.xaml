@@ -23,140 +23,146 @@
              BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}">
     <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All">
 
-        <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
-            Command="{Binding RefreshCommand}"
-            RefreshColor="Transparent"
-            IsRefreshing="{Binding IsRefreshing}">
+        <!--
+            The risk-warning/search header and the skeleton/empty-state footer are pinned
+            siblings of the list, not CollectionView.Header/Footer. On iOS a
+            CollectionView header or footer is hosted as a UICollectionView supplementary
+            view, and self-sizing ones (MeasureAllItems) crash this page on navigation.
+            A plain item list with pinned chrome is the pattern the rest of the app uses.
+        -->
+        <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
+              RowDefinitions="Auto,*,Auto">
 
-            <RefreshView.Behaviors>
-                <animations:PullProgressBehavior x:Name="marketplacePullProgress" />
-            </RefreshView.Behaviors>
+            <VerticalStackLayout Grid.Row="0" Spacing="10">
+                <xcavate:RiskWarningView Margin="20,10,20,10" />
 
-            <CollectionView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
-                    ItemSizingStrategy="MeasureAllItems"
-                    ItemsSource="{Binding Items}"
-                    RemainingItemsThreshold="0"
-                    RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
-
-                <CollectionView.Header>
-                    <VerticalStackLayout Spacing="10">
-                        <xcavate:RiskWarningView Margin="20,10,20,10" />
-
-                        <VerticalStackLayout Margin="20,0,20,20" Spacing="12">
-                            <Border Stroke="#C9CDD8"
-                                    StrokeThickness="1"
-                                    Padding="4"
-                                    HorizontalOptions="Center"
-                                    StrokeShape="RoundRectangle 26">
-                                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4">
-                                    <Border Grid.Column="0"
-                                            Padding="16,10"
-                                            BackgroundColor="#3C4A74"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 22">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Tapped="OnMarketplaceTapped" />
-                                        </Border.GestureRecognizers>
-                                        <Label Text="Marketplace"
-                                               FontSize="14"
-                                               TextColor="White"
-                                               VerticalOptions="Center"
-                                               HorizontalOptions="Center" />
-                                    </Border>
-                                    <Border Grid.Column="1"
-                                            Padding="16,10"
-                                            BackgroundColor="Transparent"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 22">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Tapped="OnNoticeboardTapped" />
-                                        </Border.GestureRecognizers>
-                                        <Label Text="Notice Board"
-                                               FontSize="14"
-                                               TextColor="#555555"
-                                               VerticalOptions="Center"
-                                               HorizontalOptions="Center" />
-                                    </Border>
-                                </Grid>
+                <VerticalStackLayout Margin="20,0,20,20" Spacing="12">
+                    <Border Stroke="#C9CDD8"
+                            StrokeThickness="1"
+                            Padding="4"
+                            HorizontalOptions="Center"
+                            StrokeShape="RoundRectangle 26">
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4">
+                            <Border Grid.Column="0"
+                                    Padding="16,10"
+                                    BackgroundColor="#3C4A74"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 22">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnMarketplaceTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Marketplace"
+                                       FontSize="14"
+                                       TextColor="White"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="Center" />
                             </Border>
+                            <Border Grid.Column="1"
+                                    Padding="16,10"
+                                    BackgroundColor="Transparent"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 22">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnNoticeboardTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Notice Board"
+                                       FontSize="14"
+                                       TextColor="#555555"
+                                       VerticalOptions="Center"
+                                       HorizontalOptions="Center" />
+                            </Border>
+                        </Grid>
+                    </Border>
 
-                            <Grid ColumnDefinitions="*,62" ColumnSpacing="10">
-                                <Border Grid.Column="0"
-                                        Stroke="#3C4A74"
-                                        StrokeThickness="2"
-                                        HeightRequest="56"
-                                        StrokeShape="RoundRectangle 28">
-                                    <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
-                                        <Entry Grid.Column="0"
-                                                 x:Name="MarketplaceSearchEntry"
-                                               Margin="18,0,0,0"
-                                               Placeholder="Search"
-                                               Text="{Binding SearchText}"
-                                               ReturnType="Search"
-                                                 Completed="OnSearchEntryCompleted"
-                                               ReturnCommand="{Binding SearchCommand}"
-                                               VerticalOptions="Center"
-                                               BackgroundColor="Transparent"
-                                               ClearButtonVisibility="Never" />
-                                        <Image Grid.Column="1"
-                                               Source="xcavatesearch.svg"
-                                               HeightRequest="22"
-                                               WidthRequest="22"
-                                               Margin="0,0,18,0"
-                                               VerticalOptions="Center">
-                                            <Image.GestureRecognizers>
-                                                <TapGestureRecognizer Tapped="OnSearchButtonTapped" Command="{Binding SearchCommand}" />
-                                            </Image.GestureRecognizers>
-                                        </Image>
-                                    </Grid>
-                                </Border>
-
-                                <Border Grid.Column="1"
-                                        BackgroundColor="#E8E9ED"
-                                        HeightRequest="56"
-                                        WidthRequest="56"
-                                        HorizontalOptions="End"
-                                        VerticalOptions="Center"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 28">
-                                    <ImageButton Source="xcavatesettings.png"
-                                                 Command="{Binding OpenFilterCommand}"
-                                                 BackgroundColor="Transparent"
-                                                 HeightRequest="56"
-                                                 WidthRequest="56"
-                                                 Padding="14" />
-                                </Border>
+                    <Grid ColumnDefinitions="*,62" ColumnSpacing="10">
+                        <Border Grid.Column="0"
+                                Stroke="#3C4A74"
+                                StrokeThickness="2"
+                                HeightRequest="56"
+                                StrokeShape="RoundRectangle 28">
+                            <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                                <Entry Grid.Column="0"
+                                         x:Name="MarketplaceSearchEntry"
+                                       Margin="18,0,0,0"
+                                       Placeholder="Search"
+                                       Text="{Binding SearchText}"
+                                       ReturnType="Search"
+                                         Completed="OnSearchEntryCompleted"
+                                       ReturnCommand="{Binding SearchCommand}"
+                                       VerticalOptions="Center"
+                                       BackgroundColor="Transparent"
+                                       ClearButtonVisibility="Never" />
+                                <Image Grid.Column="1"
+                                       Source="xcavatesearch.svg"
+                                       HeightRequest="22"
+                                       WidthRequest="22"
+                                       Margin="0,0,18,0"
+                                       VerticalOptions="Center">
+                                    <Image.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnSearchButtonTapped" Command="{Binding SearchCommand}" />
+                                    </Image.GestureRecognizers>
+                                </Image>
                             </Grid>
-                        </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </CollectionView.Header>
-                <CollectionView.Footer>
-                    <StackLayout MinimumHeightRequest="200">
-                        <loading:SkeletonCardView
-                                IsVisible="{Binding Loading}"/>
-                        <StackLayout HeightRequest="200"
-                                     IsVisible="{Binding NoItems}">
-                            <Label Text="No properties were found for this filter. Try to search for something different."
-                                   TextColor="#A6A6A6"
-                                   HorizontalOptions="Center"
-                                   Margin="20, 40, 20, 40"
-                                   HorizontalTextAlignment="Center"/>
-                        </StackLayout>
-                    </StackLayout>
-                </CollectionView.Footer>
-                <CollectionView.ItemsLayout>
-                    <LinearItemsLayout Orientation="Vertical"
-                                       ItemSpacing="0" />
-                </CollectionView.ItemsLayout>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <xcavateproperty:PropertyThumbnailView XcavateNftWrapper="{Binding .}"
-                                                               Padding="20, 5, 20, 10" />
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                        </Border>
 
-        </RefreshView>
+                        <Border Grid.Column="1"
+                                BackgroundColor="#E8E9ED"
+                                HeightRequest="56"
+                                WidthRequest="56"
+                                HorizontalOptions="End"
+                                VerticalOptions="Center"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 28">
+                            <ImageButton Source="xcavatesettings.png"
+                                         Command="{Binding OpenFilterCommand}"
+                                         BackgroundColor="Transparent"
+                                         HeightRequest="56"
+                                         WidthRequest="56"
+                                         Padding="14" />
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <RefreshView Grid.Row="1"
+                Command="{Binding RefreshCommand}"
+                RefreshColor="Transparent"
+                IsRefreshing="{Binding IsRefreshing}">
+
+                <RefreshView.Behaviors>
+                    <animations:PullProgressBehavior x:Name="marketplacePullProgress" />
+                </RefreshView.Behaviors>
+
+                <CollectionView ItemSizingStrategy="MeasureAllItems"
+                        ItemsSource="{Binding Items}"
+                        RemainingItemsThreshold="0"
+                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical"
+                                           ItemSpacing="0" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <xcavateproperty:PropertyThumbnailView XcavateNftWrapper="{Binding .}"
+                                                                   Padding="20, 5, 20, 10" />
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </RefreshView>
+
+            <StackLayout Grid.Row="2" MinimumHeightRequest="200">
+                <loading:SkeletonCardView
+                        IsVisible="{Binding Loading}"/>
+                <StackLayout HeightRequest="200"
+                             IsVisible="{Binding NoItems}">
+                    <Label Text="No properties were found for this filter. Try to search for something different."
+                           TextColor="#A6A6A6"
+                           HorizontalOptions="Center"
+                           Margin="20, 40, 20, 40"
+                           HorizontalTextAlignment="Center"/>
+                </StackLayout>
+            </StackLayout>
+        </Grid>
 
         <animations:ParticleStreamView AbsoluteLayout.LayoutBounds="0, 0, 1, 100"
                                        AbsoluteLayout.LayoutFlags="XProportional,WidthProportional"
