@@ -3,7 +3,6 @@ using System.Numerics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
-using PlutoFramework.Components.MessagePopup;
 using PlutoFramework.Components.Solana.Status;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Solana;
@@ -244,6 +243,7 @@ namespace PlutoFramework.Components.Solana.Transfer
                     // No key, or the unlock prompt was declined. Either way the toast must
                     // not sit at Submitting forever.
                     info.Status = SolanaTransactionStatus.Error;
+                    info.ErrorMessage = "No Solana account is set up in this wallet, or the unlock prompt was declined.";
 
                     return;
                 }
@@ -259,12 +259,10 @@ namespace PlutoFramework.Components.Solana.Transfer
             }
             catch (Exception ex)
             {
+                // The toast is the failure report now: its error page shows this message,
+                // so no popup alongside it.
                 info.Status = SolanaTransactionStatus.Error;
-
-                var messagePopup = DependencyService.Get<MessagePopupViewModel>();
-                messagePopup.Title = "Transfer failed";
-                messagePopup.Text = DescribeFailure(ex, token);
-                messagePopup.IsVisible = true;
+                info.ErrorMessage = DescribeFailure(ex, token);
             }
         }
 

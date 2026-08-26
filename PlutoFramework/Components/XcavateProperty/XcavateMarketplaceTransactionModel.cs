@@ -1,4 +1,3 @@
-using PlutoFramework.Components.MessagePopup;
 using PlutoFramework.Components.Solana.Status;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Solana;
@@ -44,8 +43,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 if (string.IsNullOrEmpty(address))
                 {
                     info.Status = SolanaTransactionStatus.Error;
-
-                    ShowFailure(description, "No Solana account is set up in this wallet.");
+                    info.ErrorMessage = "No Solana account is set up in this wallet.";
 
                     return;
                 }
@@ -61,6 +59,7 @@ namespace PlutoFramework.Components.XcavateProperty
                     // No key, or the unlock prompt was declined. Either way the toast
                     // must not sit at Submitting forever.
                     info.Status = SolanaTransactionStatus.Error;
+                    info.ErrorMessage = "No Solana account is set up in this wallet, or the unlock prompt was declined.";
 
                     return;
                 }
@@ -74,19 +73,11 @@ namespace PlutoFramework.Components.XcavateProperty
             }
             catch (Exception ex)
             {
+                // The toast is the failure report now: its error page shows this message,
+                // so no popup alongside it.
                 info.Status = SolanaTransactionStatus.Error;
-
-                ShowFailure(description, ex.Message);
+                info.ErrorMessage = ex.Message;
             }
-        }
-
-        private static void ShowFailure(string description, string message)
-        {
-            var messagePopup = DependencyService.Get<MessagePopupViewModel>();
-
-            messagePopup.Title = $"{description} failed";
-            messagePopup.Text = message;
-            messagePopup.IsVisible = true;
         }
     }
 }

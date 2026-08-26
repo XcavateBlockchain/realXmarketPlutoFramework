@@ -66,6 +66,16 @@ namespace PlutoFramework.Components.Solana.Status
                         cluster, signature, token);
 
                     status = SolanaSignatureStatusMapper.Map(signatureStatus);
+
+                    // The node's reason for an on-chain failure is the only error the error
+                    // page can show, and it is only available here, while the poll still
+                    // holds the status response.
+                    if (status is SolanaTransactionStatus.ConfirmedFailed
+                        or SolanaTransactionStatus.FinalizedFailed)
+                    {
+                        SetErrorMessage(
+                            info, SolanaTransactionErrorDescriber.Describe(signatureStatus.Error));
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -84,6 +94,9 @@ namespace PlutoFramework.Components.Solana.Status
                 if (status == SolanaTransactionStatus.Pending && elapsed > UnseenTimeout)
                 {
                     SetStatus(info, SolanaTransactionStatus.Dropped);
+                    SetErrorMessage(
+                        info,
+                        "The transaction was never seen by the network; the recent blockhash expired before it was processed.");
 
                     return;
                 }
@@ -125,6 +138,16 @@ namespace PlutoFramework.Components.Solana.Status
             }
 
             MainThread.BeginInvokeOnMainThread(() => info.Status = status);
+        }
+
+        private static void SetErrorMessage(SolanaTransactionInfo info, string message)
+        {
+            if (info.ErrorMessage == message)
+            {
+                return;
+            }
+
+            MainThread.BeginInvokeOnMainThread(() => info.ErrorMessage = message);
         }
     }
 }

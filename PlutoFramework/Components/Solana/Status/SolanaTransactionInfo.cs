@@ -34,13 +34,38 @@ namespace PlutoFramework.Components.Solana.Status
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(StatusText))]
         [NotifyPropertyChangedFor(nameof(StatusColor))]
+        [NotifyPropertyChangedFor(nameof(IsFailure))]
         private SolanaTransactionStatus status = SolanaTransactionStatus.Submitting;
+
+        /// <summary>
+        /// Why the transaction failed, in words the error page shows. Null while nothing
+        /// has failed: the page is only reachable from a failed toast.
+        /// </summary>
+        /// <remarks>
+        /// Filled where the failure is known — the submitter for a submission that threw
+        /// or never got signed, the tracker for a failure the cluster reported.
+        /// </remarks>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasErrorMessage))]
+        private string? errorMessage;
 
         /// <summary>
         /// Null until submission returns one, and permanently null when submission failed —
         /// so the explorer link is hidden rather than pointing at nothing.
         /// </summary>
         public bool HasExplorerLink => !string.IsNullOrEmpty(Signature);
+
+        public bool HasErrorMessage => !string.IsNullOrEmpty(ErrorMessage);
+
+        /// <summary>
+        /// True for every status the toast offers the error page for. A submission that
+        /// threw and a transaction the cluster rejected are both worth a look.
+        /// </summary>
+        public bool IsFailure => Status is
+            SolanaTransactionStatus.Error
+            or SolanaTransactionStatus.Dropped
+            or SolanaTransactionStatus.ConfirmedFailed
+            or SolanaTransactionStatus.FinalizedFailed;
 
         public string ExplorerUrl => Solscan.TransactionUrl(Signature ?? string.Empty, Cluster);
 

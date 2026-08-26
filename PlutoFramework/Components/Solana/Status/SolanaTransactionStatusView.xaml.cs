@@ -6,7 +6,8 @@ namespace PlutoFramework.Components.Solana.Status;
 
 /// <summary>
 /// One Solana transaction toast. Mirrors <c>ExtrinsicStatusView</c>: swipe or tap the cross
-/// to dismiss, five seconds of grace after success, tap to open the explorer.
+/// to dismiss, five seconds of grace after success, tap to open the explorer — or, for a
+/// failed transaction, its error page.
 /// </summary>
 public partial class SolanaTransactionStatusView : ContentView
 {
@@ -172,8 +173,15 @@ public partial class SolanaTransactionStatusView : ContentView
 
     private async void OnClicked(object sender, TappedEventArgs e)
     {
-        // No signature means submission never got that far, so there is nothing to look up.
-        if (info is null || !info.HasExplorerLink || navigating)
+        if (info is null || navigating)
+        {
+            return;
+        }
+
+        // A failed toast opens its error page, signature or not: the reason it failed is
+        // what the tap is for. A toast still in flight, or succeeded, opens the explorer —
+        // and has nowhere to go when submission never got a signature.
+        if (!info.IsFailure && !info.HasExplorerLink)
         {
             return;
         }
@@ -182,7 +190,11 @@ public partial class SolanaTransactionStatusView : ContentView
 
         try
         {
-            await Navigation.PushAsync(new WebViewPage(info.ExplorerUrl));
+            var page = info.IsFailure
+                ? (Page)new SolanaTransactionErrorPage(info)
+                : new WebViewPage(info.ExplorerUrl);
+
+            await Navigation.PushAsync(page);
         }
         finally
         {
