@@ -15,6 +15,15 @@ namespace PlutoFramework.Templates.TopNavigationBarTemplate
         public Func<Task>? BackFunc { get; set; }
 
         [RelayCommand]
-        public Task BackAsync() => BackFunc?.Invoke() ?? NavigationModel.PopAsync();
+        public async Task BackAsync()
+        {
+            // A visible popup is dismissed before the page goes back.
+            if (PopupManager.TryCloseTopPopup())
+            {
+                return;
+            }
+
+            await (BackFunc?.Invoke() ?? NavigationModel.PopAsync());
+        }
     }
 }

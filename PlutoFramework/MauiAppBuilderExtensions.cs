@@ -268,6 +268,49 @@ namespace PlutoFramework
             DependencyService.Register<PropertyMarketplaceSelectionPopupViewModel>();
 
             DependencyService.Register<Components.Form.CountrySelectPopupViewModel>();
+
+            // Track the popup view models so that while a popup is on screen, back actions
+            // dismiss the most recently opened popup first (see PopupManager).
+            foreach (var popupViewModel in new IPopup[]
+            {
+                DependencyService.Get<CanNotRecoverKeyPopupViewModel>(),
+                DependencyService.Get<TransferViewModel>(),
+                DependencyService.Get<DAppConnectionRequestViewModel>(),
+                DependencyService.Get<MessagePopupViewModel>(),
+                DependencyService.Get<AddressQrCodeViewModel>(),
+                DependencyService.Get<Components.Solana.Transfer.SolanaTransferViewModel>(),
+                DependencyService.Get<Components.Solana.Transfer.SolanaTokenSelectViewModel>(),
+                DependencyService.Get<MessageSignRequestViewModel>(),
+                DependencyService.Get<AssetSelectViewModel>(),
+                DependencyService.Get<NetworkSelectPopupViewModel>(),
+                DependencyService.Get<TransactionAnalyzerConfirmationViewModel>(),
+                DependencyService.Get<EnterPasswordPopupViewModel>(),
+                DependencyService.Get<SuccessfulImportPopupViewModel>(),
+                DependencyService.Get<BuyPropertyTokensViewModel>(),
+                DependencyService.Get<NoAccountPopupViewModel>(),
+                DependencyService.Get<ImportWarningPopupViewModel>(),
+                DependencyService.Get<ImportMethodPopupViewModel>(),
+                DependencyService.Get<CreateSolanaMnemonicsPopupViewModel>(),
+                DependencyService.Get<EnterSolanaMnemonicsPopupViewModel>(),
+                DependencyService.Get<ConnectMwaPopupViewModel>(),
+                DependencyService.Get<MwaSignPopupViewModel>(),
+                DependencyService.Get<LogOutPopupViewModel>(),
+                DependencyService.Get<CancelReservationPopupViewModel>(),
+                DependencyService.Get<OnboardingInProgressPopupViewModel>(),
+                DependencyService.Get<NoDidPopupViewModel>(),
+                DependencyService.Get<NoKYCPopupViewModel>(),
+                DependencyService.Get<RelistPropertyTokensViewModel>(),
+                DependencyService.Get<NotWhitelistedPopupViewModel>(),
+                DependencyService.Get<UserProfileNotCreatedPopupViewModel>(),
+                DependencyService.Get<WebSignRawPopupViewModel>(),
+                DependencyService.Get<DAppWebViewConnectionRequestPopupViewModel>(),
+                DependencyService.Get<PropertyMarketplaceFilterPopupViewModel>(),
+                DependencyService.Get<PropertyMarketplaceSelectionPopupViewModel>(),
+                DependencyService.Get<Components.Form.CountrySelectPopupViewModel>(),
+            })
+            {
+                PopupManager.TrackPopup(popupViewModel);
+            }
         }
 
         /// <summary>

@@ -1,3 +1,5 @@
+using PlutoFramework.Model;
+
 namespace PlutoFramework.Components.NavigationBar;
 
 using System.Windows.Input;
@@ -44,6 +46,12 @@ public partial class TopNavigationStepperBar : ContentView
 
     private static async Task GoBackAsync()
     {
+        // A visible popup is dismissed before the page goes back.
+        if (PopupManager.TryCloseTopPopup())
+        {
+            return;
+        }
+
         var navigation = Shell.Current?.Navigation;
 
         if (navigation is not null && navigation.NavigationStack.Count > 1)

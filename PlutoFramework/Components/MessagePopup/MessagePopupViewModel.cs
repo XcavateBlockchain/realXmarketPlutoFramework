@@ -1,9 +1,10 @@
 ﻿using System;
 using CommunityToolkit.Mvvm.ComponentModel;
+using PlutoFramework.Model;
 
 namespace PlutoFramework.Components.MessagePopup
 {
-    public partial class MessagePopupViewModel : ObservableObject
+    public partial class MessagePopupViewModel : ObservableObject, IPopup
     {
         [ObservableProperty]
         private string title;

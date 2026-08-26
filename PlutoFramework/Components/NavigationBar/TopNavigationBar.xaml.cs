@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Model;
 
 namespace PlutoFramework.Components.NavigationBar;
 
@@ -64,6 +65,12 @@ public partial class TopNavigationBar : ContentView
     }
     private async void OnBackClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)
     {
+        // A visible popup is dismissed before the page goes back.
+        if (PopupManager.TryCloseTopPopup())
+        {
+            return;
+        }
+
         if (BackFunc is not null)
         {
             await BackFunc();

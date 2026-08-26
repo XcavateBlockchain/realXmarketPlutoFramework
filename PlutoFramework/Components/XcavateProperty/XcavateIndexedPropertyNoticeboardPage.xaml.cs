@@ -1,3 +1,5 @@
+using PlutoFramework.Model;
+
 namespace PlutoFramework.Components.XcavateProperty;
 
 public partial class XcavateIndexedPropertyNoticeboardPage : ContentPage
@@ -12,6 +14,13 @@ public partial class XcavateIndexedPropertyNoticeboardPage : ContentPage
         InitializeComponent();
 
         navigationBarViewModel = DependencyService.Get<PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel>();
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        // A visible popup (e.g. the transfer popup) is dismissed before the page itself
+        // goes back.
+        return PopupManager.TryCloseTopPopup() || base.OnBackButtonPressed();
     }
 
     protected override async void OnNavigatedTo(NavigatedToEventArgs args)

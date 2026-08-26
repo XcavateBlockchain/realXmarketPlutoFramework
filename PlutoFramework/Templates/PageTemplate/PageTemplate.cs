@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using MauiView = Microsoft.Maui.Controls.View;
+using PlutoFramework.Model;
 using TopNavigationBarTemplateView = PlutoFramework.Templates.TopNavigationBarTemplate.TopNavigationBarTemplate;
 
 namespace PlutoFramework.Templates.PageTemplate
@@ -121,6 +122,13 @@ namespace PlutoFramework.Templates.PageTemplate
             AutomationProperties.SetIsInAccessibleTree(this, true);
 
             HideSoftInputOnTapped = true;
+        }
+
+        protected override bool OnBackButtonPressed()
+        {
+            // A visible popup (e.g. a transfer or confirmation popup) must be dismissed
+            // before the page itself can go back.
+            return PopupManager.TryCloseTopPopup() || base.OnBackButtonPressed();
         }
 
         private void ApplyScrollViewPadding()

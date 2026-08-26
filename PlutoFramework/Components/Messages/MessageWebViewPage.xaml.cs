@@ -138,6 +138,13 @@ public partial class MessageWebViewPage : PageTemplate
 
     protected override bool OnBackButtonPressed()
     {
+        // A visible popup (e.g. a dApp connection request raised by the hosted page) is
+        // dismissed before the hosted page navigates back.
+        if (PopupManager.TryCloseTopPopup())
+        {
+            return true;
+        }
+
         if (NavigateBackInWebView())
         {
             return true;
