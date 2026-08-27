@@ -22,14 +22,32 @@ namespace PlutoFrameworkTests
 
             // Whatever is listed on devnet right now must come out renderable: the
             // marketplace views need these to be non-null.
+            var withDocument = 0;
+
             foreach (var property in properties)
             {
                 Assert.That(property.XcavateMetadata, Is.Not.Null);
                 Assert.That(property.OngoingObjectListingDetails, Is.Not.Null);
                 Assert.That(property.Metadata, Is.Not.Null);
 
+                // The asset's nested metadata document (fetched and decomposed by the
+                // indexer, ADR-27) flows into the view shape: the base image is the
+                // document's first file, and both names agree on the document's.
+                if (property.Metadata.Image.Length > 0)
+                {
+                    withDocument++;
+
+                    Assert.That(property.XcavateMetadata!.Files, Is.Not.Empty);
+                    Assert.That(property.Metadata.Name, Is.EqualTo(property.XcavateMetadata.PropertyName));
+                }
+
                 Console.WriteLine($"{property.ListingId}: {property.XcavateMetadata!.PropertyName} ({property.ListingStatus})");
             }
+
+            // The devnet enricher snapshots the live assets' documents, so a feed of
+            // listings over assets with documents must surface at least one of them.
+            // (Kept soft on purpose for devnets that run with zero documents.)
+            Console.WriteLine($"{withDocument}/{properties.Count} listings carry a metadata document");
         }
 
         [Test]

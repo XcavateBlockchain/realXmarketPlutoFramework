@@ -3,6 +3,7 @@ using StrawberryShake;
 using Substrate.NetApi.Model.Types.Primitive;
 using System.Globalization;
 using System.Numerics;
+using System.Text.Json;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
 using XcavateDevnetIndexer;
@@ -14,13 +15,15 @@ namespace PlutoFramework.Model.Xcavate
     /// Xcavate indexer - the replacement for the SubQuery-backed
     /// <c>UniqueryPlus.Nfts.XcavateIndexerModel</c> marketplace feed.
     /// <para>
-    /// The chain carries a <c>metadataUri</c> per property asset pointing at the webapp's
-    /// property document (name, address, images, finances), fetched and mapped through
-    /// <see cref="XcavateSolanaPropertyMetadataClient"/>; when the URI is still empty or the
-    /// fetch fails, the mapped record degrades to a minimal <see cref="PropertyMetadata"/>
-    /// synthesized from chain data so the existing views still render. There is no
-    /// server-side text filtering either way - the old town/type/name filters are answered
-    /// client-side by <see cref="MatchesFilter"/>.
+    /// Each property asset nests the webapp's property document (name, address, images,
+    /// finances) as <c>metadata</c>: the indexer's background enricher fetches and
+    /// decomposes the <c>metadataUri</c> document server-side (ADR-27), so the app reads
+    /// it from the same query instead of downloading and parsing the JSON itself. When
+    /// the enricher has no snapshot for an asset yet (<c>metadata</c> is null), the mapped
+    /// record degrades to a minimal <see cref="PropertyMetadata"/> synthesized from chain
+    /// data so the existing views still render. There is no server-side text filtering
+    /// either way - the old town/type/name filters are answered client-side by
+    /// <see cref="MatchesFilter"/>.
     /// </para>
     /// </summary>
     public static class XcavateMarketplaceIndexerModel
@@ -64,15 +67,14 @@ namespace PlutoFramework.Model.Xcavate
                 return [];
             }
 
-            // The flat QueryRoot has no listing -> asset join, so the asset behind each
-            // listing is a second lookup (plus its metadata document); the listings are
-            // independent, so all run at once.
+            // The flat QueryRoot has no listing -> asset join, so the asset (and its
+            // nested metadata document) behind each listing is a second lookup; the
+            // listings are independent, so all run at once.
             var mapped = await Task.WhenAll(
                 listings.Select(async listing =>
                 {
                     var asset = await GetPropertyAssetAsync(client, listing.AssetId, token).ConfigureAwait(false);
-                    var metadata = await XcavateSolanaPropertyMetadataClient.GetAsync(asset?.MetadataUri, token).ConfigureAwait(false);
-                    return MapListing(listing, asset, metadata);
+                    return MapListing(listing, asset);
                 }))
                 .ConfigureAwait(false);
 
@@ -107,9 +109,8 @@ namespace PlutoFramework.Model.Xcavate
             }
 
             var asset = await GetPropertyAssetAsync(client, listing.AssetId, token).ConfigureAwait(false);
-            var metadata = await XcavateSolanaPropertyMetadataClient.GetAsync(asset?.MetadataUri, token).ConfigureAwait(false);
 
-            var nft = MapListing(listing, asset, metadata);
+            var nft = MapListing(listing, asset);
 
             if (investor is not null && nft.OngoingObjectListingDetails is not null)
             {
@@ -213,9 +214,12 @@ namespace PlutoFramework.Model.Xcavate
 
         private static XcavateSolanaListingNft MapListing(
             IListingParts listing,
-            IMarketplacePropertyAsset_PropertyAssets_Nodes? asset,
-            XcavateSolanaPropertyMetadata? offchainMetadata)
+            IMarketplacePropertyAsset_PropertyAssets_Nodes? asset)
         {
+            // The indexer's background enricher has already fetched and decomposed the
+            // document `metadataUri` points at (ADR-27), nested on the asset itself; null
+            // while the enricher has no snapshot for this PDA (fetch pending or failing).
+            var offchainMetadata = asset?.Metadata;
             var listingId = ParseInt64(listing.ListingId);
             var assetId = ParseInt64(listing.AssetId);
             var listed = ParseInt64(listing.ListedShareAmount);
@@ -245,23 +249,29 @@ namespace PlutoFramework.Model.Xcavate
                 string.IsNullOrWhiteSpace(asset?.Location) ? null : $"Property {asset!.Location}",
                 $"Listing #{listingId}")!;
 
+            // The indexer carries the document's image list as a raw JSON string (juniper
+            // has no JSON scalar), so it is decoded here once and shared with the view.
+            var images = ParseStringArray(offchainMetadata?.PropertyImages);
+
             var metadata = new MetadataBase
             {
                 Name = propertyName,
                 Description = offchainMetadata?.PropertyDescription ?? string.Empty,
-                Image = offchainMetadata?.PropertyImages.FirstOrDefault() ?? string.Empty,
+                Image = images.FirstOrDefault() ?? string.Empty,
             };
 
-            // The webapp document when the asset carries one, degraded to a minimal
-            // record synthesized from chain state when not - the views need a non-null
-            // PropertyMetadata to render at all.
-            var propertyMetadata = offchainMetadata?.ToPropertyMetadata() ?? new PropertyMetadata
-            {
-                Financials = new PropertyFinancials(),
-                Files = [],
-                Address = new PropertyAddress(),
-                Attributes = new PropertyAttributes(),
-            };
+            // The indexer's decomposed document when the asset carries one, degraded to a
+            // minimal record synthesized from chain state when not - the views need a
+            // non-null PropertyMetadata to render at all.
+            var propertyMetadata = offchainMetadata is not null
+                ? MapPropertyMetadata(offchainMetadata)
+                : new PropertyMetadata
+                {
+                    Financials = new PropertyFinancials(),
+                    Files = [],
+                    Address = new PropertyAddress(),
+                    Attributes = new PropertyAttributes(),
+                };
 
             // Chain-authoritative fields win over whatever the document said: the buy flow
             // prices and counts shares with these, and the sale's status and developer are
@@ -357,6 +367,110 @@ namespace PlutoFramework.Model.Xcavate
             }
 
             return BigInteger.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : BigInteger.Zero;
+        }
+
+        private static decimal ParseDecimal(string? value)
+        {
+            return decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0m;
+        }
+
+        private static int? ParseInt32(string? value)
+        {
+            return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : null;
+        }
+
+        /// <summary>
+        /// The indexer's enricher stores the document's URL arrays (<c>propertyImages</c>,
+        /// <c>otherDocuments</c>) as raw JSON strings - juniper has no JSON scalar - so the
+        /// array is decoded here. Malformed or empty input degrades to no URLs.
+        /// </summary>
+        private static List<string> ParseStringArray(string? rawJson)
+        {
+            if (string.IsNullOrWhiteSpace(rawJson))
+            {
+                return [];
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<string>>(rawJson) ?? [];
+            }
+            catch (JsonException)
+            {
+                return [];
+            }
+        }
+
+        /// <summary>
+        /// The <see cref="PropertyMetadata"/> the property views bind to, built from the
+        /// indexer's decomposed document. The chain-authoritative overwrite that
+        /// <see cref="MapListing"/> applies afterwards is unchanged; only the source of
+        /// the document data moved from an app-side HTTP fetch to the indexer.
+        /// </summary>
+        private static PropertyMetadata MapPropertyMetadata(IMarketplacePropertyAsset_PropertyAssets_Nodes_Metadata metadata)
+        {
+            var address = metadata.Address;
+            var attributes = metadata.Attributes;
+            var finances = metadata.Finances;
+
+            return new PropertyMetadata
+            {
+                Status = metadata.Status,
+                PropertyName = metadata.PropertyName,
+                Financials = new PropertyFinancials
+                {
+                    PropertyPrice = ParseDecimal(finances?.PropertyPrice),
+                    NumberOfTokens = (int)Math.Clamp(ParseInt64(finances?.NumberOfShares), 0, int.MaxValue),
+                    PricePerToken = ParseDecimal(finances?.SharePrice),
+                    EstimatedRentalIncome = ParseDecimal(finances?.EstimatedRentalIncome),
+                    AnnualServiceCharge = ParseDecimal(finances?.AnnualServiceCharge),
+                    StampDutyTax = ParseDecimal(finances?.StampDutyTax),
+                    IsStampDutyPaid = finances?.IsStampDutyPaid ?? false,
+                    IsAnnualServiceChargePaid = finances?.IsAnnualServiceChargePaid ?? false,
+                },
+                // Files is what every view treats as the image list.
+                Files = ParseStringArray(metadata.PropertyImages),
+                CreatedAt = metadata.CreatedAt ?? default,
+                UpdatedAt = metadata.UpdatedAt ?? default,
+                Address = address is null
+                    ? new PropertyAddress()
+                    : new PropertyAddress
+                    {
+                        Street = address.Street,
+                        TownCity = address.TownCity,
+                        FlatOrUnit = address.FlatOrUnit,
+                        PostCode = address.PostCode,
+                        LocalAuthority = address.LocalAuthority,
+                    },
+                Company = metadata.CompanyName is null && metadata.CompanyLogo is null
+                    ? null
+                    : new PropertyCompany
+                    {
+                        Name = metadata.CompanyName,
+                        Logo = metadata.CompanyLogo,
+                    },
+                PropertyDescription = metadata.PropertyDescription,
+                PropertyType = metadata.PropertyType,
+                Map = metadata.MapUrl,
+                PlanningCode = metadata.PlanningCode,
+                PropertyId = metadata.PropertyId,
+                // The developer identity the document knows; the listing's on-chain
+                // developer overwrites it in MapListing.
+                DeveloperAddress = metadata.CompanyWalletAddress ?? metadata.User,
+                AccountAddress = metadata.User,
+                Attributes = attributes is null
+                    ? null
+                    : new PropertyAttributes
+                    {
+                        Area = attributes.Area,
+                        Quality = attributes.Quality,
+                        OutdoorSpace = attributes.OutdoorSpace,
+                        NumberOfBedrooms = ParseInt32(attributes.NumberOfBedrooms),
+                        NumberOfBathrooms = ParseInt32(attributes.NumberOfBathrooms),
+                        ConstructionDate = attributes.ConstructionDate,
+                        OffStreetParking = attributes.OffStreetParking,
+                    },
+            };
         }
     }
 }

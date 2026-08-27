@@ -490,7 +490,7 @@ type ProgramUpgrade {
   detectedAt: DateTime!
 }
 
-"The tokenised property behind one listing (`asset_id == listing_id` in current source).\n`name` and `metadata_uri` are empty until `init_property_assets` attaches them."
+"The tokenised property behind one listing (`asset_id == listing_id` in current source).\n`name` and `metadata_uri` are empty until `init_property_assets` attaches them.\n`metadata` is the fetched-and-decomposed off-chain document `metadata_uri` points at\n(ADR-27), nested so asset and document answer in ONE query; `null` while the enricher\nhas no row for this PDA (fetch pending or still failing)."
 type PropertyAsset {
   id: ID!
   slot: I64!
@@ -500,6 +500,8 @@ type PropertyAsset {
   assetId: I64!
   name: String!
   metadataUri: String!
+  "The fetched-and-decomposed metadata document (ADR-27); `null` until one exists."
+  metadata: PropertyMetadata
   shareMint: String!
   regionId: Int!
   location: String!
@@ -581,6 +583,87 @@ type PropertyLetting {
 type PropertyLettingConnection {
   nodes: [PropertyLetting!]!
   totalCount: Int!
+}
+
+"One fetched-and-decomposed metadata document. Wallets are base58; `raw` /\n`otherDocuments` / `propertyImages` are raw JSON (juniper has no JSON scalar); the nested\nobjects are present only when the document had at least one field in them."
+type PropertyMetadata {
+  id: ID!
+  assetId: I64!
+  "The URI the last attempt targeted."
+  metadataUri: String!
+  "When the last successful snapshot was fetched; `null` until one exists."
+  fetchedAt: DateTime
+  "Consecutive failures for `metadata_uri` (reset to 0 by a success)."
+  attempts: Int!
+  "The last failure's message; `null` when the row's state is a success."
+  lastError: String
+  "The whole document verbatim -- the ground truth the typed fields are derived from;\n`null` until the first successful fetch."
+  raw: String
+  propertyId: String
+  propertyName: String
+  propertyType: String
+  status: String
+  tenure: String
+  propertyDescription: String
+  planningCode: String
+  buildingControlCode: String
+  user: String
+  companyId: String
+  companyName: String
+  companyLogo: String
+  companyWalletAddress: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  address: PropertyMetadataAddress
+  attributes: PropertyMetadataAttributes
+  finances: PropertyMetadataFinances
+  floorPlan: String
+  mapUrl: String
+  salesAgreement: String
+  "Raw JSON array of URL strings."
+  otherDocuments: String
+  "Raw JSON array of URL strings."
+  propertyImages: String
+}
+
+"The document's `address` object."
+type PropertyMetadataAddress {
+  street: String
+  townCity: String
+  flatOrUnit: String
+  postCode: String
+  localAuthority: String
+  region: String
+  location: String
+}
+
+"The document's `attributes` object."
+type PropertyMetadataAttributes {
+  area: String
+  quality: String
+  outdoorSpace: String
+  numberOfBedrooms: I64
+  numberOfBathrooms: I64
+  "The document's `YYYY-MM-DD` date, as stored."
+  constructionDate: String
+  offStreetParking: String
+}
+
+type PropertyMetadataConnection {
+  nodes: [PropertyMetadata!]!
+  totalCount: Int!
+}
+
+"The document's `finances` object."
+type PropertyMetadataFinances {
+  propertyPrice: I64
+  numberOfShares: I64
+  sharePrice: I64
+  estimatedRentalIncome: I64
+  annualServiceCharge: I64
+  stampDutyTax: I64
+  isStampDutyPaid: Boolean
+  isAnnualServiceChargePaid: Boolean
 }
 
 "A spending proposal put to a property's holders (only above-low-tier proposals reach\nstorage; auto-approved ones close inside their own instruction). `detailsHash` is the\noff-chain document hash, lowercase hex."
@@ -684,7 +767,7 @@ type QueryRoot {
     first: Int
     offset: Int
   ): LawyerVoteConnection!
-  "Tokenised property assets backing listings."
+  "Tokenised property assets backing listings. Each node nests the fetched-and-\ndecomposed off-chain metadata document (`metadata`, ADR-27) when the enricher has\none for the asset's PDA — asset + document in a single query (`metadata` is\n`null` while the fetch is pending or failing)."
   propertyAssets(
     assetId: I64
     regionId: Int
@@ -692,6 +775,8 @@ type QueryRoot {
     first: Int
     offset: Int
   ): PropertyAssetConnection!
+  "Fetched and decomposed off-chain metadata for property assets (ADR-27): the indexer's\nbackground enricher downloads the JSON document each `metadataUri` points at; one row\nper asset, latest snapshot first."
+  propertyMetadata(assetId: I64, first: Int, offset: Int): PropertyMetadataConnection!
   "Per-token-account reservation totals."
   reservations(tokenAccount: String, active: Boolean, first: Int, offset: Int): ReservationConnection!
   "Investors' share holdings per asset."
@@ -1073,4 +1158,4 @@ type WhitelistAction {
 type WhitelistActionConnection {
   nodes: [WhitelistAction!]!
   totalCount: Int!
-}
+}
