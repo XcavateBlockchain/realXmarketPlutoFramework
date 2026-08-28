@@ -171,6 +171,37 @@ namespace PlutoFrameworkCore.Solana
         }
 
         /// <summary>
+        /// The number of signature slots a compiled message requires: its header's
+        /// numRequiredSignatures, the exact count a wire-format transaction built from it
+        /// must carry.
+        /// </summary>
+        /// <remarks>
+        /// A node rejects a transaction whose signature slots disagree with the header
+        /// count as a malformed transaction, with a "failed to sanitize accounts offsets"
+        /// error that has nothing to do with the message's actual account offsets, so the
+        /// slots must be sized from this value rather than assumed.
+        /// </remarks>
+        public static int GetRequiredSignatures(byte[] compiledMessage)
+        {
+            if (compiledMessage.Length == 0)
+            {
+                throw new ArgumentException("Compiled message is empty", nameof(compiledMessage));
+            }
+
+            // A versioned message opens with a marker byte, a legacy one straight into the
+            // header. Read as a signer count, a v0 marker would say 128 and misplace
+            // every offset after it.
+            var offset = (compiledMessage[0] & MESSAGE_VERSION_PREFIX_BIT) != 0 ? 1 : 0;
+
+            if (compiledMessage.Length < offset + MESSAGE_HEADER_LENGTH)
+            {
+                throw new FormatException("Message is too short to contain a header");
+            }
+
+            return compiledMessage[offset];
+        }
+
+        /// <summary>
         /// The index of <paramref name="publicKey"/> among a message's required signers, which
         /// is the signature slot it must sign into.
         /// </summary>
@@ -191,17 +222,9 @@ namespace PlutoFrameworkCore.Solana
                     $"A Solana public key is {PUBLIC_KEY_LENGTH} bytes, not {publicKey.Length}", nameof(publicKey));
             }
 
-            // A versioned message opens with a marker byte, a legacy one straight into the
-            // header. Read as a signer count, a v0 marker would say 128 and misplace
-            // every offset after it.
-            var offset = message.Length > 0 && (message[0] & MESSAGE_VERSION_PREFIX_BIT) != 0 ? 1 : 0;
+            var requiredSignatures = GetRequiredSignatures(message);
 
-            if (message.Length < offset + MESSAGE_HEADER_LENGTH)
-            {
-                throw new FormatException("Message is too short to contain a header");
-            }
-
-            var requiredSignatures = message[offset];
+            var offset = (message[0] & MESSAGE_VERSION_PREFIX_BIT) != 0 ? 1 : 0;
 
             offset += MESSAGE_HEADER_LENGTH;
 

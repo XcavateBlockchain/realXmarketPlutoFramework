@@ -41,8 +41,24 @@ namespace PlutoFramework.Model.Solana
             string reason,
             CancellationToken token)
         {
-            // Build signs the compiled message and serializes the result in one step.
-            var signedTransaction = builder.Build(key.Account);
+            // Framed by hand rather than via Build(key): Build emits a single signature
+            // slot no matter how many the message's header requires, and a node rejects
+            // a slot count that disagrees with the header as a malformed ("failed to
+            // sanitize accounts offsets") transaction. The framer sizes the slots to the
+            // header and signs only this account's slot; a message that needs other
+            // signers then fails on submission with the real reason - a missing
+            // signature, not a malformed-transaction error.
+            var compiled = builder.CompileMessage();
+
+            var framed = SolanaTransactionFramer.FrameUnsigned(
+                compiled, SolanaTransactionFramer.GetRequiredSignatures(compiled));
+
+            var parsed = SolanaTransactionFramer.Parse(framed);
+
+            var signerIndex = SolanaTransactionFramer.FindSignerIndex(parsed.Message, key.Account.PublicKey.KeyBytes);
+
+            var signedTransaction = SolanaTransactionFramer.ApplySignature(
+                parsed, signerIndex, key.Account.Sign(parsed.Message));
 
             return await SolanaRpcModel.SendTransactionAsync(cluster, signedTransaction, token);
         }

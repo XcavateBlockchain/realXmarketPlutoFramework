@@ -373,6 +373,8 @@ type Listing {
   spvElectionCandidateCount: I64!
   spvElectionRound: I64!
   status: ListingStatus!
+  "The tokenised property this listing sells, joined by the listing's `asset_id`;\n`null` while the listing is still `PENDING_ASSETS` (the asset PDA does not exist yet),\nso the asset and its nested `metadata` document answer in the same query as the listing."
+  propertyAsset: PropertyAsset
 }
 
 type ListingConnection {

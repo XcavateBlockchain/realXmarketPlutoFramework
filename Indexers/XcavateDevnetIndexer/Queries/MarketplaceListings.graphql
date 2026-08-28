@@ -15,6 +15,11 @@
 # There is no text filtering here on purpose. This indexer only knows on-chain state,
 # so the old `includesInsensitive` town/type/name filters have no server-side
 # counterpart; the app filters the mapped page client-side instead.
+#
+# `propertyAsset` is nested on the listing itself: the indexer joins it by the
+# listing's own `asset_id` in the same request, so the feed answers listing, asset
+# and the asset's decomposed `metadata` document in ONE query - `null` for
+# PENDING_ASSETS listings whose asset PDA does not exist yet.
 query MarketplaceListings($first: Int!, $offset: Int!) {
   listings(active: true, first: $first, offset: $offset) {
     totalCount
@@ -39,4 +44,58 @@ fragment ListingParts on Listing {
   listingExpiry
   claimDeadline
   status
+  propertyAsset {
+    id
+    assetId
+    name
+    shareMint
+    regionId
+    location
+    shareAmount
+    spvCreated
+    finalized
+    holderCount
+    metadata {
+      propertyId
+      propertyName
+      propertyType
+      status
+      propertyDescription
+      planningCode
+      mapUrl
+      companyName
+      companyLogo
+      companyWalletAddress
+      user
+      createdAt
+      updatedAt
+      propertyImages
+      address {
+        street
+        townCity
+        flatOrUnit
+        postCode
+        localAuthority
+      }
+      attributes {
+        area
+        quality
+        outdoorSpace
+        numberOfBedrooms
+        numberOfBathrooms
+        constructionDate
+        offStreetParking
+      }
+      finances {
+        propertyPrice
+        numberOfShares
+        sharePrice
+        estimatedRentalIncome
+        annualServiceCharge
+        stampDutyTax
+        isStampDutyPaid
+        isAnnualServiceChargePaid
+      }
+    }
+  }
 }

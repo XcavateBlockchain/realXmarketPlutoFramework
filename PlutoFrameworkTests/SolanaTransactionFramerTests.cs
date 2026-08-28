@@ -126,6 +126,63 @@ namespace PlutoFrameworkTests
         }
     }
 
+    public class GetRequiredSignaturesTests
+    {
+        [Test]
+        public void ReadsTheHeaderCountOfALegacyMessage()
+        {
+            var message = WireFormat.LegacyMessage(3, WireFormat.Key(0xAA), WireFormat.Key(0xBB), WireFormat.Key(0xCC));
+
+            Assert.That(SolanaTransactionFramer.GetRequiredSignatures(message), Is.EqualTo(3));
+        }
+
+        /// <summary>
+        /// A v0 message opens with the 0x80 marker, which read as a count would say 128
+        /// signers and misplace every later offset.
+        /// </summary>
+        [Test]
+        public void ReadsPastTheVersionMarkerOfAV0Message()
+        {
+            var message = WireFormat.VersionedMessage(2, WireFormat.Key(0xAA), WireFormat.Key(0xBB));
+
+            Assert.That(SolanaTransactionFramer.GetRequiredSignatures(message), Is.EqualTo(2));
+        }
+
+        /// <summary>
+        /// The regression behind the size change: framing a message with this count yields a
+        /// wire transaction whose slot count the node accepts, where an assumed one slot
+        /// for a two-signer message read back as a malformed transaction.
+        /// </summary>
+        [Test]
+        public void SizedFramingRoundTripsThroughParse()
+        {
+            var message = WireFormat.LegacyMessage(2, WireFormat.Key(0xAA), WireFormat.Key(0xBB));
+
+            var framed = SolanaTransactionFramer.FrameUnsigned(
+                message, SolanaTransactionFramer.GetRequiredSignatures(message));
+
+            var parsed = SolanaTransactionFramer.Parse(framed);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(parsed.Signatures, Has.Length.EqualTo(2));
+                Assert.That(parsed.Message, Is.EqualTo(message));
+            });
+        }
+
+        [Test]
+        public void RejectsAnEmptyMessage()
+        {
+            Assert.Throws<ArgumentException>(() => SolanaTransactionFramer.GetRequiredSignatures([]));
+        }
+
+        [Test]
+        public void RejectsAMessageTooShortForAHeader()
+        {
+            Assert.Throws<FormatException>(() => SolanaTransactionFramer.GetRequiredSignatures([0x01, 0x00]));
+        }
+    }
+
     public class ExtractSignatureTests
     {
         private const int SIGNATURE_LENGTH = 64;

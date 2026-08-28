@@ -1,5 +1,6 @@
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Solana;
+using Solnet.Rpc.Builders;
 using Solnet.Wallet;
 using System.Security.Cryptography;
 using System.Text;
@@ -124,6 +125,32 @@ namespace PlutoFrameworkTests
                 Assert.That(unreserve.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
                 Assert.That(createSpv.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
             });
+        }
+
+        /// <summary>
+        /// The regression behind "failed to sanitize accounts offsets": the compiled
+        /// message's header requires two signature slots (investor plus the rent collector),
+        /// and a wire transaction framed with fewer slots is rejected as malformed.
+        /// </summary>
+        [Test]
+        public void ReserveShares_CompiledMessageRequiresTwoSignatures()
+        {
+            var investor = SyntheticKey(1);
+            var payer = SyntheticKey(2);
+            var mint = SyntheticKey(3);
+            var paymentAccount = SyntheticKey(4);
+            var legacyToken = new PublicKey(SolanaTokenProgram.Legacy);
+
+            var builder = new TransactionBuilder()
+                .SetRecentBlockHash(SolanaBase58.Encode(new byte[32]))
+                .SetFeePayer(investor)
+                .AddInstruction(
+                    XcavateMarketplaceProgram.ReserveShares(
+                        Programs, investor, payer, 7, 5, 1_000, mint, paymentAccount, legacyToken));
+
+            var compiled = builder.CompileMessage();
+
+            Assert.That(SolanaTransactionFramer.GetRequiredSignatures(compiled), Is.EqualTo(2));
         }
 
         [Test]

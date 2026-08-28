@@ -21,10 +21,10 @@ namespace PlutoFramework.Model.Xcavate
     /// On the sponsor: reserve_shares, buy_property_shares and claim_shares take a
     /// rent-fronting <c>payer</c> that the program pins to the config's rent collector,
     /// and a signer at that. This app holds only the investor's key, so those
-    /// transactions are built correctly but cannot carry the sponsor's signature until a
-    /// co-signing service exists - they are rejected at submission with a
-    /// signature-verification error today. The seam for that service is exactly here,
-    /// where the payer is resolved.
+    /// transactions cannot carry the sponsor's signature until a co-signing service
+    /// exists - until one does, the transaction submitter spots the second required
+    /// signer before anything is signed or sent and reports the reason. The seam for
+    /// that service is exactly here, where the payer is resolved.
     /// </remarks>
     public static class XcavateMarketplaceCallsModel
     {

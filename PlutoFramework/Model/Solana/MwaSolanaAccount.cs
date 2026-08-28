@@ -71,7 +71,14 @@ namespace PlutoFramework.Model.Solana
                 {
                     // The wallet needs a wire-format transaction with an empty signature slot
                     // to fill in, which is not what Solnet's Serialize() produces unsigned.
-                    var payload = SolanaTransactionFramer.FrameUnsigned(builder.CompileMessage(), REQUIRED_SIGNATURES);
+                    // The slot count comes from the message header: a transaction whose
+                    // slots disagree with its declared signer count is rejected on
+                    // submission with a misleading "sanitize accounts offsets" error.
+                    var compiled = builder.CompileMessage();
+
+                    var payload = SolanaTransactionFramer.FrameUnsigned(
+                        compiled,
+                        SolanaTransactionFramer.GetRequiredSignatures(compiled));
 
                     var signatures = await client.SignAndSendTransactionsAsync([payload], operationToken);
 

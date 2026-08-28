@@ -67,18 +67,11 @@ namespace PlutoFramework.Model.Xcavate
                 return [];
             }
 
-            // The flat QueryRoot has no listing -> asset join, so the asset (and its
-            // nested metadata document) behind each listing is a second lookup; the
-            // listings are independent, so all run at once.
-            var mapped = await Task.WhenAll(
-                listings.Select(async listing =>
-                {
-                    var asset = await GetPropertyAssetAsync(client, listing.AssetId, token).ConfigureAwait(false);
-                    return MapListing(listing, asset);
-                }))
-                .ConfigureAwait(false);
-
-            return mapped;
+            // The asset (and its nested metadata document) arrives joined on each listing,
+            // so one query answers the whole page - no second per-asset lookup.
+            return listings
+                .Select(listing => MapListing(listing, listing.PropertyAsset))
+                .ToList();
         }
 
         /// <summary>
@@ -108,7 +101,8 @@ namespace PlutoFramework.Model.Xcavate
                 return null;
             }
 
-            var asset = await GetPropertyAssetAsync(client, listing.AssetId, token).ConfigureAwait(false);
+            // The joined asset arrives with the listing - no second lookup.
+            var asset = listing.PropertyAsset;
 
             var nft = MapListing(listing, asset);
 
@@ -198,23 +192,9 @@ namespace PlutoFramework.Model.Xcavate
             return values.Any(value => value?.Contains(filter, StringComparison.OrdinalIgnoreCase) == true);
         }
 
-        private static async Task<IMarketplacePropertyAsset_PropertyAssets_Nodes?> GetPropertyAssetAsync(
-            IXcavateDevnetIndexerClient client,
-            string assetId,
-            CancellationToken token)
-        {
-            var result = await client.MarketplacePropertyAsset
-                .ExecuteAsync(assetId, token)
-                .ConfigureAwait(false);
-
-            result.EnsureNoErrors();
-
-            return result.Data?.PropertyAssets.Nodes.FirstOrDefault();
-        }
-
         private static XcavateSolanaListingNft MapListing(
             IListingParts listing,
-            IMarketplacePropertyAsset_PropertyAssets_Nodes? asset)
+            IMarketplaceListings_Listings_Nodes_PropertyAsset? asset)
         {
             // The indexer's background enricher has already fetched and decomposed the
             // document `metadataUri` points at (ADR-27), nested on the asset itself; null
@@ -407,7 +387,7 @@ namespace PlutoFramework.Model.Xcavate
         /// <see cref="MapListing"/> applies afterwards is unchanged; only the source of
         /// the document data moved from an app-side HTTP fetch to the indexer.
         /// </summary>
-        private static PropertyMetadata MapPropertyMetadata(IMarketplacePropertyAsset_PropertyAssets_Nodes_Metadata metadata)
+        private static PropertyMetadata MapPropertyMetadata(IMarketplaceListings_Listings_Nodes_PropertyAsset_Metadata metadata)
         {
             var address = metadata.Address;
             var attributes = metadata.Attributes;

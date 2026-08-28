@@ -21,12 +21,6 @@ namespace PlutoFramework.Model.Solana
     /// </summary>
     public abstract class PlutoFrameworkSolanaAccount
     {
-        /// <summary>
-        /// A transaction whose only signer is its fee payer, which is this account.
-        /// Multi-signature transactions are out of scope.
-        /// </summary>
-        protected const int REQUIRED_SIGNATURES = 1;
-
         /// <summary>Base58 Solana address.</summary>
         public abstract string Address { get; }
 
