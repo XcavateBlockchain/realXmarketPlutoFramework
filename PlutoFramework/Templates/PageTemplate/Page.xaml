@@ -68,7 +68,9 @@
 
             <xcavate:NotWhitelistedPopupView ZIndex="10" />
 
-            <password:EnterPasswordPopupView ZIndex="10"/>
+            <!-- Above the full-screen loading overlay (ZIndex=20): the user must always be
+                 able to enter a password, even while something is loading. -->
+            <password:EnterPasswordPopupView ZIndex="1000"/>
 
             <!-- Hosted here rather than per page so the global QR scanner can open a transfer
                  from wherever the user happens to be. The token picker stacks above it. -->

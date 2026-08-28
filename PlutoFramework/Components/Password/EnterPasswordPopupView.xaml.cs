@@ -6,6 +6,12 @@ public partial class EnterPasswordPopupView : ContentView
 	{
 		InitializeComponent();
 
+		// Top-most by default so a hosting page that forgets to set a ZIndex still
+		// renders the password prompt above the full-screen loading overlay (ZIndex=20)
+		// and every other popup layer. The user must never be locked out of entering
+		// a password because something is loading.
+		ZIndex = 1000;
+
         BindingContext = DependencyService.Get<EnterPasswordPopupViewModel>();
     }
 
