@@ -20,9 +20,35 @@
 # listing's own `asset_id` in the same request, so the feed answers listing, asset
 # and the asset's decomposed `metadata` document in ONE query - `null` for
 # PENDING_ASSETS listings whose asset PDA does not exist yet.
+#
+# This file deliberately holds BOTH `MarketplaceListings` and the single-listing
+# `MarketplaceListing` query (further down): the StrawberryShake codegen names the
+# `ListingParts` fragment's nested types after the operation it processes first,
+# and the order in which separate .graphql FILES are read is filesystem-dependent.
+# With the queries in two files the generated names differed between machines
+# (CI vs. local: `IMarketpageListings_...` vs. `IMarketpageListing_...`) and broke
+# the build non-deterministically. In ONE file the order is fixed by parse order,
+# so the names are stable. Keep both operations in this file.
 query MarketplaceListings($first: Int!, $offset: Int!) {
   listings(active: true, first: $first, offset: $offset) {
     totalCount
+    nodes {
+      ...ListingParts
+    }
+  }
+}
+
+# One listing, refetched fresh when the user opens its detail page. The list feed's
+# data may be minutes old by then; sale progress and status move under it.
+#
+# `active: true` matters here as much as in the feed: a listing wound down after the
+# feed loaded is soft-deleted, and an empty result is how the caller learns to keep
+# its stale-but-live list data instead of presenting a closed listing as current.
+#
+# `listingId` filters exactly (it is the listing's on-chain id, not the row id), so
+# `first: 1` is always the whole answer.
+query MarketplaceListing($listingId: I64!) {
+  listings(listingId: $listingId, active: true, first: 1, offset: 0) {
     nodes {
       ...ListingParts
     }
