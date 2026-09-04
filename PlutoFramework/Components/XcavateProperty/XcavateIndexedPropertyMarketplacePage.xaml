@@ -150,7 +150,7 @@
                 </CollectionView>
             </RefreshView>
 
-            <StackLayout Grid.Row="2" MinimumHeightRequest="200">
+            <StackLayout Grid.Row="2">
                 <loading:SkeletonCardView
                         IsVisible="{Binding Loading}"/>
                 <StackLayout HeightRequest="200"
