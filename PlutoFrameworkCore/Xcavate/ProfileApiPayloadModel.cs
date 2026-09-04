@@ -43,6 +43,45 @@ namespace PlutoFrameworkCore.Xcavate
             RegexOptions.CultureInvariant);
 
         /// <summary>
+        /// The prefix a Profile API signing string carries when it authenticates a POST
+        /// against the GraphQL endpoint the messenger dashboard signs for its state-changing
+        /// calls.
+        /// </summary>
+        public const string GraphqlPostPrefix = "POST:/graphql:";
+
+        /// <summary>
+        /// Whether the message a dapp asked to have signed is a GraphQL POST signing payload:
+        /// readable text starting with <see cref="GraphqlPostPrefix"/>.
+        /// </summary>
+        /// <remarks>
+        /// Unlike <see cref="IsProfileApiSignPayload(byte[], DateTime)"/> the rest of the
+        /// shape is deliberately not checked: this recogniser backs the strongest routine,
+        /// signing with no sheet and no password/biometric unlock at all, which is only ever
+        /// wired to the whitelisted messenger dashboard's own GraphQL calls.
+        /// </summary>
+        public static bool IsGraphqlPostPayload(byte[] messageBytes)
+        {
+            if (messageBytes.Length is 0 or > MaxPayloadLength)
+            {
+                return false;
+            }
+
+            string message;
+
+            try
+            {
+                message = StrictUtf8.GetString(messageBytes);
+            }
+            catch (DecoderFallbackException)
+            {
+                // Not text at all - a transaction blob or a digest, never a signing payload.
+                return false;
+            }
+
+            return message.StartsWith(GraphqlPostPrefix, StringComparison.Ordinal);
+        }
+
+        /// <summary>
         /// Whether the message a dapp asked to have signed is a Profile API signing payload
         /// with a timestamp near <paramref name="utcNow"/>.
         /// </summary>

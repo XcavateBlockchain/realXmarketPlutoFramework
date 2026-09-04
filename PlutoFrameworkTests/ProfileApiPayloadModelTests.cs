@@ -135,5 +135,55 @@ namespace PlutoFrameworkTests
             Assert.That(ProfileApiPayloadModel.IsProfileApiSignPayload(
                 new byte[] { 0x50, 0x4F, 0xFF, 0xFE, 0x00 }, Now), Is.False);
         }
+
+        [Test]
+        public void GraphqlPostPayload_Matches()
+        {
+            var payload = FreshPayload(path: "/graphql");
+
+            Assert.That(ProfileApiPayloadModel.IsGraphqlPostPayload(Encoding.UTF8.GetBytes(payload)), Is.True);
+        }
+
+        [Test]
+        public void GraphqlPostWithLooseTail_Matches()
+        {
+            // The prefix is the whole rule: a GraphQL signing string that the strict
+            // Profile API check rejects still signs without any prompt.
+            var payload = "POST:/graphql:0xfa8847b0c33183273f5945508b31c320:2026-07-29T12:00:00.123Z";
+
+            Assert.That(ProfileApiPayloadModel.IsProfileApiSignPayload(payload, Now), Is.False);
+            Assert.That(ProfileApiPayloadModel.IsGraphqlPostPayload(Encoding.UTF8.GetBytes(payload)), Is.True);
+        }
+
+        [Test]
+        public void OtherGraphqlMethods_DoNotMatch()
+        {
+            foreach (var method in new[] { "GET", "PUT", "DELETE", "post", "Patch" })
+            {
+                var payload = Encoding.UTF8.GetBytes($"{method}:/graphql:0xA:2026-07-29T12:00:00.0000000Z");
+
+                Assert.That(ProfileApiPayloadModel.IsGraphqlPostPayload(payload), Is.False);
+            }
+        }
+
+        [Test]
+        public void PostToOtherPath_DoesNotMatch()
+        {
+            var profiles = Encoding.UTF8.GetBytes(FreshPayload(path: "/api/profiles"));
+            var graphqlWithoutColon = Encoding.UTF8.GetBytes("POST:/graphql-ops:0xA:2026-07-29T12:00:00.0000000Z");
+
+            Assert.That(ProfileApiPayloadModel.IsGraphqlPostPayload(profiles), Is.False);
+            Assert.That(ProfileApiPayloadModel.IsGraphqlPostPayload(graphqlWithoutColon), Is.False);
+        }
+
+        [Test]
+        public void GraphqlPostEmptyOrBinary_DoesNotMatch()
+        {
+            Assert.That(ProfileApiPayloadModel.IsGraphqlPostPayload(Array.Empty<byte>()), Is.False);
+
+            // The prefix's first two bytes, then invalid UTF-8.
+            Assert.That(ProfileApiPayloadModel.IsGraphqlPostPayload(
+                new byte[] { 0x50, 0x4F, 0xFF, 0xFE, 0x00 }), Is.False);
+        }
     }
 }

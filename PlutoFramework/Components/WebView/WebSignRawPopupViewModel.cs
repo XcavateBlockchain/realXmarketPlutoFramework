@@ -1,4 +1,4 @@
-﻿using Chaos.NaCl;
+using Chaos.NaCl;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
@@ -96,6 +96,29 @@ namespace PlutoFramework.Components.WebView
             var account = await Model.KeysModel.GetAccountAsync()
                 ?? throw new Exception("No Substrate account is available to sign with.");
 
+            return SignWithAccount(account, msg);
+        }
+
+        /// <summary>
+        /// <see cref="SignWithSubstrateAccountAsync(byte[])"/> without the password/biometric
+        /// unlock: the key is read straight from secure storage. The messenger WebView's
+        /// bridge uses it for its GraphQL calls, which the whitelisted dashboard signs on
+        /// every state-changing request and which must never hold that page for a prompt.
+        /// </summary>
+        internal static async Task<byte[]> SignWithSubstrateAccountNoAuthAsync(byte[] msg)
+        {
+            var account = await Model.KeysModel.GetAccountNoAuthAsync()
+                ?? throw new Exception("No Substrate account is available to sign with.");
+
+            return SignWithAccount(account, msg);
+        }
+
+        /// <summary>
+        /// The actual signing step, shared by the auth and no-auth signers so both produce
+        /// an identical signature for a given account.
+        /// </summary>
+        private static byte[] SignWithAccount(Substrate.NetApi.Model.Types.Account account, byte[] msg)
+        {
             if (msg.Length > 256) msg = HashExtension.Blake2(msg, 256);
 
             return account.KeyType switch

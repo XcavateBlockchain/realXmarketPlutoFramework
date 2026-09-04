@@ -57,6 +57,16 @@ public class PolkadotExtensionWalletBridge
     /// </summary>
     public Func<bool>? AllowProfileApiAutoSign { get; init; }
 
+    /// <summary>
+    /// When set and returning true, a <c>signRaw</c> whose bytes decode to a GraphQL POST
+    /// signing payload (<see cref="ProfileApiPayloadModel.IsGraphqlPostPayload(byte[])"/>)
+    /// signs without the confirmation sheet and without the password/biometric unlock: the
+    /// key is read straight from secure storage. Left null everywhere except the messenger
+    /// WebView, whose hosted dashboard signs such a payload on every state-changing GraphQL
+    /// call. <c>signPayload</c> transactions never take this path.
+    /// </summary>
+    public Func<bool>? AllowNoAuthSign { get; init; }
+
     public async Task<string> HandleAsync(string requestJson)
     {
         WalletBridgeRequest request;
@@ -89,7 +99,10 @@ public class PolkadotExtensionWalletBridge
                     result = HandleAccounts();
                     break;
                 case "signRaw":
-                    result = await HandleSignRawAsync(request, AllowProfileApiAutoSign?.Invoke() == true)
+                    result = await HandleSignRawAsync(
+                            request,
+                            AllowProfileApiAutoSign?.Invoke() == true,
+                            AllowNoAuthSign?.Invoke() == true)
                         .ConfigureAwait(false);
                     break;
                 case "signPayload":
@@ -152,7 +165,8 @@ public class PolkadotExtensionWalletBridge
         ];
     }
 
-    private static async Task<SignerResultPayload> HandleSignRawAsync(WalletBridgeRequest request, bool allowProfileApiAutoSign)
+    private static async Task<SignerResultPayload> HandleSignRawAsync(
+        WalletBridgeRequest request, bool allowProfileApiAutoSign, bool allowNoAuthSign)
     {
         Console.WriteLine("Sign raw called");
 
@@ -179,23 +193,41 @@ public class PolkadotExtensionWalletBridge
             throw new InvalidOperationException("Requested account does not match the active wallet address.");
         }
 
-        // A recognised Profile API authentication signs without the sheet, through the same
-        // signer the sheet's Sign button uses, so the signature is identical either way.
-        // Anything else - including hex that fails to decode - falls through to the sheet.
-        if (allowProfileApiAutoSign
-            && signRawPayload.Type == "bytes"
-            && TryDecodeHex(signRawPayload.Data, out var rawMessage)
-            && ProfileApiPayloadModel.IsProfileApiSignPayload(rawMessage, DateTime.UtcNow))
+        if (signRawPayload.Type == "bytes" && TryDecodeHex(signRawPayload.Data, out var rawMessage))
         {
-            var autoSignature = await WebSignRawPopupViewModel
-                .SignWithSubstrateAccountAsync(rawMessage)
-                .ConfigureAwait(false);
-
-            return new SignerResultPayload
+            // A GraphQL call the whitelisted dashboard makes: the strongest routine. It signs
+            // without the sheet and without the password/biometric unlock, reading the key
+            // straight from secure storage.
+            if (allowNoAuthSign && ProfileApiPayloadModel.IsGraphqlPostPayload(rawMessage))
             {
-                Id = signRawPayload.Id ?? request.Id ?? Guid.NewGuid().ToString("N"),
-                Signature = Utils.Bytes2HexString(autoSignature).ToLowerInvariant()
-            };
+                var noAuthSignature = await WebSignRawPopupViewModel
+                    .SignWithSubstrateAccountNoAuthAsync(rawMessage)
+                    .ConfigureAwait(false);
+
+                return new SignerResultPayload
+                {
+                    Id = signRawPayload.Id ?? request.Id ?? Guid.NewGuid().ToString("N"),
+                    Signature = Utils.Bytes2HexString(noAuthSignature).ToLowerInvariant()
+                };
+            }
+
+            // A recognised Profile API authentication signs without the sheet, through the
+            // same signer the sheet's Sign button uses, so the signature is identical either
+            // way. Anything else - including hex that fails to decode - falls through to the
+            // sheet.
+            if (allowProfileApiAutoSign
+                && ProfileApiPayloadModel.IsProfileApiSignPayload(rawMessage, DateTime.UtcNow))
+            {
+                var autoSignature = await WebSignRawPopupViewModel
+                    .SignWithSubstrateAccountAsync(rawMessage)
+                    .ConfigureAwait(false);
+
+                return new SignerResultPayload
+                {
+                    Id = signRawPayload.Id ?? request.Id ?? Guid.NewGuid().ToString("N"),
+                    Signature = Utils.Bytes2HexString(autoSignature).ToLowerInvariant()
+                };
+            }
         }
 
         try

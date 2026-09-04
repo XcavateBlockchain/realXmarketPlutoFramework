@@ -59,9 +59,21 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     public X25519WebView()
     {
         // Auto-signing is this view's decision rather than the bridges' default: only here
-        // is the hosted page meant to be the whitelisted messenger dashboard.
-        _walletBridge = new() { AllowProfileApiAutoSign = () => _hostIsWhitelistedDApp };
-        _solanaBridge = new() { AllowProfileApiAutoSign = () => _hostIsWhitelistedDApp };
+        // is the hosted page meant to be the whitelisted messenger dashboard. GraphQL POST
+        // payloads sign without the password/biometric unlock as well - the dashboard signs
+        // them on every state-changing call, and that is the one prompt the routine flow
+        // must not stop on. Both gates read the host flag, so a page the user navigated away
+        // to gets the ordinary, fully-authenticated signing flow back.
+        _walletBridge = new()
+        {
+            AllowProfileApiAutoSign = () => _hostIsWhitelistedDApp,
+            AllowNoAuthSign = () => _hostIsWhitelistedDApp
+        };
+        _solanaBridge = new()
+        {
+            AllowProfileApiAutoSign = () => _hostIsWhitelistedDApp,
+            AllowNoAuthSign = () => _hostIsWhitelistedDApp
+        };
 
         Source = new UrlWebViewSource { Url = Url };
         Navigated += OnNavigated;

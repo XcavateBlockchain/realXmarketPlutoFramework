@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Model;
+using PlutoFramework.Model;
 using System.Text.Json;
 
 namespace PlutoFrameworkCore.Keys
@@ -99,6 +99,61 @@ namespace PlutoFrameworkCore.Keys
             };
         }
 
+        /// <summary>
+        /// The <see cref="ToSr25519KeyAsync(string)"/> equivalent that reads the stored
+        /// secret straight from secure storage, skipping the password/biometric check.
+        /// Only for callers that have already decided signing needs no local confirmation.
+        /// </summary>
+        public async Task<Sr25519Key> ToSr25519KeyNoAuthAsync()
+        {
+            if (Type != KeyTypeEnum.Sr25519)
+            {
+                throw new InvalidOperationException($"Cannot convert key of type {Type} to Sr25519Key");
+            }
+
+            var mnemonics = await PlutoConfigurationModel.SecureStorage.GetAsyncNoAuthAsync(SecretStorageKey);
+
+            if (mnemonics == null)
+            {
+                throw new InvalidOperationException("Mnemonics not found in secure storage");
+            }
+
+            return new Sr25519Key
+            {
+                Mnemonics = mnemonics,
+            };
+        }
+
+        /// <summary>
+        /// The <see cref="ToPolkadotJsonKeyAsync(string)"/> equivalent that reads both the
+        /// stored Json and the password it decrypts with straight from secure storage,
+        /// skipping the authentication gate in between.
+        /// </summary>
+        public async Task<PolkadotJsonKey> ToPolkadotJsonKeyNoAuthAsync()
+        {
+            if (Type != KeyTypeEnum.PolkadotJson)
+            {
+                throw new InvalidOperationException($"Cannot convert key of type {Type} to PolkadotJsonKey");
+            }
+
+            var json = await PlutoConfigurationModel.SecureStorage.GetAsyncNoAuthAsync(SecretStorageKey);
+
+            if (json == null)
+            {
+                throw new InvalidOperationException("Json not found in secure storage");
+            }
+
+            // The same placeholder GetWithPasswordAsync uses on a failed authentication:
+            // a key whose password was never stored cannot be decrypted either way.
+            var password = await PlutoConfigurationModel.SecureStorage.GetAsyncNoAuthAsync(PasswordStorageKey) ?? "-";
+
+            return new PolkadotJsonKey
+            {
+                Json = json,
+                Password = password,
+            };
+        }
+
         public async Task<DidKey> ToDidKeyAsync()
         {
             if (Type != KeyTypeEnum.Did)
@@ -127,6 +182,31 @@ namespace PlutoFrameworkCore.Keys
             }
 
             var mnemonics = await PlutoConfigurationModel.SecureStorage.GetAsync(SecretStorageKey, reason);
+
+            if (mnemonics == null)
+            {
+                throw new InvalidOperationException("Mnemonics not found in secure storage");
+            }
+
+            return new SolanaMnemonicKey
+            {
+                Mnemonics = mnemonics,
+            };
+        }
+
+        /// <summary>
+        /// The <see cref="ToSolanaMnemonicKeyAsync(string)"/> equivalent that reads the
+        /// stored phrase straight from secure storage, skipping the password/biometric check.
+        /// Only for callers that have already decided signing needs no local confirmation.
+        /// </summary>
+        public async Task<SolanaMnemonicKey> ToSolanaMnemonicKeyNoAuthAsync()
+        {
+            if (Type != KeyTypeEnum.SolanaMnemonic)
+            {
+                throw new InvalidOperationException($"Cannot convert key of type {Type} to SolanaMnemonicKey");
+            }
+
+            var mnemonics = await PlutoConfigurationModel.SecureStorage.GetAsyncNoAuthAsync(SecretStorageKey);
 
             if (mnemonics == null)
             {

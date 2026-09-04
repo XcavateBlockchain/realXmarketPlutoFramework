@@ -76,42 +76,49 @@ namespace PlutoFrameworkTests
         }
 
         /// <summary>
-        /// A whole balance should read "40", not "40.000000". The rule was private to
-        /// SolanaAssetView; the detail page needs the same one, so it lives here where both
-        /// can reach it and a test can pin it.
+        /// A fixed four places: whole balances keep the places ("40.0000") so the format
+        /// never collapses a value, and small balances stay legible ("0.4000" instead of "0").
         /// </summary>
         [Test]
-        public void DisplayStringTrimsTrailingZeros()
+        public void DisplayStringShowsFourDecimalPlaces()
         {
-            Assert.That(SolanaAmount.ToDisplayString(40m, decimals: 6), Is.EqualTo("40"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(SolanaAmount.ToDisplayString(40m, decimals: 6), Is.EqualTo("40.0000"));
+                Assert.That(SolanaAmount.ToDisplayString(0.4m, decimals: 9), Is.EqualTo("0.4000"));
+            });
         }
 
         [Test]
-        public void DisplayStringKeepsDustVisible()
+        public void DisplayStringRoundsSmallBalancesToFourPlaces()
         {
-            Assert.That(SolanaAmount.ToDisplayString(0.000012345m, decimals: 9), Is.EqualTo("0.000012"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(SolanaAmount.ToDisplayString(0.00004m, decimals: 9), Is.EqualTo("0.0000"));
+                Assert.That(SolanaAmount.ToDisplayString(0.00006m, decimals: 9), Is.EqualTo("0.0001"));
+            });
         }
 
         /// <summary>
-        /// Six places is the cap regardless of the mint's own decimals, so a nine-decimal
+        /// Four places is the cap regardless of the mint's own decimals, so a nine-decimal
         /// SOL balance does not push the USD column off a narrow screen.
         /// </summary>
         [Test]
-        public void DisplayStringCapsAtSixPlaces()
+        public void DisplayStringCapsAtFourPlaces()
         {
-            Assert.That(SolanaAmount.ToDisplayString(1.123456789m, decimals: 9), Is.EqualTo("1.123457"));
+            Assert.That(SolanaAmount.ToDisplayString(1.123456789m, decimals: 9), Is.EqualTo("1.1235"));
         }
 
         [Test]
-        public void DisplayStringRespectsFewerMintDecimals()
+        public void DisplayStringPadsFewerMintDecimals()
         {
-            Assert.That(SolanaAmount.ToDisplayString(1.129m, decimals: 2), Is.EqualTo("1.13"));
+            Assert.That(SolanaAmount.ToDisplayString(1.129m, decimals: 2), Is.EqualTo("1.1290"));
         }
 
         [Test]
-        public void DisplayStringRendersZeroPlainly()
+        public void DisplayStringRendersZero()
         {
-            Assert.That(SolanaAmount.ToDisplayString(0m, decimals: 6), Is.EqualTo("0"));
+            Assert.That(SolanaAmount.ToDisplayString(0m, decimals: 6), Is.EqualTo("0.0000"));
         }
 
         /// <summary>

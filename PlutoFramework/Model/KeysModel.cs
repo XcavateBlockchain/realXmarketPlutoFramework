@@ -1,4 +1,4 @@
-﻿extern alias bc26;
+extern alias bc26;
 using bc26::Org.BouncyCastle.Crypto.Parameters;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Storage;
@@ -680,6 +680,37 @@ namespace PlutoFramework.Model
                 {
                     KeyTypeEnum.Sr25519 => (await accountLockedKey.ToSr25519KeyAsync(reason)).Account,
                     KeyTypeEnum.PolkadotJson => (await accountLockedKey.ToPolkadotJsonKeyAsync(reason)).Account,
+                };
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// The <see cref="GetAccountAsync(string)"/> equivalent that reads the key straight
+        /// from secure storage, skipping the password/biometric unlock. Only for callers
+        /// that have already decided the signature needs no local confirmation.
+        /// </summary>
+        public static async Task<Account?> GetAccountNoAuthAsync()
+        {
+            var accounts = await KeysDatabase.GetAllKeysOfTypeAsync(KeyTypeEnum.Sr25519, KeyTypeEnum.PolkadotJson);
+
+            if (!accounts.Any())
+            {
+                return null;
+            }
+
+            var accountLockedKey = accounts.First();
+
+            try
+            {
+
+                return accountLockedKey.Type switch
+                {
+                    KeyTypeEnum.Sr25519 => (await accountLockedKey.ToSr25519KeyNoAuthAsync()).Account,
+                    KeyTypeEnum.PolkadotJson => (await accountLockedKey.ToPolkadotJsonKeyNoAuthAsync()).Account,
                 };
             }
             catch

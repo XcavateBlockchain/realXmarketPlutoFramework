@@ -36,17 +36,17 @@ namespace PlutoFrameworkCore.Solana
         }
 
         /// <summary>
-        /// A balance as the balances list and the detail page both print it. Trailing zeros
-        /// are trimmed so a whole balance reads "40 USDC" rather than "40.000000 USDC", but a
-        /// dust balance keeps enough places to stay visible.
+        /// A balance as the balances list and the detail page both print it: a fixed four
+        /// decimal places, so a small balance reads "0.4000 tGBP" rather than collapsing to
+        /// "0" under integer or trimmed formatting.
         /// </summary>
         /// <remarks>
-        /// Capped at six places whatever the mint declares: SOL's nine would push the USD
+        /// Rounded to four places whatever the mint declares: SOL's nine would push the USD
         /// column off a narrow screen, and the extra digits are noise at any realistic balance.
         /// </remarks>
         public static string ToDisplayString(decimal amount, int decimals) =>
-            Math.Round(amount, Math.Min(decimals, 6))
-                .ToString("0.######", CultureInfo.InvariantCulture);
+            Math.Round(amount, 4)
+                .ToString("0.0000", CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Display units to base units — the inverse of <see cref="FromBaseUnits"/>, used to

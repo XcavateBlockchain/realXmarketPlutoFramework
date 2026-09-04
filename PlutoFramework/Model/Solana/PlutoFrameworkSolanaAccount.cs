@@ -51,9 +51,26 @@ namespace PlutoFramework.Model.Solana
         /// to display should use <see cref="KeysModel.GetSolanaAddressAsync"/>, which reads
         /// the stored public key without unlocking anything.
         /// </remarks>
-        public static async Task<PlutoFrameworkSolanaAccount?> ResolveAsync(
+        public static Task<PlutoFrameworkSolanaAccount?> ResolveAsync(
             string reason = "Get access to your Solana account",
             CancellationToken token = default)
+            => ResolveAsync(reason, unlockWithAuth: true, token);
+
+        /// <summary>
+        /// <see cref="ResolveAsync(string, CancellationToken)"/> that reads the stored key
+        /// straight from secure storage, skipping the password/biometric unlock. A local
+        /// phrase then signs with no prompt at all; a Mobile Wallet Adapter key still shows
+        /// its approval in the wallet app, which no local path can skip. Only for callers
+        /// that have already decided the signature needs no local confirmation.
+        /// </summary>
+        public static Task<PlutoFrameworkSolanaAccount?> ResolveNoAuthAsync(
+            CancellationToken token = default)
+            => ResolveAsync("Get access to your Solana account", unlockWithAuth: false, token);
+
+        private static async Task<PlutoFrameworkSolanaAccount?> ResolveAsync(
+            string reason,
+            bool unlockWithAuth,
+            CancellationToken token)
         {
             var lockedKey = (await KeysDatabase.GetAllKeysOfTypeAsync(
                 KeyTypeEnum.SolanaMnemonic, KeyTypeEnum.SolanaMwa)).FirstOrDefault();
@@ -63,10 +80,13 @@ namespace PlutoFramework.Model.Solana
                 return null;
             }
 
+            // Mobile Wallet Adapter reads no-auth in either case: it keeps no local secret,
+            // and the wallet app's own approval is the check.
             PlutoFrameworkSolanaAccount? account = lockedKey.Type switch
             {
-                KeyTypeEnum.SolanaMnemonic =>
-                    new MnemonicSolanaAccount(await lockedKey.ToSolanaMnemonicKeyAsync(reason)),
+                KeyTypeEnum.SolanaMnemonic => unlockWithAuth
+                    ? new MnemonicSolanaAccount(await lockedKey.ToSolanaMnemonicKeyAsync(reason))
+                    : new MnemonicSolanaAccount(await lockedKey.ToSolanaMnemonicKeyNoAuthAsync()),
 
                 KeyTypeEnum.SolanaMwa =>
                     new MwaSolanaAccount(lockedKey, await lockedKey.ToSolanaMwaKeyAsync(reason)),

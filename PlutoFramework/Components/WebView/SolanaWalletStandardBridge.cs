@@ -68,6 +68,17 @@ namespace PlutoFramework.Components.WebView
         /// </summary>
         public Func<bool>? AllowProfileApiAutoSign { get; init; }
 
+        /// <summary>
+        /// When set and returning true, a <c>solana:signMessage</c> whose bytes are a GraphQL
+        /// POST signing payload (<see cref="ProfileApiPayloadModel.IsGraphqlPostPayload(byte[])"/>)
+        /// signs without the confirmation sheet and without the password/biometric unlock:
+        /// the key is read straight from secure storage. Left null everywhere except the
+        /// messenger WebView, whose hosted dashboard signs such a payload on every
+        /// state-changing GraphQL call. A Mobile Wallet Adapter key still shows its approval
+        /// in the wallet app. Transactions never take this path.
+        /// </summary>
+        public Func<bool>? AllowNoAuthSign { get; init; }
+
         public async Task<string> HandleAsync(string requestJson)
         {
             WalletBridgeRequest request;
@@ -92,7 +103,9 @@ namespace PlutoFramework.Components.WebView
                     "solana:connect" => await HandleConnectAsync(request.Payload),
                     "solana:disconnect" => HandleDisconnect(request.Payload),
                     "solana:signMessage" => await HandleSignMessageAsync(
-                        request.Payload, AllowProfileApiAutoSign?.Invoke() == true),
+                        request.Payload,
+                        AllowProfileApiAutoSign?.Invoke() == true,
+                        AllowNoAuthSign?.Invoke() == true),
                     "solana:signTransaction" => await HandleSignTransactionAsync(request.Payload),
                     "solana:signAndSendTransaction" => await HandleSignAndSendTransactionAsync(request.Payload),
                     _ => throw new NotSupportedException(
@@ -164,7 +177,8 @@ namespace PlutoFramework.Components.WebView
         /// Backs <c>solana:signMessage</c> through the same bottom sheet the Polkadot
         /// <c>signRaw</c> uses, so both chains show the user one screen.
         /// </summary>
-        private static async Task<object> HandleSignMessageAsync(JsonElement? payload, bool allowProfileApiAutoSign)
+        private static async Task<object> HandleSignMessageAsync(
+            JsonElement? payload, bool allowProfileApiAutoSign, bool allowNoAuthSign)
         {
             var request = payload?.Deserialize<SignMessagePayload>(SerializerOptions)
                 ?? throw new InvalidOperationException("Missing payload for signMessage request.");
@@ -180,6 +194,26 @@ namespace PlutoFramework.Components.WebView
                 !string.Equals(address, request.Address, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException("Requested account does not match the active wallet address.");
+            }
+
+            // A GraphQL call the whitelisted dashboard makes: the strongest routine. It signs
+            // without the sheet and without the password/biometric unlock, reading the key
+            // straight from secure storage. A Mobile Wallet Adapter key still gets its
+            // approval in the wallet app, which no local path can skip.
+            if (allowNoAuthSign && ProfileApiPayloadModel.IsGraphqlPostPayload(message))
+            {
+                var noAuthAccount = await PlutoFrameworkSolanaAccount.ResolveNoAuthAsync()
+                    ?? throw new InvalidOperationException("No Solana account is available.");
+
+                var noAuthSignature = await noAuthAccount
+                    .SignMessageAsync(message, SIGN_MESSAGE_REASON, CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                return new SignMessageResult
+                {
+                    SignedMessage = request.Message,
+                    Signature = Convert.ToBase64String(noAuthSignature),
+                };
             }
 
             // A recognised Profile API authentication: routine, requested for every API call
