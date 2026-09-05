@@ -52,12 +52,16 @@ namespace PlutoFramework.Components.XcavateProperty
                 // listing, marketplace not deployed) should not cost an unlock prompt.
                 var instructions = await buildInstructionsAsync(address, CancellationToken.None);
 
-                // The marketplace's reserve and claim instructions need two signers: the
-                // investor (this wallet) and the config's rent collector, which the app
-                // holds no key for. The fee payer is this wallet too, so it is the only
-                // signer this app can fill. Anything more means the transaction can never
-                // be complete here - fail now, before an unlock prompt and a wallet
-                // round trip, with the real reason.
+                // The marketplace's reserve, buy, and claim instructions take a
+                // rent-fronting payer that the deployed program pins to the config's
+                // rent collector AND requires to have signed (devnet-verified), so a
+                // purchase genuinely needs two signatures: the investor's and the rent
+                // collector's. When this wallet IS the rent collector the two roles
+                // collapse into one signer and the transaction completes; with any
+                // other wallet the second signer can never be filled here (the app
+                // holds no rent-collector key). More than one distinct signer means
+                // the transaction can never be complete here - fail now, before an
+                // unlock prompt and a wallet round trip, with the real reason.
                 var distinctSignerCount = instructions
                     .SelectMany(instruction => instruction.Keys)
                     .Where(accountMeta => accountMeta.IsSigner)
@@ -69,7 +73,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 if (distinctSignerCount > 1)
                 {
                     info.Status = SolanaTransactionStatus.Error;
-                    info.ErrorMessage = "This transaction needs a second signature from the marketplace's rent collector, which is not available in this app yet. Nothing was signed or submitted.";
+                    info.ErrorMessage = "This transaction needs two signatures - the investor's and the rent collector's (the rent-fronting wallet the marketplace pins to its sponsor), and this wallet is not the rent collector. Nothing was signed or submitted.";
 
                     return;
                 }

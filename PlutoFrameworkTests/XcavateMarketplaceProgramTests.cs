@@ -105,12 +105,20 @@ namespace PlutoFrameworkTests
                 Assert.That(unreserve.Keys, Has.Count.EqualTo(4));
                 Assert.That(createSpv.Keys, Has.Count.EqualTo(4));
 
-                // The investor/confirmer leads every instruction and is its signer.
+                // The investor/confirmer leads every instruction and is its signer,
+                // and every account in the message is writable: the deployed binary
+                // escalates the whole message, so a readonly non-signer dies with
+                // PrivilegeEscalation in simulation.
                 foreach (var instruction in new[] { buy, reserve, claim, withdraw, unreserve, createSpv })
                 {
                     Assert.That(instruction.Keys[0].PublicKey, Is.EqualTo(investor.Key));
                     Assert.That(instruction.Keys[0].IsSigner, Is.True);
-                    Assert.That(instruction.Keys[0].IsWritable, Is.False);
+                    Assert.That(instruction.Keys[0].IsWritable, Is.True);
+
+                    foreach (var key in instruction.Keys.Where(key => !key.IsSigner))
+                    {
+                        Assert.That(key.IsWritable, Is.True);
+                    }
                 }
 
                 // The rent-fronting payer co-signs buy, reserve and claim, and only those.

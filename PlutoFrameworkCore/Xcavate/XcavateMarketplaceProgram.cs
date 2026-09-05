@@ -14,6 +14,12 @@ namespace PlutoFramework.Model.Xcavate
     /// PDA seeds and discriminators come from the IDL, and the caller supplies whatever
     /// has to be looked up elsewhere (payment mints, recorded payment accounts, the
     /// rent collector).
+    ///
+    /// Writable flags deliberately do NOT follow the IDL. The deployed binary
+    /// requires every account it receives to be writable in the transaction
+    /// message - devnet simulation against the live program shows any readonly
+    /// non-signer dying with PrivilegeEscalation - so every account meta below is
+    /// marked writable to match the binary, not the IDL.
     /// </summary>
     public static class XcavateMarketplaceProgram
     {
@@ -103,9 +109,12 @@ namespace PlutoFramework.Model.Xcavate
         /// and landing aborts instead of overcharging.
         /// </summary>
         /// <param name="payer">
-        /// The sponsor wallet fronting rent for the investor's new accounts, which the
-        /// program pins to the config's rent collector - see
-        /// <see cref="XcavateMarketplaceCallsModel"/> for what that means for submission.
+        /// The sponsor wallet fronting rent for the investor's new accounts. The
+        /// deployed program pins this to the config's rent collector AND requires it
+        /// to have signed - devnet simulation against the live program rejects a
+        /// purchase whose payer is anyone else (even the investor) with
+        /// NotRentCollector. When the signing wallet IS the rent collector the two
+        /// roles collapse into one signature and the transaction completes.
         /// </param>
         public static TransactionInstruction BuyPropertyShares(
             XcavateProgramSet programs,
@@ -127,27 +136,27 @@ namespace PlutoFramework.Model.Xcavate
                 ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
                 Keys =
                 [
-                    AccountMeta.ReadOnly(investor, true),
+                    AccountMeta.Writable(investor, true),
                     AccountMeta.Writable(payer, true),
-                    AccountMeta.ReadOnly(DeriveConfig(programs), false),
-                    AccountMeta.ReadOnly(DeriveRoleAccount(programs, investor, XcavateRole.RealEstateInvestor), false),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, investor, XcavateRole.RealEstateInvestor), false),
                     AccountMeta.Writable(DeriveListing(programs, listingId), false),
                     AccountMeta.Writable(DeriveProperty(programs, listingId), false),
                     AccountMeta.Writable(DerivePosition(programs, listingId, investor), false),
                     AccountMeta.Writable(DeriveHolding(programs, listingId, investor), false),
-                    AccountMeta.ReadOnly(paymentMint, false),
+                    AccountMeta.Writable(paymentMint, false),
                     AccountMeta.Writable(investorPaymentAccount, false),
-                    AccountMeta.ReadOnly(listingVault, false),
+                    AccountMeta.Writable(listingVault, false),
                     AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(listingVault, paymentMint, paymentTokenProgram), false),
-                    AccountMeta.ReadOnly(shareMint, false),
-                    AccountMeta.ReadOnly(DeriveMintAuth(programs, listingId), false),
-                    AccountMeta.ReadOnly(propertyVault, false),
+                    AccountMeta.Writable(shareMint, false),
+                    AccountMeta.Writable(DeriveMintAuth(programs, listingId), false),
+                    AccountMeta.Writable(propertyVault, false),
                     AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(propertyVault, shareMint, ShareTokenProgram), false),
                     AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(investor, shareMint, ShareTokenProgram), false),
-                    AccountMeta.ReadOnly(paymentTokenProgram, false),
-                    AccountMeta.ReadOnly(ShareTokenProgram, false),
-                    AccountMeta.ReadOnly(AssociatedTokenAccountProgram.ProgramIdKey, false),
-                    AccountMeta.ReadOnly(SystemProgram.ProgramIdKey, false),
+                    AccountMeta.Writable(paymentTokenProgram, false),
+                    AccountMeta.Writable(ShareTokenProgram, false),
+                    AccountMeta.Writable(AssociatedTokenAccountProgram.ProgramIdKey, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
                 ],
                 Data = Encode(BuyPropertySharesDiscriminator, U64(listingId), U32(amount), U64(maxTotalCost)),
             };
@@ -160,8 +169,9 @@ namespace PlutoFramework.Model.Xcavate
         /// <see cref="BuyPropertyShares"/>, backs the Buy button while a listing sells.
         /// </summary>
         /// <param name="payer">
-        /// The sponsor wallet fronting rent, pinned by the program to the config's rent
-        /// collector - the same co-signing gap as on <see cref="BuyPropertyShares"/>.
+        /// The sponsor wallet fronting rent. The deployed program pins this to the
+        /// config's rent collector and requires it to have signed - the same two
+        /// signatures as <see cref="BuyPropertyShares"/>.
         /// </param>
         public static TransactionInstruction ReserveShares(
             XcavateProgramSet programs,
@@ -179,17 +189,17 @@ namespace PlutoFramework.Model.Xcavate
                 ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
                 Keys =
                 [
-                    AccountMeta.ReadOnly(investor, true),
+                    AccountMeta.Writable(investor, true),
                     AccountMeta.Writable(payer, true),
-                    AccountMeta.ReadOnly(DeriveConfig(programs), false),
-                    AccountMeta.ReadOnly(DeriveRoleAccount(programs, investor, XcavateRole.RealEstateInvestor), false),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, investor, XcavateRole.RealEstateInvestor), false),
                     AccountMeta.Writable(DeriveListing(programs, listingId), false),
-                    AccountMeta.ReadOnly(DeriveProperty(programs, listingId), false),
+                    AccountMeta.Writable(DeriveProperty(programs, listingId), false),
                     AccountMeta.Writable(DerivePosition(programs, listingId, investor), false),
-                    AccountMeta.ReadOnly(paymentMint, false),
+                    AccountMeta.Writable(paymentMint, false),
                     AccountMeta.Writable(investorPaymentAccount, false),
                     AccountMeta.Writable(DeriveReservation(programs, investorPaymentAccount), false),
-                    AccountMeta.ReadOnly(SystemProgram.ProgramIdKey, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
                 ],
                 Data = Encode(ReserveSharesDiscriminator, U64(listingId), U32(amount), U64(maxTotalCost)),
             };
@@ -218,28 +228,28 @@ namespace PlutoFramework.Model.Xcavate
                 ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
                 Keys =
                 [
-                    AccountMeta.ReadOnly(investor, true),
+                    AccountMeta.Writable(investor, true),
                     AccountMeta.Writable(payer, true),
-                    AccountMeta.ReadOnly(DeriveConfig(programs), false),
-                    AccountMeta.ReadOnly(DeriveRoleAccount(programs, investor, XcavateRole.RealEstateInvestor), false),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, investor, XcavateRole.RealEstateInvestor), false),
                     AccountMeta.Writable(DeriveListing(programs, listingId), false),
                     AccountMeta.Writable(DeriveProperty(programs, listingId), false),
                     AccountMeta.Writable(DerivePosition(programs, listingId, investor), false),
                     AccountMeta.Writable(DeriveHolding(programs, listingId, investor), false),
-                    AccountMeta.ReadOnly(paymentMint, false),
+                    AccountMeta.Writable(paymentMint, false),
                     AccountMeta.Writable(recordedPaymentAccount, false),
                     AccountMeta.Writable(DeriveReservation(programs, recordedPaymentAccount), false),
-                    AccountMeta.ReadOnly(listingVault, false),
+                    AccountMeta.Writable(listingVault, false),
                     AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(listingVault, paymentMint, paymentTokenProgram), false),
-                    AccountMeta.ReadOnly(shareMint, false),
-                    AccountMeta.ReadOnly(DeriveMintAuth(programs, listingId), false),
-                    AccountMeta.ReadOnly(propertyVault, false),
+                    AccountMeta.Writable(shareMint, false),
+                    AccountMeta.Writable(DeriveMintAuth(programs, listingId), false),
+                    AccountMeta.Writable(propertyVault, false),
                     AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(propertyVault, shareMint, ShareTokenProgram), false),
                     AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(investor, shareMint, ShareTokenProgram), false),
-                    AccountMeta.ReadOnly(paymentTokenProgram, false),
-                    AccountMeta.ReadOnly(ShareTokenProgram, false),
-                    AccountMeta.ReadOnly(AssociatedTokenAccountProgram.ProgramIdKey, false),
-                    AccountMeta.ReadOnly(SystemProgram.ProgramIdKey, false),
+                    AccountMeta.Writable(paymentTokenProgram, false),
+                    AccountMeta.Writable(ShareTokenProgram, false),
+                    AccountMeta.Writable(AssociatedTokenAccountProgram.ProgramIdKey, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
                 ],
                 Data = Encode(ClaimSharesDiscriminator, U64(listingId)),
             };
@@ -260,7 +270,7 @@ namespace PlutoFramework.Model.Xcavate
                 ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
                 Keys =
                 [
-                    AccountMeta.ReadOnly(investor, true),
+                    AccountMeta.Writable(investor, true),
                     AccountMeta.Writable(DeriveListing(programs, listingId), false),
                     AccountMeta.Writable(DerivePosition(programs, listingId, investor), false),
                     AccountMeta.Writable(DeriveReservation(programs, recordedPaymentAccount), false),
@@ -282,8 +292,8 @@ namespace PlutoFramework.Model.Xcavate
                 ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
                 Keys =
                 [
-                    AccountMeta.ReadOnly(confirmer, true),
-                    AccountMeta.ReadOnly(DeriveRoleAccount(programs, confirmer, XcavateRole.SpvConfirmation), false),
+                    AccountMeta.Writable(confirmer, true),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, confirmer, XcavateRole.SpvConfirmation), false),
                     AccountMeta.Writable(DeriveListing(programs, listingId), false),
                     AccountMeta.Writable(DeriveProperty(programs, listingId), false),
                 ],
@@ -357,24 +367,24 @@ namespace PlutoFramework.Model.Xcavate
                 ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
                 Keys =
                 [
-                    AccountMeta.ReadOnly(investor, true),
-                    AccountMeta.ReadOnly(DeriveConfig(programs), false),
+                    AccountMeta.Writable(investor, true),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
                     AccountMeta.Writable(rentCollector, false),
                     AccountMeta.Writable(DeriveListing(programs, listingId), false),
                     AccountMeta.Writable(DeriveProperty(programs, listingId), false),
                     AccountMeta.Writable(DerivePosition(programs, listingId, investor), false),
                     AccountMeta.Writable(DeriveHolding(programs, listingId, investor), false),
-                    AccountMeta.ReadOnly(paymentMint, false),
+                    AccountMeta.Writable(paymentMint, false),
                     AccountMeta.Writable(investorPaymentAccount, false),
-                    AccountMeta.ReadOnly(listingVault, false),
+                    AccountMeta.Writable(listingVault, false),
                     AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(listingVault, paymentMint, paymentTokenProgram), false),
-                    AccountMeta.ReadOnly(shareMint, false),
-                    AccountMeta.ReadOnly(DeriveMintAuth(programs, listingId), false),
-                    AccountMeta.ReadOnly(propertyVault, false),
+                    AccountMeta.Writable(shareMint, false),
+                    AccountMeta.Writable(DeriveMintAuth(programs, listingId), false),
+                    AccountMeta.Writable(propertyVault, false),
                     AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(propertyVault, shareMint, ShareTokenProgram), false),
                     AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(investor, shareMint, ShareTokenProgram), false),
-                    AccountMeta.ReadOnly(paymentTokenProgram, false),
-                    AccountMeta.ReadOnly(ShareTokenProgram, false),
+                    AccountMeta.Writable(paymentTokenProgram, false),
+                    AccountMeta.Writable(ShareTokenProgram, false),
                 ],
                 Data = Encode(discriminator, U64(listingId)),
             };

@@ -19,12 +19,13 @@ namespace PlutoFramework.Model.Xcavate
     /// </summary>
     /// <remarks>
     /// On the sponsor: reserve_shares, buy_property_shares and claim_shares take a
-    /// rent-fronting <c>payer</c> that the program pins to the config's rent collector,
-    /// and a signer at that. This app holds only the investor's key, so those
-    /// transactions cannot carry the sponsor's signature until a co-signing service
-    /// exists - until one does, the transaction submitter spots the second required
-    /// signer before anything is signed or sent and reports the reason. The seam for
-    /// that service is exactly here, where the payer is resolved.
+    /// rent-fronting <c>payer</c> that the program pins to the config's rent collector
+    /// and requires to have signed (devnet-verified). So a purchase completes
+    /// end-to-end only when the signing wallet IS that rent collector - the two
+    /// required signatures collapse into one. With any other investor wallet the
+    /// submitter spots the second required signer before anything is signed or sent
+    /// and reports the reason; the seam for a future co-signing service is exactly
+    /// here, where the payer is resolved.
     /// </remarks>
     public static class XcavateMarketplaceCallsModel
     {
