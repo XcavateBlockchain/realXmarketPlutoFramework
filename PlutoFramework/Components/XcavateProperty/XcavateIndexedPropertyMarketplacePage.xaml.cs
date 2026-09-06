@@ -8,7 +8,6 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
     private readonly PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel navigationBarViewModel;
     private CancellationTokenSource? initializationCts;
     private bool isInitialized;
-    private bool manualSearchRequested;
 
     public XcavateIndexedPropertyMarketplacePage()
     {
@@ -20,13 +19,6 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
         viewModel = DependencyService.Get<XcavateIndexedPropertyMarketplaceViewModel>();
         navigationBarViewModel = DependencyService.Get<PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel>();
         BindingContext = viewModel;
-    }
-
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        viewModel.AutoSearchCompleted -= OnAutoSearchCompleted;
-        viewModel.AutoSearchCompleted += OnAutoSearchCompleted;
     }
 
     protected override bool OnBackButtonPressed()
@@ -42,7 +34,6 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
         initializationCts?.Dispose();
         initializationCts = null;
 
-        viewModel.AutoSearchCompleted -= OnAutoSearchCompleted;
         viewModel.CancelPendingOperations();
         base.OnDisappearing();
     }
@@ -79,33 +70,6 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
 
     private void OnMarketplaceTapped(object? sender, TappedEventArgs e)
     {
-    }
-
-    private void OnSearchButtonTapped(object? sender, TappedEventArgs e)
-    {
-        manualSearchRequested = true;
-    }
-
-    private void OnSearchEntryCompleted(object? sender, EventArgs e)
-    {
-        manualSearchRequested = true;
-    }
-
-    private void OnAutoSearchCompleted()
-    {
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            if (manualSearchRequested)
-            {
-                manualSearchRequested = false;
-                return;
-            }
-
-            if (!MarketplaceSearchEntry.IsFocused)
-            {
-                MarketplaceSearchEntry.Focus();
-            }
-        });
     }
 
     private async void OnNoticeboardTapped(object? sender, TappedEventArgs e)

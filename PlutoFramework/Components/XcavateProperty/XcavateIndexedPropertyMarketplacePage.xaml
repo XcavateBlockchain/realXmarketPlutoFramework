@@ -87,7 +87,6 @@
                                        Placeholder="Search"
                                        Text="{Binding SearchText}"
                                        ReturnType="Search"
-                                         Completed="OnSearchEntryCompleted"
                                        ReturnCommand="{Binding SearchCommand}"
                                        VerticalOptions="Center"
                                        BackgroundColor="Transparent"
@@ -99,7 +98,7 @@
                                        Margin="0,0,18,0"
                                        VerticalOptions="Center">
                                     <Image.GestureRecognizers>
-                                        <TapGestureRecognizer Tapped="OnSearchButtonTapped" Command="{Binding SearchCommand}" />
+                                        <TapGestureRecognizer Command="{Binding SearchCommand}" />
                                     </Image.GestureRecognizers>
                                 </Image>
                             </Grid>
