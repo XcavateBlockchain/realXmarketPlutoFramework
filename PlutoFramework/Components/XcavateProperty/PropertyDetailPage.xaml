@@ -33,7 +33,8 @@
 
                 <Label FontSize="30"
                    FontAttributes="Bold"
-                   HorizontalTextAlignment="Start">
+                   HorizontalTextAlignment="Start"
+                   LineBreakMode="TailTruncation">
                     <Label.FormattedText>
                         <FormattedString>
                             <Span Text="{Binding Metadata.PropertyName}"

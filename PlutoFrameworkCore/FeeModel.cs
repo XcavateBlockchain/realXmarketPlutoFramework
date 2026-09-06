@@ -81,8 +81,8 @@ namespace PlutoFramework.Model
             }
 
             var amount = Math.Abs(asset.Amount);
-            var isLessThan = (amount < 0.01) ? "<" : "";
-            return $"Estimated fee: {isLessThan}{String.Format("{0:0.00}", amount)} {asset.Symbol}";
+            var isLessThan = (amount < 1) ? "<" : "";
+            return $"Estimated fee: {isLessThan}{String.Format("{0:0}", amount)} {asset.Symbol}";
         }
     }
 }

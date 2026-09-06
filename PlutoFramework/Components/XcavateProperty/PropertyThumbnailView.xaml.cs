@@ -32,7 +32,7 @@ public partial class PropertyThumbnailView : ContentView
 
             control.priceLabelText.Text = ((double)nftBase.XcavateMetadata.Financials.PropertyPrice).ToCurrencyString();
 
-            control.locationView.LocationName = $"{nftBase.XcavateMetadata.Address.Street}, {nftBase.XcavateMetadata.Address.TownCity}";
+            control.locationView.LocationName = nftBase.XcavateMetadata.Address.TownCity;
 
             control.image.Source = (nftBase.XcavateMetadata is not null && nftBase.XcavateMetadata.Files.Count() > 0) switch
             {

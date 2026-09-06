@@ -59,7 +59,9 @@ namespace PlutoFramework.Components.Balance
                 {
                     tempAssets.Add(new AssetInfo
                     {
-                        Amount = String.Format((string)Application.Current.Resources["CurrencyFormat"], a.Amount),
+                        // The balance page keeps decimal places: the app-wide CurrencyFormat
+                        // resource is integer-only, so pin the two-decimal format here.
+                        Amount = String.Format("{0:0.0000}", a.Amount),
                         Symbol = a.Symbol,
                         UsdValue = a.UsdValue > 0 ? a.UsdValue.ToCurrencyString() : "~",
                         ChainIcon = Application.Current.UserAppTheme != AppTheme.Dark ? a.ChainIcon : a.DarkChainIcon,

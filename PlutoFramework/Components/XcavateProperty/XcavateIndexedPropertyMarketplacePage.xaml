@@ -29,9 +29,11 @@
             CollectionView header or footer is hosted as a UICollectionView supplementary
             view, and self-sizing ones (MeasureAllItems) crash this page on navigation.
             A plain item list with pinned chrome is the pattern the rest of the app uses.
+            The 90px bottom row keeps the list (and the footer) clear of the pinned
+            XcavateNavigationBarView, which overlays the bottom of the page.
         -->
         <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
-              RowDefinitions="Auto,*,Auto">
+              RowDefinitions="Auto,*,Auto,90">
 
             <VerticalStackLayout Grid.Row="0" Spacing="10">
                 <xcavate:RiskWarningView Margin="20,10,20,10" />
