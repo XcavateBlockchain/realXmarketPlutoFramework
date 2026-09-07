@@ -1,6 +1,7 @@
-﻿using PlutoFramework.Components.Account;
+using PlutoFramework.Components.Account;
 using PlutoFramework.Components.AddressView;
 using PlutoFramework.Components.NetworkSelect;
+using PlutoFramework.Components.Solana.Transfer;
 using PlutoFramework.Components.TransferView;
 using PlutoFramework.Constants;
 using Substrate.NetApi;
@@ -80,6 +81,52 @@ namespace PlutoFramework.Model
             viewModel.IsVisible = true;
 
             viewModel.GetFeeAsync();
+        }
+
+        /// <summary>
+        /// Solana counterpart of <see cref="Receive"/>: raises the QR popup with the
+        /// Solana address (same "solana:" URI the Solana address card uses) instead of
+        /// deriving a Substrate address from the selected endpoint.
+        /// </summary>
+        public static void ReceiveSolana()
+        {
+            var address = KeysModel.GetSolanaAddress();
+
+            if (string.IsNullOrEmpty(address))
+            {
+                var noAccountPopupViewModel = DependencyService.Get<NoAccountPopupViewModel>();
+
+                noAccountPopupViewModel.IsVisible = true;
+
+                return;
+            }
+
+            var qrViewModel = DependencyService.Get<AddressQrCodeViewModel>();
+
+            qrViewModel.Address = address;
+            qrViewModel.QrAddress = $"solana:{address}";
+
+            qrViewModel.IsVisible = true;
+        }
+
+        /// <summary>
+        /// Solana counterpart of <see cref="Transfer"/>: opens the Solana transfer popup
+        /// (hosted by the page template) instead of the Substrate transfer view.
+        /// </summary>
+        public static void TransferSolana()
+        {
+            if (string.IsNullOrEmpty(KeysModel.GetSolanaAddress()))
+            {
+                var noAccountPopupViewModel = DependencyService.Get<NoAccountPopupViewModel>();
+
+                noAccountPopupViewModel.IsVisible = true;
+
+                return;
+            }
+
+            var viewModel = DependencyService.Get<SolanaTransferViewModel>();
+
+            viewModel.Appear();
         }
     }
 }

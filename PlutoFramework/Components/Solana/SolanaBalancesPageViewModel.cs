@@ -29,8 +29,10 @@ namespace PlutoFramework.Components.Solana
         [NotifyPropertyChangedFor(nameof(QrAddress))]
         private string address = string.Empty;
 
+        // Named UsdSum (not TotalText) because BalanceOverviewView - the same overview
+        // card the Polkadot balance page uses - binds its total label to UsdSum.
         [ObservableProperty]
-        private string totalText = "-";
+        private string usdSum = "-";
 
         [ObservableProperty]
         private string networkName = SolanaNetworkModel.SelectedCluster.GetName();
@@ -118,7 +120,7 @@ namespace PlutoFramework.Components.Solana
             if (!HasAccount)
             {
                 Balances.Clear();
-                TotalText = "-";
+                UsdSum = "-";
 
                 // RefreshView.IsRefreshing is two-way bound, so a pull sets it true before the
                 // command runs. Returning without clearing it would leave the spinner turning
@@ -152,7 +154,7 @@ namespace PlutoFramework.Components.Solana
                     Balances.Add(row);
                 }
 
-                TotalText = SolanaBalanceAssembler.TotalUsd(rows).ToUsdCurrencyString();
+                UsdSum = SolanaBalanceAssembler.TotalUsd(rows).ToUsdCurrencyString();
             }
             catch (OperationCanceledException)
             {
@@ -164,12 +166,12 @@ namespace PlutoFramework.Components.Solana
                 // Distinguished from an empty wallet on purpose: showing zeros here would
                 // claim a balance we never actually read.
                 ErrorMessage = ex.Message;
-                TotalText = "-";
+                UsdSum = "-";
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Could not load balances: {ex.Message}";
-                TotalText = "-";
+                UsdSum = "-";
             }
             finally
             {

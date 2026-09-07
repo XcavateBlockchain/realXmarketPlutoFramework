@@ -33,7 +33,7 @@
                     </Label.FormattedText>
                 </Label>
 
-                <buttons:ReceiveAndTransferView Margin="0" />
+                <buttons:ReceiveAndTransferView x:Name="receiveAndTransferView" Margin="0" />
             </VerticalStackLayout>
         </card:Card.View>
     </card:Card>
