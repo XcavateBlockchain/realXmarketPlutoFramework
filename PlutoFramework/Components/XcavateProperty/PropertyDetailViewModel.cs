@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.Loading;
@@ -39,7 +39,7 @@ namespace PlutoFramework.Components.XcavateProperty
     {
         private MainActionStates getMainActionState()
         {
-            if (NftWrapper.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0)
+            if (NftWrapper!.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0)
             {
                 return MainActionStates.RefundBought;
             }
@@ -113,7 +113,7 @@ namespace PlutoFramework.Components.XcavateProperty
         private bool spvCreated;
 
         [ObservableProperty]
-        private Endpoint endpoint;
+        private Endpoint? endpoint;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(StatusText))]
@@ -121,10 +121,10 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
         [NotifyPropertyChangedFor(nameof(ShowBuyMoreButtons))]
-        private XcavateNftWrapper nftWrapper;
+        private XcavateNftWrapper? nftWrapper;
 
         [ObservableProperty]
-        private XcavateRegion region;
+        private XcavateRegion? region;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(AreaPricesPercentage))]
@@ -216,7 +216,7 @@ namespace PlutoFramework.Components.XcavateProperty
         public bool OwnedPropertyTokensViewIsVisible => TokensOwned > 0;
         public bool RelistPropertyTokensButtonIsVisible => TokensOwned > 0;
 
-        public bool ShowBuyMoreButtons => !NftWrapper.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0;
+        public bool ShowBuyMoreButtons => !NftWrapper!.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0;
 
         public string MainActionText => getMainActionState() switch
         {
@@ -234,6 +234,7 @@ namespace PlutoFramework.Components.XcavateProperty
             MainActionStates.RefundClaimed => "Refund",
             MainActionStates.Relist => "Relist",
             MainActionStates.Unknown => "Unknown",
+            _ => "Unknown",
         };
         public ButtonStateEnum MainActionButtonState => getMainActionState() switch
         {
@@ -251,6 +252,7 @@ namespace PlutoFramework.Components.XcavateProperty
             MainActionStates.RefundClaimed => ButtonStateEnum.Enabled,
             MainActionStates.Relist => ButtonStateEnum.Enabled,
             MainActionStates.Unknown => ButtonStateEnum.Disabled,
+            _ => ButtonStateEnum.Disabled,
         };
 
         public string StatusText => NftWrapper?.Status ?? "Unknown";
@@ -318,7 +320,7 @@ namespace PlutoFramework.Components.XcavateProperty
             viewModel.ListingDetails = ListingDetails;
             viewModel.Metadata = Metadata;
             viewModel.IsVisible = true;
-            viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper.NftBase.Type);
+            viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper!.NftBase.Type);
         }
 
         public async Task CreateSpvAsync()
@@ -488,7 +490,7 @@ namespace PlutoFramework.Components.XcavateProperty
             viewModel.ListingDetails = ListingDetails;
             viewModel.Metadata = Metadata;
             viewModel.IsVisible = true;
-            viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper.NftBase.Type);
+            viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper!.NftBase.Type);
             viewModel.TokensOwned = TokensOwned;
         }
 
@@ -498,7 +500,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public ImageSource FavouriteImage => new FontImageSource
         {
-            Color = (Color)Application.Current.Resources["Primary"],
+            Color = (Color)Application.Current!.Resources["Primary"],
             FontFamily = "FontAwesome",
             Size = 25,
             Glyph = Favourite ? "\uf004" : "\uf08a",
@@ -514,8 +516,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
             await XcavatePropertyDatabase.SavePropertyAsync(new NftWrapper
             {
-                Endpoint = Endpoint,
-                NftBase = NftWrapper.NftBase,
+                Endpoint = Endpoint!,
+                NftBase = NftWrapper!.NftBase,
                 Favourite = Favourite
             });
 
@@ -593,7 +595,7 @@ namespace PlutoFramework.Components.XcavateProperty
             viewModel.ListingDetails = ListingDetails;
             viewModel.Metadata = Metadata;
             viewModel.IsVisible = true;
-            viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper.NftBase.Type);
+            viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper!.NftBase.Type);
         }
 
         [RelayCommand]

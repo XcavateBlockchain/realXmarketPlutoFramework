@@ -122,14 +122,17 @@ public partial class PolkadotExtensionWebView
 
     private sealed class ScrollChangedListener : Java.Lang.Object, ViewTreeObserver.IOnScrollChangedListener
     {
-        private readonly WeakReference<PolkadotExtensionWebView> _owner;
-        private readonly WeakReference<Android.Webkit.WebView> _nativeWebView;
+        private readonly WeakReference<PolkadotExtensionWebView>? _owner;
+        private readonly WeakReference<Android.Webkit.WebView>? _nativeWebView;
 
-        // Required JNI constructor so Android can rehydrate this listener from native handles
+        // Required JNI constructor so Android can rehydrate this listener from native handles.
+        // (SDK false positive: CS0628 — the protected JNI ctor is required by Xamarin.Android.)
+        #pragma warning disable CS0628
         protected ScrollChangedListener(IntPtr handle, JniHandleOwnership transfer)
             : base(handle, transfer)
         {
         }
+        #pragma warning restore CS0628
 
         public ScrollChangedListener(PolkadotExtensionWebView owner, Android.Webkit.WebView nativeWebView)
         {
@@ -139,7 +142,7 @@ public partial class PolkadotExtensionWebView
 
         public void OnScrollChanged()
         {
-            if (_owner is not null && _owner.TryGetTarget(out var owner) && _nativeWebView.TryGetTarget(out var native))
+            if (_owner is not null && _owner.TryGetTarget(out var owner) && _nativeWebView!.TryGetTarget(out var native))
             {
                 owner.RaiseScrolled(native.ScrollX, native.ScrollY);
             }

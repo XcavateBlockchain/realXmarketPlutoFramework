@@ -1,4 +1,4 @@
-﻿using PlutoFrameworkCore.Xcavate;
+using PlutoFrameworkCore.Xcavate;
 
 namespace PlutoFramework.Model.Xcavate
 {
@@ -36,8 +36,8 @@ namespace PlutoFramework.Model.Xcavate
     }
     public record XcavateUser
     {
-        public required ImageSource ProfilePicture { get; set; }
-        public required ImageSource ProfileBackground { get; set; }
+        public required ImageSource? ProfilePicture { get; set; }
+        public required ImageSource? ProfileBackground { get; set; }
         public required UserRoleEnum Role { get; set; }
         public required string Email { get; set; }
         public required string PhoneNumber { get; set; }

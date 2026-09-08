@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Model;
 
@@ -7,7 +7,7 @@ namespace PlutoFramework.Components.Settings
     public partial class DeveloperSettingsViewModel : ObservableObject
     {
         [ObservableProperty]
-        private bool displayNetworks = Preferences.Get(PreferencesModel.SETTINGS_DISPLAY_NETWORKS, (bool)Application.Current.Resources["DisplayNetworks"]);
+        private bool displayNetworks = Preferences.Get(PreferencesModel.SETTINGS_DISPLAY_NETWORKS, (bool)Application.Current!.Resources["DisplayNetworks"]);
 
         [RelayCommand]
         public void ToggleDislayNetworks()

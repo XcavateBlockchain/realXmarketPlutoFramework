@@ -80,7 +80,7 @@ namespace PlutoFramework.Model
 
             viewModel.IsVisible = true;
 
-            viewModel.GetFeeAsync();
+            _ = viewModel.GetFeeAsync();
         }
 
         /// <summary>

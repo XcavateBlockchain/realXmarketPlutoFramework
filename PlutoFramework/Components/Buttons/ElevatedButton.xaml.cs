@@ -18,7 +18,7 @@ public partial class ElevatedButton : Button
             switch ((ButtonStateEnum)newValue)
             {
                 case ButtonStateEnum.Enabled:
-                    if (Application.Current.Resources.TryGetValue("Primary", out object primaryColor))
+                    if (Application.Current!.Resources.TryGetValue("Primary", out object primaryColor))
                     {
                         control.BackgroundColor = (Color)primaryColor;
                     }
@@ -30,14 +30,14 @@ public partial class ElevatedButton : Button
                 case ButtonStateEnum.GrayEnabled:
                     control.SetAppThemeColor(Button.BackgroundColorProperty, Colors.White, Colors.Black);
 
-                    control.BorderWidth = (double)Application.Current.Resources["GrayButtonBorderWidth"];
+                    control.BorderWidth = (double)Application.Current!.Resources["GrayButtonBorderWidth"];
                     control.BorderColor = Color.FromArgb("#88A6A6A6");
 
                     control.SetAppThemeColor(Button.TextColorProperty, Color.FromArgb("#A6A6A6"), Colors.White);
                     control.IsEnabled = true;
                     break;
                 case ButtonStateEnum.Disabled:
-                    if (Application.Current.Resources.TryGetValue("PrimaryUnimportant", out object primaryUnimportantColor))
+                    if (Application.Current!.Resources.TryGetValue("PrimaryUnimportant", out object primaryUnimportantColor))
                     {
                         control.BackgroundColor = (Color)primaryUnimportantColor;
                     }
@@ -49,7 +49,7 @@ public partial class ElevatedButton : Button
                     break;
                 case ButtonStateEnum.Warning:
                     control.IsEnabled = true;
-                    control.BackgroundColor = (Color)Application.Current.Resources["DangerousRed"];
+                    control.BackgroundColor = (Color)Application.Current!.Resources["DangerousRed"];
                     control.TextColor = Colors.White;
                     break;
             }

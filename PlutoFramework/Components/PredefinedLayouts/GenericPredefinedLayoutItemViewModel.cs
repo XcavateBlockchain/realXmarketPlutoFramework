@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -6,7 +6,7 @@ namespace PlutoFramework.Components.PredefinedLayouts
 {
 	public class EndpointIcon
 	{
-		public string Icon { get; set; }
+		public string? Icon { get; set; }
 	}
 
 	public partial class GenericPredefinedLayoutItemViewModel : ObservableObject

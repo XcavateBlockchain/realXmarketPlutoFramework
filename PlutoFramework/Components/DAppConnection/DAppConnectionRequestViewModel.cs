@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Model;
 using Plutonication;
@@ -16,19 +16,19 @@ namespace PlutoFramework.Components.DAppConnection
         public string AppName => AppInfo.Current.Name;
 
         [ObservableProperty]
-        private string name;
+        private string? name;
 
         [ObservableProperty]
-        private string icon;
+        private string? icon;
 
         [ObservableProperty]
-        private string url;
+        private string? url;
 
         [ObservableProperty]
-        private string key;
+        private string? key;
 
         [ObservableProperty]
-        private string plutoLayout;
+        private string? plutoLayout;
 
         [ObservableProperty]
         private bool isVisible;
@@ -52,10 +52,10 @@ namespace PlutoFramework.Components.DAppConnection
         private bool confirmed;
 
         [ObservableProperty]
-        private string connectionStatusText;
+        private string? connectionStatusText;
 
         [ObservableProperty]
-        private AccessCredentials accessCredentials;
+        private AccessCredentials? accessCredentials;
 
         public DAppConnectionRequestViewModel()
         {
@@ -95,7 +95,7 @@ namespace PlutoFramework.Components.DAppConnection
 
         if (status == PermissionStatus.Granted)
         {
-            var mainActivity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
+            var mainActivity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity!;
             Intent serviceIntent = new Intent(mainActivity, typeof(PlutonicationAndroidForegroundService));
 
             mainActivity.StartForegroundService(serviceIntent);

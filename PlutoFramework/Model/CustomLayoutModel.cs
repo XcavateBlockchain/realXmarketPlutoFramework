@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Components.AddressView;
+using PlutoFramework.Components.AddressView;
 using PlutoFramework.Components.AwesomeAjunaAvatars;
 using PlutoFramework.Components.AzeroId;
 using PlutoFramework.Components.Balance;
@@ -22,7 +22,7 @@ namespace PlutoFramework.Model
 {
     public class ComponentInfo
     {
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public ComponentId ComponentId { get; set; }
     }
 
@@ -150,7 +150,7 @@ namespace PlutoFramework.Model
             string result = $"plutolayout: [{componentIds}];";
 
             // save Endpoints
-            result += Preferences.Get("SelectedNetworks", (string)Application.Current.Resources["DefaultEndpoints"]);
+            result += Preferences.Get("SelectedNetworks", (string)Application.Current!.Resources["DefaultEndpoints"]);
 
             // Save
             Preferences.Set("PlutoLayout", result);
@@ -179,7 +179,7 @@ namespace PlutoFramework.Model
             string result = plutoLayoutStrings[0] + ";";
 
             // save Endpoints
-            result += Preferences.Get("SelectedNetworks", (string)Application.Current.Resources["DefaultEndpoints"]);
+            result += Preferences.Get("SelectedNetworks", (string)Application.Current!.Resources["DefaultEndpoints"]);
 
             result = result.Substring(0, result.Length - 2) + "]";
 

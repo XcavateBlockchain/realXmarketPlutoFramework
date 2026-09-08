@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Layouts;
 
 namespace PlutoFramework.Templates.TopNavigationBarTemplate
@@ -36,7 +36,7 @@ namespace PlutoFramework.Templates.TopNavigationBarTemplate
                propertyChanged: (BindableObject bindable, object oldValue, object newValue) => {
                    ((TopNavigationBarViewModel)bindable.BindingContext).Extra1IsVisible = newValue is not null;
                });
-        public IAsyncRelayCommand Extra1Command
+        public IAsyncRelayCommand? Extra1Command
         {
             get => (IAsyncRelayCommand)GetValue(Extra1CommandProperty);
             set => SetValue(Extra1CommandProperty, value);
@@ -90,7 +90,7 @@ namespace PlutoFramework.Templates.TopNavigationBarTemplate
             set
             {
                 extraFunc = value;
-                Extra1Command = value is null ? null : new AsyncRelayCommand(value);
+                Extra1Command = value is null ? null : new AsyncRelayCommand(value!);
             }
         }
 
@@ -98,7 +98,7 @@ namespace PlutoFramework.Templates.TopNavigationBarTemplate
         {
             BindingContext = new TopNavigationBarViewModel();
 
-            ControlTemplate = (ControlTemplate)Application.Current.Resources["TopNavigationBarTemplate"];
+            ControlTemplate = (ControlTemplate)Application.Current!.Resources["TopNavigationBarTemplate"];
 
             var height = (double)Application.Current.Resources["TopNavigationBarHeight"];
             AbsoluteLayout.SetLayoutBounds(this, new Rect(0.5, 0, 1, height));

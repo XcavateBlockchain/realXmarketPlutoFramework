@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace PlutoFramework.Components.NetworkSelect
@@ -6,16 +6,16 @@ namespace PlutoFramework.Components.NetworkSelect
     public partial class NetworkSelectEndpoint : ObservableObject
     {
         [ObservableProperty]
-        private string name;
+        private string? name;
 
         [ObservableProperty]
-        private string uRL; // I know, weird looking
+        private string? uRL; // I know, weird looking
 
         [ObservableProperty]
-        private string icon;
+        private string? icon;
 
         [ObservableProperty]
-        private string calamarChainName;
+        private string? calamarChainName;
 
         [ObservableProperty]
         private bool showName = false;

@@ -1,4 +1,4 @@
-﻿using Plutonication;
+using Plutonication;
 using PlutoFramework.Components.DAppConnection;
 using PlutoFramework.Components.MessagePopup;
 using PlutoFramework.Components.TransactionAnalyzer;
@@ -16,10 +16,10 @@ namespace PlutoFramework.Model
             var connectionRequest = DependencyService.Get<DAppConnectionRequestViewModel>();
 
             connectionRequest.Show();
-            connectionRequest.Icon = ac.Icon;
-            connectionRequest.Name = ac.Name;
+            connectionRequest.Icon = ac.Icon!;
+            connectionRequest.Name = ac.Name!;
 
-            connectionRequest.Url = ac.Url;
+            connectionRequest.Url = ac.Url!;
             connectionRequest.Key = ac.Key;
             connectionRequest.AccessCredentials = ac;
 
@@ -45,11 +45,11 @@ namespace PlutoFramework.Model
                 dAppViewModel.SetConnectionState(DAppConnectionStateEnum.Connecting);
 
                 await PlutonicationWalletClient.InitializeAsync(
-                    ac: viewModel.AccessCredentials,
+                    ac: viewModel.AccessCredentials!,
                     pubkey: Model.KeysModel.GetSubstrateKey(),
                     signPayload: Model.PlutonicationModel.ReceivePayloadAsync,
                     signRaw: Model.PlutonicationModel.ReceiveRawAsync,
-                    onConnected: (object sender, EventArgs args) =>
+                    onConnected: (object? sender, EventArgs args) =>
                     {
                         viewModel.Connecting = false;
                         viewModel.Connected = true;
@@ -67,15 +67,15 @@ namespace PlutoFramework.Model
                         viewModel.Confirmed = true;
                         viewModel.ConnectionStatusText = $"Connected successfully. You can now go back to {viewModel.Name}.";
                     },
-                    onDisconnected: (object sender, string args) =>
+                    onDisconnected: (object? sender, string args) =>
                     {
                         dAppViewModel.SetConnectionState(DAppConnectionStateEnum.Disconnected);
                     },
-                    onReconnected: (object sender, int args) =>
+                    onReconnected: (object? sender, int args) =>
                     {
                         dAppViewModel.SetConnectionState(DAppConnectionStateEnum.Reconnecting);
                     },
-                    onReconnectFailed: (object sender, EventArgs args) =>
+                    onReconnectFailed: (object? sender, EventArgs args) =>
                     {
                         dAppViewModel.SetConnectionState(DAppConnectionStateEnum.Disconnected);
                     },
@@ -182,7 +182,7 @@ namespace PlutoFramework.Model
                 }
                 Console.WriteLine("Authenticated");
 
-                byte[] signature = account.Sign(viewModel.Payload.Encode());
+                byte[] signature = account.Sign(viewModel!.Payload!.Encode());
 
                 var signerResult = new SignerResult
                 {

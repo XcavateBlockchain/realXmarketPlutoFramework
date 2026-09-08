@@ -41,7 +41,7 @@ public partial class NftAttributeView : ContentView
             {
                 return;
             }
-            control.border.Shadow = (bool)newValue ? (Shadow)Application.Current.Resources["CardShadow"] : new()
+            control.border.Shadow = (bool)newValue ? (Shadow)Application.Current!.Resources["CardShadow"] : new()
             {
                 Brush = Brush.Black,
                 Offset = new Point(0, 0),

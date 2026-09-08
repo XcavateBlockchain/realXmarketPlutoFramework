@@ -28,7 +28,7 @@ public partial class NftMultiImageView : ContentView
         set => SetValue(ImageSourcesProperty, value);
     }
 
-    private void UpdateImages(List<string> imageSources)
+    private void UpdateImages(List<string>? imageSources)
     {
         thumbnailSources.Clear();
 

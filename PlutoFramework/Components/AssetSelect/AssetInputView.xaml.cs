@@ -73,7 +73,7 @@ public partial class AssetInputView : ContentView
         viewModel.CalculateUsdValue();
 
 
-        /// 2 way binding did not work for some reason
+        // 2 way binding did not work for some reason
         //Amount = ((Entry)sender).Text;
     }
 

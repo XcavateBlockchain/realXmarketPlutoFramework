@@ -1,10 +1,10 @@
-﻿using PlutoFramework.Templates.PageTemplate;
+using PlutoFramework.Templates.PageTemplate;
 
 namespace PlutoFramework.Components.CustomLayouts;
 
 public partial class CustomLayoutsPage : PageTemplate
 {
-    private CustomLayoutItemDragger selectedDragger;
+    private CustomLayoutItemDragger selectedDragger = null!;
 
     private Queue<(float x, float y)> _positions = new Queue<(float, float)>();
 
@@ -14,7 +14,7 @@ public partial class CustomLayoutsPage : PageTemplate
 
         BindingContext = new CustomLayoutsViewModel();
 
-        TopNavigationBar.ExtraFunc = OnExtraClicked;
+        TopNavigationBar!.ExtraFunc = OnExtraClicked;
     }
 
     async void PanGestureRecognizer_PanUpdated(System.Object sender, Microsoft.Maui.Controls.PanUpdatedEventArgs e)
@@ -106,7 +106,7 @@ public partial class CustomLayoutsPage : PageTemplate
             {
                 await selectedDragger.FadeToAsync(0, 250);
 
-                selectedDragger = null;
+                selectedDragger = null!;
 
                 ((CustomLayoutsViewModel)this.BindingContext).DeleteItem(selectedIndex);
 
@@ -144,7 +144,7 @@ public partial class CustomLayoutsPage : PageTemplate
             await selectedDragger.TranslateToAsync(0, (index - selectedIndex) * 65, 500, Easing.CubicOut);
 
             selectedDragger.ZIndex = 0;
-            selectedDragger = null;
+            selectedDragger = null!;
 
             await Task.WhenAll(
                 deleteView.FadeToAsync(0, 250),

@@ -68,8 +68,8 @@ public partial class MessageWebViewPage : PageTemplate
         if (!header.Present)
         {
             Title = DefaultTitle;
-            NavigationBarExtra1Command = null;
-            NavigationBarExtra2Command = null;
+            NavigationBarExtra1Command = null!;
+            NavigationBarExtra2Command = null!;
             return;
         }
 
@@ -91,11 +91,11 @@ public partial class MessageWebViewPage : PageTemplate
             // Clearing the command hides the slot (its IsVisible tracks the command).
             if (isPrimary)
             {
-                NavigationBarExtra1Command = null;
+                NavigationBarExtra1Command = null!;
             }
             else
             {
-                NavigationBarExtra2Command = null;
+                NavigationBarExtra2Command = null!;
             }
 
             return;

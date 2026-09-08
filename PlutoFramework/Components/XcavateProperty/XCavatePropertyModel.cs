@@ -1,4 +1,4 @@
-﻿using Amazon;
+using Amazon;
 using Amazon.S3;
 using CommunityToolkit.Maui.Alerts;
 using Microsoft.Extensions.Configuration;
@@ -62,7 +62,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 {
                     var images = new List<string>();
 
-                    foreach (var file in nft.XcavateMetadata.Files.Where(file =>
+                    foreach (var file in nft.XcavateMetadata!.Files.Where(file =>
                         !string.IsNullOrWhiteSpace(file)
                         && file.Length > 5
                         && (file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
@@ -77,12 +77,12 @@ namespace PlutoFramework.Components.XcavateProperty
 
                         images.Add(presignedUrl);
                     }
-                    nft.XcavateMetadata.Files = images;
+                    nft.XcavateMetadata!.Files = images;
                 }
 
-                if (nft.Metadata is not null && string.IsNullOrWhiteSpace(nft.Metadata.Image))
+                if (nft!.Metadata is { } metadata && string.IsNullOrWhiteSpace(metadata.Image))
                 {
-                    nft.Metadata.Image = "noimage.png";
+                    metadata.Image = "noimage.png";
                 }
             }
             catch (Exception ex)
@@ -101,7 +101,7 @@ namespace PlutoFramework.Components.XcavateProperty
             uint listingExpiry = ongoingObjectListing?.ListingExpiry ?? 0;
             uint claimExpiry = ongoingObjectListing?.ClaimExpiry ?? 0;
 
-            var tokensBought = ongoingObjectListing?.ShareOwners?.Count() == 1 ? ongoingObjectListing.ShareOwners.First().Value.ShareAmount : 0u;
+            var tokensBought = ongoingObjectListing?.ShareOwners?.Count() == 1 ? ongoingObjectListing!.ShareOwners.First().Value.ShareAmount : 0u;
             var tokensOwned = ((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails?.ShareOwners.Count() == 1 ? ((INftXcavateRealWorldAssetDetails)nft).RealWorldAssetDetails?.ShareOwners.First().Value.ShareAmount ?? 0u : 0u;
 
             return new XcavateNftWrapper
@@ -127,9 +127,9 @@ namespace PlutoFramework.Components.XcavateProperty
         /// </summary>
         public static async Task<XcavateNftWrapper> ToXcavateNftWrapperAsync(XcavateSolanaListingNft nft, CancellationToken token)
         {
-            if (nft.Metadata is not null && string.IsNullOrWhiteSpace(nft.Metadata.Image))
+            if (nft.Metadata is not null && string.IsNullOrWhiteSpace(nft.Metadata!.Image))
             {
-                nft.Metadata.Image = "noimage.png";
+                nft.Metadata!.Image = "noimage.png";
             }
 
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -240,7 +240,7 @@ namespace PlutoFramework.Components.XcavateProperty
                     {
                         var images = new List<string>();
 
-                        foreach (var file in indexedProperty.XcavateMetadata.Files.Where(file =>
+                        foreach (var file in indexedProperty.XcavateMetadata!.Files.Where(file =>
                             !string.IsNullOrWhiteSpace(file)
                             && file.Length > 5
                             && (file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)

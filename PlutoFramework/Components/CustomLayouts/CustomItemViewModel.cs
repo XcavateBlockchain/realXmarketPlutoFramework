@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace PlutoFramework.Components.CustomLayouts
@@ -9,10 +9,10 @@ namespace PlutoFramework.Components.CustomLayouts
 		private bool isVisible;
 
 		[ObservableProperty]
-		private ContentView content;
+		private ContentView? content;
 
         [ObservableProperty]
-        private string itemName;
+        private string? itemName;
 
         public CustomItemViewModel()
 		{

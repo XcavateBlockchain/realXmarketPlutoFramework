@@ -1,4 +1,4 @@
-﻿using Plugin.Fingerprint;
+using Plugin.Fingerprint;
 using Plugin.Fingerprint.Abstractions;
 using PlutoFramework.Components.Account;
 using PlutoFramework.Components.Kilt;
@@ -44,7 +44,7 @@ namespace PlutoFramework.Model
             var sumsubSecrets = SumsubSecretModel.GetSecrets();
 
             var applicantData = await SumsubModel.GetApplicantDataAsync(
-                address,
+                address!,
                 sumsubSecrets.SecretKey,
                 sumsubSecrets.AppToken,
                 token

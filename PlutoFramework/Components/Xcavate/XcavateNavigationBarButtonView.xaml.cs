@@ -45,7 +45,7 @@ public partial class XcavateNavigationBarButtonView : ContentView
 
             if ((bool)newValue)
             {
-                control.titleLabel.TextColor = (Color)Application.Current.Resources["Primary"];
+                control.titleLabel.TextColor = (Color)Application.Current!.Resources["Primary"];
             }
             else
             {

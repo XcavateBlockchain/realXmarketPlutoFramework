@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Components.Account;
+using PlutoFramework.Components.Account;
 using PlutoFramework.Components.Balance;
 using PlutoFramework.Components.MessagePopup;
 using PlutoFramework.Components.Solana;
@@ -80,7 +80,7 @@ namespace PlutoFramework.Model
             return navigation?.PopAsync() ?? Task.CompletedTask;
         }
 
-        public static void OnScanned(System.Object sender, ZXing.Net.Maui.BarcodeDetectionEventArgs e)
+        public static void OnScanned(System.Object? sender, ZXing.Net.Maui.BarcodeDetectionEventArgs e)
         {
 #pragma warning disable VSTHRD101 // Avoid unsupported async delegates
             MainThread.BeginInvokeOnMainThread(async () =>
@@ -111,7 +111,7 @@ namespace PlutoFramework.Model
                     {
                         var viewModel = DependencyService.Get<TransferViewModel>();
 
-                        viewModel.GetFeeAsync();
+                        _ = viewModel.GetFeeAsync();
 
                         viewModel.IsVisible = true;
 

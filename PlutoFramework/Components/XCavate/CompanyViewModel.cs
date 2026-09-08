@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Nft;
 using PlutoFramework.Model;
@@ -11,7 +11,7 @@ namespace PlutoFramework.Components.Xcavate
     {
         public override string Title => "Company page";
 
-        private IAsyncEnumerator<XcavateCompanyUser> userEnumerator = null;
+        private IAsyncEnumerator<XcavateCompanyUser>? userEnumerator = null;
 
         public override async Task LoadMoreAsync(CancellationToken token)
         {
@@ -75,7 +75,7 @@ namespace PlutoFramework.Components.Xcavate
                 return;
             }
 
-            var asyncEnumerable = XcavateCompanyModel.GetMockCompanyUsersAsync(Company.CompanyId.Value, 25);
+            var asyncEnumerable = XcavateCompanyModel.GetMockCompanyUsersAsync(Company!.CompanyId.Value, 25);
             userEnumerator = asyncEnumerable.GetAsyncEnumerator(token);
 
             await LoadMoreAsync(token);
@@ -92,28 +92,28 @@ namespace PlutoFramework.Components.Xcavate
         [NotifyPropertyChangedFor(nameof(Address))]
         [NotifyPropertyChangedFor(nameof(AssociatedMembershipNumber))]
         [NotifyPropertyChangedFor(nameof(PassportOrDriversLicenseVerified))]
-        private XcavateCompany company;
-        public string CompanyName => Company.CompanyName;
-        public string RegistrationNumber => Company.RegistrationNumber;
-        public string PhoneNumber => Company.PhoneNumber;
-        public string Email => Company.Email;
-        public string Website => Company.Website;
-        public string Address => Company.Address;
-        public string AssociatedMembershipNumber => Company.AssociatedMembershipNumber;
-        public VerificationEnum PassportOrDriversLicenseVerified => Company.PassportOrDriversLicense.VerificationStatus;
+        private XcavateCompany? company;
+        public string CompanyName => Company!.CompanyName;
+        public string RegistrationNumber => Company!.RegistrationNumber;
+        public string PhoneNumber => Company!.PhoneNumber;
+        public string Email => Company!.Email;
+        public string Website => Company!.Website;
+        public string Address => Company!.Address;
+        public string AssociatedMembershipNumber => Company!.AssociatedMembershipNumber;
+        public VerificationEnum PassportOrDriversLicenseVerified => Company!.PassportOrDriversLicense.VerificationStatus;
 
         [RelayCommand]
         public async Task EditAsync() => await NavigationModel.PushAsync(new ModifyCompanyPage(
             new ModifyCompanyViewModel
             {
                 Title = "Modify company",
-                CompanyName = Company.CompanyName,
-                RegistrationNumber = Company.RegistrationNumber,
-                PhoneNumber = Company.PhoneNumber,
-                Email = Company.Email,
-                Website = Company.Website,
-                Address = Company.Address,
-                AssociatedMembershipNumber = Company.AssociatedMembershipNumber,
+                CompanyName = Company!.CompanyName,
+                RegistrationNumber = Company!.RegistrationNumber,
+                PhoneNumber = Company!.PhoneNumber,
+                Email = Company!.Email,
+                Website = Company!.Website,
+                Address = Company!.Address,
+                AssociatedMembershipNumber = Company!.AssociatedMembershipNumber,
             }));
 
         [RelayCommand]

@@ -30,7 +30,7 @@ public partial class AddressQrCodeView : ContentView
     {
         var viewModel = DependencyService.Get<AddressQrCodeViewModel>();
 
-        CopyImageAnimation();
+        _ = CopyImageAnimation();
 
 		await CopyAddress.CopyToClipboardAsync(viewModel.Address);
     }

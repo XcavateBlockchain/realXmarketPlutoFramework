@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using PlutoFramework.Constants;
 using PlutoFramework.Types;
 
@@ -11,7 +11,7 @@ namespace PlutoFramework.Components.AssetSelect
     public partial class AssetSelectButtonViewModel : ObservableObject
     {
         [ObservableProperty]
-        private ImageSource chainIcon;
+        private ImageSource? chainIcon;
 
         private string symbol = "";
         public string Symbol

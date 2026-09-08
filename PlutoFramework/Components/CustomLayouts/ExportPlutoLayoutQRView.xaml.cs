@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Components.AddressView;
+using PlutoFramework.Components.AddressView;
 
 namespace PlutoFramework.Components.CustomLayouts;
 
@@ -23,6 +23,6 @@ public partial class ExportPlutoLayoutQRView : ContentView
     {
         var viewModel = DependencyService.Get<ExportPlutoLayoutQRViewModel>();
 
-        await CopyAddress.CopyToClipboardAsync(viewModel.PlutoLayoutValue);
+        await CopyAddress.CopyToClipboardAsync(viewModel.PlutoLayoutValue!);
     }
 }

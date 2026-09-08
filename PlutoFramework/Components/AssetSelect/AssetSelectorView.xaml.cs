@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Constants;
+using PlutoFramework.Constants;
 using System.Numerics;
 using PlutoFramework.Types;
 using PlutoFramework.Model;
@@ -14,7 +14,7 @@ public partial class AssetSelectorView : ContentView
         propertyChanging: (bindable, oldValue, newValue) => {
             var control = (AssetSelectorView)bindable;
 
-            control.amountLabel.Text = String.Format((string)Application.Current.Resources["CurrencyFormat"], (double)newValue);
+            control.amountLabel.Text = String.Format((string)Application.Current!.Resources["CurrencyFormat"], (double)newValue);
         });
 
     public static readonly BindableProperty SymbolProperty = BindableProperty.Create(

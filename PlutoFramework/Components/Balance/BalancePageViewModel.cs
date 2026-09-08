@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
@@ -64,7 +64,7 @@ namespace PlutoFramework.Components.Balance
                         Amount = String.Format("{0:0.0000}", a.Amount),
                         Symbol = a.Symbol,
                         UsdValue = a.UsdValue > 0 ? a.UsdValue.ToCurrencyString() : "~",
-                        ChainIcon = Application.Current.UserAppTheme != AppTheme.Dark ? a.ChainIcon : a.DarkChainIcon,
+                        ChainIcon = Application.Current!.UserAppTheme != AppTheme.Dark ? a.ChainIcon : a.DarkChainIcon,
                         IsReserved = a.Pallet == AssetPallet.NativeReserved || a.Pallet == AssetPallet.AssetsReserved || a.Pallet == AssetPallet.TokensReserved,
                         IsFrozen = a.Pallet == AssetPallet.NativeFrozen || a.Pallet == AssetPallet.AssetsFrozen || a.Pallet == AssetPallet.TokensFrozen,
                     });

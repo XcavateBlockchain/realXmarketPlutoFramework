@@ -20,7 +20,7 @@ namespace PlutoFramework.Model
     /// means they need no user interaction and can run in the background. Every entry
     /// point here is safe to fire and forget: failures are logged, never thrown, and a
     /// failed Solana link is retried the next time the account passes through
-    /// <see cref="PlutoFrameworkSolanaAccount.ResolveAsync"/> unlocked.
+    /// <see cref="PlutoFrameworkSolanaAccount.ResolveAsync(string, CancellationToken)"/> unlocked.
     /// </summary>
     public static class WalletLinkModel
     {

@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Constants;
+using PlutoFramework.Constants;
 using PlutoFramework.Model.Constants;
 using SQLite;
 using System.Numerics;
@@ -17,8 +17,8 @@ namespace PlutoFramework.Model.SQLite
         public NftTypeEnum Type { get; set; }
         public BigInteger CollectionId { get; set; }
         public BigInteger Id { get; set; }
-        public string Owner { get; set; }
-        public MetadataBase Metadata { get; set; }
+        public required string Owner { get; set; }
+        public MetadataBase? Metadata { get; set; }
         public Task<ICollectionBase> GetCollectionAsync(CancellationToken token) => throw new NotSupportedException();
         public Task<INftBase> GetFullAsync(CancellationToken token) => Task.FromResult<INftBase>(this);
     }
@@ -44,7 +44,7 @@ namespace PlutoFramework.Model.SQLite
                 throw new Exception("This should not happen");
             }
 
-            var nftBase = JsonSerializer.Deserialize<SavedXcavatePropertyBase>(item.SerializedNftBase);
+            var nftBase = JsonSerializer.Deserialize<SavedXcavatePropertyBase>(item.SerializedNftBase)!;
 
             nftBase.CollectionId = BigInteger.Parse(keyValues[1]);
             nftBase.Id = BigInteger.Parse(keyValues[2]);
@@ -52,7 +52,7 @@ namespace PlutoFramework.Model.SQLite
             return new NftWrapper
             {
                 NftBase = nftBase,
-                Endpoint = JsonSerializer.Deserialize<Endpoint>(item.SerializedEndpoint),
+                Endpoint = JsonSerializer.Deserialize<Endpoint>(item.SerializedEndpoint)!,
                 Favourite = item.Favourite,
             };
         }

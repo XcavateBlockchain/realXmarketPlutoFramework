@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace PlutoFramework.Components.CustomLayouts
@@ -9,7 +9,7 @@ namespace PlutoFramework.Components.CustomLayouts
 		private bool isVisible;
 
 		[ObservableProperty]
-		private string plutoLayoutValue;
+		private string? plutoLayoutValue;
 
 		public ExportPlutoLayoutQRViewModel()
 		{

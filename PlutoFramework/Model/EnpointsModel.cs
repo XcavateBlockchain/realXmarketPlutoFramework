@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Constants;
+using PlutoFramework.Constants;
 
 namespace PlutoFramework.Model
 {
@@ -6,7 +6,7 @@ namespace PlutoFramework.Model
     {
         public static IEnumerable<EndpointEnum> GetSelectedEndpointKeys()
         {
-            return Preferences.Get("SelectedNetworks", (string)Application.Current.Resources["DefaultEndpoints"])
+            return Preferences.Get("SelectedNetworks", (string)Application.Current!.Resources["DefaultEndpoints"])
                 .ToEndpointEnums();
         }
 

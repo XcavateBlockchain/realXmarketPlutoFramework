@@ -6,7 +6,7 @@ namespace PlutoFramework.Components.Xcavate;
 
 public partial class XcavateCell : ContentView
 {
-    private string _previousValue;
+    private string? _previousValue;
     private const int DigitHeight = 30;
     private const int StaggerDelay = 50;
 
@@ -76,7 +76,7 @@ public partial class XcavateCell : ContentView
             {
                 MainThread.BeginInvokeOnMainThread(async () =>
                 {
-                    await control.ApplyRollingTickerAnimation(null, control._previousValue);
+                    await control.ApplyRollingTickerAnimation(null, control._previousValue!);
                 });
             }
         });
@@ -174,7 +174,7 @@ public partial class XcavateCell : ContentView
             HeightRequest = DigitHeight,
             HorizontalTextAlignment = TextAlignment.Center,
             VerticalTextAlignment = TextAlignment.Center,
-            TextColor = (Color)Application.Current.Resources["Primary"],
+            TextColor = (Color)Application.Current!.Resources["Primary"],
             FontSize = 20,
             FontFamily = "XcavateFont",
             FontAttributes = FontAttributes.Bold
@@ -189,7 +189,7 @@ public partial class XcavateCell : ContentView
             HeightRequest = DigitHeight,
             VerticalTextAlignment = TextAlignment.Center,
             HorizontalTextAlignment = TextAlignment.Start,
-            TextColor = (Color)Application.Current.Resources["Primary"],
+            TextColor = (Color)Application.Current!.Resources["Primary"],
             FontSize = 20,
             FontFamily = "XcavateFont",
             FontAttributes = FontAttributes.Bold,
@@ -197,7 +197,7 @@ public partial class XcavateCell : ContentView
         };
     }
 
-    private void UpdateValueDisplay(string value)
+    private void UpdateValueDisplay(string? value)
     {
         if (valueContainer == null) return;
 
@@ -208,7 +208,7 @@ public partial class XcavateCell : ContentView
         }
     }
 
-    private async Task ApplyRollingTickerAnimation(string oldValue, string newValue)
+    private async Task ApplyRollingTickerAnimation(string? oldValue, string newValue)
     {
         if (valueContainer == null) return;
 
@@ -217,7 +217,7 @@ public partial class XcavateCell : ContentView
         var newSegments = ParseValueSegments(newValue);
         var oldSegments = string.IsNullOrEmpty(oldValue) ? new List<Segment>() : ParseValueSegments(oldValue);
         var numericalSegments = newSegments.Where(s => s.IsNumerical).ToList();
-        var totalNumericalDigits = numericalSegments.Sum(s => s.Digits.Count);
+        var totalNumericalDigits = numericalSegments.Sum(s => s.Digits!.Count);
 
         if (totalNumericalDigits == 0)
         {
@@ -226,16 +226,16 @@ public partial class XcavateCell : ContentView
         }
 
         // Flatten old numerical digits for easy index access
-        var oldNumericalDigits = oldSegments.Where(s => s.IsNumerical).SelectMany(s => s.Digits).ToList();
+        var oldNumericalDigits = oldSegments.Where(s => s.IsNumerical).SelectMany(s => s.Digits!).ToList();
 
         var animations = new List<Task>();
         var globalDigitIndex = 0;
 
         foreach (var segment in newSegments)
         {
-            if (segment.IsNumerical && segment.Digits.Count > 0)
+            if (segment.IsNumerical && segment.Digits!.Count > 0)
             {
-                foreach (var digit in segment.Digits)
+                foreach (var digit in segment.Digits!)
                 {
                     // Get the previous digit at this position, or 0 if not available
                     var fromDigit = 0;
@@ -255,7 +255,7 @@ public partial class XcavateCell : ContentView
             }
             else if (!segment.IsNumerical)
             {
-                valueContainer.Add(CreateStaticTextLabel(segment.Text));
+                valueContainer.Add(CreateStaticTextLabel(segment.Text!));
             }
         }
 
@@ -291,6 +291,6 @@ public partial class XcavateCell : ContentView
 internal class Segment
 {
     public bool IsNumerical { get; set; }
-    public string Text { get; set; }
-    public List<int> Digits { get; set; }
+    public string? Text { get; set; }
+    public List<int>? Digits { get; set; }
 }

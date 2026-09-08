@@ -1,10 +1,10 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 
 namespace PlutoFramework.Components.Nft
 {
-    public abstract partial class BaseListViewModel<Key, Item> : ObservableObject
+    public abstract partial class BaseListViewModel<Key, Item> : ObservableObject where Key : notnull
     {
         public const uint LIMIT = 20;
         public abstract string Title { get; }

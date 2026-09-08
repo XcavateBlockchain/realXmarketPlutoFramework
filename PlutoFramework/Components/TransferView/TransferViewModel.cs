@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using PlutoFramework.Components.AssetSelect;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Constants;
@@ -13,19 +13,19 @@ namespace PlutoFramework.Components.TransferView
         [ObservableProperty]
         private ButtonStateEnum confirmButtonState;
 
-        private string address;
+        private string? address;
 
-        public string Address { get => address; set { SetProperty(ref address, value); CheckCorrectInput(); } }
-
-        [ObservableProperty]
-        private string addressInput;
-
-        private string amount;
-
-        public string Amount { get => amount; set { Console.WriteLine("Setting amount: " + value); SetProperty(ref amount, value); CheckCorrectInput(); } }
+        public string Address { get => address!; set { SetProperty(ref address, value); CheckCorrectInput(); } }
 
         [ObservableProperty]
-        private string fee;
+        private string? addressInput;
+
+        private string? amount;
+
+        public string Amount { get => amount!; set { Console.WriteLine("Setting amount: " + value); SetProperty(ref amount, value); CheckCorrectInput(); } }
+
+        [ObservableProperty]
+        private string? fee;
 
         [ObservableProperty]
         private bool isVisible;

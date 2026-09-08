@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Constants;
+using PlutoFramework.Constants;
 using Substrate.NetApi.Model.Types.Base;
 using PlutoFramework.Components.Events;
 using System.Numerics;
@@ -292,7 +292,7 @@ public partial class ExtrinsicStatusView : ContentView
         clicked = true;
 
         await Navigation.PushAsync(new ExtrinsicDetailPage(
-            await EventsListViewModel.Task,
+            await EventsListViewModel!.Task,
             Endpoint,
             BlockNumber + "-" + ExtrinsicIndex
         ));

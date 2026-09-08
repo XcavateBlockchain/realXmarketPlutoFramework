@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.NetworkSelect;
 using PlutoFramework.Model;
 
@@ -42,7 +42,7 @@ public partial class AssetSelectView : ContentView
         }
 
         var assetSelectButtonViewModel = DependencyService.Get<AssetSelectButtonViewModel>();
-        assetSelectButtonViewModel.ChainIcon = Application.Current.UserAppTheme == AppTheme.Light ? assetSelector.Endpoint.Icon : assetSelector.Endpoint.DarkIcon;
+        assetSelectButtonViewModel.ChainIcon = Application.Current!.UserAppTheme == AppTheme.Light ? assetSelector.Endpoint.Icon : assetSelector.Endpoint.DarkIcon;
         assetSelectButtonViewModel.Symbol = assetSelector.Symbol;
         assetSelectButtonViewModel.SelectedAssetKey = (assetSelector.Endpoint.Key, assetSelector.Pallet, assetSelector.AssetId);
         assetSelectButtonViewModel.Decimals = assetSelector.Decimals;

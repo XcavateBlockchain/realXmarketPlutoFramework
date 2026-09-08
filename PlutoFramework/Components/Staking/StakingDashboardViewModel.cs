@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using PlutoFramework.Components.WebView;
 
@@ -11,10 +11,10 @@ namespace PlutoFramework.Components.Staking
 		[ObservableProperty]
 		private double heightRequest;
 
-		private ContentView content;
+		private ContentView? content;
 		public ContentView Content
 		{
-			get => content;
+			get => content!;
 			set {
 				SetProperty(ref content, value);
 				HeightRequest = value.HeightRequest + EXTRA_HEIGHT;

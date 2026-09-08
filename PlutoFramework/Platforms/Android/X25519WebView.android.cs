@@ -330,6 +330,7 @@ public partial class X25519WebView
                 return;
             }
 
+            #pragma warning disable CS8602 // SDK false positive: new NotificationCompat.Builder(...) receiver is non-nullable
             var notification = new NotificationCompat.Builder(context, DownloadChannelId)
                 .SetContentTitle("Downloading")
                 .SetContentText(fileName)
@@ -338,6 +339,7 @@ public partial class X25519WebView
                 .SetOngoing(true)
                 .SetAutoCancel(false)
                 .Build();
+            #pragma warning restore CS8602
 
             manager.Notify(notificationId, notification);
         }
@@ -377,6 +379,7 @@ public partial class X25519WebView
 
             var pendingIntent = PendingIntent.GetActivity(context, notificationId, openIntent, pendingFlags);
 
+            #pragma warning disable CS8602 // SDK false positive: new NotificationCompat.Builder(...) receiver is non-nullable
             var notification = new NotificationCompat.Builder(context, DownloadChannelId)
                 .SetContentTitle("Download complete")
                 .SetContentText(fileName)
@@ -386,6 +389,7 @@ public partial class X25519WebView
                 .SetOngoing(false)
                 .SetAutoCancel(true)
                 .Build();
+            #pragma warning restore CS8602
 
             manager.Notify(notificationId, notification);
         }
@@ -413,6 +417,7 @@ public partial class X25519WebView
                 return;
             }
 
+            #pragma warning disable CS8602 // SDK false positive: new NotificationCompat.Builder(...) receiver is non-nullable
             var notification = new NotificationCompat.Builder(context, DownloadChannelId)
                 .SetContentTitle("Download failed")
                 .SetContentText(fileName)
@@ -421,6 +426,7 @@ public partial class X25519WebView
                 .SetOngoing(false)
                 .SetAutoCancel(true)
                 .Build();
+            #pragma warning restore CS8602
 
             manager.Notify(notificationId, notification);
         }
@@ -530,14 +536,17 @@ public partial class X25519WebView
 
     private sealed class ScrollChangedListener : Java.Lang.Object, ViewTreeObserver.IOnScrollChangedListener
     {
-        private readonly WeakReference<X25519WebView> _owner;
-        private readonly WeakReference<Android.Webkit.WebView> _nativeWebView;
+        private readonly WeakReference<X25519WebView>? _owner;
+        private readonly WeakReference<Android.Webkit.WebView>? _nativeWebView;
 
-        // Required JNI constructor so Android can rehydrate this listener from native handles
+        // Required JNI constructor so Android can rehydrate this listener from native handles.
+        // (SDK false positive: CS0628 — the protected JNI ctor is required by Xamarin.Android.)
+        #pragma warning disable CS0628
         protected ScrollChangedListener(IntPtr handle, JniHandleOwnership transfer)
             : base(handle, transfer)
         {
         }
+        #pragma warning restore CS0628
 
         public ScrollChangedListener(X25519WebView owner, Android.Webkit.WebView nativeWebView)
         {
@@ -547,7 +556,7 @@ public partial class X25519WebView
 
         public void OnScrollChanged()
         {
-            if (_owner is not null && _owner.TryGetTarget(out var owner) && _nativeWebView.TryGetTarget(out var native))
+            if (_owner is not null && _owner.TryGetTarget(out var owner) && _nativeWebView!.TryGetTarget(out var native))
             {
                 owner.RaiseScrolled(native.ScrollX, native.ScrollY);
             }

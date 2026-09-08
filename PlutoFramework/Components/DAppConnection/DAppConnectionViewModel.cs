@@ -1,23 +1,23 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace PlutoFramework.Components.DAppConnection
 {
     public partial class DAppConnectionViewModel : ObservableObject
     {
         [ObservableProperty]
-        private string name;
+        private string? name;
 
         [ObservableProperty]
-        private string icon;
+        private string? icon;
 
         [ObservableProperty]
         private bool isVisible;
 
         [ObservableProperty]
-        private string connectionState;
+        private string? connectionState;
 
         [ObservableProperty]
-        private Color connectionStateColor;
+        private Color? connectionStateColor;
 
         public DAppConnectionViewModel()
         {

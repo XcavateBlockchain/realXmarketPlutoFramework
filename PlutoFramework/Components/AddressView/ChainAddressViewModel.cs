@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace PlutoFramework.Components.AddressView
 {
@@ -8,7 +8,7 @@ namespace PlutoFramework.Components.AddressView
         private string address;
 
         [ObservableProperty]
-        private string qrAddress;
+        private string? qrAddress;
 
         [ObservableProperty]
         private string chainAddressName;

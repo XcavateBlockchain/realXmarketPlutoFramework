@@ -9,7 +9,7 @@ namespace PlutoFramework.Components.Password;
 
 public partial class SetupPasswordPage : PageTemplate
 {
-    public required Func<Task> Navigation;
+    public new required Func<Task> Navigation;
 
     private bool _clicked = false;
 

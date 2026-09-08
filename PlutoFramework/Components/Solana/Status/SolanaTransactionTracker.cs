@@ -74,7 +74,7 @@ namespace PlutoFramework.Components.Solana.Status
                         or SolanaTransactionStatus.FinalizedFailed)
                     {
                         SetErrorMessage(
-                            info, SolanaTransactionErrorDescriber.Describe(signatureStatus.Error));
+                            info, SolanaTransactionErrorDescriber.Describe(signatureStatus!.Error));
                     }
                 }
                 catch (OperationCanceledException)

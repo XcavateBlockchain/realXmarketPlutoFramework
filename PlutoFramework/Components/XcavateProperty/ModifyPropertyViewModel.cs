@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.Nft;
@@ -25,7 +25,7 @@ namespace PlutoFramework.Components.XcavateProperty
         private List<ImageSourceWithName> imageSources = new List<ImageSourceWithName>();
 
         [ObservableProperty]
-        private PropertyMetadata metadata; /*= new PropertyMetadata
+        private PropertyMetadata? metadata; /*= new PropertyMetadata
         {
             Images = [],
             PropertyName = ""
@@ -38,7 +38,7 @@ namespace PlutoFramework.Components.XcavateProperty
         public async Task FormChangedAsync()
         {
             Console.WriteLine("Form changed: ");
-            Console.WriteLine(Metadata.PropertyName);
+            Console.WriteLine(Metadata!.PropertyName);
 
             await SaveAsync();
         }

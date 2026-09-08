@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.Threading;
+using Microsoft.VisualStudio.Threading;
 using PlutoFramework.Components.NetworkSelect;
 using PlutoFramework.Constants;
 
@@ -53,7 +53,7 @@ namespace PlutoFramework.Model
                 throw new Exception("Endpoint was None");
             }
 
-            Task<PlutoFrameworkSubstrateClient> clientTask;
+            Task<PlutoFrameworkSubstrateClient>? clientTask;
 
             lock (ClientsLock)
             {

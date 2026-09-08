@@ -1,4 +1,4 @@
-﻿namespace PlutoFramework.Components.UpdateView;
+namespace PlutoFramework.Components.UpdateView;
 
 public partial class UpdateView : ContentView, ILocalLoadableAsyncView
 {
@@ -12,7 +12,7 @@ public partial class UpdateView : ContentView, ILocalLoadableAsyncView
 		BindingContext = new UpdateViewModel();
     }
 
-    public Task LoadAsync(CancellationToken token) => (BindingContext as UpdateViewModel).CheckLatestVersionAsync(url, token);
+    public Task LoadAsync(CancellationToken token) => (BindingContext as UpdateViewModel)!.CheckLatestVersionAsync(url, token);
 
 
     async void OnClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)

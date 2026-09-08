@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using Substrate.NetApi;
@@ -9,10 +9,10 @@ namespace PlutoFramework.Components.Extrinsic
     public partial class CallDetailViewModel : ObservableObject
     {
         [ObservableProperty]
-        private string palletCallName;
+        private string? palletCallName;
 
         [ObservableProperty]
-        private Endpoint endpoint;
+        private Endpoint? endpoint;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(EncodedCallText))]

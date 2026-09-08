@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using PlutoFramework.Model;
 using PlutoFramework.Model.HydraDX;
 
@@ -6,14 +6,12 @@ namespace PlutoFramework.Components.AssetSelect
 {
     partial class AssetInputViewModel : ObservableObject
     {
-        private bool amountLastActive = true;
-
         [ObservableProperty]
-        private string amount;
+        private string? amount;
 
 
         [ObservableProperty]
-        private string usdAmount;
+        private string? usdAmount;
 
         [ObservableProperty]
         private string usdAmountPlaceholder = "USD amount";
@@ -58,7 +56,7 @@ namespace PlutoFramework.Components.AssetSelect
                     UsdAmountEnabled = true;
                     UsdAmountPlaceholder = "USD amount";
 
-                    var usdAmount = String.Format((string)Application.Current.Resources["CurrencyFormat"], decimalAmount * (decimal)price);
+                    var usdAmount = String.Format((string)Application.Current!.Resources["CurrencyFormat"], decimalAmount * (decimal)price);
 
                     UsdAmount = usdAmount;
                 }
@@ -86,7 +84,7 @@ namespace PlutoFramework.Components.AssetSelect
 
                 if (price != 0)
                 {
-                    var amount = String.Format("{0:0.00000}", decimalAmount / (decimal)price);
+                    var amount = String.Format("{0:0.00000}", decimalAmount / (decimal)price!);
 
                     Amount = amount;
                 }

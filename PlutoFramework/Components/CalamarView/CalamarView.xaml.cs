@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Model;
+using PlutoFramework.Model;
 
 namespace PlutoFramework.Components.CalamarView;
 
@@ -33,6 +33,6 @@ public partial class CalamarView : ContentView, ISubstrateClientLoadableView
     async void OnOpenClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)
     {
         var viewModel = DependencyService.Get<CalamarViewModel>();
-        await Launcher.OpenAsync(viewModel.WebAddress);
+        await Launcher.OpenAsync(viewModel.WebAddress!);
     }
 }

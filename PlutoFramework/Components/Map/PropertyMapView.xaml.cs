@@ -55,7 +55,7 @@ public partial class PropertyMapView : ContentView
 
         var openMapButton = new Border
         {
-            BackgroundColor = (Color)Application.Current.Resources["Primary"],
+            BackgroundColor = (Color)Application.Current!.Resources["Primary"],
             StrokeThickness = 0,
             IsVisible = false,
             HorizontalOptions = LayoutOptions.End,
@@ -231,7 +231,7 @@ public partial class PropertyMapView : ContentView
             return null;
         }
 
-        string[] addressParts =
+        string?[] addressParts =
         [
             PropertyMetadata.Address.FlatOrUnit,
             PropertyMetadata.Address.Street,

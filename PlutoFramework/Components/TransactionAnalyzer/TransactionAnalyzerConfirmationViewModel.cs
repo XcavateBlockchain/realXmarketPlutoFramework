@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.DAppConnection;
@@ -32,16 +32,16 @@ namespace PlutoFramework.Components.TransactionAnalyzer
         private bool isVisible;
 
         [ObservableProperty]
-        private string dAppName;
+        private string? dAppName;
 
         [ObservableProperty]
-        private string dAppIcon;
+        private string? dAppIcon;
 
         [ObservableProperty]
         private bool isDAppViewVisible;
 
         [ObservableProperty]
-        private Endpoint endpoint;
+        private Endpoint? endpoint;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ProcessedPalletCallName))]
@@ -51,14 +51,14 @@ namespace PlutoFramework.Components.TransactionAnalyzer
         {
             get
             {
-                string palletCallName = (string)Application.Current.Resources["TransactionAnalyzerPalletCallNameSubstitution"];
+                string palletCallName = (string)Application.Current!.Resources["TransactionAnalyzerPalletCallNameSubstitution"];
 
                 return !string.IsNullOrWhiteSpace(palletCallName) ? palletCallName : PalletCallName;
             }
         }
 
         [ObservableProperty]
-        private TempPayload payload;
+        private TempPayload? payload;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ExtrinsicFailedIsVisible))]
@@ -83,7 +83,7 @@ namespace PlutoFramework.Components.TransactionAnalyzer
         private string estimatedTime = "Estimated time: 6 sec";
 
         [ObservableProperty]
-        private Func<Task> onConfirm;
+        private Func<Task>? onConfirm;
 
         public async Task<string?> LoadAsync(SubstrateClientExt client, Method method, bool showDAppView = false, Func<Task>? onConfirm = null, bool enableLoading = false, CancellationToken token = default)
         {
@@ -134,7 +134,7 @@ namespace PlutoFramework.Components.TransactionAnalyzer
             }
             else
             {
-                /// Show just the endpoint
+                // Show just the endpoint
             }
 
             try
@@ -143,7 +143,7 @@ namespace PlutoFramework.Components.TransactionAnalyzer
 
                 PalletCallName = pallet + "." + call;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 PalletCallName = "Unknown call";
             }
@@ -175,11 +175,11 @@ namespace PlutoFramework.Components.TransactionAnalyzer
             transactionAnalyzerConfirmationViewModel.ConfirmButtonState = ButtonStateEnum.Disabled;
             transactionAnalyzerConfirmationViewModel.ConfirmButtonText = "Submitting";
 
-            var clientExt = await Model.SubstrateClientModel.GetOrAddSubstrateClientAsync(transactionAnalyzerConfirmationViewModel.Endpoint.Key, CancellationToken.None);
+            var clientExt = await Model.SubstrateClientModel.GetOrAddSubstrateClientAsync(transactionAnalyzerConfirmationViewModel.Endpoint!.Key, CancellationToken.None);
 
             try
             {
-                string extrinsicId = await clientExt.SubmitExtrinsicAsync(transactionAnalyzerConfirmationViewModel.Payload.Call, account, txHash: txHashTask, token: CancellationToken.None);
+                string extrinsicId = await clientExt.SubmitExtrinsicAsync(transactionAnalyzerConfirmationViewModel.Payload!.Call, account, txHash: txHashTask, token: CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -232,7 +232,7 @@ namespace PlutoFramework.Components.TransactionAnalyzer
             }
             else
             {
-                /// Show just the endpoint
+                // Show just the endpoint
             }
 
             PalletCallName = "Unknown call";
@@ -278,13 +278,13 @@ namespace PlutoFramework.Components.TransactionAnalyzer
             CancellationToken token = CancellationToken.None;
 
             Console.WriteLine("Clicked on expand extrinsic info");
-            var methodUnified = PalletCallModel.GetMethodUnified(await SubstrateClientModel.GetOrAddSubstrateClientAsync(Endpoint.Key, token), Payload.Call);
+            var methodUnified = PalletCallModel.GetMethodUnified(await SubstrateClientModel.GetOrAddSubstrateClientAsync(Endpoint!.Key, token), Payload.Call);
 
             var viewModel = new CallDetailViewModel
             {
                 PalletCallName = methodUnified.PalletName + "." + methodUnified.EventName,
                 CallParameters = new ObservableCollection<EventParameter>(methodUnified.Parameters),
-                Endpoint = Endpoint,
+                Endpoint = Endpoint!,
                 ExtrinsicEvents = ExtrinsicEvents,
                 EncodedCall = Payload.Call.Encode(),
             };

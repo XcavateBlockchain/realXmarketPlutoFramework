@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Model;
+using PlutoFramework.Model;
 
 namespace PlutoFramework.Components.Card;
 
@@ -138,7 +138,7 @@ public partial class BottomPopupCard : AbsoluteLayout
     }
 
     private Task AnimateToTop() => Task.WhenAll(
-                    border.TranslateToAsync(0, 0, (uint)(int)Application.Current.Resources["BottomCardPopupAnimationDuration"], Easing.CubicOut),
+                    border.TranslateToAsync(0, 0, (uint)(int)Application.Current!.Resources["BottomCardPopupAnimationDuration"], Easing.CubicOut),
                     dragger.TranslateToAsync(0, 0, (uint)(int)Application.Current.Resources["BottomCardPopupAnimationDuration"], Easing.CubicOut),
                     contentView.TranslateToAsync(0, 0, (uint)(int)Application.Current.Resources["BottomCardPopupAnimationDuration"], Easing.CubicOut)
                     //,closeButton.TranslateToAsync(0, 0, 250, Easing.CubicOut)
@@ -147,7 +147,7 @@ public partial class BottomPopupCard : AbsoluteLayout
                     );
 
     private Task AnimateToBottom() => Task.WhenAll(
-                    border.TranslateToAsync(0, border.Height, (uint)(int)Application.Current.Resources["BottomCardPopupAnimationDuration"], Easing.CubicOut),
+                    border.TranslateToAsync(0, border.Height, (uint)(int)Application.Current!.Resources["BottomCardPopupAnimationDuration"], Easing.CubicOut),
                     dragger.TranslateToAsync(0, border.Height, (uint)(int)Application.Current.Resources["BottomCardPopupAnimationDuration"], Easing.CubicOut),
                     contentView.TranslateToAsync(0, border.Height, (uint)(int)Application.Current.Resources["BottomCardPopupAnimationDuration"], Easing.CubicOut),
                     //,closeButton.TranslateToAsync(0, border.Height, 250, Easing.CubicOut)

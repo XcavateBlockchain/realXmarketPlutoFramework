@@ -84,6 +84,6 @@ public partial class SearchBarView : ContentView
     {
         await entry.HideKeyboardAsync();
 
-        await SearchCommand?.ExecuteAsync(null);
+        await (SearchCommand?.ExecuteAsync(null))!;
     }
 }

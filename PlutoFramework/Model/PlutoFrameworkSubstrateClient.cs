@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Components.Extrinsic;
+using PlutoFramework.Components.Extrinsic;
 using PlutoFramework.Components.NetworkSelect;
 using PlutoFramework.Constants;
 using PlutoFramework.Model.AjunaExt;
@@ -93,9 +93,9 @@ namespace PlutoFramework.Model
         /// <returns>subscription ID</returns>
         public override async Task<string> SubmitExtrinsicAsync(Method method, Account account, TaskCompletionSource<string?> txHash, Action<string, ExtrinsicStatus>? callback = null, uint lifeTime = 64, CancellationToken token = default)
         {
-            ///
-            /// This part is temporary fix before the next Substrate.Net.Api version, that would fix the code gen and sign metadata checks
-            ///
+            //
+            // This part is temporary fix before the next Substrate.Net.Api version, that would fix the code gen and sign metadata checks
+            //
             #region Temp
             var extrinsic = await GetTempUnCheckedExtrinsicAsync(method, account, lifeTime, token);
             #endregion
@@ -228,6 +228,7 @@ namespace PlutoFramework.Model
                             ExtrinsicResult.Success => ExtrinsicStatusEnum.FinalizedSuccess,
                             ExtrinsicResult.Failed => ExtrinsicStatusEnum.FinalizedFailed,
                             ExtrinsicResult.Unknown => ExtrinsicStatusEnum.Unknown,
+                            _ => ExtrinsicStatusEnum.Unknown,
                         };
 
                         extrinsicStackViewModel.Update();

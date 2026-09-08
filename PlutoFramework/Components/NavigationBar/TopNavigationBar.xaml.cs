@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Model;
 
 namespace PlutoFramework.Components.NavigationBar;
@@ -46,9 +46,9 @@ public partial class TopNavigationBar : ContentView
 
     public string ExtraTitle { set { extraLabelText.Text = value; } }
 
-    public Func<Task> ExtraFunc { get; set; }
+    public Func<Task>? ExtraFunc { get; set; }
 
-    public Func<Task> BackFunc { get; set; }
+    public Func<Task>? BackFunc { get; set; }
 
     public IAsyncRelayCommand ExtraCommand
     {

@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Model.Constants;
+using PlutoFramework.Model.Constants;
 using SQLite;
 using System.Text.Json;
 using PlutoFramework.Types;
@@ -16,7 +16,7 @@ namespace PlutoFramework.Model.SQLite
         {
             var asset = JsonSerializer.Deserialize<Asset>(item.Serialized);
 
-            return asset;
+            return asset!;
         }
     }
 

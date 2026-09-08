@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microcharts;
 using PlutoFramework.Model;
@@ -15,19 +15,19 @@ namespace PlutoFramework.Components.Balance
         private const uint CHART_STEPS = 24;
 
         [ObservableProperty]
-        private AssetInfo assetInfo;
+        private AssetInfo? assetInfo;
 
         [ObservableProperty]
-        private string time1Text;
+        private string? time1Text;
 
         [ObservableProperty]
-        private string time2Text;
+        private string? time2Text;
 
         [ObservableProperty]
-        private string time3Text;
+        private string? time3Text;
 
         [ObservableProperty]
-        private string time4Text;
+        private string? time4Text;
 
         [ObservableProperty]
         public string pricePerTokenText = "Loading";
@@ -90,7 +90,7 @@ namespace PlutoFramework.Components.Balance
         private IEnumerable<(uint, double?)> prices = [];
 
         private IEnumerable<ChartEntry> GetDefaultEntries() {
-            var color = SKColor.Parse(((Color)Application.Current.Resources["Primary"]).ToHex());
+            var color = SKColor.Parse(((Color)Application.Current!.Resources["Primary"]).ToHex());
             
             return Enumerable.Range(0, (int)CHART_STEPS).Select(_ =>
                 new ChartEntry(1)
@@ -135,7 +135,9 @@ namespace PlutoFramework.Components.Balance
                 var minIndex = entries.ToList().FindIndex(e => e.Value == min);
                 var maxIndex = entries.ToList().FindIndex(e => e.Value == max);
 
+                #pragma warning disable CS8629 // min/max guaranteed non-null: entries falls back to GetDefaultEntries() when empty (see L128-129)
                 var tenPercentDifference = (max.Value - min.Value) * 0.1;
+                #pragma warning restore CS8629
 
                 if (tenPercentDifference == 0)
                 {
@@ -176,12 +178,12 @@ namespace PlutoFramework.Components.Balance
         {
             Prices = [];
 
-            PricePerTokenText = (Sdk.GetSpotPrice(AssetInfo.Symbol) ?? 0).ToCurrencyString(currencyFormat: "{0:0.00}");
+            PricePerTokenText = (Sdk.GetSpotPrice(AssetInfo!.Symbol) ?? 0).ToCurrencyString(currencyFormat: "{0:0.00}");
         }
 
         private IEnumerable<ChartEntry> GetChartEntries()
         {
-            var color = SKColor.Parse(((Color)Application.Current.Resources["Primary"]).ToHex());
+            var color = SKColor.Parse(((Color)Application.Current!.Resources["Primary"]).ToHex());
 
             return Prices.Select((blocknumberPrice, index) =>
             {
@@ -189,9 +191,9 @@ namespace PlutoFramework.Components.Balance
 
                 if (price is null)
                 {
-                    var spotPrice = Sdk.GetSpotPrice(AssetInfo.Symbol);
+                    var spotPrice = Sdk.GetSpotPrice(AssetInfo!.Symbol);
 
-                    return new ChartEntry((float)spotPrice)
+                    return new ChartEntry((float)spotPrice!)
                     {
                         Color = color,
                         ValueLabelColor = color,

@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Model;
+using PlutoFramework.Model;
 using PlutoFramework.Components.UniversalScannerView;
 using AzeroIdResolver;
 using Substrate.NetApi;
@@ -87,7 +87,7 @@ public partial class IdentityAddressView : ContentView
                 if (((string)newValue).Length != 48)
                 {
                     control.identityLabel.Text = "Unknown";
-                    if (Application.Current.RequestedTheme == AppTheme.Light)
+                    if (Application.Current!.RequestedTheme == AppTheme.Light)
                     {
                         control.identityJundgementIcon.Source = "unknownblack.png";
                     }
@@ -108,7 +108,7 @@ public partial class IdentityAddressView : ContentView
                 if (identity == null)
                 {
                     control.identityLabel.Text = "Unknown";
-                    if (Application.Current.RequestedTheme == AppTheme.Light)
+                    if (Application.Current!.RequestedTheme == AppTheme.Light)
                     {
                         control.identityJundgementIcon.Source = "unknownblack.png";
                     }
@@ -124,7 +124,7 @@ public partial class IdentityAddressView : ContentView
                 switch (identity.FinalJudgement)
                 {
                     case Judgement.Unknown:
-                        if (Application.Current.RequestedTheme == AppTheme.Light)
+                        if (Application.Current!.RequestedTheme == AppTheme.Light)
                         {
                             control.identityJundgementIcon.Source = "unknownblack.png";
                         }
@@ -134,7 +134,7 @@ public partial class IdentityAddressView : ContentView
                         }
                         break;
                     case Judgement.LowQuality:
-                        if (Application.Current.RequestedTheme == AppTheme.Light)
+                        if (Application.Current!.RequestedTheme == AppTheme.Light)
                         {
                             control.identityJundgementIcon.Source = "unknownblack.png";
                         }
@@ -144,7 +144,7 @@ public partial class IdentityAddressView : ContentView
                         }
                         break;
                     case Judgement.OutOfDate:
-                        if (Application.Current.RequestedTheme == AppTheme.Light)
+                        if (Application.Current!.RequestedTheme == AppTheme.Light)
                         {
                             control.identityJundgementIcon.Source = "unknownblack.png";
                         }
@@ -168,7 +168,7 @@ public partial class IdentityAddressView : ContentView
             catch
             {
                 control.identityLabel.Text = "Failed to load";
-                if (Application.Current.RequestedTheme == AppTheme.Light)
+                if (Application.Current!.RequestedTheme == AppTheme.Light)
                 {
                     control.identityJundgementIcon.Source = "unknownblack.png";
                 }
@@ -219,7 +219,7 @@ public partial class IdentityAddressView : ContentView
         SetValue(AddressProperty, ((Entry)sender).Text);
     }
 
-    void OnScanned(System.Object sender, ZXing.Net.Maui.BarcodeDetectionEventArgs e)
+    void OnScanned(object? sender, ZXing.Net.Maui.BarcodeDetectionEventArgs e)
     {
         MainThread.BeginInvokeOnMainThread(async () =>
         {

@@ -1,4 +1,4 @@
-﻿using Amazon.S3.Model;
+using Amazon.S3.Model;
 using Amazon.S3;
 using Amazon;
 
@@ -10,7 +10,7 @@ namespace PlutoFramework.Model.Xcavate
         /// Source: https://docs.aws.amazon.com/code-library/latest/ug/s3_example_s3_Scenario_PresignedUrl_section.html
         /// Generate a presigned URL that can be used to access the file named
         /// in the objectKey parameter for the amount of time specified in the
-        /// duration parameter.
+        /// expiresInSeconds parameter.
         /// </summary>
         /// <param name="client">An initialized S3 client object used to call
         /// the GetPresignedUrl method.</param>
@@ -18,7 +18,7 @@ namespace PlutoFramework.Model.Xcavate
         /// object for which to create the presigned URL.</param>
         /// <param name="objectKey">The name of the object to access with the
         /// presigned URL.</param>
-        /// <param name="duration">The length of time for which the presigned
+        /// <param name="expiresInSeconds">The length of time for which the presigned
         /// URL will be valid.</param>
         /// <returns>A string representing the generated presigned URL.</returns>
         public static Task<string> GeneratePresignedURLAsync(IAmazonS3 client, string bucketName, string objectKey, double expiresInSeconds = 604800)

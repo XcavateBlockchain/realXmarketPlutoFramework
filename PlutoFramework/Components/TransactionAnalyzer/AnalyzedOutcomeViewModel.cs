@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using PlutoFramework.Components.Balance;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
@@ -54,8 +54,8 @@ namespace PlutoFramework.Components.TransactionAnalyzer
                 {
                     Amount = a.Amount switch
                     {
-                        > 0 => "+" + String.Format((string)Application.Current.Resources["CurrencyFormat"], a.Amount),
-                        _ => String.Format((string)Application.Current.Resources["CurrencyFormat"], a.Amount)
+                        > 0 => "+" + String.Format((string)Application.Current!.Resources["CurrencyFormat"], a.Amount),
+                        _ => String.Format((string)Application.Current!.Resources["CurrencyFormat"], a.Amount)
                     },
                     Symbol = a.Symbol,
                     UsdValue = a.UsdValue switch
@@ -92,7 +92,7 @@ namespace PlutoFramework.Components.TransactionAnalyzer
 
             foreach (var nft in nftChanges[walletAddress].Values)
             {
-                double spotPrice = Model.HydraDX.Sdk.GetSpotPrice(nft.AssetPrice.Symbol) ?? 0;
+                double spotPrice = Model.HydraDX.Sdk.GetSpotPrice(nft.AssetPrice!.Symbol) ?? 0;
                 nft.AssetPrice.UsdValue = nft.AssetPrice.Amount * spotPrice;
                 tempNfts.Add(new NftAssetWrapperExpanded
                 {
@@ -105,8 +105,8 @@ namespace PlutoFramework.Components.TransactionAnalyzer
                         IsFrozen = false,
                         Amount = nft.AssetPrice.Amount switch
                         {
-                            > 0 => "+" + String.Format((string)Application.Current.Resources["CurrencyFormat"], nft.AssetPrice.Amount),
-                            _ => String.Format((string)Application.Current.Resources["CurrencyFormat"], nft.AssetPrice.Amount)
+                            > 0 => "+" + String.Format((string)Application.Current!.Resources["CurrencyFormat"], nft.AssetPrice.Amount),
+                            _ => String.Format((string)Application.Current!.Resources["CurrencyFormat"], nft.AssetPrice.Amount)
                         },
                         Symbol = nft.AssetPrice.Symbol,
                         UsdValue = nft.AssetPrice.UsdValue switch
@@ -175,11 +175,11 @@ namespace PlutoFramework.Components.TransactionAnalyzer
 
     public record AssetInfoExpanded : AssetInfo
     {
-        public Color UsdColor { get; set; }
+        public Color? UsdColor { get; set; }
     }
     public record NftAssetWrapperExpanded : NftWrapper
     {
         public NftOperation Operation { get; set; }
-        public AssetInfoExpanded Price { get; set; }
+        public AssetInfoExpanded? Price { get; set; }
     }
 }

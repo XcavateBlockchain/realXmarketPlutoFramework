@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using PlutoFramework.Model.AzeroId;
 using PlutoFramework.Model;
@@ -13,10 +13,10 @@ namespace PlutoFramework.Components.AzeroId
 		private string primaryName;
 
 		[ObservableProperty]
-		private string tld;
+		private string? tld;
 
 		[ObservableProperty]
-		private string reservedUntil;
+		private string? reservedUntil;
 
 		[ObservableProperty]
 		private bool reservedUntilIsVisible;

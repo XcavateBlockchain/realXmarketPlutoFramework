@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using PlutoFramework.Model;
 
 namespace PlutoFramework.Components.AddressView
@@ -6,7 +6,7 @@ namespace PlutoFramework.Components.AddressView
     internal partial class AddressQrCodeViewModel : ObservableObject, IPopup
     {
         [ObservableProperty]
-        private string qrAddress;
+        private string? qrAddress;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TwoLineAddress))]

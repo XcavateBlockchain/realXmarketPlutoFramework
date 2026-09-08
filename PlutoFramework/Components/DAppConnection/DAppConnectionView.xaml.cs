@@ -1,4 +1,4 @@
-﻿using Plutonication;
+using Plutonication;
 
 #if ANDROID29_0_OR_GREATER
 using PlutoFramework.Platforms.Android;
@@ -31,7 +31,7 @@ public partial class DAppConnectionView : ContentView
             await PlutonicationWalletClient.DisconnectAsync();
 
 #if ANDROID29_0_OR_GREATER
-            var mainActivity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
+            var mainActivity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity!;
             Intent serviceIntent = new Intent(mainActivity, typeof(PlutonicationAndroidForegroundService));
 
             mainActivity.StopService(serviceIntent);

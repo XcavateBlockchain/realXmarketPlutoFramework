@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using MauiView = Microsoft.Maui.Controls.View;
 using PlutoFramework.Model;
 using TopNavigationBarTemplateView = PlutoFramework.Templates.TopNavigationBarTemplate.TopNavigationBarTemplate;
@@ -138,7 +138,7 @@ namespace PlutoFramework.Templates.PageTemplate
                 return;
             }
 
-            var topNavigationBarHeight = (double)Application.Current.Resources["TopNavigationBarHeight"];
+            var topNavigationBarHeight = (double)Application.Current!.Resources["TopNavigationBarHeight"];
 
             var scrollViewPadding = NavigationBarIsVisible ? new Thickness(0, topNavigationBarHeight, 0, 0) : new Thickness(0);
 

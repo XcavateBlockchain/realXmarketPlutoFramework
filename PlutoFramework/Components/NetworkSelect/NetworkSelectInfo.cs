@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Constants;
+using PlutoFramework.Constants;
 using System;
 using System.ComponentModel;
 namespace PlutoFramework.Components.NetworkSelect
@@ -7,9 +7,9 @@ namespace PlutoFramework.Components.NetworkSelect
     {
         public EndpointEnum EndpointKey { get; set; }
         public bool ShowName { get; set; }
-        public string Name { get; set; }
-        public string Icon { get; set; }
-        public string DarkIcon { get; set; }
+        public string? Name { get; set; }
+        public string? Icon { get; set; }
+        public string? DarkIcon { get; set; }
         public EndpointConnectionStatus EndpointConnectionStatus { get; set; }
 
 
@@ -27,7 +27,7 @@ namespace PlutoFramework.Components.NetworkSelect
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }

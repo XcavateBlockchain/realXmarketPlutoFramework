@@ -680,6 +680,7 @@ namespace PlutoFramework.Model
                 {
                     KeyTypeEnum.Sr25519 => (await accountLockedKey.ToSr25519KeyAsync(reason)).Account,
                     KeyTypeEnum.PolkadotJson => (await accountLockedKey.ToPolkadotJsonKeyAsync(reason)).Account,
+                    _ => null,
                 };
             }
             catch
@@ -711,6 +712,7 @@ namespace PlutoFramework.Model
                 {
                     KeyTypeEnum.Sr25519 => (await accountLockedKey.ToSr25519KeyNoAuthAsync()).Account,
                     KeyTypeEnum.PolkadotJson => (await accountLockedKey.ToPolkadotJsonKeyNoAuthAsync()).Account,
+                    _ => null,
                 };
             }
             catch

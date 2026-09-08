@@ -30,7 +30,7 @@ namespace PlutoFramework.Model.Sumsub
                 return;
             }
 
-            var role = applicant.Review.LevelName switch
+            var role = applicant.Review!.LevelName switch
             {
                 "csharp-verification-developer" => UserRoleEnum.Developer,
                 "csharp-verification-investor" => UserRoleEnum.Investor,
@@ -46,8 +46,8 @@ namespace PlutoFramework.Model.Sumsub
                 Role = role,
                 FirstName = "",
                 LastName = "",
-                Email = applicant.Email,
-                PhoneNumber = applicant.Phone,
+                Email = applicant.Email!,
+                PhoneNumber = applicant.Phone!,
                 AccountCreatedAt = applicant.CreatedAtDateTime
             };
 

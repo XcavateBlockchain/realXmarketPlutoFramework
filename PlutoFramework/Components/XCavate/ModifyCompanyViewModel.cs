@@ -1,4 +1,4 @@
-﻿
+
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,40 +10,40 @@ namespace PlutoFramework.Components.Xcavate
     public partial class ModifyCompanyViewModel : ObservableObject
     {
         [ObservableProperty]
-        private string title;
+        private string? title;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SaveButtonState))]
-        private string companyName;
+        private string? companyName;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SaveButtonState))]
-        private string registrationNumber;
+        private string? registrationNumber;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SaveButtonState))]
-        private string phoneNumber;
+        private string? phoneNumber;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SaveButtonState))]
-        private string email;
+        private string? email;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SaveButtonState))]
-        private string website;
+        private string? website;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SaveButtonState))]
-        private string address;
+        private string? address;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SaveButtonState))]
-        private string associatedMembershipNumber;
+        private string? associatedMembershipNumber;
 
         //[ObservableProperty]
         //private PassportOrDriversLicense passportOrDriversLicense;
 
-        public ButtonStateEnum SaveButtonState => CompanyName != "" && RegistrationNumber != "" && PhoneNumber != "" && FormModel.IsValidEmail(Email) && Website != "" && Address != "" && AssociatedMembershipNumber != "" ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
+        public ButtonStateEnum SaveButtonState => CompanyName != "" && RegistrationNumber != "" && PhoneNumber != "" && FormModel.IsValidEmail(Email!) && Website != "" && Address != "" && AssociatedMembershipNumber != "" ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
 
         [RelayCommand]
         public async Task SaveAsync()

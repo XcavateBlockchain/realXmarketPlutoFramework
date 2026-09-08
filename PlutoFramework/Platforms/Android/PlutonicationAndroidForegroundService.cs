@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
@@ -16,15 +16,15 @@ namespace PlutoFramework.Platforms.Android
     [Service(ForegroundServiceType = ForegroundService.TypeRemoteMessaging)]
     class PlutonicationAndroidForegroundService : Service
     {
-        CancellationTokenSource _cts;
+        CancellationTokenSource? _cts;
         public const int SERVICE_RUNNING_NOTIFICATION_ID = 96063; // Random id
 
-        public override IBinder OnBind(Intent intent)
+        public override IBinder OnBind(Intent? intent)
         {
-            return null;
+            return null!;
         }
 
-        public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
+        public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
         {
             _cts = new CancellationTokenSource();
 
@@ -32,7 +32,16 @@ namespace PlutoFramework.Platforms.Android
 
             Notification notification = new AndroidNotificationHelper().GetNotification($"Connected to {dAppConnectionViewModel.Name}", "Connected securely via Plutonication");
 
-            StartForeground(SERVICE_RUNNING_NOTIFICATION_ID, notification, ForegroundService.TypeRemoteMessaging);
+            if ((int)global::Android.OS.Build.VERSION.SdkInt >= 34) // API 34 = UPSIDE_DOWN_CAKE
+            {
+                #pragma warning disable CA1416 // ForegroundService.TypeRemoteMessaging is Android API 34+; an API-level guard would change behavior on API 29-33
+                StartForeground(SERVICE_RUNNING_NOTIFICATION_ID, notification, ForegroundService.TypeRemoteMessaging);
+                #pragma warning restore CA1416
+            }
+            else
+            {
+                StartForeground(SERVICE_RUNNING_NOTIFICATION_ID, notification);
+            }
 
             _ = Task.Run(() =>
             {

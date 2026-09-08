@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -29,8 +29,8 @@ namespace PlutoFramework.Components.GalaxyLogicGame
 
 	public class GLGPowerupInfo
 	{
-		public string Name { get; set; }
-        public string Icon { get; set; }
+		public string? Name { get; set; }
+        public string? Icon { get; set; }
     }
 }
 

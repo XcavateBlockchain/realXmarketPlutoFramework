@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Substrate.NetApi.Model.Extrinsics;
 using Substrate.NetApi;
@@ -12,18 +12,18 @@ namespace PlutoFramework.Components.Vault
         private bool isVisible;
 
         [ObservableProperty]
-        private string palletIndex;
+        private string? palletIndex;
 
         [ObservableProperty]
-        private string callIndex;
+        private string? callIndex;
 
         [ObservableProperty]
-        private string parameters;
+        private string? parameters;
 
         [ObservableProperty]
-        private Method ajunaMethod;
+        private Method? ajunaMethod;
 
-        public byte[] Payload { get; set; }
+        public byte[]? Payload { get; set; }
 
         [ObservableProperty]
         private string signature;
@@ -76,7 +76,7 @@ namespace PlutoFramework.Components.Vault
 
                 PalletIndex = pallet.Name;
                 CallIndex = clientExt.CustomMetadata.NodeMetadata.Types[pallet.Calls.TypeId.ToString()]
-                    .Variants[method.CallIndex].Name;
+                    .Variants![method.CallIndex].Name;
             }
             catch
             {

@@ -1,4 +1,4 @@
-﻿
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Controls.Shapes;
 using System.Collections.ObjectModel;
@@ -36,7 +36,7 @@ namespace PlutoFramework.Components.Progress
                     {
                         HeightRequest = 4,
                         WidthRequest = i == ProgressStep ? 32 : 12,
-                        BackgroundColor = i == ProgressStep ? (Color)Application.Current.Resources["Primary"] : Color.FromArgb("#D9D9D9"),
+                        BackgroundColor = i == ProgressStep ? (Color)Application.Current!.Resources["Primary"] : Color.FromArgb("#D9D9D9"),
                         StrokeThickness = 0,
                         StrokeShape = new RoundRectangle
                         {

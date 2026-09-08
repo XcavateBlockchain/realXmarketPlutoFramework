@@ -12,6 +12,15 @@
     <OutputType>Library</OutputType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 
+    <!-- Source-generated XAML (MauiXamlInflator=SourceGen) emits .xsg.cs files that use
+         obsolete APIs (Frame, LayoutOptions.*AndExpand, Device, NamedSize via Font="Large"),
+         and the generated markup can't be rewritten without changing UI rendering.
+         NU5104: Plugin.Fingerprint 3.0.0-beta.1 (prerelease) is referenced from this
+         stable package during pack.
+         VSTHRD: suppressed, not fixed - resolving the analyzer's main-thread
+         requirements would require async restructuring, a behavior change. -->
+    <NoWarn>$(NoWarn);CS0618;CS0612;NU5104;VSTHRD002;VSTHRD100;VSTHRD101;VSTHRD103;VSTHRD110;VSTHRD200</NoWarn>
+
     <!-- Same iOS 26 XamlC bytecode crash as the app (dotnet/macios#26446): compile this
          project's XAML to type-checked C# instead of bytecode. -->
     <MauiXamlInflator>SourceGen</MauiXamlInflator>
@@ -86,6 +95,7 @@
     <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="10.0.0" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.0" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.0" />
   </ItemGroup>
   
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">

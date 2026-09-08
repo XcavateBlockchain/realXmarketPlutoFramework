@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Chaos.NaCl;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -24,7 +24,7 @@ namespace PlutoFramework.Components.TransactionRequest
         [NotifyPropertyChangedFor(nameof(MessageDecodedString))]
         private Plutonication.RawMessage? message = null;
 
-        public string MessageString => Message is not null ? Message.data : "";
+        public string MessageString => Message is not null ? Message.data! : "";
 
         public string MessageDecodedString => Message is not null ? System.Text.Encoding.UTF8.GetString(Utils.HexToByteArray(Message.data)) : "";
 
@@ -50,7 +50,7 @@ namespace PlutoFramework.Components.TransactionRequest
 
             try
             {
-                byte[] msg = Utils.HexToByteArray(Message.data);
+                byte[] msg = Utils.HexToByteArray(Message!.data);
 
                 var account = await Model.KeysModel.GetAccountAsync();
                 if (account is null)
