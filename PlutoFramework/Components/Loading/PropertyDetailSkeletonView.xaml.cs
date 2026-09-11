@@ -1,3 +1,4 @@
+using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Dispatching;
 
 namespace PlutoFramework.Components.Loading;
@@ -28,20 +29,6 @@ public partial class PropertyDetailSkeletonView : ContentView
     private IDispatcherTimer? _shimmerTimer;
     private bool _isLoaded;
     private double _shimmerPhase;
-
-    // Same theme-aware colors as the placeholder styles in the XAML.
-    private static readonly IBrush BarBackground = new AppThemeBinding
-    {
-        Light = Color.FromHex("#E0E0E0"),
-        Dark = Color.FromHex("#2F2F2F"),
-    };
-
-    // Same theme-aware colors as the real NftAttributeView rows.
-    private static readonly IBrush AttributeRowBackground = new AppThemeBinding
-    {
-        Light = Color.FromHex("#fdfdfd"),
-        Dark = Color.FromHex("#0a0a0a"),
-    };
 
     public PropertyDetailSkeletonView()
     {
@@ -124,24 +111,24 @@ public partial class PropertyDetailSkeletonView : ContentView
         Grid.SetColumn(valueBar, 1);
         grid.Children.Add(valueBar);
 
+        // The style (not a hard-coded color) keeps the row background theme-aware:
+        // AppThemeBinding is XAML-only, so the light/dark pair lives in the XAML.
         return new Border
         {
-            StrokeThickness = 0,
-            HorizontalOptions = LayoutOptions.Fill,
+            Style = (Style)Resources["SkeletonAttributeRow"],
             Padding = new Thickness(10, 8, 10, 8),
-            BackgroundColor = AttributeRowBackground,
             StrokeShape = new RoundRectangle { CornerRadius = 15 },
             Content = grid,
         };
     }
 
-    private static Border CreateBar(double height, double cornerRadius)
+    private Border CreateBar(double height, double cornerRadius)
     {
         return new Border
         {
-            StrokeThickness = 0,
+            // Stroke thickness and the theme-aware bar color come from the style in the XAML.
+            Style = (Style)Resources["SkeletonBar"],
             HeightRequest = height,
-            BackgroundColor = BarBackground,
             StrokeShape = new RoundRectangle { CornerRadius = cornerRadius },
         };
     }

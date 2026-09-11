@@ -2,7 +2,6 @@ using Amazon;
 using Amazon.S3;
 using CommunityToolkit.Maui.Alerts;
 using Microsoft.Extensions.Configuration;
-using PlutoFramework.Components.Loading;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
@@ -170,148 +169,162 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public static async Task NavigateToPropertyDetailPageAsync(XcavateNftWrapper nft, CancellationToken token)
         {
-            var loadingViewModel = await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                var viewModel = DependencyService.Get<FullPageLoadingViewModel>();
-
-                viewModel.IsVisible = true;
-                viewModel.Message = "Gathering property details";
-
-                return viewModel;
-            });
-
-            if (nft.NftBase is XcavateSolanaListingNft solanaListing)
-            {
-                // Solana-sourced items refresh from the Xcavate devnet indexer; the SubQuery
-                // indexer below knows nothing about them. On failure the list-time data is
-                // simply kept - stale beats no detail page.
-                try
-                {
-                    var solanaAddress = KeysModel.GetSolanaAddress();
-
-                    var freshListing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
-                            solanaListing.ListingId,
-                            solanaAddress,
-                            token)
-                        .ConfigureAwait(false);
-
-                    if (freshListing is not null)
-                    {
-                        nft.NftBase = freshListing;
-                        nft.TokensBought = solanaAddress is not null && freshListing.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareBuyer) == true
-                            ? shareBuyer.ShareAmount
-                            : 0u;
-                        nft.TokensOwned = solanaAddress is not null && freshListing.RealWorldAssetDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareOwner) == true
-                            ? shareOwner.ShareAmount
-                            : 0u;
-                        nft.SpvCreated = freshListing.RealWorldAssetDetails?.SpvCreated ?? true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Failed to refresh the Solana listing: ");
-                    Console.WriteLine(ex);
-                }
-            }
-            else
-            {
-                var ownerAddress = KeysModel.GetSubstrateKey(ss58prefix: 0);
-
-                var indexedProperty = await XcavateIndexerModel.GetPropertyFullInfoAsync(
-                        checked((int)nft.Key.Item3),
-                        ownerAddress)
-                    .ConfigureAwait(false);
-
-                if (indexedProperty is not null)
-                {
-                    nft.NftBase = indexedProperty;
-                    nft.TokensBought = indexedProperty.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareBuyers) == true
-                        ? shareBuyers.ShareAmount
-                        : 0u;
-                    nft.TokensOwned = indexedProperty.RealWorldAssetDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareOwner) == true
-                        ? shareOwner.ShareAmount
-                        : 0u;
-                    nft.SpvCreated = indexedProperty.RealWorldAssetDetails?.SpvCreated ?? true;
-
-                    var s3Client = GetOrCreateS3Client();
-
-                    // Handle S3
-                    if (s3Client is not null && indexedProperty.XcavateMetadata?.Files is not null)
-                    {
-                        var images = new List<string>();
-
-                        foreach (var file in indexedProperty.XcavateMetadata!.Files.Where(file =>
-                            !string.IsNullOrWhiteSpace(file)
-                            && file.Length > 5
-                            && (file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
-                                || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
-                                || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                            && file[0] == '5'
-                        ))
-                        {
-                            const string bucketName = "real-marketplace-properties";
-
-                            var presignedUrl = await S3Model.GeneratePresignedURLAsync(s3Client, bucketName, file);
-
-                            images.Add(presignedUrl);
-                        }
-                        ((INftXcavateMetadata)nft.NftBase).XcavateMetadata?.Files = images;
-                    }
-                }
-            }
-
-            if (nft.NftBase is not INftXcavateMetadata || ((INftXcavateMetadata)nft.NftBase).XcavateMetadata is null || nft.NftBase is not INftXcavateNftMarketplace)
-            {
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    var toast = Toast.Make($"Could not navigate to property id: {nft.Key.Item3.ToString() ?? "Unknown"}");
-                    await toast.Show(token);
-
-                    loadingViewModel.IsVisible = false;
-                });
-
-                return;
-            }
-
-            // The detail page's action states are role-gated (create_spv needs the
-            // SpvConfirmation role); without this the roles stay null and those states
-            // can never be offered.
-            HashSet<XcavateRole>? roles = null;
-
-            try
-            {
-                var rolesAddress = KeysModel.GetSolanaAddress();
-
-                if (rolesAddress is not null)
-                {
-                    roles = await WhitelistModel.GetRolesCachedAsync(rolesAddress, token).ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Failed to load the wallet's Xcavate roles: ");
-                Console.WriteLine(ex);
-            }
-
+            // The page pushes instantly with its skeleton showing (IsLoading defaults to
+            // true); the details load in the background and the skeleton swaps to the
+            // real content only once everything is in place.
             var viewModel = new PropertyDetailViewModel
             {
                 Endpoint = nft.Endpoint!,
                 Favourite = nft.Favourite,
                 NftWrapper = nft,
-                Metadata = ((INftXcavateMetadata)nft.NftBase).XcavateMetadata,
-                ListingDetails = ((INftXcavateOngoingObjectListing)nft.NftBase).OngoingObjectListingDetails,
                 Region = nft.Region,
                 TokensBought = nft.TokensBought,
                 TokensOwned = nft.TokensOwned,
-                Roles = roles,
             };
 
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
-                loadingViewModel.IsVisible = false;
+            await MainThread.InvokeOnMainThreadAsync(async () => await NavigationModel.PushAsync(new PropertyDetailPage(viewModel)));
 
-                await NavigationModel.PushAsync(new PropertyDetailPage(viewModel));
-            });
+            try
+            {
+                if (nft.NftBase is XcavateSolanaListingNft solanaListing)
+                {
+                    // Solana-sourced items refresh from the Xcavate devnet indexer; the SubQuery
+                    // indexer below knows nothing about them. On failure the list-time data is
+                    // simply kept - stale beats no detail page.
+                    try
+                    {
+                        var solanaAddress = KeysModel.GetSolanaAddress();
+
+                        var freshListing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
+                                solanaListing.ListingId,
+                                solanaAddress,
+                                token)
+                            .ConfigureAwait(false);
+
+                        if (freshListing is not null)
+                        {
+                            nft.NftBase = freshListing;
+                            nft.TokensBought = solanaAddress is not null && freshListing.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareBuyer) == true
+                                ? shareBuyer.ShareAmount
+                                : 0u;
+                            nft.TokensOwned = solanaAddress is not null && freshListing.RealWorldAssetDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareOwner) == true
+                                ? shareOwner.ShareAmount
+                                : 0u;
+                            nft.SpvCreated = freshListing.RealWorldAssetDetails?.SpvCreated ?? true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Failed to refresh the Solana listing: ");
+                        Console.WriteLine(ex);
+                    }
+                }
+                else
+                {
+                    var ownerAddress = KeysModel.GetSubstrateKey(ss58prefix: 0);
+
+                    var indexedProperty = await XcavateIndexerModel.GetPropertyFullInfoAsync(
+                            checked((int)nft.Key.Item3),
+                            ownerAddress)
+                        .ConfigureAwait(false);
+
+                    if (indexedProperty is not null)
+                    {
+                        nft.NftBase = indexedProperty;
+                        nft.TokensBought = indexedProperty.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareBuyers) == true
+                            ? shareBuyers.ShareAmount
+                            : 0u;
+                        nft.TokensOwned = indexedProperty.RealWorldAssetDetails?.ShareOwners?.TryGetValue(ownerAddress, out var shareOwner) == true
+                            ? shareOwner.ShareAmount
+                            : 0u;
+                        nft.SpvCreated = indexedProperty.RealWorldAssetDetails?.SpvCreated ?? true;
+
+                        var s3Client = GetOrCreateS3Client();
+
+                        // Handle S3
+                        if (s3Client is not null && indexedProperty.XcavateMetadata?.Files is not null)
+                        {
+                            var images = new List<string>();
+
+                            foreach (var file in indexedProperty.XcavateMetadata!.Files.Where(file =>
+                                !string.IsNullOrWhiteSpace(file)
+                                && file.Length > 5
+                                && (file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                                    || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                                    || file.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                                && file[0] == '5'
+                            ))
+                            {
+                                const string bucketName = "real-marketplace-properties";
+
+                                var presignedUrl = await S3Model.GeneratePresignedURLAsync(s3Client, bucketName, file);
+
+                                images.Add(presignedUrl);
+                            }
+                            ((INftXcavateMetadata)nft.NftBase).XcavateMetadata?.Files = images;
+                        }
+                    }
+                }
+
+                if (nft.NftBase is not INftXcavateMetadata || ((INftXcavateMetadata)nft.NftBase).XcavateMetadata is null || nft.NftBase is not INftXcavateNftMarketplace)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        await NavigationModel.PopAsync();
+
+                        var toast = Toast.Make($"Could not navigate to property id: {nft.Key.Item3.ToString() ?? "Unknown"}");
+                        await toast.Show(token);
+                    });
+
+                    return;
+                }
+
+                // The detail page's action states are role-gated (create_spv needs the
+                // SpvConfirmation role); without this the roles stay null and those states
+                // can never be offered.
+                HashSet<XcavateRole>? roles = null;
+
+                try
+                {
+                    var rolesAddress = KeysModel.GetSolanaAddress();
+
+                    if (rolesAddress is not null)
+                    {
+                        roles = await WhitelistModel.GetRolesCachedAsync(rolesAddress, token).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to load the wallet's Xcavate roles: ");
+                    Console.WriteLine(ex);
+                }
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    viewModel.Metadata = ((INftXcavateMetadata)nft.NftBase).XcavateMetadata;
+                    viewModel.ListingDetails = ((INftXcavateOngoingObjectListing)nft.NftBase).OngoingObjectListingDetails;
+                    viewModel.Region = nft.Region;
+                    viewModel.TokensBought = nft.TokensBought;
+                    viewModel.TokensOwned = nft.TokensOwned;
+                    viewModel.Roles = roles;
+
+                    // Set last, so the skeleton only steps aside once every field is in place.
+                    viewModel.IsLoading = false;
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to load the property details: ");
+                Console.WriteLine(ex);
+
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await NavigationModel.PopAsync();
+
+                    var toast = Toast.Make($"Could not navigate to property id: {nft.Key.Item3.ToString() ?? "Unknown"}");
+                    await toast.Show(token);
+                });
+            }
         }
     }
 }

@@ -20,6 +20,14 @@
             <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#dddddd, Dark=#222222}" />
         </Style>
 
+        <!-- Row background for the description block, matching the NftAttributeView rows.
+             Kept as a style (not a C# brush) because AppThemeBinding is XAML-only. -->
+        <Style x:Key="SkeletonAttributeRow" TargetType="Border">
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="HorizontalOptions" Value="Fill" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#fdfdfd, Dark=#0a0a0a}" />
+        </Style>
+
         <!-- Card chrome for the 2x2 stats cells, matching ClickableCard. -->
         <Style x:Key="SkeletonCell" TargetType="Border">
             <Setter Property="StrokeThickness" Value="0" />
@@ -356,7 +364,7 @@
                             <RoundRectangle CornerRadius="7" />
                         </Border.StrokeShape>
                     </Border>
-                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="60%" HorizontalOptions="Start">
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="240" HorizontalOptions="Start">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="7" />
                         </Border.StrokeShape>
