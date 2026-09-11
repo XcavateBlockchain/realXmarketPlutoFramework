@@ -8,17 +8,18 @@ namespace PlutoFrameworkCore.Solana
     public static class SolanaNetworkOptions
     {
         /// <summary>
-        /// Mainnet. A user who never opens Settings must end up on the network their real
-        /// funds and the deployed programs live on, never on a test network.
+        /// Devnet. The Xcavate Solana programs are only deployed there today, so a user
+        /// who never opens Settings lands on the network where the app actually works.
+        /// When the mainnet programs deploy, flip this to <see cref="SolanaCluster.Mainnet"/>.
         /// </summary>
-        public const SolanaCluster Default = SolanaCluster.Mainnet;
+        public const SolanaCluster Default = SolanaCluster.Devnet;
 
         /// <summary>
-        /// In display order. Testnet is deliberately absent: it exists to stage validator
-        /// releases, not as a place this app's programs are deployed, so offering it would
-        /// only give users a third way to end up somewhere nothing works.
+        /// In display order, default first. Testnet is deliberately absent: it exists to
+        /// stage validator releases, not as a place this app's programs are deployed, so
+        /// offering it would only give users a third way to end up somewhere nothing works.
         /// </summary>
         public static readonly SolanaCluster[] Selectable =
-            [SolanaCluster.Mainnet, SolanaCluster.Devnet];
+            [SolanaCluster.Devnet, SolanaCluster.Mainnet];
     }
 }

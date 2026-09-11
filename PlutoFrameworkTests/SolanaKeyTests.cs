@@ -48,17 +48,18 @@ namespace PlutoFrameworkTests
     public class SolanaNetworkOptionsTests
     {
         [Test]
-        public void DefaultIsMainnet()
+        public void DefaultIsDevnet()
         {
-            // A user who never opens Settings must be on the network real funds live on.
-            Assert.That(SolanaNetworkOptions.Default, Is.EqualTo(SolanaCluster.Mainnet));
+            // The Xcavate Solana programs are only deployed on devnet, so a user who never
+            // opens Settings must be on the network where the app actually works.
+            Assert.That(SolanaNetworkOptions.Default, Is.EqualTo(SolanaCluster.Devnet));
         }
 
         [Test]
-        public void SelectableOffersMainnetAndDevnetInThatOrder()
+        public void SelectableOffersDevnetAndMainnetInThatOrder()
         {
             Assert.That(SolanaNetworkOptions.Selectable,
-                Is.EqualTo(new[] { SolanaCluster.Mainnet, SolanaCluster.Devnet }));
+                Is.EqualTo(new[] { SolanaCluster.Devnet, SolanaCluster.Mainnet }));
         }
 
         [Test]

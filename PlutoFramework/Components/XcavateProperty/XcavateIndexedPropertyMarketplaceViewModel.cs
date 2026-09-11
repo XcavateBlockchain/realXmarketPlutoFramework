@@ -69,6 +69,12 @@ namespace PlutoFramework.Components.XcavateProperty
             // ShowSkeleton depends on the base-class Loading flag and the Items count, neither of
             // which auto-notifies this derived property. Re-raise it (on the main thread) whenever
             // either changes so the skeleton shows only while the list is empty and loading.
+            //
+            // NoItems/AnyItems (also base-class) only re-evaluate when the Items or Loading
+            // property is *reassigned*; a CollectionView mutating the collection in place
+            // (Items.Add / Items.Clear) does not fire them. Re-raise them on the main thread
+            // whenever the collection actually changes, so the empty caption tracks the real
+            // item count instead of a stale value.
             PropertyChanged += (sender, e) =>
             {
                 if (e.PropertyName == nameof(Loading))
@@ -77,7 +83,12 @@ namespace PlutoFramework.Components.XcavateProperty
                 }
             };
             Items.CollectionChanged += (sender, e) =>
-                MainThread.BeginInvokeOnMainThread(() => OnPropertyChanged(nameof(ShowSkeleton)));
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    OnPropertyChanged(nameof(ShowSkeleton));
+                    OnPropertyChanged(nameof(NoItems));
+                    OnPropertyChanged(nameof(AnyItems));
+                });
         }
 
         public override async Task LoadMoreAsync(CancellationToken token)
@@ -193,8 +204,13 @@ namespace PlutoFramework.Components.XcavateProperty
             }
             finally
             {
-                Loading = false;
                 loadMoreSemaphore.Release();
+
+                // Clear the loading flag on the main thread, and only after the pending Items
+                // mutation (posted earlier in the try block) has run. NoItems is then never
+                // re-evaluated with a stale empty count between the fetch completing and the
+                // items appearing, which is what made the empty caption flash on refresh.
+                MainThread.BeginInvokeOnMainThread(() => Loading = false);
             }
         }
 

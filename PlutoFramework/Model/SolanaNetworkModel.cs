@@ -22,7 +22,7 @@ namespace PlutoFramework.Model
         public static event EventHandler<SolanaCluster>? ClusterChanged;
 
         /// <summary>
-        /// Mainnet until the user picks otherwise. Changing this leaves an already connected
+        /// Devnet until the user picks otherwise. Changing this leaves an already connected
         /// wallet in place: its authorization was granted on one network and the wallet is
         /// the party that rejects a mismatch, so the app does not pre-emptively discard it.
         /// </summary>
