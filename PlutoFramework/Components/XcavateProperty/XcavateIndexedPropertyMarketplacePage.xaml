@@ -25,11 +25,14 @@
     <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All">
 
         <!--
-            The risk-warning/search header and the skeleton/empty-state footer are pinned
-            siblings of the list, not CollectionView.Header/Footer. On iOS a
+            The risk-warning/search header, the loading skeleton and the empty-state footer are
+            pinned siblings of the list, not CollectionView.Header/Footer. On iOS a
             CollectionView header or footer is hosted as a UICollectionView supplementary
             view, and self-sizing ones (MeasureAllItems) crash this page on navigation.
             A plain item list with pinned chrome is the pattern the rest of the app uses.
+            The skeleton overlays the top of the list cell (only visible while the list is
+            still empty) so it renders exactly where the first property card will appear,
+            instead of floating in a separate row away from the items.
             The 90px bottom row keeps the list (and the footer) clear of the pinned
             XcavateNavigationBarView, which overlays the bottom of the page.
         -->
@@ -152,17 +155,24 @@
                 </CollectionView>
             </RefreshView>
 
-            <StackLayout Grid.Row="2">
-                <loading:SkeletonCardView
-                        IsVisible="{Binding Loading}"/>
-                <StackLayout HeightRequest="200"
-                             IsVisible="{Binding NoItems}">
-                    <Label Text="No properties were found for this filter. Try to search for something different."
-                           TextColor="#A6A6A6"
-                           HorizontalOptions="Center"
-                           Margin="20, 40, 20, 40"
-                           HorizontalTextAlignment="Center"/>
-                </StackLayout>
+            <!--
+                The skeleton overlays the top of the list cell so it sits exactly where the first
+                property card renders. It is only visible while the list is still empty (ShowSkeleton),
+                so once any items are present it stays hidden and never covers the loaded cards while
+                further pages hydrate in the background.
+            -->
+            <loading:SkeletonCardView Grid.Row="1"
+                                      VerticalOptions="Start"
+                                      IsVisible="{Binding ShowSkeleton}" />
+
+            <StackLayout Grid.Row="2"
+                         HeightRequest="200"
+                         IsVisible="{Binding NoItems}">
+                <Label Text="{Binding NoItemsMessage}"
+                       TextColor="#A6A6A6"
+                       HorizontalOptions="Center"
+                       Margin="20, 40, 20, 40"
+                       HorizontalTextAlignment="Center"/>
             </StackLayout>
         </Grid>
 

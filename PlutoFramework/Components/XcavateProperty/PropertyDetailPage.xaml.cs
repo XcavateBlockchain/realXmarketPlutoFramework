@@ -8,7 +8,8 @@ public partial class PropertyDetailPage : PageTemplate
     {
         InitializeComponent();
 
+        // The details may still be loading, so the metadata (and with it the map) is bound
+        // rather than captured here.
         BindingContext = viewModel;
-        propertyMapView.PropertyMetadata = viewModel.Metadata;
     }
 }

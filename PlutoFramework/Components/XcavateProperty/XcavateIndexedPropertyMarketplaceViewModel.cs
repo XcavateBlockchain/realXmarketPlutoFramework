@@ -43,11 +43,41 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public override string Title => "Property Marketplace";
 
+        /// <summary>True while the list is still empty and loading (initial load / refresh).</summary>
+        public bool ShowSkeleton => Loading && Items.Count == 0;
+
+        /// <summary>True when a search text or a town/type filter is currently applied.</summary>
+        public bool HasActiveFilter =>
+            !string.IsNullOrEmpty(includesPropertyName)
+            || !string.IsNullOrEmpty(includesTownCity)
+            || !string.IsNullOrEmpty(includesPropertyType);
+
+        /// <summary>
+        /// The empty-state caption. The filter-specific wording is only used when a filter is
+        /// actually applied; otherwise the generic wording is shown.
+        /// </summary>
+        public string NoItemsMessage => HasActiveFilter
+            ? "No properties were found for this filter. Try to search for something different."
+            : "No properties were found";
+
         public XcavateIndexedPropertyMarketplaceViewModel()
         {
             filterPopupViewModel = DependencyService.Get<PropertyMarketplaceFilterPopupViewModel>();
             filterPopupViewModel.ApplyRequested = ApplyFiltersAsync;
             searchText = filterPopupViewModel.SearchText;
+
+            // ShowSkeleton depends on the base-class Loading flag and the Items count, neither of
+            // which auto-notifies this derived property. Re-raise it (on the main thread) whenever
+            // either changes so the skeleton shows only while the list is empty and loading.
+            PropertyChanged += (sender, e) =>
+            {
+                if (e.PropertyName == nameof(Loading))
+                {
+                    MainThread.BeginInvokeOnMainThread(() => OnPropertyChanged(nameof(ShowSkeleton)));
+                }
+            };
+            Items.CollectionChanged += (sender, e) =>
+                MainThread.BeginInvokeOnMainThread(() => OnPropertyChanged(nameof(ShowSkeleton)));
         }
 
         public override async Task LoadMoreAsync(CancellationToken token)
@@ -63,7 +93,10 @@ namespace PlutoFramework.Components.XcavateProperty
 
             try
             {
-                if (Loading || !hasMore || !clientLoaded)
+                // Do not gate on Loading here: a refresh sets Loading=true up front (before the
+                // list is cleared) to keep the empty-state caption suppressed, and that must not
+                // block this load. The semaphore already serializes concurrent loads.
+                if (!hasMore || !clientLoaded)
                 {
                     return;
                 }
@@ -290,6 +323,10 @@ namespace PlutoFramework.Components.XcavateProperty
 
             try
             {
+                // Keep the empty-state caption suppressed while the list is cleared and reloaded;
+                // otherwise NoItems flips on for the moment the list is empty, showing the
+                // "no properties" message even though items are about to be (re)loaded.
+                Loading = true;
                 Clear();
                 await InitialLoadAsync(CancellationToken.None).ConfigureAwait(false);
 
@@ -297,6 +334,10 @@ namespace PlutoFramework.Components.XcavateProperty
                 {
                     RememberLoadedQuery();
                 }
+
+                // Refresh the empty-state caption now that the query has settled (this method can
+                // run off the main thread via the debounced search path, so marshal it).
+                MainThread.BeginInvokeOnMainThread(() => OnPropertyChanged(nameof(NoItemsMessage)));
             }
             catch (OperationCanceledException)
             {

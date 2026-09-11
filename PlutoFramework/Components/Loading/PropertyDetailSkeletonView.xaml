@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.Loading.PropertyDetailSkeletonView"
+             HorizontalOptions="Fill">
+    <ContentView.Resources>
+        <!-- Placeholder text bar. Corner radius is half the bar height, so each bar stays
+             fully rounded at whatever height the section it stands in for actually uses. -->
+        <Style x:Key="SkeletonBar" TargetType="Border">
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="HorizontalOptions" Value="Fill" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}" />
+        </Style>
+
+        <!-- Placeholder for image/map regions, matching the #dddddd / #222222 the real
+             image views fall back to while loading. -->
+        <Style x:Key="SkeletonImage" TargetType="Border">
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="HorizontalOptions" Value="Fill" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#dddddd, Dark=#222222}" />
+        </Style>
+
+        <!-- Card chrome for the 2x2 stats cells, matching ClickableCard. -->
+        <Style x:Key="SkeletonCell" TargetType="Border">
+            <Setter Property="StrokeThickness" Value="0" />
+            <Setter Property="HorizontalOptions" Value="Fill" />
+            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}" />
+            <Setter Property="Shadow" Value="{StaticResource CardShadow}" />
+        </Style>
+    </ContentView.Resources>
+
+    <Grid>
+        <ScrollView>
+            <!-- Same rhythm as the real page: Spacing 15, Padding 20,80,20,110. -->
+            <VerticalStackLayout Spacing="15"
+                                 Padding="20, 80, 20, 110"
+                                 HorizontalOptions="Fill">
+
+                <!-- RiskWarningView: the fixed warning paragraph. -->
+                <Border Style="{StaticResource SkeletonBar}" HeightRequest="14">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="7" />
+                    </Border.StrokeShape>
+                </Border>
+                <Border Style="{StaticResource SkeletonBar}" HeightRequest="14">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="7" />
+                    </Border.StrokeShape>
+                </Border>
+                <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="180" HorizontalOptions="Start">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="7" />
+                    </Border.StrokeShape>
+                </Border>
+
+                <!-- NftMultiImageView: square main image (kept square in code-behind). -->
+                <Border x:Name="mainImageBorder"
+                        Style="{StaticResource SkeletonImage}"
+                        VerticalOptions="Fill">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                    </Border.StrokeShape>
+                </Border>
+
+                <!-- Thumbnail row: 60px-tall strip of small squares. -->
+                <HorizontalStackLayout Spacing="10"
+                                       HeightRequest="60"
+                                       HorizontalOptions="Fill">
+                    <Border Style="{StaticResource SkeletonImage}" WidthRequest="60" HeightRequest="60" VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Style="{StaticResource SkeletonImage}" WidthRequest="60" HeightRequest="60" VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Style="{StaticResource SkeletonImage}" WidthRequest="60" HeightRequest="60" VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Style="{StaticResource SkeletonImage}" WidthRequest="60" HeightRequest="60" VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                    </Border>
+                </HorizontalStackLayout>
+
+                <!-- Property name: single bold line. -->
+                <Border Style="{StaticResource SkeletonBar}" HeightRequest="30">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="15" />
+                    </Border.StrokeShape>
+                </Border>
+
+                <!-- LocationView: pin glyph + address line. -->
+                <HorizontalStackLayout Spacing="10">
+                    <Border WidthRequest="20" HeightRequest="20"
+                            VerticalOptions="Center"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="240" HorizontalOptions="Start" VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                </HorizontalStackLayout>
+
+                <!-- "Price per share" section header. -->
+                <Border Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="140" HorizontalOptions="Start">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="6" />
+                    </Border.StrokeShape>
+                </Border>
+
+                <!-- Price per token + status chip. -->
+                <HorizontalStackLayout Spacing="10">
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="24" WidthRequest="150" HorizontalOptions="Start" VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="20" WidthRequest="64" HorizontalOptions="Start" VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="5" />
+                        </Border.StrokeShape>
+                    </Border>
+                </HorizontalStackLayout>
+
+                <!-- "Developer" section header. -->
+                <Border Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="100" HorizontalOptions="Start">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="6" />
+                    </Border.StrokeShape>
+                </Border>
+
+                <!-- CompanyThumbnailView: 40px round logo + name. -->
+                <HorizontalStackLayout Spacing="10">
+                    <Border WidthRequest="40" HeightRequest="40"
+                            VerticalOptions="Center"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="20" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="16" WidthRequest="160" HorizontalOptions="Start" VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+                    </Border>
+                </HorizontalStackLayout>
+
+                <!-- 2x2 stats cells (Listing price / Gross yield / Shares / Property). -->
+                <Grid ColumnSpacing="15"
+                      RowSpacing="5"
+                      Margin="0,10,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="90" />
+                        <RowDefinition Height="80" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Column="0" Grid.Row="0" Style="{StaticResource SkeletonCell}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="5" Margin="10,0,10,0" VerticalOptions="Center">
+                            <Border Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="90" HorizontalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="6" />
+                                </Border.StrokeShape>
+                            </Border>
+                            <Border Style="{StaticResource SkeletonBar}" HeightRequest="16" WidthRequest="70" HorizontalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" Grid.Row="0" Style="{StaticResource SkeletonCell}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="5" Margin="10,0,10,0" VerticalOptions="Center">
+                            <Border Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="90" HorizontalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="6" />
+                                </Border.StrokeShape>
+                            </Border>
+                            <Border Style="{StaticResource SkeletonBar}" HeightRequest="16" WidthRequest="70" HorizontalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="0" Grid.Row="1" Style="{StaticResource SkeletonCell}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="5" Margin="10,0,10,0" VerticalOptions="Center">
+                            <Border Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="90" HorizontalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="6" />
+                                </Border.StrokeShape>
+                            </Border>
+                            <Border Style="{StaticResource SkeletonBar}" HeightRequest="16" WidthRequest="70" HorizontalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1" Grid.Row="1" Style="{StaticResource SkeletonCell}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="5" Margin="10,0,10,0" VerticalOptions="Center">
+                            <Border Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="90" HorizontalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="6" />
+                                </Border.StrokeShape>
+                            </Border>
+                            <Border Style="{StaticResource SkeletonBar}" HeightRequest="16" WidthRequest="70" HorizontalOptions="Start">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="8" />
+                                </Border.StrokeShape>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- SliderView: title + track + min/max labels. -->
+                <VerticalStackLayout Spacing="0">
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="220" HorizontalOptions="Start">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border StrokeThickness="0"
+                            BackgroundColor="#44888888"
+                            HeightRequest="5"
+                            Margin="0,10,0,10"
+                            HorizontalOptions="Fill">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="2.5" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="70" HorizontalOptions="Start">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="6" />
+                            </Border.StrokeShape>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="70" HorizontalOptions="End">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="6" />
+                            </Border.StrokeShape>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- Divider. -->
+                <Border HeightRequest="1"
+                        BackgroundColor="#888888"
+                        StrokeThickness="0"
+                        HorizontalOptions="Fill" />
+
+                <!-- "Rental income pcm" title + value. -->
+                <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="150" HorizontalOptions="Start">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="7" />
+                    </Border.StrokeShape>
+                </Border>
+                <Border Style="{StaticResource SkeletonBar}" HeightRequest="16" WidthRequest="120" HorizontalOptions="Start">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                </Border>
+
+                <!-- Divider. -->
+                <Border HeightRequest="1"
+                        BackgroundColor="#888888"
+                        StrokeThickness="0"
+                        HorizontalOptions="Fill" />
+
+                <!-- SliderView: rental demand. -->
+                <VerticalStackLayout Spacing="0">
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="180" HorizontalOptions="Start">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border StrokeThickness="0"
+                            BackgroundColor="#44888888"
+                            HeightRequest="5"
+                            Margin="0,10,0,10"
+                            HorizontalOptions="Fill">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="2.5" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="40" HorizontalOptions="Start">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="6" />
+                            </Border.StrokeShape>
+                        </Border>
+                        <Border Grid.Column="1" Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="40" HorizontalOptions="End">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="6" />
+                            </Border.StrokeShape>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- Property description + details block, same inset/shaded container as
+                     the real page (margin -20 so it bleeds to the screen edges). -->
+                <StackLayout BackgroundColor="#22888888"
+                             Padding="20,30,20,30"
+                             Margin="-20,0,-20,0"
+                             Spacing="15">
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="16" WidthRequest="200" HorizontalOptions="Start">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="14">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="14">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="60%" HorizontalOptions="Start">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+
+                    <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="80" HorizontalOptions="Start">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+
+                    <!-- Attribute rows are added in code-behind, one per real
+                         NftAttributeView, so the count always matches. -->
+                    <VerticalStackLayout x:Name="attributesStack"
+                                         Spacing="10" />
+                </StackLayout>
+
+                <!-- PropertyMapView: 350px rounded map region. -->
+                <Border Style="{StaticResource SkeletonImage}"
+                        HeightRequest="350">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20" />
+                    </Border.StrokeShape>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Shimmer sweep over the whole visible skeleton. -->
+        <Border x:Name="shimmerBorder"
+                InputTransparent="True"
+                Padding="0"
+                StrokeThickness="0"
+                IsVisible="False" />
+    </Grid>
+</ContentView>

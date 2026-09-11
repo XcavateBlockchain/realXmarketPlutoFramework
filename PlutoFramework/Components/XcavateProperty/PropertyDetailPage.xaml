@@ -14,242 +14,250 @@
                        xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
                        xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                        xmlns:map="clr-namespace:PlutoFramework.Components.Map"
+                       xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
                        x:Class="PlutoFramework.Components.XcavateProperty.PropertyDetailPage"
                        Title="PropertyDetailPage"
                        NavigationBarIsVisible="False">
     <template:PageTemplate.MainContent>
-        <ScrollView>
-            <VerticalStackLayout Spacing="15"
-                                 Padding="20, 80, 20, 110">
-                
-                <xcavate:RiskWarningView />
+        <Grid>
+            <!-- Shown until the details finish loading. Mirrors the content below block for
+                 block, so the page appears instantly and the swap to real data is seamless. -->
+            <loading:PropertyDetailSkeletonView IsVisible="{Binding IsLoading}" />
 
-                <nft:NftMultiImageView ImageSources="{Binding PropertyImages}" />
+            <ScrollView IsVisible="{Binding IsLoaded}">
+                <VerticalStackLayout Spacing="15"
+                                     Padding="20, 80, 20, 110">
 
-                <!--<Label Text="{Binding PropertyStatus}"
-                       FontSize="14"
-                       TextColor="#888888"
-                       HorizontalTextAlignment="Start" />-->
+                    <xcavate:RiskWarningView />
 
-                <Label FontSize="30"
-                   FontAttributes="Bold"
-                   HorizontalTextAlignment="Start"
-                   LineBreakMode="TailTruncation">
-                    <Label.FormattedText>
-                        <FormattedString>
-                            <Span Text="{Binding Metadata.PropertyName}"
-                              FontAttributes="Bold" />
-                        </FormattedString>
-                    </Label.FormattedText>
-                </Label>
+                    <nft:NftMultiImageView ImageSources="{Binding PropertyImages}" />
 
-                <xcavateproperty:LocationView LocationName="{Binding PropertyAddressLine}" />
+                    <!--<Label Text="{Binding PropertyStatus}"
+                           FontSize="14"
+                           TextColor="#888888"
+                           HorizontalTextAlignment="Start" />-->
 
-                <Label Text="Price per share"
-                   Margin="0,10,0,-10"
-                   HorizontalTextAlignment="Start" />
-
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <Label FontSize="20"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Start"
-                           HorizontalTextAlignment="Start">
+                    <Label FontSize="30"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Start"
+                       LineBreakMode="TailTruncation">
                         <Label.FormattedText>
                             <FormattedString>
-                                <Span Text="{Binding PricePerTokenText}"
-                                      FontAttributes="Bold" />
+                                <Span Text="{Binding Metadata.PropertyName}"
+                                  FontAttributes="Bold" />
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>
 
-                    <Border BackgroundColor="#22888888"
-                            x:Name="status"
-                            IsVisible="{Binding StatusIsVisible}"
-                            StrokeThickness="0"
-                            Grid.Column="1">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="5" />
-                        </Border.StrokeShape>
+                    <xcavateproperty:LocationView LocationName="{Binding PropertyAddressLine}" />
 
-                        <Label Text="{Binding StatusText}"
-                               Margin="5,0,5,0"
-                               HorizontalTextAlignment="Center"
-                               VerticalOptions="Center"
-                               VerticalTextAlignment="Center"/>
-                    </Border>
-                </Grid>
-
-                <Label Text="Developer"
-                       Margin="0,10,0,0"
-                       HorizontalTextAlignment="Start" />
-                
-                <xcavateproperty:CompanyThumbnailView />
-
-                <Grid AbsoluteLayout.LayoutBounds="0.5, 25, 1, 185"
-                  AbsoluteLayout.LayoutFlags="XProportional,WidthProportional"
-                  ColumnSpacing="15"
-                  RowSpacing="5"
-                  Margin="0,10,0,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="90" />
-                        <RowDefinition Height="80" />
-                    </Grid.RowDefinitions>
-
-                    <xcavate:XcavateCell Grid.Column="0"
-                                     Grid.Row="0"
-                                     Title="Listing price"
-                                     InfoCommand="{Binding NavigateToFeesCommand}"
-                                     Value="{Binding ListingPrice}" />
-
-                    <xcavate:XcavateCell Grid.Column="1"
-                                     Grid.Row="0"
-                                     Title="Gross yield"
-                                     InfoCommand="{Binding NavigateToFeesCommand}"
-                                     Value="{Binding Apy}" />
-
-                    <xcavate:XcavateCell Grid.Column="0"
-                                     Grid.Row="1"
-                                     Title="Shares"
-                                     InfoCommand="{Binding NavigateToFeesCommand}"
-                                     Value="{Binding TokensAvailable}" />
-
-                    <xcavate:XcavateCell Grid.Column="1"
-                                     Grid.Row="1"
-                                     Title="Property"
-                                     InfoCommand="{Binding NavigateToFeesCommand}"
-                                     Value="{Binding Metadata.PropertyType}" />
-                </Grid>
-
-                <xcavateproperty:SliderView Title="Similar property prices in area"
-                                        Percentage="{Binding AreaPricesPercentage}"
-                                        MinimumTitle="£200,000"
-                                        MaximumTitle="£270,000"
-                                        InfoCommand="{Binding NavigateToFeesCommand}"/>
-
-                <Line Stroke="#888888"
-                  X2="{Binding Width, Source={RelativeSource Self}}"
-                  HorizontalOptions="Fill"
-                  StrokeThickness="1" />
-
-                <xcavateproperty:PropertyTitleWithInfoView Title="Rental income pcm"
-                                                       Command="{Binding NavigateToFeesCommand}"/>
-
-                <Label Text="{Binding RentalIncome}"
-                   HorizontalTextAlignment="Start" />
-
-                <Line Stroke="#888888"
-                  X2="{Binding Width, Source={RelativeSource Self}}"
-                  HorizontalOptions="Fill"
-                  StrokeThickness="1" />
-
-                <xcavateproperty:SliderView Title="Rental demand in the area"
-                                        Percentage="{Binding RentalDemandPercentage}"
-                                        MinimumTitle="Low"
-                                        MaximumTitle="High"
-                                        InfoCommand="{Binding NavigateToFeesCommand}" />
-
-                <xcavateproperty:OwnedPropertyTokensView IsVisible="{Binding OwnedPropertyTokensViewIsVisible}" />
-
-                <xcavateproperty:BoughtPropertyTokensView IsVisible="{Binding BoughtPropertyTokensViewIsVisible}" />
-
-                <StackLayout BackgroundColor="#22888888"
-                            Padding="20,30,20,30"
-                            Margin="-20,20,-20,0"
-                            Spacing="15">
-                    <Label FontAttributes="Bold"
-                        HorizontalTextAlignment="Start">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="Property description"
-                                    FontAttributes="Bold" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-
-                    <Label Text="{Binding Metadata.PropertyDescription}"
-                        HorizontalTextAlignment="Start" />
-
-                    <Label FontAttributes="Bold"
-                       Text="Details"
+                    <Label Text="Price per share"
+                       Margin="0,10,0,-10"
                        HorizontalTextAlignment="Start" />
 
-                    <nft:NftAttributeView AttributeName="Post code"
-                                      Value="{Binding Metadata.Address.PostCode}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <nft:NftAttributeView AttributeName="Flat / unit"
-                                      Value="{Binding Metadata.Address.FlatOrUnit}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                        <Label FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Start"
+                               HorizontalTextAlignment="Start">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="{Binding PricePerTokenText}"
+                                          FontAttributes="Bold" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
 
-                    <nft:NftAttributeView AttributeName="Local authority"
-                                      Value="{Binding Metadata.Address.LocalAuthority}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                        <Border BackgroundColor="#22888888"
+                                x:Name="status"
+                                IsVisible="{Binding StatusIsVisible}"
+                                StrokeThickness="0"
+                                Grid.Column="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="5" />
+                            </Border.StrokeShape>
 
-                    <nft:NftAttributeView AttributeName="Town / city"
-                                      Value="{Binding Metadata.Address.TownCity}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                            <Label Text="{Binding StatusText}"
+                                   Margin="5,0,5,0"
+                                   HorizontalTextAlignment="Center"
+                                   VerticalOptions="Center"
+                                   VerticalTextAlignment="Center"/>
+                        </Border>
+                    </Grid>
 
-                    <nft:NftAttributeView AttributeName="Location"
-                                      Value="{Binding LocationShortName}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                    <Label Text="Developer"
+                           Margin="0,10,0,0"
+                           HorizontalTextAlignment="Start" />
 
-                    <nft:NftAttributeView AttributeName="Area"
-                                      Value="{Binding PropertyArea}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                    <xcavateproperty:CompanyThumbnailView />
 
-                    <nft:NftAttributeView AttributeName="Off street parking"
-                                      Value="{Binding OffStreetParking}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 25, 1, 185"
+                      AbsoluteLayout.LayoutFlags="XProportional,WidthProportional"
+                      ColumnSpacing="15"
+                      RowSpacing="5"
+                      Margin="0,10,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                    <nft:NftAttributeView AttributeName="Outdoor space"
-                                      Value="{Binding OutdoorSpace}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="90" />
+                            <RowDefinition Height="80" />
+                        </Grid.RowDefinitions>
 
-                    <nft:NftAttributeView AttributeName="Bedrooms"
-                                      Value="{Binding NumberOfBedrooms}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                        <xcavate:XcavateCell Grid.Column="0"
+                                         Grid.Row="0"
+                                         Title="Listing price"
+                                         InfoCommand="{Binding NavigateToFeesCommand}"
+                                         Value="{Binding ListingPrice}" />
 
-                    <nft:NftAttributeView AttributeName="Construction date"
-                                      Value="{Binding ConstructionDate}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                        <xcavate:XcavateCell Grid.Column="1"
+                                         Grid.Row="0"
+                                         Title="Gross yield"
+                                         InfoCommand="{Binding NavigateToFeesCommand}"
+                                         Value="{Binding Apy}" />
 
-                    <nft:NftAttributeView AttributeName="Bathrooms"
-                                      Value="{Binding NumberOfBathrooms}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                        <xcavate:XcavateCell Grid.Column="0"
+                                         Grid.Row="1"
+                                         Title="Shares"
+                                         InfoCommand="{Binding NavigateToFeesCommand}"
+                                         Value="{Binding TokensAvailable}" />
 
-                    <nft:NftAttributeView AttributeName="Quality"
-                                      Value="{Binding Quality}"
-                                      HasShadow="False"
-                                      CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
-                </StackLayout>
+                        <xcavate:XcavateCell Grid.Column="1"
+                                         Grid.Row="1"
+                                         Title="Property"
+                                         InfoCommand="{Binding NavigateToFeesCommand}"
+                                         Value="{Binding Metadata.PropertyType}" />
+                    </Grid>
 
-                <map:PropertyMapView x:Name="propertyMapView"
-                                     HeightRequest="350"
-                                     LocationName="{Binding PropertyAddressLine}"
-                                     MapUrl="{Binding Metadata.Map}" />
-            </VerticalStackLayout>
-        </ScrollView>
+                    <xcavateproperty:SliderView Title="Similar property prices in area"
+                                            Percentage="{Binding AreaPricesPercentage}"
+                                            MinimumTitle="£200,000"
+                                            MaximumTitle="£270,000"
+                                            InfoCommand="{Binding NavigateToFeesCommand}"/>
+
+                    <Line Stroke="#888888"
+                      X2="{Binding Width, Source={RelativeSource Self}}"
+                      HorizontalOptions="Fill"
+                      StrokeThickness="1" />
+
+                    <xcavateproperty:PropertyTitleWithInfoView Title="Rental income pcm"
+                                                           Command="{Binding NavigateToFeesCommand}"/>
+
+                    <Label Text="{Binding RentalIncome}"
+                       HorizontalTextAlignment="Start" />
+
+                    <Line Stroke="#888888"
+                      X2="{Binding Width, Source={RelativeSource Self}}"
+                      HorizontalOptions="Fill"
+                      StrokeThickness="1" />
+
+                    <xcavateproperty:SliderView Title="Rental demand in the area"
+                                            Percentage="{Binding RentalDemandPercentage}"
+                                            MinimumTitle="Low"
+                                            MaximumTitle="High"
+                                            InfoCommand="{Binding NavigateToFeesCommand}" />
+
+                    <xcavateproperty:OwnedPropertyTokensView IsVisible="{Binding OwnedPropertyTokensViewIsVisible}" />
+
+                    <xcavateproperty:BoughtPropertyTokensView IsVisible="{Binding BoughtPropertyTokensViewIsVisible}" />
+
+                    <StackLayout BackgroundColor="#22888888"
+                                Padding="20,30,20,30"
+                                Margin="-20,20,-20,0"
+                                Spacing="15">
+                        <Label FontAttributes="Bold"
+                            HorizontalTextAlignment="Start">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Property description"
+                                        FontAttributes="Bold" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+
+                        <Label Text="{Binding Metadata.PropertyDescription}"
+                            HorizontalTextAlignment="Start" />
+
+                        <Label FontAttributes="Bold"
+                           Text="Details"
+                           HorizontalTextAlignment="Start" />
+
+                        <nft:NftAttributeView AttributeName="Post code"
+                                          Value="{Binding Metadata.Address.PostCode}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Flat / unit"
+                                          Value="{Binding Metadata.Address.FlatOrUnit}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Local authority"
+                                          Value="{Binding Metadata.Address.LocalAuthority}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Town / city"
+                                          Value="{Binding Metadata.Address.TownCity}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Location"
+                                          Value="{Binding LocationShortName}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Area"
+                                          Value="{Binding PropertyArea}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Off street parking"
+                                          Value="{Binding OffStreetParking}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Outdoor space"
+                                          Value="{Binding OutdoorSpace}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Bedrooms"
+                                          Value="{Binding NumberOfBedrooms}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Construction date"
+                                          Value="{Binding ConstructionDate}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Bathrooms"
+                                          Value="{Binding NumberOfBathrooms}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+
+                        <nft:NftAttributeView AttributeName="Quality"
+                                          Value="{Binding Quality}"
+                                          HasShadow="False"
+                                          CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
+                    </StackLayout>
+
+                    <map:PropertyMapView x:Name="propertyMapView"
+                                         HeightRequest="350"
+                                         LocationName="{Binding PropertyAddressLine}"
+                                         MapUrl="{Binding Metadata.Map}"
+                                         PropertyMetadata="{Binding Metadata}" />
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
     </template:PageTemplate.MainContent>
 
     <template:PageTemplate.PopupContent>
@@ -269,7 +277,8 @@
                                              Extra3ImageHeight="28"
                                              Extra3ImageWidth="28" />
 
-        <xcavate:PageBottomBarButtonView Text="{Binding MainActionText}"
+        <xcavate:PageBottomBarButtonView IsVisible="{Binding IsLoaded}"
+                                         Text="{Binding MainActionText}"
                                          ButtonState="{Binding MainActionButtonState}"
                                          Command="{Binding MainActionCommand}" />
 

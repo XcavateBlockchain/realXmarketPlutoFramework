@@ -126,6 +126,17 @@ namespace PlutoFramework.Components.XcavateProperty
         [ObservableProperty]
         private XcavateRegion? region;
 
+        /// <summary>
+        /// True until the property details have been fetched and the real content can be
+        /// shown. The page renders a skeleton (see PropertyDetailSkeletonView) while this is
+        /// set, so navigation to the page is instant - no full-screen loading overlay.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsLoaded))]
+        private bool isLoading = true;
+
+        public bool IsLoaded => !IsLoading;
+
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(AreaPricesPercentage))]
         [NotifyPropertyChangedFor(nameof(RentalDemandPercentage))]
