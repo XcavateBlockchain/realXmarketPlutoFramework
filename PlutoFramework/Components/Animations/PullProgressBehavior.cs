@@ -2,6 +2,7 @@
 using Android.Views;
 #endif
 #if IOS || MACCATALYST
+using CoreAnimation;
 using UIKit;
 #endif
 
@@ -214,7 +215,13 @@ public class PullProgressBehavior : Behavior<RefreshView>
 #elif IOS || MACCATALYST
 
     private UIScrollView? scrollView;
+    private CADisplayLink? displayLink;
 
+    // UIScrollView.Scrolled is backed by the scroll view's single native Delegate slot,
+    // which the CollectionView handler already owns (ReorderableItemsViewDelegator2).
+    // Subscribing to the event would overwrite that delegate and throw
+    // InvalidOperationException. Poll ContentOffset on the display link instead: it is
+    // read-only and never touches the Delegate.
     private void TryAttachPlatform()
     {
         if (scrollView is not null)
@@ -234,25 +241,26 @@ public class PullProgressBehavior : Behavior<RefreshView>
             return;
         }
 
-        scrollView.Scrolled += OnPlatformScrolled;
+        displayLink = CADisplayLink.Create(OnDisplayLinkTick);
+        displayLink.AddToRunLoop(Foundation.NSRunLoop.Main, Foundation.NSRunLoopMode.Common);
     }
 
     private void DetachPlatform()
     {
-        if (scrollView is null)
+        if (displayLink is not null)
         {
-            return;
+            displayLink.Invalidate();
+            displayLink = null;
         }
 
-        scrollView.Scrolled -= OnPlatformScrolled;
         scrollView = null;
 
         Progress = 0d;
     }
 
-    private void OnPlatformScrolled(object? sender, EventArgs e)
+    private void OnDisplayLinkTick()
     {
-        if (scrollView is null)
+        if (scrollView is null || scrollView.Window is null)
         {
             return;
         }
