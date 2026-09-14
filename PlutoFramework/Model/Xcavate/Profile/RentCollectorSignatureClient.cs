@@ -10,10 +10,10 @@ namespace PlutoFramework.Model.Xcavate.Profile
 {
     /// <summary>
     /// Asks the profile API for the rent collector's signature on a marketplace
-    /// buy/claim transaction.
+    /// buy, reserve, or claim transaction.
     /// </summary>
     /// <remarks>
-    /// The marketplace program pins the fee payer of buy and claim to its configured
+    /// The marketplace program pins the fee payer of buy, reserve, and claim to its configured
     /// rent collector and requires that key to have signed, but the investor's wallet
     /// cannot co-sign on its own machine - so the profile API holds the rent collector
     /// key (in its environment) and signs the exact compiled message the investor is
@@ -62,7 +62,9 @@ namespace PlutoFramework.Model.Xcavate.Profile
 
             using var request = new HttpRequestMessage(HttpMethod.Post, ApiBaseUrl + EndpointPath.TrimStart('/'));
 
-            request.Content = new StringContent(body, Encoding.UTF8, "json");
+            // "application/json", not just "json" - the .NET 10 media-type parser
+            // throws a FormatException on the latter before the request is even sent.
+            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
             request.Headers.Add("X-SS58-Address", signer.Address);
             request.Headers.Add("X-Signature", signer.EncodeSignature(signature));
