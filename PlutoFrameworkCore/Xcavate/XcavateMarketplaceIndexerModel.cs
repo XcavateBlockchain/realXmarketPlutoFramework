@@ -166,6 +166,112 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// One listing read fresh from the feed's single-listing query, without the
+        /// share-holder dictionaries the detail page's <see cref="GetListingFullInfoAsync"/>
+        /// pages in. Null when the listing does not exist or its account has been closed.
+        /// </summary>
+        public static async Task<XcavateSolanaListingNft?> GetListingAsync(
+            long listingId,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
+
+            var result = await client.MarketplaceListing
+                .ExecuteAsync(listingId.ToString(CultureInfo.InvariantCulture), token)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            var listing = result.Data?.Listings.Nodes.FirstOrDefault();
+            if (listing is null)
+            {
+                return null;
+            }
+
+            // The joined asset arrives with the listing - no second lookup.
+            return MapListing(listing, listing.PropertyAsset);
+        }
+
+        /// <summary>
+        /// The properties one investor has bought or reserved shares in, one page at a
+        /// time: <c>investorPositions</c> answers the investor's open positions (bought in
+        /// <c>shareAmount</c>, reserved in <c>reservedShareAmount</c>), and each position's
+        /// listing is read fresh so the property card carries the current name, images and
+        /// price.
+        /// <para>
+        /// A position with no bought and no reserved shares carries nothing to show and is
+        /// dropped before spending a listing lookup on it; a listing the program has since
+        /// closed (soft-deleted) answers null and is skipped. The investor's committed
+        /// total (bought plus reserved) is stored under their own address in
+        /// <c>OngoingObjectListingDetails.ShareOwners</c>, the same figure the detail page
+        /// shows, so a record wrapped from <see cref="Listing"/> agrees with it.
+        /// </para>
+        /// </summary>
+        public static async Task<IReadOnlyList<XcavateSolanaInvestorProperty>> GetInvestorPropertiesAsync(
+            string investor,
+            int first,
+            int offset,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
+
+            var result = await client.InvestorProperties
+                .ExecuteAsync(investor, first, offset, token)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            var positions = result.Data?.InvestorPositions.Nodes ?? [];
+
+            // Zero/zero positions hold nothing to show; drop them before the listing
+            // lookups, not after.
+            var openPositions = positions
+                .Where(position => ParseInt64(position.ShareAmount) + ParseInt64(position.ReservedShareAmount) > 0)
+                .ToList();
+
+            // One lookup per position, all in flight at once: a position's listing is a
+            // small join (listing plus its propertyAsset document), so the whole page
+            // answers in one round of requests.
+            var listings = await Task.WhenAll(
+                    openPositions.Select(position => GetListingAsync(ParseInt64(position.ListingId), token)))
+                .ConfigureAwait(false);
+
+            var properties = new List<XcavateSolanaInvestorProperty>(openPositions.Count);
+
+            for (var i = 0; i < openPositions.Count; i++)
+            {
+                var position = openPositions[i];
+                var listing = listings[i];
+
+                if (listing is null)
+                {
+                    continue;
+                }
+
+                var boughtShares = ParseInt64(position.ShareAmount);
+                var reservedShares = ParseInt64(position.ReservedShareAmount);
+
+                if (listing.OngoingObjectListingDetails is not null)
+                {
+                    listing.OngoingObjectListingDetails.ShareOwners[investor] = new ShareOwner
+                    {
+                        Account = investor,
+                        ShareAmount = (uint)Math.Clamp(boughtShares + reservedShares, 0, uint.MaxValue),
+                    };
+                }
+
+                properties.Add(new XcavateSolanaInvestorProperty
+                {
+                    Listing = listing,
+                    BoughtShares = (uint)Math.Clamp(boughtShares, 0, uint.MaxValue),
+                    ReservedShares = (uint)Math.Clamp(reservedShares, 0, uint.MaxValue),
+                });
+            }
+
+            return properties;
+        }
+
+        /// <summary>
         /// The client-side stand-in for the old SubQuery <c>includesInsensitive</c> filters:
         /// an empty filter matches everything, a non-empty one is a case-insensitive
         /// substring match. The search text additionally matches the postcode, which is the
