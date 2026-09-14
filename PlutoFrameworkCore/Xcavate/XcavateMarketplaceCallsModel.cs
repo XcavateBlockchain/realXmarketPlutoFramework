@@ -18,17 +18,17 @@ namespace PlutoFramework.Model.Xcavate
     /// payment mints.
     /// </summary>
     /// <remarks>
-    /// On the payer: reserve_shares lets the <c>payer</c> front rent as the
-    /// investor themselves (one signature), while buy_property_shares and
-    /// claim_shares pin the <c>payer</c> to the config's rent collector and
-    /// require its signature (devnet-verified). So those complete end-to-end
-    /// only when the signing wallet IS that rent collector - the two required
-    /// signatures collapse into one. With any other investor wallet the
-    /// rent collector's half now comes from the profile API's rent-collector-
-    /// signature endpoint: the key lives in that service's environment, and
-    /// it signs the exact compiled message the investor then signs and
-    /// submits. The transaction model detects the two-signer case and routes
-    /// to that endpoint before the investor's wallet is ever opened.
+    /// On the payer: reserve_shares, buy_property_shares and claim_shares
+    /// all pin the <c>payer</c> to the config's rent collector and require
+    /// its signature (devnet-verified against the deployed program). So each
+    /// completes end-to-end only when the signing wallet IS that rent
+    /// collector - the two required signatures collapse into one. With any
+    /// other investor wallet the rent collector's half now comes from the
+    /// profile API's rent-collector-signature endpoint: the key lives in
+    /// that service's environment, and it signs the exact compiled message
+    /// the investor then signs and submits. The transaction model detects
+    /// the two-signer case and routes to that endpoint before the investor's
+    /// wallet is ever opened.
     /// </remarks>
     public static class XcavateMarketplaceCallsModel
     {
@@ -42,9 +42,11 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// reserve_shares for <paramref name="amount"/> shares of listing
         /// <paramref name="listingId"/> - the sale-phase purchase behind the Reserve button.
-        /// The investor's own signature alone completes the transaction; the payer is the
-        /// investor fronting their own accounts' rent. Money stays in the investor's
-        /// payment account, bound by a reservation, until claim_shares pays for it.
+        /// The deployed program pins the rent-fronting payer to the config's rent
+        /// collector and requires its signature, so the transaction needs the investor's
+        /// and the rent collector's signatures (see the class remarks). Money stays in
+        /// the investor's payment account, bound by a reservation, until claim_shares
+        /// pays for it.
         /// Price, fees and tax are read fresh from the indexer so the max-total-cost cap
         /// reflects the listing as it is now, not as the page loaded it.
         /// </summary>
@@ -53,7 +55,7 @@ namespace PlutoFramework.Model.Xcavate
             long listingId,
             uint amount,
             CancellationToken token = default) =>
-            PurchaseAsync(XcavateMarketplaceProgram.ReserveShares, investor, listingId, amount, token, sponsorFrontsRent: false);
+            PurchaseAsync(XcavateMarketplaceProgram.ReserveShares, investor, listingId, amount, token, sponsorFrontsRent: true);
 
         /// <summary>
         /// buy_property_shares for <paramref name="amount"/> shares - the direct purchase
@@ -90,8 +92,9 @@ namespace PlutoFramework.Model.Xcavate
                 ComputeMaxTotalCost(sharePrice, amount, listing.InvestorFeeBps, listing.TaxBps, listing.TaxPaidByDeveloper),
                 payment.Decimals);
 
-            // Reserve lets the investor front rent for their own accounts (one signature);
-            // the buy pins the payer to the rent collector and needs its signature too.
+            // The deployed program pins the rent-fronting payer to the config's rent
+            // collector on every purchase (reserve included) and requires its
+            // signature, so the rent collector's key always fronts rent here.
             var payer = sponsorFrontsRent ? new PublicKey(config.RentCollector) : new PublicKey(investor);
 
             return

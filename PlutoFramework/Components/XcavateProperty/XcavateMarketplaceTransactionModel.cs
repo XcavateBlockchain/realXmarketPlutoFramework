@@ -17,7 +17,7 @@ namespace PlutoFramework.Components.XcavateProperty
     /// the signing wallet, sent on the marketplace's own cluster, then tracked to
     /// confirmation. The replacement for the Substrate extrinsic pipeline
     /// (TransactionAnalyzer + extrinsic status stack) on the property pages. When the
-    /// program additionally requires the rent collector's signature (buy and claim),
+    /// program additionally requires the rent collector's signature (reserve, buy and claim),
     /// that signature comes from the profile API - which holds the rent collector key -
     /// and the investor signs and submits the same compiled message.
     /// </summary>
@@ -59,14 +59,13 @@ namespace PlutoFramework.Components.XcavateProperty
                 // listing, marketplace not deployed) should not cost an unlock prompt.
                 var instructions = await buildInstructionsAsync(address, CancellationToken.None);
 
-                // Reserve needs only the investor's signature - the program accepts
-                // the investor fronting their own accounts' rent. Buy and claim take a
-                // rent-fronting payer that the deployed program pins to the config's
-                // rent collector AND requires to have signed (devnet-verified), so
-                // those genuinely need two signatures: the investor's and the rent
-                // collector's. When this wallet IS the rent collector the two roles
-                // collapse into one signer; otherwise the rent collector's half comes
-                // from the profile API, which holds that key (this app holds none).
+                // Reserve, buy and claim all take a rent-fronting payer that the
+                // deployed program pins to the config's rent collector AND requires
+                // to have signed (devnet-verified), so each genuinely needs two
+                // signatures: the investor's and the rent collector's. When this
+                // wallet IS the rent collector the two roles collapse into one
+                // signer; otherwise the rent collector's half comes from the profile
+                // API, which holds that key (this app holds none).
                 var signerKeys = instructions
                     .SelectMany(instruction => instruction.Keys)
                     .Where(accountMeta => accountMeta.IsSigner)
@@ -91,8 +90,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 if (signerKeys.Count == 1)
                 {
-                    // The ordinary one-signer path (reserve, or this wallet IS the
-                    // rent collector): byte for byte the way it has always worked.
+                    // The one-signer path (this wallet IS the rent collector): byte
+                    // for byte the way it has always worked.
                     signature = await account.SendAsync(instructions, description, CancellationToken.None, cluster);
                 }
                 else if (signerKeys.Count == 2)
@@ -125,7 +124,7 @@ namespace PlutoFramework.Components.XcavateProperty
         }
 
         /// <summary>
-        /// The buy and claim path: the program pins the rent-fronting payer to the rent
+        /// The reserve, buy and claim path: the program pins the rent-fronting payer to the rent
         /// collector AND requires its signature (devnet-verified), and this wallet is
         /// not the rent collector. The rent collector's half comes from the profile
         /// API - which holds the key - pre-applied to the wire transaction, then this

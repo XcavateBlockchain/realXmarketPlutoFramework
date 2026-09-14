@@ -169,11 +169,11 @@ namespace PlutoFramework.Model.Xcavate
         /// <see cref="BuyPropertyShares"/>, backs the Reserve button while a listing sells.
         /// </summary>
         /// <param name="payer">
-        /// The wallet fronting rent for the investor's new accounts. The program's
-        /// constraint accepts the investor themselves, so the transaction completes
-        /// with the investor's signature alone; the config's rent collector may still
-        /// sponsor (unlike <see cref="BuyPropertyShares"/>, which pins this to the
-        /// rent collector and requires its signature).
+        /// The wallet fronting rent for the investor's new accounts. The deployed
+        /// program pins this to the config's rent collector and requires its
+        /// signature, like <see cref="BuyPropertyShares"/>, so unless the signing
+        /// wallet IS the rent collector the transaction needs the investor's and
+        /// the rent collector's signatures.
         /// </param>
         public static TransactionInstruction ReserveShares(
             XcavateProgramSet programs,

@@ -139,8 +139,8 @@ namespace PlutoFrameworkTests
         /// The regression behind "failed to sanitize accounts offsets": with the rent
         /// collector fronting rent as a distinct payer, the compiled message's header
         /// requires two signature slots (investor plus the rent collector), and a wire
-        /// transaction framed with fewer slots is rejected as malformed. (An investor
-        /// fronting their own rent is a single signer - see
+        /// transaction framed with fewer slots is rejected as malformed. (A payer that
+        /// is the investor themselves leaves a single signature slot - see
         /// <see cref="ReserveShares_InvestorFrontedRequiresOneSignature"/>.)
         /// </summary>
         [Test]
@@ -165,9 +165,11 @@ namespace PlutoFrameworkTests
         }
 
         /// <summary>
-        /// The program accepts the investor fronting rent for their own accounts, so
-        /// an investor-fronted reserve's compiled message needs a single signature
-        /// slot - the investor's signature alone completes the transaction.
+        /// Encoder-level check: when the payer IS the investor, only one signer is
+        /// left, so the compiled message needs a single signature slot. The deployed
+        /// program does not accept that layout for reserve_shares (it pins the payer
+        /// to the config's rent collector and rejects the investor with
+        /// NotRentCollector), so the app always sends the two-signer layout above.
         /// </summary>
         [Test]
         public void ReserveShares_InvestorFrontedRequiresOneSignature()
