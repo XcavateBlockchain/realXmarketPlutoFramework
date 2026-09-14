@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Model;
+using PlutoFramework.Model;
 using PlutoFramework.Model.Xcavate;
 using UniqueryPlus.Nfts;
 
@@ -37,7 +37,7 @@ namespace PlutoFrameworkCore.Xcavate
 
                 if (!ListingHasExpired && ListingDetails?.ListedTokens > 0)
                 {
-                    return TimeModel.GetTimeLeftText(TimeLeftToBuy.Value, "to buy");
+                    return TimeModel.GetTimeLeftText(TimeLeftToBuy.Value, "to reserve");
                 }
 
                 if (ListingDetails?.ListedTokens == 0 && !SpvCreated)

@@ -286,7 +286,7 @@
                                              LeftCommand="{Binding CancelReservationCommand}"
                                              LeftText="Cancel"
                                              RightCommand="{Binding BuyMoreCommand}"
-                                             RightText="Buy more" />
+                                             RightText="Reserve more" />
 
         <extrinsic:ExtrinsicStatusStackLayout />
 

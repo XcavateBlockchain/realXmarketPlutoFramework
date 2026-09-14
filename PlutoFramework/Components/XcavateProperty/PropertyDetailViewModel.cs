@@ -231,7 +231,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public string MainActionText => getMainActionState() switch
         {
-            MainActionStates.Buy => "Buy",
+            MainActionStates.Buy => "Reserve",
             MainActionStates.ListingExpired => "Expired",
             MainActionStates.RefundBought => "Refund",
             MainActionStates.SoldOut => "Sold Out",

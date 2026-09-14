@@ -136,9 +136,12 @@ namespace PlutoFrameworkTests
         }
 
         /// <summary>
-        /// The regression behind "failed to sanitize accounts offsets": the compiled
-        /// message's header requires two signature slots (investor plus the rent collector),
-        /// and a wire transaction framed with fewer slots is rejected as malformed.
+        /// The regression behind "failed to sanitize accounts offsets": with the rent
+        /// collector fronting rent as a distinct payer, the compiled message's header
+        /// requires two signature slots (investor plus the rent collector), and a wire
+        /// transaction framed with fewer slots is rejected as malformed. (An investor
+        /// fronting their own rent is a single signer - see
+        /// <see cref="ReserveShares_InvestorFrontedRequiresOneSignature"/>.)
         /// </summary>
         [Test]
         public void ReserveShares_CompiledMessageRequiresTwoSignatures()
@@ -159,6 +162,31 @@ namespace PlutoFrameworkTests
             var compiled = builder.CompileMessage();
 
             Assert.That(SolanaTransactionFramer.GetRequiredSignatures(compiled), Is.EqualTo(2));
+        }
+
+        /// <summary>
+        /// The program accepts the investor fronting rent for their own accounts, so
+        /// an investor-fronted reserve's compiled message needs a single signature
+        /// slot - the investor's signature alone completes the transaction.
+        /// </summary>
+        [Test]
+        public void ReserveShares_InvestorFrontedRequiresOneSignature()
+        {
+            var investor = SyntheticKey(1);
+            var mint = SyntheticKey(3);
+            var paymentAccount = SyntheticKey(4);
+            var legacyToken = new PublicKey(SolanaTokenProgram.Legacy);
+
+            var builder = new TransactionBuilder()
+                .SetRecentBlockHash(SolanaBase58.Encode(new byte[32]))
+                .SetFeePayer(investor)
+                .AddInstruction(
+                    XcavateMarketplaceProgram.ReserveShares(
+                        Programs, investor, investor, 7, 5, 1_000, mint, paymentAccount, legacyToken));
+
+            var compiled = builder.CompileMessage();
+
+            Assert.That(SolanaTransactionFramer.GetRequiredSignatures(compiled), Is.EqualTo(1));
         }
 
         [Test]

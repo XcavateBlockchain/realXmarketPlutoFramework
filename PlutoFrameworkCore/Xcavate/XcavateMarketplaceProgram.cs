@@ -166,12 +166,14 @@ namespace PlutoFramework.Model.Xcavate
         /// reserve_shares(listing_id, amount, max_total_cost): the sale-phase purchase.
         /// Money stays in the investor's payment account, bound by a reservation keyed to
         /// that account, until claim_shares pays for it - which is why this, not
-        /// <see cref="BuyPropertyShares"/>, backs the Buy button while a listing sells.
+        /// <see cref="BuyPropertyShares"/>, backs the Reserve button while a listing sells.
         /// </summary>
         /// <param name="payer">
-        /// The sponsor wallet fronting rent. The deployed program pins this to the
-        /// config's rent collector and requires it to have signed - the same two
-        /// signatures as <see cref="BuyPropertyShares"/>.
+        /// The wallet fronting rent for the investor's new accounts. The program's
+        /// constraint accepts the investor themselves, so the transaction completes
+        /// with the investor's signature alone; the config's rent collector may still
+        /// sponsor (unlike <see cref="BuyPropertyShares"/>, which pins this to the
+        /// rent collector and requires its signature).
         /// </param>
         public static TransactionInstruction ReserveShares(
             XcavateProgramSet programs,

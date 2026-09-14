@@ -12,7 +12,7 @@
              AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
              AbsoluteLayout.LayoutFlags="All">
 
-    <card:BottomPopupCard Title="Buy Property Shares"
+    <card:BottomPopupCard Title="Reserve Property Shares"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
             <AbsoluteLayout>

@@ -59,7 +59,7 @@ public partial class PropertyLittleThumbnailView : ContentView
 
             control.operationLabel.Text = (XcavatePropertyOperation)newValue switch
             {
-                XcavatePropertyOperation.Buy => "Buy",
+                XcavatePropertyOperation.Buy => "Reserve",
                 _ => ((XcavatePropertyOperation)newValue).ToString(),
             };
         });
