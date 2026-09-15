@@ -166,49 +166,36 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
-        /// One listing read fresh from the feed's single-listing query, without the
-        /// share-holder dictionaries the detail page's <see cref="GetListingFullInfoAsync"/>
-        /// pages in. Null when the listing does not exist or its account has been closed.
-        /// </summary>
-        public static async Task<XcavateSolanaListingNft?> GetListingAsync(
-            long listingId,
-            CancellationToken token = default)
-        {
-            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
-
-            var result = await client.MarketplaceListing
-                .ExecuteAsync(listingId.ToString(CultureInfo.InvariantCulture), token)
-                .ConfigureAwait(false);
-
-            result.EnsureNoErrors();
-
-            var listing = result.Data?.Listings.Nodes.FirstOrDefault();
-            if (listing is null)
-            {
-                return null;
-            }
-
-            // The joined asset arrives with the listing - no second lookup.
-            return MapListing(listing, listing.PropertyAsset);
-        }
-
-        /// <summary>
         /// The properties one investor has bought or reserved shares in, one page at a
-        /// time: <c>investorPositions</c> answers the investor's open positions (bought in
-        /// <c>shareAmount</c>, reserved in <c>reservedShareAmount</c>), and each position's
-        /// listing is read fresh so the property card carries the current name, images and
-        /// price.
+        /// time. A single <c>investorProperties</c> query answers the whole page
+        /// (ADR-34): the indexer joins the investor's open positions to their listings
+        /// and the listings' <c>propertyAsset</c> metadata server-side, so no per-listing
+        /// lookups.
         /// <para>
-        /// A position with no bought and no reserved shares carries nothing to show and is
-        /// dropped before spending a listing lookup on it; a listing the program has since
-        /// closed (soft-deleted) answers null and is skipped. The investor's committed
-        /// total (bought plus reserved) is stored under their own address in
-        /// <c>OngoingObjectListingDetails.ShareOwners</c>, the same figure the detail page
-        /// shows, so a record wrapped from <see cref="Listing"/> agrees with it.
+        /// The filters run in SQL, not in the app: <paramref name="owned"/> keeps only
+        /// positions that hold bought shares (the page's "purchased" toggle),
+        /// <paramref name="reserved"/> only positions with reserved shares (the
+        /// "reserved" toggle), <paramref name="name"/> case-insensitive-substring-matches
+        /// the property name or postcode (the search bar), and
+        /// <paramref name="townCity"/> / <paramref name="propertyType"/> match the
+        /// filter popup's dropdowns. A null argument switches a filter off; the caller
+        /// converts its empty/All values to null.
+        /// </para>
+        /// <para>
+        /// A position with no bought and no reserved shares carries nothing to show and
+        /// is dropped. The investor's committed total (bought plus reserved) is stored
+        /// under their own address in <c>OngoingObjectListingDetails.ShareOwners</c>, the
+        /// same figure the detail page shows, so a record wrapped from
+        /// <see cref="Listing"/> agrees with it.
         /// </para>
         /// </summary>
         public static async Task<IReadOnlyList<XcavateSolanaInvestorProperty>> GetInvestorPropertiesAsync(
             string investor,
+            bool? owned,
+            bool? reserved,
+            string? name,
+            string? townCity,
+            string? propertyType,
             int first,
             int offset,
             CancellationToken token = default)
@@ -216,40 +203,28 @@ namespace PlutoFramework.Model.Xcavate
             var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
 
             var result = await client.InvestorProperties
-                .ExecuteAsync(investor, first, offset, token)
+                .ExecuteAsync(investor, owned, reserved, name, townCity, propertyType, first, offset, token)
                 .ConfigureAwait(false);
 
             result.EnsureNoErrors();
 
-            var positions = result.Data?.InvestorPositions.Nodes ?? [];
+            var nodes = result.Data?.InvestorProperties.Nodes ?? [];
 
-            // Zero/zero positions hold nothing to show; drop them before the listing
-            // lookups, not after.
-            var openPositions = positions
-                .Where(position => ParseInt64(position.ShareAmount) + ParseInt64(position.ReservedShareAmount) > 0)
+            // Zero/zero positions hold nothing to show; drop them.
+            var nodesToShow = nodes
+                .Where(node => ParseInt64(node.ShareAmount) + ParseInt64(node.ReservedShareAmount) > 0)
                 .ToList();
 
-            // One lookup per position, all in flight at once: a position's listing is a
-            // small join (listing plus its propertyAsset document), so the whole page
-            // answers in one round of requests.
-            var listings = await Task.WhenAll(
-                    openPositions.Select(position => GetListingAsync(ParseInt64(position.ListingId), token)))
-                .ConfigureAwait(false);
+            var properties = new List<XcavateSolanaInvestorProperty>(nodesToShow.Count);
 
-            var properties = new List<XcavateSolanaInvestorProperty>(openPositions.Count);
-
-            for (var i = 0; i < openPositions.Count; i++)
+            foreach (var node in nodesToShow)
             {
-                var position = openPositions[i];
-                var listing = listings[i];
+                // The listing (with its asset and metadata) arrives joined with the
+                // position - no second lookup.
+                var listing = MapListing(node.Listing, node.Listing.PropertyAsset);
 
-                if (listing is null)
-                {
-                    continue;
-                }
-
-                var boughtShares = ParseInt64(position.ShareAmount);
-                var reservedShares = ParseInt64(position.ReservedShareAmount);
+                var boughtShares = ParseInt64(node.ShareAmount);
+                var reservedShares = ParseInt64(node.ReservedShareAmount);
 
                 if (listing.OngoingObjectListingDetails is not null)
                 {

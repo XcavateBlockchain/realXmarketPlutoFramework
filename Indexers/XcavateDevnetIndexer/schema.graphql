@@ -251,6 +251,34 @@ type InvestorPositionConnection {
   totalCount: Int!
 }
 
+"One investor's reserved/purchased properties (position + full listing, ADR-34)."
+type InvestorProperty {
+  id: ID!
+  slot: I64!
+  lamports: I64!
+  active: Boolean!
+  closedAtSlot: I64
+  listingId: I64!
+  investor: String!
+  paymentMint: String!
+  paymentAccount: String!
+  shareAmount: I64!
+  reservedShareAmount: I64!
+  paidFunds: I64!
+  paidTax: I64!
+  paidFee: I64!
+  reservedFunds: I64!
+  reservedTax: I64!
+  reservedFee: I64!
+  cancelled: Boolean!
+  listing: Listing!
+}
+
+type InvestorPropertyConnection {
+  nodes: [InvestorProperty!]!
+  totalCount: Int!
+}
+
 "A lawyer registered with the marketplace (the registry PDA keyed by the lawyer's wallet)."
 type Lawyer {
   id: ID!
@@ -751,6 +779,17 @@ type QueryRoot {
     first: Int
     offset: Int
   ): InvestorPositionConnection!
+  "One investor's reserved/purchased properties (position + full listing, ADR-34)."
+  investorProperties(
+    investor: String!
+    owned: Boolean
+    reserved: Boolean
+    name: String
+    townCity: String
+    propertyType: String
+    first: Int
+    offset: Int
+  ): InvestorPropertyConnection!
   "The marketplace's lawyer registry."
   lawyers(lawyer: String, active: Boolean, first: Int, offset: Int): LawyerConnection!
   "SPV-lawyer election candidacies."
