@@ -92,7 +92,41 @@
                         </Label>
                     </AbsoluteLayout>
 
-                        <Label Text="{Binding ErrorMessage}"
+                    <AbsoluteLayout Margin="10, 0, 10, -10"
+                                     IsVisible="{Binding TgBpBalanceRowIsVisible}">
+                        <Label Text="Your tGBP balance:"
+                               AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
+                        <Label Text="{Binding TgBpBalanceText}"
+                               HorizontalTextAlignment="End"
+                               AbsoluteLayout.LayoutBounds="1,0,AutoSize, AutoSize"
+                               AbsoluteLayout.LayoutFlags="PositionProportional"/>
+                    </AbsoluteLayout>
+
+                    <AbsoluteLayout Margin="10, 0, 10, -10"
+                                     IsVisible="{Binding AlreadyReservedRowIsVisible}">
+                        <Label Text="Already reserved:"
+                               AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
+                        <Label Text="{Binding AlreadyReservedText}"
+                               HorizontalTextAlignment="End"
+                               AbsoluteLayout.LayoutBounds="1,0,AutoSize, AutoSize"
+                               AbsoluteLayout.LayoutFlags="PositionProportional"/>
+                    </AbsoluteLayout>
+
+                    <AbsoluteLayout Margin="10, 0, 10, -10"
+                                     IsVisible="{Binding TotalReservedRowIsVisible}">
+                        <Label Text="Reserved so far (all investors):"
+                               AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
+                        <Label Text="{Binding TotalReservedText}"
+                               HorizontalTextAlignment="End"
+                               AbsoluteLayout.LayoutBounds="1,0,AutoSize, AutoSize"
+                               AbsoluteLayout.LayoutFlags="PositionProportional"/>
+                    </AbsoluteLayout>
+
+                    <Label Text="{Binding BalanceWarningText}"
+                           IsVisible="{Binding BalanceWarningIsVisible}"
+                           TextColor="OrangeRed" />
+
+                    <Label Text="{Binding ErrorMessage}"
                            IsVisible="{Binding ErrorIsVisible}"
                            TextColor="Red" />
 
