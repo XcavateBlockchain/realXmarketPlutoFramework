@@ -9,14 +9,16 @@
     <card:ClickableCard Margin="0"
                         CardPadding="0,0,0,0">
         <card:ClickableCard.View>
-            <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 80"
-                        AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+            <AbsoluteLayout x:Name="cellLayout"
+                            AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 80"
+                            AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
                 <Image Source="xcavatexgray.png"
                        Opacity="0.2"
                        AbsoluteLayout.LayoutBounds="1, 1, 60, 60"
                        AbsoluteLayout.LayoutFlags="PositionProportional"
                        InputTransparent="True"/>
-                <StackLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 70"
+                <StackLayout x:Name="contentStack"
+                             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 70"
                     AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
                              Margin="10,0,10,0"
                        InputTransparent="True"
@@ -30,6 +32,14 @@
                                            Margin="10, 0, 0, 0"
                                            Spacing="0">
                     </HorizontalStackLayout>
+
+                    <Label x:Name="secondaryValueLabel"
+                           HeightRequest="18"
+                           Margin="10, 2, 0, 0"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="#A6A6A6"
+                           IsVisible="False" />
                 </StackLayout>
 
 

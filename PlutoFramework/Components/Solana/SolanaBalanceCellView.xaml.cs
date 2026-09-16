@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Solana.Status;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
+using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Solana;
 
 namespace PlutoFramework.Components.Solana;
@@ -95,6 +96,7 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
             // A dash, not a formatted zero: "you have no account" and "you have no money"
             // are different statements.
             cell.Value = "-";
+            cell.SecondaryValue = string.Empty;
             return;
         }
 
@@ -110,6 +112,8 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
             loadToken.ThrowIfCancellationRequested();
 
             cell.Value = SolanaBalanceAssembler.TotalUsd(rows).ToUsdCurrencyString();
+
+            await LoadTotalAssetValueAsync(address, loadToken);
         }
         catch (OperationCanceledException)
         {
@@ -121,6 +125,32 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
             Console.WriteLine($"Solana balance cell failed to load: {ex.Message}");
 
             cell.Value = "-";
+            cell.SecondaryValue = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// The value of every property the investor has bought or reserved shares in, shown as
+    /// a second line under the wallet total. Best-effort: a failed indexer query hides the
+    /// figure rather than asserting one, so a down marketplace never paints the investor
+    /// with zero assets.
+    /// </summary>
+    private async Task LoadTotalAssetValueAsync(string address, CancellationToken token)
+    {
+        try
+        {
+            var total = await XcavateReserveBalanceModel.GetTotalAssetValueAsync(address, token);
+
+            token.ThrowIfCancellationRequested();
+
+            cell.SecondaryValue = total > 0m ? $"All assets: {total.ToCurrencyString()}" : string.Empty;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch
+        {
+            cell.SecondaryValue = string.Empty;
         }
     }
 }

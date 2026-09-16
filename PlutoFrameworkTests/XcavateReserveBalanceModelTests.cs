@@ -174,6 +174,54 @@ namespace PlutoFrameworkTests
             Assert.That(XcavateReserveBalanceModel.ComputeReservedValue([]), Is.EqualTo(0m));
 
         [Test]
+        public void ComputeTotalAssetValue_SumsBoughtPlusReservedSharesTimesPricePerListing()
+        {
+            var positions = new[]
+            {
+                Position(2, 3, 100m),  // committed 5 × 100 = 500
+                Position(0, 4, 50m),   // committed 4 × 50  = 200
+            };
+
+            Assert.That(XcavateReserveBalanceModel.ComputeTotalAssetValue(positions), Is.EqualTo(700m));
+        }
+
+        [Test]
+        public void ComputeTotalAssetValue_CountsReservedSharesEvenWhenNothingIsBought()
+        {
+            var position = Position(0, 3, 20m);
+
+            Assert.That(XcavateReserveBalanceModel.ComputeTotalAssetValue([position]), Is.EqualTo(60m));
+        }
+
+        /// <summary>
+        /// Unlike <see cref="XcavateReserveBalanceModel.ComputeReservedValue"/>, bought
+        /// shares count here too: they are paid-for assets the investor still holds.
+        /// </summary>
+        [Test]
+        public void ComputeTotalAssetValue_CountsBoughtSharesAsAssets()
+        {
+            var position = Position(11, 0, 100m);
+
+            Assert.That(XcavateReserveBalanceModel.ComputeTotalAssetValue([position]), Is.EqualTo(1100m));
+        }
+
+        [Test]
+        public void ComputeTotalAssetValue_TreatsMissingMetadataAsZeroPrice()
+        {
+            var positions = new[]
+            {
+                Position(1, 3, null),   // no metadata: contributes nothing
+                Position(2, 2, 10m),    // committed 4 × 10 = 40
+            };
+
+            Assert.That(XcavateReserveBalanceModel.ComputeTotalAssetValue(positions), Is.EqualTo(40m));
+        }
+
+        [Test]
+        public void ComputeTotalAssetValue_IsZeroForAnEmptyPortfolio() =>
+            Assert.That(XcavateReserveBalanceModel.ComputeTotalAssetValue([]), Is.EqualTo(0m));
+
+        [Test]
         public void FindTgBpEntry_IsNullWhenTgBpIsNotConfigured()
         {
             PlutoConfigurationModel.WhitelistedSolanaTokens =

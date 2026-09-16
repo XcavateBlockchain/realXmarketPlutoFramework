@@ -43,6 +43,16 @@ public partial class XcavateCell : ContentView
             });
         });
 
+    public static readonly BindableProperty SecondaryValueProperty = BindableProperty.Create(
+        nameof(SecondaryValue), typeof(string), typeof(XcavateCell),
+        defaultValue: string.Empty,
+        propertyChanged: (bindable, oldValue, newValue) =>
+        {
+            var control = (XcavateCell)bindable;
+            var newValueStr = (string?)newValue ?? string.Empty;
+
+            MainThread.BeginInvokeOnMainThread(() => control.ApplySecondaryValue(newValueStr));
+        });
 
     public static readonly BindableProperty CommandProperty = BindableProperty.Create(
         nameof(Command), typeof(IAsyncRelayCommand), typeof(XcavateCell),
@@ -96,6 +106,12 @@ public partial class XcavateCell : ContentView
     {
         get => (string)GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
+    }
+
+    public string SecondaryValue
+    {
+        get => (string)GetValue(SecondaryValueProperty);
+        set => SetValue(SecondaryValueProperty, value);
     }
 
     public IAsyncRelayCommand Command
@@ -206,6 +222,30 @@ public partial class XcavateCell : ContentView
         {
             valueContainer.Add(CreateStaticTextLabel(value));
         }
+    }
+
+    /// <summary>
+    /// Shows or hides the optional second line under the value and grows the cell to fit
+    /// it - 92 outer and 84 inner bounds, back to the XAML's 80/70 when cleared.
+    /// </summary>
+    private void ApplySecondaryValue(string value)
+    {
+        if (secondaryValueLabel is null || contentStack is null || cellLayout is null)
+        {
+            return;
+        }
+
+        var hasSecondary = !string.IsNullOrEmpty(value);
+
+        secondaryValueLabel.Text = value;
+        secondaryValueLabel.IsVisible = hasSecondary;
+
+        var outerHeight = hasSecondary ? 92 : 80;
+        var innerHeight = hasSecondary ? 84 : 70;
+
+        HeightRequest = outerHeight;
+        AbsoluteLayout.SetLayoutBounds(cellLayout, new Rect(0.5, 0.5, 1, outerHeight));
+        AbsoluteLayout.SetLayoutBounds(contentStack, new Rect(0.5, 0.5, 1, innerHeight));
     }
 
     private async Task ApplyRollingTickerAnimation(string? oldValue, string newValue)

@@ -88,6 +88,30 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// The value of every share the investor has committed to, at each listing's price per
+        /// token: bought shares (already paid for) plus reserved shares (still bound in the
+        /// wallet until claim). Reserved properties count - before a claim moves the money,
+        /// the reserved shares are the investor's assets in that property.
+        /// </summary>
+        public static decimal ComputeTotalAssetValue(IReadOnlyList<XcavateSolanaInvestorProperty> positions) =>
+            positions.Sum(position => (decimal)position.CommittedShares
+                * (position.Listing.XcavateMetadata?.Financials.PricePerToken ?? 0));
+
+        /// <summary>
+        /// The wallet-wide value of every property the investor has bought or reserved shares
+        /// in, in display units. Same query and page cap as <see cref="GetReservedTgBpValueAsync"/>:
+        /// no filters, so both reserved and purchased positions are in the total.
+        /// </summary>
+        public static async Task<decimal> GetTotalAssetValueAsync(string address, CancellationToken token)
+        {
+            var positions = await XcavateMarketplaceIndexerModel
+                .GetInvestorPropertiesAsync(address, null, null, null, null, null, 100, 0, token)
+                .ConfigureAwait(false);
+
+            return ComputeTotalAssetValue(positions);
+        }
+
+        /// <summary>
         /// The total cost of reserving <paramref name="shares"/>: the funds plus the 1%
         /// investor-side fee - the same figure the popup prints as its total price.
         /// </summary>
