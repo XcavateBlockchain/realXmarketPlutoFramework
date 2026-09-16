@@ -278,6 +278,102 @@ namespace PlutoFramework.Components.XcavateProperty
             ? solanaListing.ListingId
             : ListingDetails?.ItemId.Value ?? 0;
 
+        private bool marketplaceTransactionsSubscribed;
+
+        /// <summary>
+        /// Listens for marketplace transaction confirmations while the page is on screen.
+        /// Called from <c>PropertyDetailPage.OnAppearing</c>; the page's
+        /// <c>OnDisappearing</c> calls <see cref="UnsubscribeFromMarketplaceTransactions"/>
+        /// so the static event never keeps a popped page's view model alive.
+        /// </summary>
+        public void SubscribeToMarketplaceTransactions()
+        {
+            if (marketplaceTransactionsSubscribed)
+            {
+                return;
+            }
+
+            marketplaceTransactionsSubscribed = true;
+
+            XcavateMarketplaceTransactionModel.TransactionConfirmed += OnMarketplaceTransactionConfirmed;
+        }
+
+        public void UnsubscribeFromMarketplaceTransactions()
+        {
+            if (!marketplaceTransactionsSubscribed)
+            {
+                return;
+            }
+
+            marketplaceTransactionsSubscribed = false;
+
+            XcavateMarketplaceTransactionModel.TransactionConfirmed -= OnMarketplaceTransactionConfirmed;
+        }
+
+        /// <summary>
+        /// A confirmed marketplace transaction (a reserve, buy or claim) changed this
+        /// listing's on-chain state, so the figures on screen - shares still available,
+        /// this wallet's reserved shares, the action button - are the pre-transaction
+        /// ones and must be re-read.
+        /// </summary>
+        private void OnMarketplaceTransactionConfirmed(object? sender, EventArgs e) =>
+            MainThread.BeginInvokeOnMainThread(() => _ = RefreshListingAsync(CancellationToken.None));
+
+        /// <summary>
+        /// Re-reads this listing from the Xcavate indexer and re-applies it to the page.
+        /// Mirrors what <c>NavigateToPropertyDetailPageAsync</c> does on first load - the
+        /// wrapper is rebuilt with the same code path, so expiry and countdown states are
+        /// recomputed from the fresh data instead of patched onto the stale wrapper. A
+        /// failed re-read keeps whatever the page already shows: stale beats an empty page.
+        /// </summary>
+        public async Task RefreshListingAsync(CancellationToken token)
+        {
+            if (NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                // Substrate-sourced listings have no Solana indexer to re-read.
+                return;
+            }
+
+            try
+            {
+                var solanaAddress = KeysModel.GetSolanaAddress();
+
+                var freshListing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
+                        solanaListing.ListingId, solanaAddress, token)
+                    .ConfigureAwait(false);
+
+                if (freshListing is null)
+                {
+                    return;
+                }
+
+                var freshWrapper = await XcavatePropertyModel.ToXcavateNftWrapperAsync(freshListing, token)
+                    .ConfigureAwait(false);
+
+                token.ThrowIfCancellationRequested();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    NftWrapper = freshWrapper;
+                    Metadata = ((INftXcavateMetadata)freshListing).XcavateMetadata;
+                    ListingDetails = ((INftXcavateOngoingObjectListing)freshListing).OngoingObjectListingDetails;
+                    TokensBought = freshWrapper.TokensBought;
+                    TokensOwned = freshWrapper.TokensOwned;
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // The page went away mid-query.
+            }
+            catch (Exception ex)
+            {
+                // Keep the current data - the same tolerance the first load applies when
+                // the indexer cannot be reached.
+                Console.WriteLine("Failed to refresh the Solana listing: ");
+                Console.WriteLine(ex);
+            }
+        }
+
         [RelayCommand]
         public Task MainActionAsync()
         {

@@ -38,11 +38,19 @@ namespace PlutoFramework.Components.Solana.Status
         /// </remarks>
         public static event EventHandler? TransactionConfirmed;
 
+        /// <param name="onConfirmed">
+        /// Optional per-transaction callback, receiving the signature, raised on the main
+        /// thread the first time the transaction reaches a confirmed-success state - for
+        /// callers that need to react to one specific transaction (e.g. a marketplace
+        /// reserve refreshing the pages that show its listing) rather than to every
+        /// confirmation the <see cref="TransactionConfirmed"/> event reports.
+        /// </param>
         public static async Task TrackAsync(
             string signature,
             SolanaCluster cluster,
             SolanaTransactionInfo info,
-            CancellationToken token)
+            CancellationToken token,
+            Action<string>? onConfirmed = null)
         {
             var startedAt = DateTimeOffset.UtcNow;
             var announcedConfirmation = false;
@@ -107,8 +115,11 @@ namespace PlutoFramework.Components.Solana.Status
                 {
                     announcedConfirmation = true;
 
-                    MainThread.BeginInvokeOnMainThread(
-                        () => TransactionConfirmed?.Invoke(null, EventArgs.Empty));
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        TransactionConfirmed?.Invoke(null, EventArgs.Empty);
+                        onConfirmed?.Invoke(signature);
+                    });
                 }
 
                 if (status is SolanaTransactionStatus.FinalizedSuccess

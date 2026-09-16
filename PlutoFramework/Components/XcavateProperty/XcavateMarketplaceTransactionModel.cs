@@ -24,6 +24,22 @@ namespace PlutoFramework.Components.XcavateProperty
     public static class XcavateMarketplaceTransactionModel
     {
         /// <summary>
+        /// Raised on the main thread the first time a transaction submitted through
+        /// <see cref="SubmitAsync"/> reaches a confirmed-success state. Scoped to the
+        /// marketplace program's transactions - unlike
+        /// <see cref="SolanaTransactionTracker.TransactionConfirmed"/>, which also fires
+        /// for plain transfers - so the property pages re-read only when their data can
+        /// actually have changed on-chain.
+        /// </summary>
+        /// <remarks>
+        /// Static, so every subscriber must unsubscribe or it keeps their view model alive
+        /// - the same trap <c>SolanaNetworkModel.ClusterChanged</c> documents. The two
+        /// session-wide singleton list view models (investor main page, marketplace) never
+        /// unsubscribe because nothing ever disposes them anyway.
+        /// </remarks>
+        public static event EventHandler? TransactionConfirmed;
+
+        /// <summary>
         /// Builds and submits one marketplace transaction.
         /// <paramref name="buildInstructionsAsync"/> receives the signing wallet's
         /// address - the investor/confirmer the program instructions are keyed by.
@@ -112,7 +128,13 @@ namespace PlutoFramework.Components.XcavateProperty
                 info.Signature = signature;
                 info.Status = SolanaTransactionStatus.Pending;
 
-                _ = SolanaTransactionTracker.TrackAsync(signature, cluster, info, CancellationToken.None);
+                // The per-transaction callback raises the marketplace-scoped event: a
+                // reserve, buy or claim that lands changes every listing figure on screen,
+                // while a plain transfer (which only the tracker's own event reports) must
+                // not cost the property pages a re-query.
+                _ = SolanaTransactionTracker.TrackAsync(
+                    signature, cluster, info, CancellationToken.None,
+                    onConfirmed: _ => TransactionConfirmed?.Invoke(null, EventArgs.Empty));
             }
             catch (Exception ex)
             {

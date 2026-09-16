@@ -5,6 +5,7 @@ using PlutoFramework.Components.AddressView;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Constants;
 using PlutoFramework.Model.Currency;
+using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Solana;
 using SkiaSharp;
 
@@ -32,6 +33,14 @@ namespace PlutoFramework.Components.Solana
         /// the newly selected button.
         /// </summary>
         private CancellationTokenSource? loadCts;
+
+        /// <summary>
+        /// A separate cancellation chain from <see cref="loadCts"/>: a stablecoin's
+        /// <see cref="LoadAsync"/> returns immediately without replacing the token, and the
+        /// reserved figure still needs to load on that page - sharing the chain would let a
+        /// stablecoin's early exit cancel the reserved fetch that was still in flight.
+        /// </summary>
+        private CancellationTokenSource? reservedCts;
 
         private readonly SolanaTokenBalance balance;
 
@@ -86,6 +95,18 @@ namespace PlutoFramework.Components.Solana
         /// </summary>
         [ObservableProperty]
         private bool historyIsUnavailable = false;
+
+        /// <summary>
+        /// The tGBP amount reserved against the user's property reservations. Only the
+        /// tGBP page shows it, and only once the value has actually loaded - it is hidden
+        /// rather than shown as zero, so a failed indexer query can never read as "you
+        /// have reserved nothing".
+        /// </summary>
+        [ObservableProperty]
+        private string tgBpReservedText = string.Empty;
+
+        [ObservableProperty]
+        private bool tgBpReservedIsVisible = false;
 
         /// <summary>
         /// Drives the chart itself. Keyed off the points rather than
@@ -239,6 +260,68 @@ namespace PlutoFramework.Components.Solana
             SolanaNetworkModel.ClusterChanged -= OnClusterChanged;
 
             loadCts?.Cancel();
+
+            reservedCts?.Cancel();
+            reservedCts?.Dispose();
+            reservedCts = null;
+        }
+
+        /// <summary>
+        /// Loads the tGBP amount reserved against property reservations. Only a tGBP page
+        /// on the cluster whose whitelist carries that mint can show it - the mint differs
+        /// per cluster, so a page opened before a cluster switch may now point at a mint
+        /// that no longer matches. Best effort: the figure is an indexer query, not a
+        /// wallet read, so it is hidden on failure rather than shown as zero.
+        /// </summary>
+        public async Task LoadReservedAsync()
+        {
+            var entry = XcavateReserveBalanceModel.FindTgBpEntry(SolanaNetworkModel.SelectedCluster);
+
+            if (entry is null || !string.Equals(Mint, entry.Mint, StringComparison.Ordinal))
+            {
+                TgBpReservedIsVisible = false;
+
+                return;
+            }
+
+            var address = KeysModel.GetSolanaAddress();
+
+            if (string.IsNullOrEmpty(address))
+            {
+                TgBpReservedIsVisible = false;
+
+                return;
+            }
+
+            var previousCts = reservedCts;
+            var newCts = new CancellationTokenSource();
+
+            reservedCts = newCts;
+
+            previousCts?.Cancel();
+            previousCts?.Dispose();
+
+            var token = newCts.Token;
+
+            try
+            {
+                var reserved = await XcavateReserveBalanceModel.GetReservedTgBpValueAsync(address, token);
+
+                token.ThrowIfCancellationRequested();
+
+                TgBpReservedText = $"{XcavateReserveBalanceModel.Format(reserved)} tGBP";
+                TgBpReservedIsVisible = reserved > 0m;
+            }
+            catch (OperationCanceledException)
+            {
+                // Superseded load or a navigated-away page owns nothing anymore.
+            }
+            catch
+            {
+                // Best effort, as above: hide the row rather than assert a value we could
+                // not verify.
+                TgBpReservedIsVisible = false;
+            }
         }
 
         /// <summary>

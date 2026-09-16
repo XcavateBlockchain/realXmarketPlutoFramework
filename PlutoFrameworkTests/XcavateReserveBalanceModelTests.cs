@@ -1,6 +1,7 @@
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore;
 using PlutoFrameworkCore.Solana;
+using UniqueryPlus.Metadata;
 
 namespace PlutoFrameworkTests
 {
@@ -89,6 +90,76 @@ namespace PlutoFrameworkTests
 
             Assert.That(XcavateReserveBalanceModel.FindTgBpEntry(SolanaCluster.Devnet), Is.Not.Null);
         }
+
+        /// <summary>
+        /// Builds a position the way the indexer does, with only the record's required
+        /// properties set. A null price simulates a listing whose offchain metadata has not
+        /// been attached yet: it contributes nothing rather than throwing.
+        /// </summary>
+        private static XcavateSolanaInvestorProperty Position(uint bought, uint reserved, decimal? pricePerToken)
+        {
+            XcavateSolanaListingNft listing = new()
+            {
+                Owner = "owner",
+                ListingId = 1,
+                AssetId = 1,
+                ListingExpiryTimestamp = 0,
+                ClaimDeadlineTimestamp = 0,
+                ListingStatus = "Listed",
+                OpenForSale = true,
+                IsTornDown = false,
+                XcavateMetadata = pricePerToken is null
+                    ? null
+                    : new PropertyMetadata
+                    {
+                        Financials = new PropertyFinancials { PricePerToken = pricePerToken.Value },
+                        Address = new PropertyAddress(),
+                    },
+            };
+
+            return new XcavateSolanaInvestorProperty
+            {
+                Listing = listing,
+                BoughtShares = bought,
+                ReservedShares = reserved,
+            };
+        }
+
+        [Test]
+        public void ComputeReservedValue_SumsCommittedSharesTimesPricePerListing()
+        {
+            var positions = new[]
+            {
+                Position(2, 3, 100m),  // committed 5 × 100 = 500
+                Position(0, 4, 50m),   // committed 4 × 50  = 200
+            };
+
+            Assert.That(XcavateReserveBalanceModel.ComputeReservedValue(positions), Is.EqualTo(700m));
+        }
+
+        [Test]
+        public void ComputeReservedValue_CountsReservedSharesEvenWhenNothingIsBought()
+        {
+            var position = Position(0, 3, 20m);
+
+            Assert.That(XcavateReserveBalanceModel.ComputeReservedValue([position]), Is.EqualTo(60m));
+        }
+
+        [Test]
+        public void ComputeReservedValue_TreatsMissingMetadataAsZeroPrice()
+        {
+            var positions = new[]
+            {
+                Position(1, 1, null),
+                Position(2, 0, 10m),
+            };
+
+            Assert.That(XcavateReserveBalanceModel.ComputeReservedValue(positions), Is.EqualTo(20m));
+        }
+
+        [Test]
+        public void ComputeReservedValue_IsZeroForAnEmptyPortfolio() =>
+            Assert.That(XcavateReserveBalanceModel.ComputeReservedValue([]), Is.EqualTo(0m));
 
         [Test]
         public void FindTgBpEntry_IsNullWhenTgBpIsNotConfigured()

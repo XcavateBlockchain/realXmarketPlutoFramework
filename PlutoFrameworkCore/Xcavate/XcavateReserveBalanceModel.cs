@@ -56,6 +56,37 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// The tGBP value bound by every position in <paramref name="positions"/>:
+        /// committed shares (bought plus reserved) at each listing's price per token, summed.
+        /// The 1% reservation fee is excluded - it was charged when the reservation was made
+        /// and no longer sits in the wallet.
+        /// </summary>
+        /// <remarks>
+        /// Pure on purpose: the balances and detail pages call it with the indexer's result,
+        /// and the unit tests call it with hand-built positions.
+        /// </remarks>
+        public static decimal ComputeReservedValue(IReadOnlyList<XcavateSolanaInvestorProperty> positions) =>
+            positions.Sum(position => (decimal)position.CommittedShares
+                * (position.Listing.XcavateMetadata?.Financials.PricePerToken ?? 0));
+
+        /// <summary>
+        /// The wallet-wide tGBP value <paramref name="address"/> has bound through reservations,
+        /// in display units. The Xcavate devnet marketplace is the only cluster the reservation
+        /// flow knows, so the cluster is not a parameter.
+        /// </summary>
+        public static async Task<decimal> GetReservedTgBpValueAsync(string address, CancellationToken token)
+        {
+            // 100 positions per page matches the Substrate-owned-properties limit; an investor
+            // holding more listings than that on the devnet marketplace is beyond what the
+            // app's other pages list either, so the cap is an accepted, known limitation.
+            var positions = await XcavateMarketplaceIndexerModel
+                .GetInvestorPropertiesAsync(address, null, null, null, null, null, 100, 0, token)
+                .ConfigureAwait(false);
+
+            return ComputeReservedValue(positions);
+        }
+
+        /// <summary>
         /// The total cost of reserving <paramref name="shares"/>: the funds plus the 1%
         /// investor-side fee - the same figure the popup prints as its total price.
         /// </summary>

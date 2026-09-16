@@ -23,6 +23,10 @@ public partial class SolanaTokenDetailPage : PageTemplate
         // A stablecoin's LoadAsync returns immediately - its page is built entirely from the
         // row it was constructed with.
         _ = viewModel.LoadAsync(CancellationToken.None);
+
+        // The reserved tGBP figure is an indexer query, not part of the row, so it loads on
+        // its own path - it is worth showing even on a stablecoin where LoadAsync bails early.
+        _ = viewModel.LoadReservedAsync();
     }
 
     protected override void OnDisappearing()

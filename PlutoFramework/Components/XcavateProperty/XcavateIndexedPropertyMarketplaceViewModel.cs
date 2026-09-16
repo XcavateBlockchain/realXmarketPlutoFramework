@@ -89,7 +89,27 @@ namespace PlutoFramework.Components.XcavateProperty
                     OnPropertyChanged(nameof(NoItems));
                     OnPropertyChanged(nameof(AnyItems));
                 });
+
+            // A confirmed marketplace transaction (a reserve took shares off the market)
+            // changes the feed, so it must be re-read. This view model is a session-wide
+            // singleton - like SolanaBalanceCellView it has no disposal hook, so it never
+            // unsubscribes: the static event can only keep a singleton alive.
+            XcavateMarketplaceTransactionModel.TransactionConfirmed += OnMarketplaceTransactionConfirmed;
         }
+
+        /// <summary>
+        /// Runs on the main thread - the event already is - and fire-and-forget: the
+        /// re-fetch is pure async I/O, so nothing blocks the UI while it runs.
+        /// </summary>
+        private void OnMarketplaceTransactionConfirmed(object? sender, EventArgs e) =>
+            MainThread.BeginInvokeOnMainThread(() => _ = RefreshInBackgroundAsync());
+
+        /// <summary>
+        /// Re-fetches the feed without the pull-to-refresh indicator, so a confirmed
+        /// marketplace transaction updates the list quietly instead of spinning the header
+        /// on a refresh the user did not ask for.
+        /// </summary>
+        public Task RefreshInBackgroundAsync() => RefreshInternalAsync(showRefreshIndicator: false);
 
         public override async Task LoadMoreAsync(CancellationToken token)
         {

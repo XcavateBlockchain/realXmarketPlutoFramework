@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Solana.Status;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
+using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Solana;
 using System.Collections.ObjectModel;
 
@@ -40,6 +41,14 @@ namespace PlutoFramework.Components.Solana
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ErrorIsVisible))]
         private string errorMessage = string.Empty;
+
+        // Field names start tgBp (not tGbp) on purpose: the Mvvm source generator
+        // Pascal-cases only the first letter, so tGbpX would surface as TGbpX.
+        [ObservableProperty]
+        private string tgBpReservedText = string.Empty;
+
+        [ObservableProperty]
+        private bool tgBpReservedIsVisible = false;
 
         public bool HasAccount => !string.IsNullOrEmpty(Address);
 
@@ -121,6 +130,7 @@ namespace PlutoFramework.Components.Solana
             {
                 Balances.Clear();
                 UsdSum = "-";
+                TgBpReservedIsVisible = false;
 
                 // RefreshView.IsRefreshing is two-way bound, so a pull sets it true before the
                 // command runs. Returning without clearing it would leave the spinner turning
@@ -155,6 +165,39 @@ namespace PlutoFramework.Components.Solana
                 }
 
                 UsdSum = SolanaBalanceAssembler.TotalUsd(rows).ToUsdCurrencyString();
+
+                // Best effort: the reserved figure is an Xcavate indexer query, not part of the
+                // wallet read, so its failure must not turn a loaded balance page into an error.
+                // It is hidden rather than shown as zero - a zero could be true or a failure,
+                // and only the nonzero figure carries meaning on this page.
+                var tGbpEntry = XcavateReserveBalanceModel.FindTgBpEntry(SolanaNetworkModel.SelectedCluster);
+                var holdsTgBp = rows.Any(row =>
+                    string.Equals(row.Symbol, XcavateReserveBalanceModel.TgBpSymbol, StringComparison.OrdinalIgnoreCase));
+
+                if (tGbpEntry is not null && holdsTgBp)
+                {
+                    try
+                    {
+                        var reserved = await XcavateReserveBalanceModel.GetReservedTgBpValueAsync(Address, loadToken);
+
+                        loadToken.ThrowIfCancellationRequested();
+
+                        TgBpReservedText = $"{XcavateReserveBalanceModel.Format(reserved)} tGBP reserved";
+                        TgBpReservedIsVisible = reserved > 0m;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Superseded load or a navigated-away page owns nothing anymore.
+                    }
+                    catch
+                    {
+                        TgBpReservedIsVisible = false;
+                    }
+                }
+                else
+                {
+                    TgBpReservedIsVisible = false;
+                }
             }
             catch (OperationCanceledException)
             {
@@ -167,11 +210,13 @@ namespace PlutoFramework.Components.Solana
                 // claim a balance we never actually read.
                 ErrorMessage = ex.Message;
                 UsdSum = "-";
+                TgBpReservedIsVisible = false;
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Could not load balances: {ex.Message}";
                 UsdSum = "-";
+                TgBpReservedIsVisible = false;
             }
             finally
             {

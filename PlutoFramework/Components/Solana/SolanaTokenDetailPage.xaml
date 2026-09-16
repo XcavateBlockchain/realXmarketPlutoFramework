@@ -219,6 +219,19 @@
                                        FontAttributes="Bold"
                                        FontSize="14" />
                             </Grid>
+
+                            <!-- tGBP only: the amount reserved for Xcavate property listings. -->
+                            <Grid ColumnDefinitions="*,Auto"
+                                  IsVisible="{Binding TgBpReservedIsVisible}">
+                                <Label Grid.Column="0"
+                                       Text="Reserved"
+                                       FontSize="14"
+                                       TextColor="#A6A6A6" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding TgBpReservedText}"
+                                       FontAttributes="Bold"
+                                       FontSize="14" />
+                            </Grid>
                         </VerticalStackLayout>
                     </card:Card.View>
                 </card:Card>

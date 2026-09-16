@@ -48,6 +48,14 @@
                     </Label.FormattedText>
                 </Label>
 
+                <!-- tGBP locked in Xcavate property reservations. The balance above still
+                     includes it, but it is not spendable - transfers are capped to match. -->
+                <Label Text="{Binding TgBpReservedText}"
+                       IsVisible="{Binding TgBpReservedIsVisible}"
+                       FontSize="13"
+                       TextColor="#B8860B"
+                       Margin="20, 0, 20, 0" />
+
                 <VerticalStackLayout Margin="20, 0, 20, 100"
                                      BindableLayout.ItemsSource="{Binding Balances}"
                                      IsVisible="{Binding HasAccount}"
