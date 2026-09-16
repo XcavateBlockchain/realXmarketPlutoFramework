@@ -35,18 +35,6 @@ namespace PlutoFramework.Components.Solana
         [ObservableProperty]
         private string usdSum = "-";
 
-        /// <summary>
-        /// The tGBP amount held by property reservations, shown under Assets only on the
-        /// clusters whose whitelist carries a tGBP mint and only once verified - hidden
-        /// rather than shown as zero so a failed indexer query never reads as "nothing
-        /// reserved". The tGBP row itself shows the net (balance minus reserved) figure.
-        /// </summary>
-        [ObservableProperty]
-        private string tgBpReservedText = string.Empty;
-
-        [ObservableProperty]
-        private bool tgBpReservedIsVisible = false;
-
         [ObservableProperty]
         private string networkName = SolanaNetworkModel.SelectedCluster.GetName();
 
@@ -202,9 +190,11 @@ namespace PlutoFramework.Components.Solana
 
         /// <summary>
         /// Replaces the tGBP row with the spendable figure (balance minus what property
-        /// reservations hold) and refreshes the USD total. Best effort: on a failed indexer
-        /// query the raw row is kept and the "Reserved" line stays hidden, since a figure we
-        /// could not verify must never read as a real balance.
+        /// reservations hold) and refreshes the USD total. The netted row is marked
+        /// <c>IsAmountNetted</c> so the detail page - which receives its row straight from
+        /// this list - does not subtract the reserved value a second time. Best effort: on
+        /// a failed indexer query the raw row is kept as is, since a figure we could not
+        /// verify must never be netted into the displayed balance.
         /// </summary>
         private async Task ApplyReservedNetting(CancellationToken token)
         {
@@ -230,8 +220,6 @@ namespace PlutoFramework.Components.Solana
 
                 if (reserved <= 0m)
                 {
-                    TgBpReservedIsVisible = false;
-
                     return;
                 }
 
@@ -254,13 +242,10 @@ namespace PlutoFramework.Components.Solana
                     var netUsd = row.UsdValue is double usd && row.Amount > 0m
                         ? (double)net * (usd / (double)row.Amount)
                         : row.UsdValue;
-                    Balances[rowIndex] = row with { Amount = net, UsdValue = netUsd };
+                    Balances[rowIndex] = row with { Amount = net, UsdValue = netUsd, IsAmountNetted = true };
 
                     UsdSum = SolanaBalanceAssembler.TotalUsd(Balances).ToUsdCurrencyString();
                 }
-
-                TgBpReservedText = $"{XcavateReserveBalanceModel.Format(reserved)} tGBP";
-                TgBpReservedIsVisible = true;
             }
             catch (OperationCanceledException)
             {
@@ -268,8 +253,7 @@ namespace PlutoFramework.Components.Solana
             }
             catch
             {
-                // Could not verify the reserved figure: keep the raw row, hide the line.
-                TgBpReservedIsVisible = false;
+                // Could not verify the reserved figure: keep the raw row as is.
             }
         }
     }

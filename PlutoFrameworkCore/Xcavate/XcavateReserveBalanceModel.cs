@@ -56,17 +56,18 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
-        /// The tGBP value bound by every position in <paramref name="positions"/>:
-        /// committed shares (bought plus reserved) at each listing's price per token, summed.
-        /// The 1% reservation fee is excluded - it was charged when the reservation was made
-        /// and no longer sits in the wallet.
+        /// The tGBP value still sitting in the wallet, bound by every position in
+        /// <paramref name="positions"/>: reserved-but-not-yet-bought shares at each listing's
+        /// price per token, summed. Bought shares are excluded - claim_shares already paid
+        /// for them, so that money has left the wallet. The 1% reservation fee is excluded
+        /// as well: it was charged when the reservation was made.
         /// </summary>
         /// <remarks>
         /// Pure on purpose: the balances and detail pages call it with the indexer's result,
         /// and the unit tests call it with hand-built positions.
         /// </remarks>
         public static decimal ComputeReservedValue(IReadOnlyList<XcavateSolanaInvestorProperty> positions) =>
-            positions.Sum(position => (decimal)position.CommittedShares
+            positions.Sum(position => (decimal)position.ReservedShares
                 * (position.Listing.XcavateMetadata?.Financials.PricePerToken ?? 0));
 
         /// <summary>

@@ -126,15 +126,15 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
-        public void ComputeReservedValue_SumsCommittedSharesTimesPricePerListing()
+        public void ComputeReservedValue_SumsReservedSharesTimesPricePerListing()
         {
             var positions = new[]
             {
-                Position(2, 3, 100m),  // committed 5 × 100 = 500
-                Position(0, 4, 50m),   // committed 4 × 50  = 200
+                Position(2, 3, 100m),  // reserved 3 × 100 = 300, bought 2 not counted
+                Position(0, 4, 50m),   // reserved 4 × 50  = 200
             };
 
-            Assert.That(XcavateReserveBalanceModel.ComputeReservedValue(positions), Is.EqualTo(700m));
+            Assert.That(XcavateReserveBalanceModel.ComputeReservedValue(positions), Is.EqualTo(500m));
         }
 
         [Test]
@@ -150,11 +150,23 @@ namespace PlutoFrameworkTests
         {
             var positions = new[]
             {
-                Position(1, 1, null),
-                Position(2, 0, 10m),
+                Position(1, 3, null),   // no metadata: contributes nothing
+                Position(2, 2, 10m),    // reserved 2 × 10 = 20, bought 2 not counted
             };
 
             Assert.That(XcavateReserveBalanceModel.ComputeReservedValue(positions), Is.EqualTo(20m));
+        }
+
+        /// <summary>
+        /// Bought shares are already paid for - the money has left the wallet - so they
+        /// hold no tGBP against the balance and must not be netted away from it.
+        /// </summary>
+        [Test]
+        public void ComputeReservedValue_IgnoresBoughtShares()
+        {
+            var position = Position(11, 0, 100m);
+
+            Assert.That(XcavateReserveBalanceModel.ComputeReservedValue([position]), Is.EqualTo(0m));
         }
 
         [Test]

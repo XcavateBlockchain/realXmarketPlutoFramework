@@ -48,21 +48,6 @@
                     </Label.FormattedText>
                 </Label>
 
-                <Label IsVisible="{Binding TgBpReservedIsVisible}"
-                       HorizontalOptions="Start"
-                       HorizontalTextAlignment="Start"
-                       FontSize="13"
-                       Margin="20, 0, 20, 0"
-                       TextColor="#B26A00">
-                    <Label.FormattedText>
-                        <FormattedString>
-                            <Span Text="Reserved on properties: "
-                                  FontAttributes="Bold"/>
-                            <Span Text="{Binding TgBpReservedText}"/>
-                        </FormattedString>
-                    </Label.FormattedText>
-                </Label>
-
                 <VerticalStackLayout Margin="20, 0, 20, 100"
                                      BindableLayout.ItemsSource="{Binding Balances}"
                                      IsVisible="{Binding HasAccount}"

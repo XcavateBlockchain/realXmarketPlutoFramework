@@ -313,10 +313,15 @@ namespace PlutoFramework.Components.Solana
                 TgBpReservedText = $"{XcavateReserveBalanceModel.Format(reserved)} tGBP";
                 TgBpReservedIsVisible = reserved > 0m;
 
-                // Only the tGBP page reaches here, so the big amount readout now shows the
+                // Only the tGBP page reaches here, so the big amount readout shows the
                 // spendable figure - balance minus what reservations hold - matching every
-                // other place the tGBP balance is displayed. Zero reserved leaves it unchanged.
-                AmountText = $"{SolanaAmount.ToDisplayString(Math.Max(balance.Amount - reserved, 0m), balance.Decimals)} {balance.Symbol}";
+                // other place the tGBP balance is displayed. Zero reserved leaves it
+                // unchanged. A row that arrived already netted (the balances page marks its
+                // netted tGBP row) must not be netted a second time.
+                var spendable = balance.IsAmountNetted
+                    ? balance.Amount
+                    : Math.Max(balance.Amount - reserved, 0m);
+                AmountText = $"{SolanaAmount.ToDisplayString(spendable, balance.Decimals)} {balance.Symbol}";
             }
             catch (OperationCanceledException)
             {

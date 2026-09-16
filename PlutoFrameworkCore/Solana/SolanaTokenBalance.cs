@@ -23,6 +23,14 @@ namespace PlutoFrameworkCore.Solana
 
         /// <summary>Null when no price is known. Not zero — those mean different things.</summary>
         public double? UsdValue { get; init; }
+
+        /// <summary>
+        /// True when <see cref="Amount"/> and <see cref="UsdValue"/> already have the
+        /// reserved tGBP value subtracted from them. Pages that net the reserved value
+        /// themselves - the token detail page does - must skip their own subtraction when
+        /// this is set, or the figure would be netted twice.
+        /// </summary>
+        public bool IsAmountNetted { get; init; }
     }
 
     /// <summary>
