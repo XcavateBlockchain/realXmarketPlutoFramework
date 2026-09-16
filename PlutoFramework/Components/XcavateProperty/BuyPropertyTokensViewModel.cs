@@ -106,6 +106,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(AlreadyReservedValue))]
         [NotifyPropertyChangedFor(nameof(AlreadyReservedText))]
         [NotifyPropertyChangedFor(nameof(AlreadyReservedRowIsVisible))]
+        [NotifyPropertyChangedFor(nameof(TgBpBalanceText))]
         private uint alreadyReservedShares;
 
         /// <summary>
@@ -134,8 +135,10 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public bool TgBpBalanceRowIsVisible => TgBpBalanceLoaded;
 
+        // Shows the spendable figure - balance minus what is already reserved on this
+        // listing - so the popup matches every other place the tGBP balance is displayed.
         public string TgBpBalanceText => TgBpBalanceLoaded
-            ? $"{XcavateReserveBalanceModel.Format(TgBpBalance)} tGBP"
+            ? $"{XcavateReserveBalanceModel.Format(Math.Max(TgBpBalance - AlreadyReservedValue, 0m))} tGBP"
             : "…";
 
         public bool BalanceWarningIsVisible => TgBpBalanceLoadFailed;

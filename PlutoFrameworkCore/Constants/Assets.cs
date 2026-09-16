@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 
 namespace PlutoFramework.Model.Constants
 {
@@ -19,7 +19,7 @@ namespace PlutoFramework.Model.Constants
         public static readonly ReadOnlyDictionary<string, string> AssetIcons = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()
         {
             { "usdc", "usdc.png" },
-            { "tusdc", "usdc.png" }
+            { "tusdc", "usdc.png" },
             { "usdt", "usdt.png" },
             { "tgbp", "tgbp.png" },
             { "dot", "polkadot.png" },

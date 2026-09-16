@@ -69,7 +69,8 @@ namespace PlutoFramework.Components.Solana
 
         public string DecimalsText { get; }
 
-        public string AmountText { get; }
+        [ObservableProperty]
+        private string amountText = string.Empty;
 
         public string UsdValueText { get; }
 
@@ -311,6 +312,11 @@ namespace PlutoFramework.Components.Solana
 
                 TgBpReservedText = $"{XcavateReserveBalanceModel.Format(reserved)} tGBP";
                 TgBpReservedIsVisible = reserved > 0m;
+
+                // Only the tGBP page reaches here, so the big amount readout now shows the
+                // spendable figure - balance minus what reservations hold - matching every
+                // other place the tGBP balance is displayed. Zero reserved leaves it unchanged.
+                AmountText = $"{SolanaAmount.ToDisplayString(Math.Max(balance.Amount - reserved, 0m), balance.Decimals)} {balance.Symbol}";
             }
             catch (OperationCanceledException)
             {

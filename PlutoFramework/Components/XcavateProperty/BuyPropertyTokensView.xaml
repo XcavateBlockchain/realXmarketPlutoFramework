@@ -94,7 +94,7 @@
 
                     <AbsoluteLayout Margin="10, 0, 10, -10"
                                      IsVisible="{Binding TgBpBalanceRowIsVisible}">
-                        <Label Text="Your tGBP balance:"
+                        <Label Text="Your available tGBP balance:"
                                AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
                         <Label Text="{Binding TgBpBalanceText}"
                                HorizontalTextAlignment="End"

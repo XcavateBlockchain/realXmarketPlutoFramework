@@ -6,6 +6,7 @@ using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.Solana.Status;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Solana;
+using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Solana;
 
 namespace PlutoFramework.Components.Solana.Transfer
@@ -40,6 +41,12 @@ namespace PlutoFramework.Components.Solana.Transfer
 
         /// <summary>Applied once, when the first poll produces rows to choose from.</summary>
         private string? preselectedMint;
+
+        // tGBP reserved against properties, in display units. Feeds Max, Validate and
+        // BalanceText. Fail-closed: while unverified, tGBP transfers are blocked.
+        private decimal tgBpReservedValue;
+
+        private bool tgBpReservedLoaded;
 
         public ObservableCollection<SolanaTransferBalance> Balances { get; } = [];
 
@@ -102,9 +109,33 @@ namespace PlutoFramework.Components.Solana.Transfer
 
         public string SymbolText => SelectedToken?.Symbol ?? "-";
 
-        public string BalanceText => SelectedToken is null
-            ? string.Empty
-            : $"Balance: {DisplayAmount(SelectedToken, SelectedToken.SpendableBaseUnits)} {SelectedToken.Symbol}";
+        public string BalanceText
+        {
+            get
+            {
+                if (SelectedToken is null)
+                {
+                    return string.Empty;
+                }
+
+                // tGBP is shown net of reserved, so the figure matches what a transfer can
+                // actually spend. Unverified reserved is not guessed at: the raw balance
+                // stays until it loads.
+                var shown = SelectedToken.SpendableBaseUnits;
+
+                if (IsTgBp(SelectedToken) && tgBpReservedLoaded)
+                {
+                    shown -= TgBpReservedBaseUnits(SelectedToken);
+
+                    if (shown < BigInteger.Zero)
+                    {
+                        shown = BigInteger.Zero;
+                    }
+                }
+
+                return $"Balance: {DisplayAmount(SelectedToken, shown)} {SelectedToken.Symbol}";
+            }
+        }
 
         /// <summary>
         /// Opens the popup, optionally on a chosen token and with the recipient filled in.
@@ -124,6 +155,10 @@ namespace PlutoFramework.Components.Solana.Transfer
             AmountError = string.Empty;
             LoadError = string.Empty;
             SelectedToken = null;
+
+            // A previous session's reserved value cannot vouch for this one's transfers.
+            tgBpReservedValue = 0m;
+            tgBpReservedLoaded = false;
 
             preselectedMint = preselectMint;
 
@@ -189,6 +224,23 @@ namespace PlutoFramework.Components.Solana.Transfer
 
             var sendable = SolanaFees.MaxSendable(
                 SelectedToken.SpendableBaseUnits, SelectedToken.IsNative);
+
+            if (IsTgBp(SelectedToken))
+            {
+                // Unverified reserved means an unknown deduction; Max stays inert rather
+                // than offering an amount that may include it.
+                if (!tgBpReservedLoaded)
+                {
+                    return;
+                }
+
+                sendable -= TgBpReservedBaseUnits(SelectedToken);
+
+                if (sendable < BigInteger.Zero)
+                {
+                    sendable = BigInteger.Zero;
+                }
+            }
 
             Amount = SolanaAmount
                 .FromBaseUnits(sendable.ToString(), SelectedToken.Decimals)
@@ -311,6 +363,33 @@ namespace PlutoFramework.Components.Solana.Transfer
                 if (baseUnits > SelectedToken.SpendableBaseUnits)
                 {
                     AmountError = "Insufficient balance";
+                }
+                else if (IsTgBp(SelectedToken) && !tgBpReservedLoaded)
+                {
+                    // Fail-closed: the reserved figure could not be verified, so the true
+                    // available amount is unknown and nothing may go out.
+                    AmountError = "Your reserved tGBP could not be verified yet - "
+                        + "transfers are blocked until it loads.";
+                }
+                else if (IsTgBp(SelectedToken))
+                {
+                    var available = SelectedToken.SpendableBaseUnits
+                        - TgBpReservedBaseUnits(SelectedToken);
+
+                    if (available < BigInteger.Zero)
+                    {
+                        available = BigInteger.Zero;
+                    }
+
+                    if (baseUnits > available)
+                    {
+                        AmountError = $"Only {DisplayAmount(SelectedToken, available)} "
+                            + $"{SelectedToken.Symbol} available";
+                    }
+                    else
+                    {
+                        amountOk = true;
+                    }
                 }
                 else if (SelectedToken.IsNative
                     && baseUnits + SolanaFees.LamportsPerSignature > SelectedToken.SpendableBaseUnits)
@@ -455,6 +534,9 @@ namespace PlutoFramework.Components.Solana.Transfer
                     Balances.Add(row);
                 }
 
+                // Refreshed alongside the balances; re-validates itself when done.
+                _ = RefreshTgBpReservedAsync(address, rows, token);
+
                 SelectedToken = ResolveSelection(rows);
 
                 // Consumed once: after the first poll the user's own choice must win.
@@ -474,5 +556,49 @@ namespace PlutoFramework.Components.Solana.Transfer
                 LoadError = ex.Message;
             }
         }
+
+        private async Task RefreshTgBpReservedAsync(
+            string address, IReadOnlyList<SolanaTransferBalance> rows, CancellationToken token)
+        {
+            var entry = XcavateReserveBalanceModel.FindTgBpEntry(SolanaNetworkModel.SelectedCluster);
+
+            if (entry is null
+                || !rows.Any(row => string.Equals(
+                    row.Symbol, XcavateReserveBalanceModel.TgBpSymbol, StringComparison.OrdinalIgnoreCase)))
+            {
+                tgBpReservedLoaded = false;
+                OnPropertyChanged(nameof(BalanceText));
+                return;
+            }
+
+            try
+            {
+                var reserved = await XcavateReserveBalanceModel.GetReservedTgBpValueAsync(address, token);
+                token.ThrowIfCancellationRequested();
+
+                tgBpReservedValue = reserved;
+                tgBpReservedLoaded = true;
+
+                OnPropertyChanged(nameof(BalanceText));
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch
+            {
+                // Keep the last verified value; transfers stay blocked until it loads.
+            }
+
+            Validate();
+        }
+
+        private static bool IsTgBp(SolanaTransferBalance token) =>
+            string.Equals(
+                token.Symbol, XcavateReserveBalanceModel.TgBpSymbol, StringComparison.OrdinalIgnoreCase);
+
+        private BigInteger TgBpReservedBaseUnits(SolanaTransferBalance token) =>
+            tgBpReservedLoaded
+                ? SolanaAmount.ToBaseUnits(tgBpReservedValue, token.Decimals)
+                : BigInteger.Zero;
     }
 }
