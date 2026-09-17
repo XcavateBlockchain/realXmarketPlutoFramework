@@ -96,7 +96,6 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
             // A dash, not a formatted zero: "you have no account" and "you have no money"
             // are different statements.
             cell.Value = "-";
-            cell.SecondaryValue = string.Empty;
             return;
         }
 
@@ -113,7 +112,7 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
 
             cell.Value = SolanaBalanceAssembler.TotalUsd(rows).ToUsdCurrencyString();
 
-            await LoadInvestorFiguresAsync(address, rows, loadToken);
+            await NetReservedValueAsync(address, rows, loadToken);
         }
         catch (OperationCanceledException)
         {
@@ -125,54 +124,47 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
             Console.WriteLine($"Solana balance cell failed to load: {ex.Message}");
 
             cell.Value = "-";
-            cell.SecondaryValue = string.Empty;
         }
     }
 
     /// <summary>
-    /// The two figures the investor's positions contribute, from one indexer query: the
-    /// reserved tGBP value netted out of the headline total - the same netting the balances
-    /// page applies to its own tGBP row - and the value of every property the investor has
-    /// bought or reserved shares in, shown as a second line under the wallet total.
-    /// Best-effort: a failed query keeps the raw total and hides the figures rather than
-    /// asserting ones, so a down marketplace never paints the investor with less money, or
-    /// zero assets, than the chain says.
+    /// Nets the reserved tGBP value out of the headline total - the same netting the balances
+    /// page applies to its own tGBP row, through the same
+    /// <see cref="XcavateReserveBalanceModel.NetReservedValue"/>. Best effort: a failed
+    /// indexer query keeps the raw total, since a figure we could not verify must never be
+    /// netted into the displayed balance.
     /// </summary>
-    private async Task LoadInvestorFiguresAsync(
+    private async Task NetReservedValueAsync(
         string address, IReadOnlyList<SolanaTokenBalance> rows, CancellationToken token)
     {
+        // Same guard as SolanaBalancesPageViewModel.ApplyReservedNetting: on a cluster whose
+        // whitelist does not carry tGBP there is nothing to net, and no query to issue.
+        if (XcavateReserveBalanceModel.FindTgBpEntry(SolanaNetworkModel.SelectedCluster) is null)
+        {
+            return;
+        }
+
         try
         {
-            // One query feeds both figures: the reserved value and the total asset value
-            // price the same positions two ways, so the page's own
-            // GetReservedTgBpValueAsync and GetTotalAssetValueAsync pair would hit the
-            // indexer twice for the same result. 100 positions per page matches their page
-            // cap; an investor holding more listings than that is beyond what the app's
-            // other pages list either.
-            var positions = await XcavateMarketplaceIndexerModel.GetInvestorPropertiesAsync(
-                    address, null, null, null, null, null, 100, 0, token)
-                .ConfigureAwait(false);
+            var reserved = await XcavateReserveBalanceModel.GetReservedTgBpValueAsync(address, token);
 
             token.ThrowIfCancellationRequested();
 
             var netted = XcavateReserveBalanceModel.NetReservedValue(
-                rows, SolanaNetworkModel.SelectedCluster, XcavateReserveBalanceModel.ComputeReservedValue(positions));
+                rows, SolanaNetworkModel.SelectedCluster, reserved);
 
             if (netted is not null)
             {
                 cell.Value = SolanaBalanceAssembler.TotalUsd(netted).ToUsdCurrencyString();
             }
-
-            var total = XcavateReserveBalanceModel.ComputeTotalAssetValue(positions);
-
-            cell.SecondaryValue = total > 0m ? $"All assets: {total.ToCurrencyString()}" : string.Empty;
         }
         catch (OperationCanceledException)
         {
+            // A newer load superseded this one; it owns the display now.
         }
         catch
         {
-            cell.SecondaryValue = string.Empty;
+            // Could not verify the reserved figure: keep the raw total as is.
         }
     }
 }
