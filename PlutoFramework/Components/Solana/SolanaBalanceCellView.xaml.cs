@@ -113,7 +113,7 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
 
             cell.Value = SolanaBalanceAssembler.TotalUsd(rows).ToUsdCurrencyString();
 
-            await LoadTotalAssetValueAsync(address, loadToken);
+            await LoadInvestorFiguresAsync(address, rows, loadToken);
         }
         catch (OperationCanceledException)
         {
@@ -130,18 +130,40 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
     }
 
     /// <summary>
-    /// The value of every property the investor has bought or reserved shares in, shown as
-    /// a second line under the wallet total. Best-effort: a failed indexer query hides the
-    /// figure rather than asserting one, so a down marketplace never paints the investor
-    /// with zero assets.
+    /// The two figures the investor's positions contribute, from one indexer query: the
+    /// reserved tGBP value netted out of the headline total - the same netting the balances
+    /// page applies to its own tGBP row - and the value of every property the investor has
+    /// bought or reserved shares in, shown as a second line under the wallet total.
+    /// Best-effort: a failed query keeps the raw total and hides the figures rather than
+    /// asserting ones, so a down marketplace never paints the investor with less money, or
+    /// zero assets, than the chain says.
     /// </summary>
-    private async Task LoadTotalAssetValueAsync(string address, CancellationToken token)
+    private async Task LoadInvestorFiguresAsync(
+        string address, IReadOnlyList<SolanaTokenBalance> rows, CancellationToken token)
     {
         try
         {
-            var total = await XcavateReserveBalanceModel.GetTotalAssetValueAsync(address, token);
+            // One query feeds both figures: the reserved value and the total asset value
+            // price the same positions two ways, so the page's own
+            // GetReservedTgBpValueAsync and GetTotalAssetValueAsync pair would hit the
+            // indexer twice for the same result. 100 positions per page matches their page
+            // cap; an investor holding more listings than that is beyond what the app's
+            // other pages list either.
+            var positions = await XcavateMarketplaceIndexerModel.GetInvestorPropertiesAsync(
+                    address, null, null, null, null, null, 100, 0, token)
+                .ConfigureAwait(false);
 
             token.ThrowIfCancellationRequested();
+
+            var netted = XcavateReserveBalanceModel.NetReservedValue(
+                rows, SolanaNetworkModel.SelectedCluster, XcavateReserveBalanceModel.ComputeReservedValue(positions));
+
+            if (netted is not null)
+            {
+                cell.Value = SolanaBalanceAssembler.TotalUsd(netted).ToUsdCurrencyString();
+            }
+
+            var total = XcavateReserveBalanceModel.ComputeTotalAssetValue(positions);
 
             cell.SecondaryValue = total > 0m ? $"All assets: {total.ToCurrencyString()}" : string.Empty;
         }

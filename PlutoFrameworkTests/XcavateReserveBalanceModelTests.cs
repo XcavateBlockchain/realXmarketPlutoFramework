@@ -92,6 +92,126 @@ namespace PlutoFrameworkTests
         }
 
         /// <summary>
+        /// Builds a balances-page row with only the record's required properties set.
+        /// </summary>
+        private static SolanaTokenBalance Row(string symbol, string mint, decimal amount, double? usd, bool netted = false) =>
+            new()
+            {
+                Symbol = symbol,
+                Mint = mint,
+                Amount = amount,
+                Decimals = 9,
+                IsNative = false,
+                ShowPriceChart = false,
+                UsdValue = usd,
+                IsAmountNetted = netted,
+            };
+
+        [Test]
+        public void NetReservedValue_NetsTheTgBpRowAndLeavesTheOtherRowsAlone()
+        {
+            var solRow = Row("SOL", "So11111111111111111111111111111111111111112", 10m, 740.0);
+            var tGbpRow = Row("tGBP", TgBpMint, 50m, 125.0);
+
+            var netted = XcavateReserveBalanceModel.NetReservedValue([solRow, tGbpRow], SolanaCluster.Devnet, 20m);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(netted, Is.Not.Null);
+                // The SOL row is the very same instance - no copy, no change.
+                Assert.That(netted![0], Is.SameAs(solRow));
+
+                var nettedTgBp = netted[1];
+
+                // 50 - 20 reserved, repriced at 2.5 USD per tGBP: 30 × 2.5 = 75.
+                Assert.That(nettedTgBp.Amount, Is.EqualTo(30m));
+                Assert.That(nettedTgBp.UsdValue, Is.EqualTo(75.0));
+                Assert.That(nettedTgBp.IsAmountNetted, Is.True);
+            });
+        }
+
+        [Test]
+        public void NetReservedValue_ClampsTheAmountAtZeroWhenTheReservationExceedsTheBalance()
+        {
+            var netted = XcavateReserveBalanceModel.NetReservedValue(
+                [Row("tGBP", TgBpMint, 10m, 10.0)], SolanaCluster.Devnet, 30m);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(netted, Is.Not.Null);
+                Assert.That(netted![0].Amount, Is.EqualTo(0m));
+                Assert.That(netted[0].UsdValue, Is.EqualTo(0.0));
+                Assert.That(netted[0].IsAmountNetted, Is.True);
+            });
+        }
+
+        [Test]
+        public void NetReservedValue_LeavesTheUsdValueNullOnAnUnpricedRow()
+        {
+            var netted = XcavateReserveBalanceModel.NetReservedValue(
+                [Row("tGBP", TgBpMint, 100m, null)], SolanaCluster.Devnet, 30m);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(netted, Is.Not.Null);
+                Assert.That(netted![0].Amount, Is.EqualTo(70m));
+                Assert.That(netted[0].UsdValue, Is.Null);
+                Assert.That(netted[0].IsAmountNetted, Is.True);
+            });
+        }
+
+        /// <summary>
+        /// A row that arrived already netted must pass through untouched - netting it again
+        /// would subtract the reserved value twice.
+        /// </summary>
+        [Test]
+        public void NetReservedValue_DoesNotNetARowThatIsAlreadyNetted()
+        {
+            var netted = XcavateReserveBalanceModel.NetReservedValue(
+                [Row("tGBP", TgBpMint, 70m, 70.0, netted: true)], SolanaCluster.Devnet, 30m);
+
+            Assert.That(netted, Is.Null);
+        }
+
+        [Test]
+        public void NetReservedValue_ReturnsNullWhenNothingIsReserved()
+        {
+            var netted = XcavateReserveBalanceModel.NetReservedValue(
+                [Row("tGBP", TgBpMint, 50m, 125.0)], SolanaCluster.Devnet, 0m);
+
+            Assert.That(netted, Is.Null);
+        }
+
+        [Test]
+        public void NetReservedValue_ReturnsNullWhenTheListHasNoTgBpRow()
+        {
+            var netted = XcavateReserveBalanceModel.NetReservedValue(
+                [Row("SOL", "So11111111111111111111111111111111111111112", 10m, 740.0)], SolanaCluster.Devnet, 20m);
+
+            Assert.That(netted, Is.Null);
+        }
+
+        [Test]
+        public void NetReservedValue_ReturnsNullWhenTgBpIsNotConfiguredForTheCluster()
+        {
+            PlutoConfigurationModel.WhitelistedSolanaTokens =
+            [
+                new SolanaTokenWhitelistEntry
+                {
+                    Cluster = SolanaCluster.Devnet,
+                    Mint = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+                    Symbol = "tUSDC",
+                    Decimals = 6,
+                },
+            ];
+
+            var netted = XcavateReserveBalanceModel.NetReservedValue(
+                [Row("tUSDC", "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU", 50m, 50.0)], SolanaCluster.Devnet, 20m);
+
+            Assert.That(netted, Is.Null);
+        }
+
+        /// <summary>
         /// Builds a position the way the indexer does, with only the record's required
         /// properties set. A null price simulates a listing whose offchain metadata has not
         /// been attached yet: it contributes nothing rather than throwing.

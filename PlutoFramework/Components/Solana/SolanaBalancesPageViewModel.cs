@@ -218,34 +218,21 @@ namespace PlutoFramework.Components.Solana
 
                 token.ThrowIfCancellationRequested();
 
-                if (reserved <= 0m)
+                var netted = XcavateReserveBalanceModel.NetReservedValue(
+                    Balances, SolanaNetworkModel.SelectedCluster, reserved);
+
+                if (netted is null)
                 {
+                    // Nothing was reserved, or the tGBP row is not in the list: the raw rows stand.
                     return;
                 }
 
-                var rowIndex = -1;
-
                 for (var i = 0; i < Balances.Count; i++)
                 {
-                    if (string.Equals(Balances[i].Mint, entry.Mint, StringComparison.Ordinal))
-                    {
-                        rowIndex = i;
-
-                        break;
-                    }
+                    Balances[i] = netted[i];
                 }
 
-                if (rowIndex >= 0)
-                {
-                    var row = Balances[rowIndex];
-                    var net = Math.Max(row.Amount - reserved, 0m);
-                    var netUsd = row.UsdValue is double usd && row.Amount > 0m
-                        ? (double)net * (usd / (double)row.Amount)
-                        : row.UsdValue;
-                    Balances[rowIndex] = row with { Amount = net, UsdValue = netUsd, IsAmountNetted = true };
-
-                    UsdSum = SolanaBalanceAssembler.TotalUsd(Balances).ToUsdCurrencyString();
-                }
+                UsdSum = SolanaBalanceAssembler.TotalUsd(Balances).ToUsdCurrencyString();
             }
             catch (OperationCanceledException)
             {

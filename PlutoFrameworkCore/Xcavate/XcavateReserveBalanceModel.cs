@@ -88,6 +88,61 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// The rows with the reserved tGBP value netted out of the tGBP row: its amount and
+        /// USD value both drop by the reserved figure (the amount clamped at zero), and the
+        /// row is marked <see cref="SolanaTokenBalance.IsAmountNetted"/> so a page that nets
+        /// on its own - the token detail page does - does not subtract the value a second
+        /// time. Every other row passes through unchanged.
+        /// </summary>
+        /// <remarks>
+        /// Pure on purpose: the balances page and the main page's balance cell both net
+        /// through this, so the two displayed totals cannot drift apart. Returns null when
+        /// there is nothing to net - a non-positive reserved value, no tGBP configured for
+        /// the cluster, or no unnetted tGBP row in the list - so a caller can tell a no-op
+        /// from a netted list.
+        /// </remarks>
+        public static IReadOnlyList<SolanaTokenBalance>? NetReservedValue(
+            IReadOnlyList<SolanaTokenBalance> rows,
+            SolanaCluster cluster,
+            decimal reserved)
+        {
+            if (reserved <= 0m)
+            {
+                return null;
+            }
+
+            var entry = FindTgBpEntry(cluster);
+
+            if (entry is null)
+            {
+                return null;
+            }
+
+            var nettedRows = new List<SolanaTokenBalance>(rows.Count);
+            var nettedAny = false;
+
+            foreach (var row in rows)
+            {
+                if (row.IsAmountNetted || !string.Equals(row.Mint, entry.Mint, StringComparison.Ordinal))
+                {
+                    nettedRows.Add(row);
+
+                    continue;
+                }
+
+                var net = Math.Max(row.Amount - reserved, 0m);
+                var netUsd = row.UsdValue is double usd && row.Amount > 0m
+                    ? (double)net * (usd / (double)row.Amount)
+                    : row.UsdValue;
+
+                nettedRows.Add(row with { Amount = net, UsdValue = netUsd, IsAmountNetted = true });
+                nettedAny = true;
+            }
+
+            return nettedAny ? nettedRows : null;
+        }
+
+        /// <summary>
         /// The value of every share the investor has committed to, at each listing's price per
         /// token: bought shares (already paid for) plus reserved shares (still bound in the
         /// wallet until claim). Reserved properties count - before a claim moves the money,
