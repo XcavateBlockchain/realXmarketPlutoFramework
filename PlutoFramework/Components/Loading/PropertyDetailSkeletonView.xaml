@@ -120,7 +120,7 @@
                     </Border>
                 </HorizontalStackLayout>
 
-                <!-- "Price per share" section header. -->
+                <!-- "Price per token" section header. -->
                 <Border Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="140" HorizontalOptions="Start">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="6" />
@@ -165,7 +165,7 @@
                     </Border>
                 </HorizontalStackLayout>
 
-                <!-- 2x2 stats cells (Listing price / Gross yield / Shares / Property). -->
+                <!-- 2x2 stats cells (Listing price / Gross yield / Tokens / Property). -->
                 <Grid ColumnSpacing="15"
                       RowSpacing="5"
                       Margin="0,10,0,10">

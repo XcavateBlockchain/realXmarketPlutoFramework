@@ -12,7 +12,7 @@
              AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
              AbsoluteLayout.LayoutFlags="All">
 
-    <card:BottomPopupCard Title="Reserve Property Shares"
+    <card:BottomPopupCard Title="Reserve Property Tokens"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
             <AbsoluteLayout>
@@ -30,7 +30,7 @@
                     <xcavateproperty:PropertyLittleThumbnailView XcavateMetadata="{Binding Metadata}" />
 
                     <AbsoluteLayout Margin="10, 0, 10, -10">
-                        <Label Text="Shares available:"
+                        <Label Text="Tokens available:"
                                AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
                         <Label Text="{Binding MaxValue}"
                                AbsoluteLayout.LayoutBounds="1,0,AutoSize, AutoSize"
@@ -38,7 +38,7 @@
                     </AbsoluteLayout>
 
                     <form:FormInputView KeyboardType="Numeric"
-                                        Placeholder="Shares"
+                                        Placeholder="Tokens"
                                         Text="{Binding Tokens}"
                                         MaxValue="{Binding MaxValue}"
                                         UpdateCommand="{Binding FormChangedCommand}"

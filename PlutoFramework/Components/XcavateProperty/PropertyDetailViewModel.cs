@@ -312,8 +312,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
         /// <summary>
         /// A confirmed marketplace transaction (a reserve, buy or claim) changed this
-        /// listing's on-chain state, so the figures on screen - shares still available,
-        /// this wallet's reserved shares, the action button - are the pre-transaction
+        /// listing's on-chain state, so the figures on screen - tokens still available,
+        /// this wallet's reserved tokens, the action button - are the pre-transaction
         /// ones and must be re-read.
         /// </summary>
         private void OnMarketplaceTransactionConfirmed(object? sender, EventArgs e) =>
@@ -478,7 +478,7 @@ namespace PlutoFramework.Components.XcavateProperty
             fullPageLoadingViewModel.IsVisible = false;
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
-                "Claim property shares",
+                "Claim property tokens",
                 (investor, ct) => XcavateMarketplaceCallsModel.ClaimSharesAsync(investor, ListingId, ct));
         }
 
@@ -504,7 +504,7 @@ namespace PlutoFramework.Components.XcavateProperty
             fullPageLoadingViewModel.IsVisible = false;
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
-                "Refund property shares",
+                "Refund property tokens",
                 (investor, ct) => XcavateMarketplaceCallsModel.WithdrawExpiredAsync(investor, ListingId, ct));
         }
 
@@ -530,7 +530,7 @@ namespace PlutoFramework.Components.XcavateProperty
             fullPageLoadingViewModel.IsVisible = false;
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
-                "Refund property shares",
+                "Refund property tokens",
                 BuildClaimPhaseRefundAsync);
         }
 
@@ -556,7 +556,7 @@ namespace PlutoFramework.Components.XcavateProperty
             fullPageLoadingViewModel.IsVisible = false;
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
-                "Refund property shares",
+                "Refund property tokens",
                 BuildClaimPhaseRefundAsync);
         }
 

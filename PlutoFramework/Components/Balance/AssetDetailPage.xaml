@@ -116,7 +116,7 @@
             <VerticalStackLayout Spacing="15"
                                  Padding="0"
                                  Margin="20, 0, 20, 0">
-                <Label Text="Share symbol"
+                <Label Text="Token symbol"
                        Margin="0,10,0,-10"
                        HorizontalTextAlignment="Start" />
 
@@ -131,7 +131,7 @@
                     </Label.FormattedText>
                 </Label>
 
-                <Label Text="Price per share"
+                <Label Text="Price per token"
                        Margin="0,10,0,-10"
                        HorizontalTextAlignment="Start" />
 

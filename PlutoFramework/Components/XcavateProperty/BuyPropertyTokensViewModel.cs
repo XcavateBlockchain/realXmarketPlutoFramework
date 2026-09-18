@@ -110,7 +110,7 @@ namespace PlutoFramework.Components.XcavateProperty
         private uint alreadyReservedShares;
 
         /// <summary>
-        /// The user's shares already reserved on this listing (bought plus reserved -
+        /// The user's tokens already reserved on this listing (bought plus reserved -
         /// both bind tGBP in the wallet until claim), keyed by the wallet's own address.
         /// </summary>
         public decimal AlreadyReservedValue => (decimal)AlreadyReservedShares * (Metadata?.Financials.PricePerToken ?? 0);
@@ -118,10 +118,10 @@ namespace PlutoFramework.Components.XcavateProperty
         public bool AlreadyReservedRowIsVisible => AlreadyReservedShares > 0;
 
         public string AlreadyReservedText =>
-            $"{AlreadyReservedShares} share(s) = {XcavateReserveBalanceModel.Format(AlreadyReservedValue)} tGBP";
+            $"{AlreadyReservedShares} token(s) = {XcavateReserveBalanceModel.Format(AlreadyReservedValue)} tGBP";
 
         /// <summary>
-        /// The whole listing's reserved value: every investor's reserved shares at the
+        /// The whole listing's reserved value: every investor's reserved tokens at the
         /// current price - the listing's total reserved value, whatever this wallet holds.
         /// </summary>
         public uint TotalReservedShares => ListingDetails?.UnclaimedTokens ?? 0;
@@ -131,7 +131,7 @@ namespace PlutoFramework.Components.XcavateProperty
         public bool TotalReservedRowIsVisible => TotalReservedShares > 0;
 
         public string TotalReservedText =>
-            $"{TotalReservedShares} shares = {XcavateReserveBalanceModel.Format(TotalReservedValue)} tGBP";
+            $"{TotalReservedShares} tokens = {XcavateReserveBalanceModel.Format(TotalReservedValue)} tGBP";
 
         public bool TgBpBalanceRowIsVisible => TgBpBalanceLoaded;
 
@@ -156,7 +156,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
         /// <summary>
         /// Populates the balance checks the popup shows: the wallet's tGBP balance, its
-        /// already-reserved shares on this listing, and the listing's total reserved
+        /// already-reserved tokens on this listing, and the listing's total reserved
         /// value. The affordability check itself runs in FormChangedAsync and again at
         /// ContinueAsync, both against the latest known balance.
         /// </summary>
@@ -285,7 +285,7 @@ namespace PlutoFramework.Components.XcavateProperty
             // are reservations (paid at claim time); the direct buy only opens after the
             // claim window closes.
             await XcavateMarketplaceTransactionModel.SubmitAsync(
-                parsedTokens == 1 ? "Reserve 1 property share" : $"Reserve {parsedTokens} property shares",
+                parsedTokens == 1 ? "Reserve 1 property token" : $"Reserve {parsedTokens} property tokens",
                 (investor, ct) => XcavateMarketplaceCallsModel.ReserveSharesAsync(investor, listingId, parsedTokens, ct));
         }
 
@@ -303,21 +303,21 @@ namespace PlutoFramework.Components.XcavateProperty
             if (!int.TryParse(Tokens, out parsedTokens))
             {
 
-                ErrorMessage = "Shares is not valid number";
+                ErrorMessage = "Tokens is not valid number";
 
                 return;
             }
 
             if (parsedTokens < 1)
             {
-                ErrorMessage = "Shares must be greater than 0";
+                ErrorMessage = "Tokens must be greater than 0";
 
                 return;
             }
 
             if (parsedTokens > ListingDetails?.ListedTokens)
             {
-                ErrorMessage = $"Shares must be less than {ListingDetails.ListedTokens}";
+                ErrorMessage = $"Tokens must be less than {ListingDetails.ListedTokens}";
 
                 return;
             }

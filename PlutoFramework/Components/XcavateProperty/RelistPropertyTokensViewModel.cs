@@ -87,7 +87,7 @@ namespace PlutoFramework.Components.XcavateProperty
             // The pallet's relist_shares extrinsic has no successor in the Solana
             // marketplace program (idls/devnet/marketplace.json has no share-relisting
             // instruction), so this popup cannot submit anything yet.
-            ErrorMessage = "Relisting shares is not available on the Solana marketplace yet.";
+            ErrorMessage = "Relisting tokens is not available on the Solana marketplace yet.";
 
             return Task.CompletedTask;
         }
@@ -107,21 +107,21 @@ namespace PlutoFramework.Components.XcavateProperty
             if (!uint.TryParse(Tokens, out parsedTokens))
             {
 
-                ErrorMessage = "Shares is not valid number";
+                ErrorMessage = "Tokens is not valid number";
 
                 return;
             }
 
             if (parsedTokens < 1)
             {
-                ErrorMessage = "Shares must be greater than 0";
+                ErrorMessage = "Tokens must be greater than 0";
 
                 return;
             }
 
             if (parsedTokens > ListingDetails?.ListedTokens)
             {
-                ErrorMessage = $"Shares must be less than {ListingDetails.ListedTokens}";
+                ErrorMessage = $"Tokens must be less than {ListingDetails.ListedTokens}";
 
                 return;
             }
@@ -129,14 +129,14 @@ namespace PlutoFramework.Components.XcavateProperty
             uint pricePerToken;
             if (!uint.TryParse(PricePerToken, out pricePerToken))
             {
-                ErrorMessage = "Price per share is not valid number";
+                ErrorMessage = "Price per token is not valid number";
 
                 return;
             }
 
             if (pricePerToken < 1)
             {
-                ErrorMessage = "Price per share must be greater than 0";
+                ErrorMessage = "Price per token must be greater than 0";
                 return;
             }
 
