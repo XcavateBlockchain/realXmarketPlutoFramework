@@ -573,7 +573,9 @@ namespace PlutoFramework.Components.Solana.Transfer
 
             try
             {
-                var reserved = await XcavateReserveBalanceModel.GetReservedTgBpValueAsync(address, token);
+                var reserved = XcavateReserveBalanceModel.ValueFor(
+                    await XcavateReserveBalanceModel.GetReservedValuesAsync(address, token),
+                    XcavateReserveBalanceModel.TgBpSymbol);
                 token.ThrowIfCancellationRequested();
 
                 tgBpReservedValue = reserved;

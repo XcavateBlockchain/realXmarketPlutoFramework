@@ -93,10 +93,20 @@
                     </AbsoluteLayout>
 
                     <AbsoluteLayout Margin="10, 0, 10, -10"
-                                     IsVisible="{Binding TgBpBalanceRowIsVisible}">
-                        <Label Text="Your available tGBP balance:"
+                                     IsVisible="{Binding PaymentTokenBalanceRowIsVisible}">
+                        <Label Text="{Binding PaymentTokenBalanceLabel}"
                                AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
-                        <Label Text="{Binding TgBpBalanceText}"
+                        <Label Text="{Binding PaymentTokenBalanceText}"
+                               HorizontalTextAlignment="End"
+                               AbsoluteLayout.LayoutBounds="1,0,AutoSize, AutoSize"
+                               AbsoluteLayout.LayoutFlags="PositionProportional"/>
+                    </AbsoluteLayout>
+
+                    <AbsoluteLayout Margin="10, 0, 10, -10"
+                                     IsVisible="{Binding WalletReservedRowIsVisible}">
+                        <Label Text="Reserved across your properties:"
+                               AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
+                        <Label Text="{Binding WalletReservedText}"
                                HorizontalTextAlignment="End"
                                AbsoluteLayout.LayoutBounds="1,0,AutoSize, AutoSize"
                                AbsoluteLayout.LayoutFlags="PositionProportional"/>

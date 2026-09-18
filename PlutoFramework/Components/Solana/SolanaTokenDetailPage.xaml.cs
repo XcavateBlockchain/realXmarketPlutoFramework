@@ -24,8 +24,9 @@ public partial class SolanaTokenDetailPage : PageTemplate
         // row it was constructed with.
         _ = viewModel.LoadAsync(CancellationToken.None);
 
-        // The reserved tGBP figure is an indexer query, not part of the row, so it loads on
-        // its own path - it is worth showing even on a stablecoin where LoadAsync bails early.
+        // The reserved tGBP section is an indexer query, not part of the row, so it loads
+        // on its own path - it is worth showing even on a stablecoin where LoadAsync bails
+        // early.
         _ = viewModel.LoadReservedAsync();
     }
 

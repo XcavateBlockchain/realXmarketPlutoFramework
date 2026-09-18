@@ -7,8 +7,10 @@
                        xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                        xmlns:address="clr-namespace:PlutoFramework.Components.AddressView"
                        xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
+                       xmlns:ffimageloading="clr-namespace:FFImageLoading.Maui;assembly=FFImageLoading.Maui"
                        xmlns:model="clr-namespace:PlutoFramework.Model;assembly=PlutoFrameworkCore"
                        x:Class="PlutoFramework.Components.Solana.SolanaTokenDetailPage"
+                       x:Name="page"
                        Title="{Binding Symbol}">
 
     <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
@@ -137,6 +139,101 @@
                     </card:Card.View>
                 </card:Card>
 
+                <!-- tGBP only: the amount property reservations hold, broken down per
+                     property - each row opens that property's detail page. Hidden unless
+                     the indexer confirmed a non-zero reserved value. -->
+                <card:Card IsVisible="{Binding ReservedSectionIsVisible}">
+                    <card:Card.View>
+                        <VerticalStackLayout Padding="15, 12, 15, 15"
+                                             Spacing="12">
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0"
+                                       Text="Reserved for properties"
+                                       FontSize="14"
+                                       TextColor="#A6A6A6"
+                                       VerticalTextAlignment="Center" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding TgBpReservedText}"
+                                       FontAttributes="Bold"
+                                       FontSize="14"
+                                       VerticalTextAlignment="Center" />
+                            </Grid>
+
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding ReservedProperties}"
+                                                 Spacing="12">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="44,*,Auto,Auto"
+                                              RowDefinitions="Auto,Auto"
+                                              ColumnSpacing="12">
+                                            <Grid.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={x:Reference page}, Path=BindingContext.OpenPropertyCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Grid.GestureRecognizers>
+
+                                            <Border Grid.Column="0"
+                                                    Grid.RowSpan="2"
+                                                    Padding="0"
+                                                    HeightRequest="44"
+                                                    WidthRequest="44"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="{AppThemeBinding Light=#dddddd, Dark=#222222}">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                                                </Border.StrokeShape>
+                                                <ffimageloading:CachedImage Source="{Binding ImageSource}"
+                                                                            Aspect="AspectFill"
+                                                                            HeightRequest="44"
+                                                                            WidthRequest="44" />
+                                            </Border>
+
+                                            <Label Grid.Column="1"
+                                                   Grid.Row="0"
+                                                   Text="{Binding NameText}"
+                                                   FontAttributes="Bold"
+                                                   FontSize="14"
+                                                   LineBreakMode="TailTruncation"
+                                                   VerticalTextAlignment="End" />
+
+                                            <Label Grid.Column="1"
+                                                   Grid.Row="1"
+                                                   Text="{Binding SubtitleText}"
+                                                   FontSize="12"
+                                                   TextColor="#A6A6A6"
+                                                   LineBreakMode="TailTruncation"
+                                                   VerticalTextAlignment="Start" />
+
+                                            <Label Grid.Column="2"
+                                                   Grid.Row="0"
+                                                   Grid.RowSpan="2"
+                                                   Text="{Binding ValueText}"
+                                                   FontAttributes="Bold"
+                                                   FontSize="13"
+                                                   VerticalTextAlignment="Center" />
+
+                                            <Image Grid.Column="3"
+                                                   Grid.Row="0"
+                                                   Grid.RowSpan="2"
+                                                   WidthRequest="10"
+                                                   HeightRequest="10"
+                                                   VerticalOptions="Center">
+                                                <Image.Source>
+                                                    <FontImageSource Glyph="&#xf054;"
+                                                                     FontFamily="FontAwesome"
+                                                                     Size="10"
+                                                                     Color="#A6A6A6" />
+                                                </Image.Source>
+                                            </Image>
+                                        </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </card:Card.View>
+                </card:Card>
+
                 <!-- Live price. Chartable tokens only; a stablecoin has no movement to report. -->
                 <card:Card IsVisible="{Binding ChartIsVisible}">
                     <card:Card.View>
@@ -216,19 +313,6 @@
                                        TextColor="#A6A6A6" />
                                 <Label Grid.Column="1"
                                        Text="{Binding DecimalsText}"
-                                       FontAttributes="Bold"
-                                       FontSize="14" />
-                            </Grid>
-
-                            <!-- tGBP only: the amount reserved for Xcavate property listings. -->
-                            <Grid ColumnDefinitions="*,Auto"
-                                  IsVisible="{Binding TgBpReservedIsVisible}">
-                                <Label Grid.Column="0"
-                                       Text="Reserved"
-                                       FontSize="14"
-                                       TextColor="#A6A6A6" />
-                                <Label Grid.Column="1"
-                                       Text="{Binding TgBpReservedText}"
                                        FontAttributes="Bold"
                                        FontSize="14" />
                             </Grid>

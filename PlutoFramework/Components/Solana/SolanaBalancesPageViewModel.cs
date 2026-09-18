@@ -189,15 +189,17 @@ namespace PlutoFramework.Components.Solana
         }
 
         /// <summary>
-        /// Replaces the tGBP row with the spendable figure (balance minus what property
-        /// reservations hold) and refreshes the USD total. The netted row is marked
-        /// <c>IsAmountNetted</c> so the detail page - which receives its row straight from
-        /// this list - does not subtract the reserved value a second time. Best effort: on
-        /// a failed indexer query the raw row is kept as is, since a figure we could not
-        /// verify must never be netted into the displayed balance.
+        /// Replaces each payment token's row with the spendable figure (balance minus
+        /// what property reservations hold) and refreshes the USD total. A netted row is
+        /// marked <c>IsAmountNetted</c> so the detail page - which receives its row
+        /// straight from this list - does not subtract the reserved value a second time.
+        /// Best effort: on a failed indexer query the raw rows are kept as is, since a
+        /// figure we could not verify must never be netted into the displayed balance.
         /// </summary>
         private async Task ApplyReservedNetting(CancellationToken token)
         {
+            // tGBP is the one payment token today; a cluster without it in the whitelist
+            // has nothing to net, and no query to issue.
             var entry = XcavateReserveBalanceModel.FindTgBpEntry(SolanaNetworkModel.SelectedCluster);
 
             if (entry is null)
@@ -214,12 +216,12 @@ namespace PlutoFramework.Components.Solana
 
             try
             {
-                var reserved = await XcavateReserveBalanceModel.GetReservedTgBpValueAsync(address, token);
+                var reservedValues = await XcavateReserveBalanceModel.GetReservedValuesAsync(address, token);
 
                 token.ThrowIfCancellationRequested();
 
-                var netted = XcavateReserveBalanceModel.NetReservedValue(
-                    Balances, SolanaNetworkModel.SelectedCluster, reserved);
+                var netted = XcavateReserveBalanceModel.NetReservedValues(
+                    Balances, SolanaNetworkModel.SelectedCluster, reservedValues);
 
                 if (netted is null)
                 {

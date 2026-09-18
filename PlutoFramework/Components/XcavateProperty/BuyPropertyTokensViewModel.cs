@@ -86,39 +86,58 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public ButtonStateEnum ContinueButtonState => ErrorMessage == "" && Tokens != "" ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
 
-        // Field names start with "tgBp", not "tGbp": the source generator Pascal-cases
-        // the leading single letter as its own word, so tGbpBalance would generate
-        // TGbpBalance, while tgBpBalance generates the expected TgBpBalance.
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(TgBpBalanceText))]
-        private decimal tgBpBalance;
+        /// <summary>
+        /// The token this listing's shares sell for. tGBP for every listing today; when
+        /// the marketplace prices listings in other tokens, this listing's symbol is what
+        /// keeps the balance row, the affordability check and every message in the right
+        /// currency.
+        /// </summary>
+        public string PaymentTokenSymbol { get; private set; } = XcavateReserveBalanceModel.TgBpSymbol;
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(TgBpBalanceText))]
-        [NotifyPropertyChangedFor(nameof(TgBpBalanceRowIsVisible))]
-        private bool tgBpBalanceLoaded;
+        [NotifyPropertyChangedFor(nameof(PaymentTokenBalanceText))]
+        private decimal paymentTokenBalance;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PaymentTokenBalanceText))]
+        [NotifyPropertyChangedFor(nameof(PaymentTokenBalanceRowIsVisible))]
+        private bool paymentTokenBalanceLoaded;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(BalanceWarningIsVisible))]
-        private bool tgBpBalanceLoadFailed;
+        [NotifyPropertyChangedFor(nameof(BalanceWarningText))]
+        private bool balanceLoadFailed;
+
+        /// <summary>
+        /// The payment token value this wallet has reserved across EVERY listing, not
+        /// just this one. reserve_shares binds funds wallet-wide, so the spendable
+        /// balance and the affordability check must subtract all of it - subtracting
+        /// only this listing's share overstates what the user can still spend whenever
+        /// another property holds a reservation.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PaymentTokenBalanceText))]
+        [NotifyPropertyChangedFor(nameof(WalletReservedText))]
+        [NotifyPropertyChangedFor(nameof(WalletReservedRowIsVisible))]
+        private decimal walletReservedValue;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(AlreadyReservedValue))]
         [NotifyPropertyChangedFor(nameof(AlreadyReservedText))]
         [NotifyPropertyChangedFor(nameof(AlreadyReservedRowIsVisible))]
-        [NotifyPropertyChangedFor(nameof(TgBpBalanceText))]
         private uint alreadyReservedShares;
 
         /// <summary>
-        /// The user's tokens already reserved on this listing (bought plus reserved -
-        /// both bind tGBP in the wallet until claim), keyed by the wallet's own address.
+        /// The user's tokens already reserved on this listing (bought plus reserved),
+        /// keyed by the wallet's own address. Informational only - the balance row and
+        /// the affordability check run on <see cref="WalletReservedValue"/>.
         /// </summary>
         public decimal AlreadyReservedValue => (decimal)AlreadyReservedShares * (Metadata?.Financials.PricePerToken ?? 0);
 
         public bool AlreadyReservedRowIsVisible => AlreadyReservedShares > 0;
 
         public string AlreadyReservedText =>
-            $"{AlreadyReservedShares} token(s) = {XcavateReserveBalanceModel.Format(AlreadyReservedValue)} tGBP";
+            $"{AlreadyReservedShares} token(s) = {XcavateReserveBalanceModel.Format(AlreadyReservedValue)} {PaymentTokenSymbol}";
 
         /// <summary>
         /// The whole listing's reserved value: every investor's reserved tokens at the
@@ -131,20 +150,28 @@ namespace PlutoFramework.Components.XcavateProperty
         public bool TotalReservedRowIsVisible => TotalReservedShares > 0;
 
         public string TotalReservedText =>
-            $"{TotalReservedShares} tokens = {XcavateReserveBalanceModel.Format(TotalReservedValue)} tGBP";
+            $"{TotalReservedShares} tokens = {XcavateReserveBalanceModel.Format(TotalReservedValue)} {PaymentTokenSymbol}";
 
-        public bool TgBpBalanceRowIsVisible => TgBpBalanceLoaded;
+        public bool PaymentTokenBalanceRowIsVisible => PaymentTokenBalanceLoaded;
 
-        // Shows the spendable figure - balance minus what is already reserved on this
-        // listing - so the popup matches every other place the tGBP balance is displayed.
-        public string TgBpBalanceText => TgBpBalanceLoaded
-            ? $"{XcavateReserveBalanceModel.Format(Math.Max(TgBpBalance - AlreadyReservedValue, 0m))} tGBP"
+        public string PaymentTokenBalanceLabel => $"Your available {PaymentTokenSymbol} balance:";
+
+        // Shows the spendable figure - balance minus what is already reserved on every
+        // listing - so the popup matches every other place the payment token balance is
+        // displayed.
+        public string PaymentTokenBalanceText => PaymentTokenBalanceLoaded
+            ? $"{XcavateReserveBalanceModel.Format(Math.Max(PaymentTokenBalance - WalletReservedValue, 0m))} {PaymentTokenSymbol}"
             : "…";
 
-        public bool BalanceWarningIsVisible => TgBpBalanceLoadFailed;
+        public bool WalletReservedRowIsVisible => PaymentTokenBalanceLoaded && WalletReservedValue > 0m;
+
+        public string WalletReservedText =>
+            $"{XcavateReserveBalanceModel.Format(WalletReservedValue)} {PaymentTokenSymbol}";
+
+        public bool BalanceWarningIsVisible => BalanceLoadFailed;
 
         public string BalanceWarningText =>
-            "Could not check your tGBP balance, so this reservation is blocked until it can be verified. Check your connection and try again.";
+            $"Could not verify your {PaymentTokenSymbol} balance and reservations, so this reservation is blocked until it can be verified. Check your connection and try again.";
 
         partial void OnIsVisibleChanged(bool value)
         {
@@ -155,15 +182,18 @@ namespace PlutoFramework.Components.XcavateProperty
         }
 
         /// <summary>
-        /// Populates the balance checks the popup shows: the wallet's tGBP balance, its
-        /// already-reserved tokens on this listing, and the listing's total reserved
-        /// value. The affordability check itself runs in FormChangedAsync and again at
-        /// ContinueAsync, both against the latest known balance.
+        /// Populates the balance checks the popup shows: the wallet's payment token
+        /// balance, its reserved value across every listing, and its already-reserved
+        /// tokens on this listing. The affordability check itself runs in
+        /// FormChangedAsync and again at ContinueAsync, both against the latest known
+        /// balance. Fails closed: without a verified balance AND a verified
+        /// wallet-wide reserved figure the subtraction cannot be trusted, so the
+        /// reservation is blocked until both load.
         /// </summary>
         private async Task LoadBalanceAsync()
         {
-            TgBpBalanceLoaded = false;
-            TgBpBalanceLoadFailed = false;
+            PaymentTokenBalanceLoaded = false;
+            BalanceLoadFailed = false;
 
             var address = KeysModel.GetSolanaAddress();
 
@@ -181,17 +211,24 @@ namespace PlutoFramework.Components.XcavateProperty
 
             try
             {
-                TgBpBalance = await XcavateReserveBalanceModel.GetTgBpBalanceAsync(
-                    XcavateMarketplaceCallsModel.MarketplaceCluster, address, CancellationToken.None);
+                var balanceTask = XcavateReserveBalanceModel.GetPaymentTokenBalanceAsync(
+                    XcavateMarketplaceCallsModel.MarketplaceCluster, address, PaymentTokenSymbol, CancellationToken.None);
 
-                TgBpBalanceLoaded = true;
+                var reservedTask = XcavateReserveBalanceModel.GetReservedValuesAsync(address, CancellationToken.None);
+
+                await Task.WhenAll(balanceTask, reservedTask);
+
+                PaymentTokenBalance = await balanceTask;
+                WalletReservedValue = XcavateReserveBalanceModel.ValueFor(await reservedTask, PaymentTokenSymbol);
+
+                PaymentTokenBalanceLoaded = true;
             }
             catch (Exception ex)
             {
                 // The balance cannot be verified, so the affordability check cannot run:
                 // ContinueAsync refuses to submit while the load is in this state.
                 Console.WriteLine(ex);
-                TgBpBalanceLoadFailed = true;
+                BalanceLoadFailed = true;
             }
 
             // Re-validate whatever the user has already typed now that the balance is known.
@@ -211,9 +248,11 @@ namespace PlutoFramework.Components.XcavateProperty
             Metadata = null;
             ListingDetails = null;
             EndpointKey = EndpointEnum.None;
-            TgBpBalance = 0;
-            TgBpBalanceLoaded = false;
-            TgBpBalanceLoadFailed = false;
+            PaymentTokenSymbol = XcavateReserveBalanceModel.TgBpSymbol;
+            PaymentTokenBalance = 0;
+            PaymentTokenBalanceLoaded = false;
+            BalanceLoadFailed = false;
+            WalletReservedValue = 0;
             AlreadyReservedShares = 0;
         }
 
@@ -234,27 +273,35 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            // Re-fetch the balance at reserve time rather than trusting the value loaded
-            // when the popup opened: a transfer or another reservation may have landed
-            // since, and the check must hold for the balance as it is now.
+            // Re-fetch the balance and the wallet-wide reserved value at reserve time
+            // rather than trusting the values loaded when the popup opened: a transfer
+            // or another reservation may have landed since, and the check must hold for
+            // the balance as it is now.
             var address = KeysModel.GetSolanaAddress();
 
             if (!string.IsNullOrEmpty(address))
             {
                 try
                 {
-                    TgBpBalance = await XcavateReserveBalanceModel.GetTgBpBalanceAsync(
-                        XcavateMarketplaceCallsModel.MarketplaceCluster, address, CancellationToken.None);
+                    var balanceTask = XcavateReserveBalanceModel.GetPaymentTokenBalanceAsync(
+                        XcavateMarketplaceCallsModel.MarketplaceCluster, address, PaymentTokenSymbol, CancellationToken.None);
 
-                    TgBpBalanceLoaded = true;
-                    TgBpBalanceLoadFailed = false;
+                    var reservedTask = XcavateReserveBalanceModel.GetReservedValuesAsync(address, CancellationToken.None);
+
+                    await Task.WhenAll(balanceTask, reservedTask);
+
+                    PaymentTokenBalance = await balanceTask;
+                    WalletReservedValue = XcavateReserveBalanceModel.ValueFor(await reservedTask, PaymentTokenSymbol);
+
+                    PaymentTokenBalanceLoaded = true;
+                    BalanceLoadFailed = false;
                 }
                 catch (Exception ex)
                 {
                     // Without the balance the non-negative check cannot be made, so the
                     // reservation is not submitted - the popup stays open with the reason.
                     Console.WriteLine(ex);
-                    TgBpBalanceLoadFailed = true;
+                    BalanceLoadFailed = true;
                     ErrorMessage = BalanceWarningText;
 
                     return;
@@ -264,10 +311,11 @@ namespace PlutoFramework.Components.XcavateProperty
             var cost = XcavateReserveBalanceModel.ComputeReservationTotalCost(
                 parsedTokens, (Metadata?.Financials.PricePerToken ?? 0));
 
-            if (TgBpBalanceLoaded && !XcavateReserveBalanceModel.CanAfford(TgBpBalance, AlreadyReservedValue, cost))
+            if (PaymentTokenBalanceLoaded
+                && !XcavateReserveBalanceModel.CanAfford(PaymentTokenBalance, WalletReservedValue, cost))
             {
                 ErrorMessage = XcavateReserveBalanceModel.InsufficientBalanceMessage(
-                    TgBpBalance, AlreadyReservedValue, cost);
+                    PaymentTokenSymbol, PaymentTokenBalance, WalletReservedValue, cost);
 
                 return;
             }
@@ -322,15 +370,15 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            if (TgBpBalanceLoaded)
+            if (PaymentTokenBalanceLoaded)
             {
                 var cost = XcavateReserveBalanceModel.ComputeReservationTotalCost(
                     (uint)parsedTokens, (Metadata?.Financials.PricePerToken ?? 0));
 
-                if (!XcavateReserveBalanceModel.CanAfford(TgBpBalance, AlreadyReservedValue, cost))
+                if (!XcavateReserveBalanceModel.CanAfford(PaymentTokenBalance, WalletReservedValue, cost))
                 {
                     ErrorMessage = XcavateReserveBalanceModel.InsufficientBalanceMessage(
-                        TgBpBalance, AlreadyReservedValue, cost);
+                        PaymentTokenSymbol, PaymentTokenBalance, WalletReservedValue, cost);
 
                     return;
                 }

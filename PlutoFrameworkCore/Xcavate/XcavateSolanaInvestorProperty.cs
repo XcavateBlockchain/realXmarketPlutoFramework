@@ -21,6 +21,14 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>Shares reserved but not yet bought (the position's on-chain <c>reserved_share_amount</c>).</summary>
         public required uint ReservedShares { get; init; }
 
+        /// <summary>
+        /// The symbol of the token this position's shares are priced and paid in.
+        /// Every listing sells for tGBP today, so the indexer mapping leaves the
+        /// default; when the marketplace sells a listing for another token, this is
+        /// what keeps the position's value out of the tGBP buckets.
+        /// </summary>
+        public string PaymentTokenSymbol { get; init; } = XcavateReserveBalanceModel.TgBpSymbol;
+
         /// <summary>Bought plus reserved: the shares the investor has committed money to.</summary>
         public uint CommittedShares => (uint)Math.Clamp(BoughtShares + ReservedShares, 0, uint.MaxValue);
     }

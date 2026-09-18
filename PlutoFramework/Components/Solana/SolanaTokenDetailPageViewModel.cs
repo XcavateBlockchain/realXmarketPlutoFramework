@@ -2,12 +2,14 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microcharts;
 using PlutoFramework.Components.AddressView;
+using PlutoFramework.Components.XcavateProperty;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Constants;
 using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Solana;
 using SkiaSharp;
+using System.Collections.ObjectModel;
 
 namespace PlutoFramework.Components.Solana
 {
@@ -98,16 +100,23 @@ namespace PlutoFramework.Components.Solana
         private bool historyIsUnavailable = false;
 
         /// <summary>
-        /// The tGBP amount reserved against the user's property reservations. Only the
-        /// tGBP page shows it, and only once the value has actually loaded - it is hidden
-        /// rather than shown as zero, so a failed indexer query can never read as "you
-        /// have reserved nothing".
+        /// The tGBP amount reserved against the user's property reservations, printed as
+        /// the reserved section's total. Only the tGBP page shows it, and only once the
+        /// value has actually loaded - it is hidden rather than shown as zero, so a failed
+        /// indexer query can never read as "you have reserved nothing".
         /// </summary>
         [ObservableProperty]
         private string tgBpReservedText = string.Empty;
 
         [ObservableProperty]
-        private bool tgBpReservedIsVisible = false;
+        private bool reservedSectionIsVisible = false;
+
+        /// <summary>
+        /// The reserved section's per-property rows, in the same load as
+        /// <see cref="TgBpReservedText"/>: every position whose reserved shares bind tGBP,
+        /// each tappable through to its property detail page.
+        /// </summary>
+        public ObservableCollection<ReservedPropertyItem> ReservedProperties { get; } = [];
 
         /// <summary>
         /// Drives the chart itself. Keyed off the points rather than
@@ -268,11 +277,13 @@ namespace PlutoFramework.Components.Solana
         }
 
         /// <summary>
-        /// Loads the tGBP amount reserved against property reservations. Only a tGBP page
-        /// on the cluster whose whitelist carries that mint can show it - the mint differs
-        /// per cluster, so a page opened before a cluster switch may now point at a mint
-        /// that no longer matches. Best effort: the figure is an indexer query, not a
-        /// wallet read, so it is hidden on failure rather than shown as zero.
+        /// Loads the reserved section: the tGBP amount reserved against property
+        /// reservations plus one row per property those reservations sit in. Only a tGBP
+        /// page on the cluster whose whitelist carries that mint can show it - the mint
+        /// differs per cluster, so a page opened before a cluster switch may now point at
+        /// a mint that no longer matches. Best effort: the figures are an indexer query,
+        /// not a wallet read, so the section is hidden on failure rather than shown as
+        /// zero.
         /// </summary>
         public async Task LoadReservedAsync()
         {
@@ -280,7 +291,7 @@ namespace PlutoFramework.Components.Solana
 
             if (entry is null || !string.Equals(Mint, entry.Mint, StringComparison.Ordinal))
             {
-                TgBpReservedIsVisible = false;
+                ReservedSectionIsVisible = false;
 
                 return;
             }
@@ -289,7 +300,7 @@ namespace PlutoFramework.Components.Solana
 
             if (string.IsNullOrEmpty(address))
             {
-                TgBpReservedIsVisible = false;
+                ReservedSectionIsVisible = false;
 
                 return;
             }
@@ -306,12 +317,29 @@ namespace PlutoFramework.Components.Solana
 
             try
             {
-                var reserved = await XcavateReserveBalanceModel.GetReservedTgBpValueAsync(address, token);
+                // One indexer query feeds both the section's total and its per-property
+                // list - a second round trip would only risk the two disagreeing.
+                var positions = await XcavateMarketplaceIndexerModel.GetInvestorPropertiesAsync(
+                    address, null, null, null, null, null,
+                    XcavateReserveBalanceModel.InvestorPropertiesPageSize, 0, token);
 
                 token.ThrowIfCancellationRequested();
 
+                var reserved = XcavateReserveBalanceModel.ValueFor(
+                    XcavateReserveBalanceModel.ComputeReservedValues(positions),
+                    XcavateReserveBalanceModel.TgBpSymbol);
+
                 TgBpReservedText = $"{XcavateReserveBalanceModel.Format(reserved)} tGBP";
-                TgBpReservedIsVisible = reserved > 0m;
+
+                ReservedProperties.Clear();
+
+                foreach (var position in XcavateReserveBalanceModel.ReservedPositions(
+                    positions, XcavateReserveBalanceModel.TgBpSymbol))
+                {
+                    ReservedProperties.Add(ToReservedPropertyItem(position));
+                }
+
+                ReservedSectionIsVisible = reserved > 0m;
 
                 // Only the tGBP page reaches here, so the big amount readout shows the
                 // spendable figure - balance minus what reservations hold - matching every
@@ -329,10 +357,56 @@ namespace PlutoFramework.Components.Solana
             }
             catch
             {
-                // Best effort, as above: hide the row rather than assert a value we could
-                // not verify.
-                TgBpReservedIsVisible = false;
+                // Best effort, as above: hide the section rather than assert values we
+                // could not verify.
+                ReservedSectionIsVisible = false;
             }
+        }
+
+        /// <summary>
+        /// One reserved-section row from a position: the property's best name, its
+        /// reserved share count with the best known location, the tGBP value those shares
+        /// bind, and the property's first image (the bundled placeholder when the indexer
+        /// has none).
+        /// </summary>
+        private static ReservedPropertyItem ToReservedPropertyItem(XcavateSolanaInvestorProperty position)
+        {
+            var metadata = position.Listing.XcavateMetadata;
+
+            var shares = position.ReservedShares;
+            var sharesText = shares == 1 ? "1 token" : $"{shares} tokens";
+
+            var location = FirstNonEmpty(metadata?.Address?.PostCode, metadata?.Address?.TownCity);
+
+            return new ReservedPropertyItem
+            {
+                Listing = position.Listing,
+                NameText = FirstNonEmpty(metadata?.PropertyName) ?? $"Listing #{position.Listing.ListingId}",
+                SubtitleText = location is null ? sharesText : $"{sharesText} · {location}",
+                ValueText = $"{XcavateReserveBalanceModel.Format(XcavateReserveBalanceModel.ComputePositionReservedValue(position))} tGBP",
+                ImageSource = FirstNonEmpty(position.Listing.Metadata?.Image, metadata?.Files.FirstOrDefault())
+                    ?? "noimage.png",
+            };
+        }
+
+        private static string? FirstNonEmpty(params string?[] values) =>
+            values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+
+        /// <summary>
+        /// Opens the property detail page for a reserved position - the same navigation
+        /// the marketplace's property thumbnails use, wrapped from the position's listing.
+        /// </summary>
+        [RelayCommand]
+        public async Task OpenPropertyAsync(ReservedPropertyItem? item)
+        {
+            if (item is null)
+            {
+                return;
+            }
+
+            var wrapper = await XcavatePropertyModel.ToXcavateNftWrapperAsync(item.Listing, CancellationToken.None);
+
+            await XcavatePropertyModel.NavigateToPropertyDetailPageAsync(wrapper, CancellationToken.None);
         }
 
         /// <summary>
