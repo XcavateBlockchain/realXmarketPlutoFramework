@@ -59,8 +59,9 @@ namespace PlutoFramework.Model.Xcavate
 
         /// <summary>
         /// buy_property_shares for <paramref name="amount"/> shares - the direct purchase
-        /// the program only opens after the claim window closes. Not wired to the UI yet;
-        /// the sale phase goes through <see cref="ReserveSharesAsync"/>.
+        /// the program only opens after the claim window closes. The buy popup submits
+        /// this once <see cref="XcavateSolanaListingNft.DirectBuyIsOpen"/> says the window
+        /// closed; while the listing sells it goes through <see cref="ReserveSharesAsync"/>.
         /// </summary>
         public static Task<List<TransactionInstruction>> BuyPropertySharesAsync(
             string investor,

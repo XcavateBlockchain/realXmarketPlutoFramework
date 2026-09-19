@@ -71,6 +71,16 @@ namespace PlutoFramework.Model.Xcavate
         public XcavateOngoingObjectListingDetails? OngoingObjectListingDetails { get; set; }
         public XcavateRealWorldAssetDetails? RealWorldAssetDetails { get; set; }
 
+        /// <summary>
+        /// True once the claim window create_spv opened has closed - the phase in which
+        /// the marketplace program takes buy_property_shares (the direct purchase) and
+        /// rejects reserve_shares. False before the SPV exists (deadline 0) and while
+        /// claims are still running; the program checks <c>now &gt;= claim_deadline</c>,
+        /// so the deadline second itself already counts.
+        /// </summary>
+        public bool DirectBuyIsOpen(long nowUnixSeconds) =>
+            ClaimDeadlineTimestamp != 0 && nowUnixSeconds >= ClaimDeadlineTimestamp;
+
         public Task<ICollectionBase> GetCollectionAsync(CancellationToken token) => throw new NotSupportedException();
 
         public Task<INftBase> GetFullAsync(CancellationToken token) => Task.FromResult<INftBase>(this);

@@ -240,6 +240,15 @@ namespace PlutoFramework.Components.XcavateProperty
         // program's config when the transaction is built.
         public EndpointEnum EndpointKey { get; set; }
 
+        /// <summary>
+        /// Set by the detail page when this listing's claim window has closed: the
+        /// purchase then goes through buy_property_shares (tokens paid for and
+        /// delivered immediately) instead of reserve_shares, and the copy follows.
+        /// </summary>
+        public bool DirectBuyIsOpen { get; set; }
+
+        public string PopupTitle => DirectBuyIsOpen ? "Buy Property Tokens" : "Reserve Property Tokens";
+
         public void SetToDefault()
         {
             IsVisible = false;
@@ -248,6 +257,7 @@ namespace PlutoFramework.Components.XcavateProperty
             Metadata = null;
             ListingDetails = null;
             EndpointKey = EndpointEnum.None;
+            DirectBuyIsOpen = false;
             PaymentTokenSymbol = XcavateReserveBalanceModel.TgBpSymbol;
             PaymentTokenBalance = 0;
             PaymentTokenBalanceLoaded = false;
@@ -324,17 +334,29 @@ namespace PlutoFramework.Components.XcavateProperty
             // AssetId is the property asset's id, a different id space.
             long listingId = ListingDetails.ItemId.Value;
 
+            // Captured before SetToDefault resets it: while a listing sells, purchases
+            // are reservations (paid at claim time); once the claim window closes the
+            // program rejects reserve_shares and the direct buy takes over.
+            var directBuyIsOpen = DirectBuyIsOpen;
+
             // Closed before submitting: a Mobile Wallet Adapter key launches an intent
             // and backgrounds the app, and coming back to a stale popup over a toast
             // that already says "Submitting" reads as a purchase that did not happen.
             SetToDefault();
 
-            // reserve_shares, not buy_property_shares: while a listing sells, purchases
-            // are reservations (paid at claim time); the direct buy only opens after the
-            // claim window closes.
+            var description = (directBuyIsOpen, parsedTokens) switch
+            {
+                (true, 1) => "Buy 1 property token",
+                (true, _) => $"Buy {parsedTokens} property tokens",
+                (false, 1) => "Reserve 1 property token",
+                (false, _) => $"Reserve {parsedTokens} property tokens",
+            };
+
             await XcavateMarketplaceTransactionModel.SubmitAsync(
-                parsedTokens == 1 ? "Reserve 1 property token" : $"Reserve {parsedTokens} property tokens",
-                (investor, ct) => XcavateMarketplaceCallsModel.ReserveSharesAsync(investor, listingId, parsedTokens, ct));
+                description,
+                (investor, ct) => directBuyIsOpen
+                    ? XcavateMarketplaceCallsModel.BuyPropertySharesAsync(investor, listingId, parsedTokens, ct)
+                    : XcavateMarketplaceCallsModel.ReserveSharesAsync(investor, listingId, parsedTokens, ct));
         }
 
         [RelayCommand]

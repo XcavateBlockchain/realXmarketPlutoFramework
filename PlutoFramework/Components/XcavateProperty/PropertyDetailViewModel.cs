@@ -110,6 +110,8 @@ namespace PlutoFramework.Components.XcavateProperty
         private HashSet<XcavateRole>? roles = null;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
+        [NotifyPropertyChangedFor(nameof(MainActionText))]
         private bool spvCreated;
 
         [ObservableProperty]
@@ -236,7 +238,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public string MainActionText => getMainActionState() switch
         {
-            MainActionStates.Buy => "Reserve",
+            MainActionStates.Buy => DirectBuyIsOpen ? "Buy" : "Reserve",
             MainActionStates.ListingExpired => "Expired",
             MainActionStates.RefundBought => "Refund",
             MainActionStates.SoldOut => "Sold Out",
@@ -282,6 +284,16 @@ namespace PlutoFramework.Components.XcavateProperty
         private long ListingId => NftWrapper?.NftBase is XcavateSolanaListingNft solanaListing
             ? solanaListing.ListingId
             : ListingDetails?.ItemId.Value ?? 0;
+
+        /// <summary>
+        /// True once this listing's claim window has closed: purchases then go through
+        /// buy_property_shares (tokens delivered and paid for immediately) instead of
+        /// reserve_shares, which the program rejects from that point on. False for
+        /// Substrate-sourced items, whose flow is unmigrated.
+        /// </summary>
+        private bool DirectBuyIsOpen =>
+            NftWrapper?.NftBase is XcavateSolanaListingNft solanaListing
+            && solanaListing.DirectBuyIsOpen(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
         private bool marketplaceTransactionsSubscribed;
 
@@ -364,6 +376,7 @@ namespace PlutoFramework.Components.XcavateProperty
                     ListingDetails = ((INftXcavateOngoingObjectListing)freshListing).OngoingObjectListingDetails;
                     TokensBought = freshWrapper.TokensBought;
                     TokensOwned = freshWrapper.TokensOwned;
+                    SpvCreated = freshWrapper.SpvCreated;
                 });
             }
             catch (OperationCanceledException)
@@ -433,6 +446,7 @@ namespace PlutoFramework.Components.XcavateProperty
             viewModel.Metadata = Metadata;
             viewModel.IsVisible = true;
             viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper!.NftBase.Type);
+            viewModel.DirectBuyIsOpen = DirectBuyIsOpen;
         }
 
         public async Task CreateSpvAsync()
@@ -708,6 +722,7 @@ namespace PlutoFramework.Components.XcavateProperty
             viewModel.Metadata = Metadata;
             viewModel.IsVisible = true;
             viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper!.NftBase.Type);
+            viewModel.DirectBuyIsOpen = DirectBuyIsOpen;
         }
 
         [RelayCommand]

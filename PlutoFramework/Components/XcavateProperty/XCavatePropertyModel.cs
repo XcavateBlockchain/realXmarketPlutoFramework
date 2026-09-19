@@ -180,6 +180,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 Region = nft.Region,
                 TokensBought = nft.TokensBought,
                 TokensOwned = nft.TokensOwned,
+                SpvCreated = nft.SpvCreated,
             };
 
             await MainThread.InvokeOnMainThreadAsync(async () => await NavigationModel.PushAsync(new PropertyDetailPage(viewModel)));
@@ -306,6 +307,7 @@ namespace PlutoFramework.Components.XcavateProperty
                     viewModel.Region = nft.Region;
                     viewModel.TokensBought = nft.TokensBought;
                     viewModel.TokensOwned = nft.TokensOwned;
+                    viewModel.SpvCreated = nft.SpvCreated;
                     viewModel.Roles = roles;
 
                     // Set last, so the skeleton only steps aside once every field is in place.
