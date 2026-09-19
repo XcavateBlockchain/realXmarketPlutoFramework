@@ -16,6 +16,11 @@ public partial class NftImageView : ContentView
                 : 0.5;
         });
 
+    public static readonly BindableProperty FullImageSourceProperty = BindableProperty.Create(
+        nameof(FullImageSource), typeof(string), typeof(NftImageView),
+        default(string),
+        defaultBindingMode: BindingMode.TwoWay);
+
     public static readonly BindableProperty ExtraButtonsVisibleProperty = BindableProperty.Create(
         nameof(ExtraButtonsVisible), typeof(bool), typeof(NftImageView),
         true,
@@ -40,6 +45,16 @@ public partial class NftImageView : ContentView
     {
         get => (string)GetValue(ImageSourceProperty);
         set => SetValue(ImageSourceProperty, value);
+    }
+
+    /// <summary>
+    /// The full-resolution counterpart of <see cref="ImageSource"/> (which may be a
+    /// compressed mirror thumbnail). Only the full-screen image page loads it.
+    /// </summary>
+    public string FullImageSource
+    {
+        get => (string)GetValue(FullImageSourceProperty);
+        set => SetValue(FullImageSourceProperty, value);
     }
 
     public bool ExtraButtonsVisible
@@ -80,6 +95,10 @@ public partial class NftImageView : ContentView
     }
     private async void OnExpandClicked(object sender, TappedEventArgs e)
     {
-        await Shell.Current.Navigation.PushAsync(new NftImageFullScreenPage(ImageSource));
+        // The full-screen page is the only surface that loads the full-resolution
+        // original; everything else shows the compressed mirror thumbnail.
+        var fullImageSource = string.IsNullOrWhiteSpace(FullImageSource) ? ImageSource : FullImageSource;
+
+        await Shell.Current.Navigation.PushAsync(new NftImageFullScreenPage(fullImageSource));
     }
 }

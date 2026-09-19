@@ -314,11 +314,17 @@ namespace PlutoFramework.Model.Xcavate
             // has no JSON scalar), so it is decoded here once and shared with the view.
             var images = ParseStringArray(offchainMetadata?.PropertyImages);
 
+            // The mirror's compressed 720x720 copies of `images` (same order; null until
+            // the mirror's first upload for the asset) arrive as a real list, unlike the
+            // raw-JSON `propertyImages`. Every surface except the full-screen image page
+            // shows these; an absent list falls back to the full-resolution originals.
+            var thumbnails = offchainMetadata?.PropertyImageThumbnails?.Select(NormalizeMirrorUrl).ToList();
+
             var metadata = new MetadataBase
             {
                 Name = propertyName,
                 Description = offchainMetadata?.PropertyDescription ?? string.Empty,
-                Image = images.FirstOrDefault() ?? string.Empty,
+                Image = thumbnails?.FirstOrDefault() ?? images.FirstOrDefault() ?? string.Empty,
             };
 
             // The indexer's decomposed document when the asset carries one, degraded to a
@@ -441,6 +447,14 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// The mirror currently prefixes its public thumbnail URLs with a doubled scheme
+        /// (<c>https://://host/...</c>), which no image loader can parse; collapsing it
+        /// here keeps the views working until the mirror is fixed. Correct URLs contain
+        /// no "://://" and pass through unchanged.
+        /// </summary>
+        private static string NormalizeMirrorUrl(string url) => url.Replace("://://", "://", StringComparison.Ordinal);
+
+        /// <summary>
         /// The indexer's enricher stores the document's URL arrays (<c>propertyImages</c>,
         /// <c>otherDocuments</c>) as raw JSON strings - juniper has no JSON scalar - so the
         /// array is decoded here. Malformed or empty input degrades to no URLs.
@@ -489,8 +503,11 @@ namespace PlutoFramework.Model.Xcavate
                     IsStampDutyPaid = finances?.IsStampDutyPaid ?? false,
                     IsAnnualServiceChargePaid = finances?.IsAnnualServiceChargePaid ?? false,
                 },
-                // Files is what every view treats as the image list.
+                // DisplayImages is what every view treats as the image list: the mirror's
+                // compressed thumbnails when the indexer supplied them, the full-resolution
+                // Files otherwise. Files stays full-res for the full-screen image page.
                 Files = ParseStringArray(metadata.PropertyImages),
+                ThumbnailFiles = metadata.PropertyImageThumbnails?.Select(NormalizeMirrorUrl).ToList() ?? [],
                 CreatedAt = metadata.CreatedAt ?? default,
                 UpdatedAt = metadata.UpdatedAt ?? default,
                 Address = address is null

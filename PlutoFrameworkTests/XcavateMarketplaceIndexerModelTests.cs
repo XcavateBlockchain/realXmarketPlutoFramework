@@ -41,6 +41,22 @@ namespace PlutoFrameworkTests
                     Assert.That(property.Metadata.Name, Is.EqualTo(property.XcavateMetadata.PropertyName));
                 }
 
+                // When the mirror has uploaded for the asset, the compressed thumbnails
+                // are what the views show: the base image is the first thumbnail and the
+                // display list is the thumbnails, with the full-resolution originals kept
+                // on Files for the full-screen image page. (Soft: a devnet without the
+                // mirror configured has ThumbnailFiles empty everywhere.)
+                if (property.XcavateMetadata!.ThumbnailFiles.Count > 0)
+                {
+                    Assert.That(property.Metadata.Image, Is.EqualTo(property.XcavateMetadata.ThumbnailFiles[0]));
+                    Assert.That(property.XcavateMetadata.DisplayImages, Is.EqualTo(property.XcavateMetadata.ThumbnailFiles));
+                    Assert.That(property.XcavateMetadata.ThumbnailFiles.Count, Is.LessThanOrEqualTo(property.XcavateMetadata.Files.Count));
+                }
+                else
+                {
+                    Assert.That(property.XcavateMetadata.DisplayImages, Is.EqualTo(property.XcavateMetadata.Files));
+                }
+
                 Console.WriteLine($"{property.ListingId}: {property.XcavateMetadata!.PropertyName} ({property.ListingStatus})");
             }
 

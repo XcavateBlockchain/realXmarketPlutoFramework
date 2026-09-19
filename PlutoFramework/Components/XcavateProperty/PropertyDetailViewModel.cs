@@ -142,6 +142,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(RentalDemandPercentage))]
         [NotifyPropertyChangedFor(nameof(LocationShortName))]
         [NotifyPropertyChangedFor(nameof(PropertyImages))]
+        [NotifyPropertyChangedFor(nameof(PropertyFullImages))]
         [NotifyPropertyChangedFor(nameof(PropertyStatus))]
         [NotifyPropertyChangedFor(nameof(PropertyAddressLine))]
         [NotifyPropertyChangedFor(nameof(ListingPrice))]
@@ -170,7 +171,11 @@ namespace PlutoFramework.Components.XcavateProperty
             ? "Unknown address"
             : $"{Metadata.Address.FlatOrUnit}, {Metadata.Address.Street}, {Metadata.Address.TownCity}, {Metadata.Address.PostCode}";
 
-        public IReadOnlyList<string> PropertyImages => Metadata?.Files ?? [];
+        // The detail page's gallery shows the compressed mirror thumbnails; only the
+        // full-screen image page (expand) loads the full-resolution originals.
+        public IReadOnlyList<string> PropertyImages => Metadata?.DisplayImages ?? [];
+
+        public IReadOnlyList<string> PropertyFullImages => Metadata?.Files ?? [];
 
         public string PropertyStatus => Metadata?.Status ?? "Unknown";
 

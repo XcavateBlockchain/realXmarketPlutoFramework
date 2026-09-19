@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace UniqueryPlus.Metadata
 {
@@ -17,6 +17,21 @@ namespace UniqueryPlus.Metadata
         [JsonPropertyName("financials")] public required PropertyFinancials Financials { get; set; }
 
         [JsonPropertyName("files")] public List<string> Files { get; set; } = [];
+
+        /// <summary>
+        /// The indexer's compressed (720x720 JPEG) mirrors of <see cref="Files"/>, in the
+        /// same order. Only populated by the GraphQL indexer feed; empty when the mirror
+        /// has not uploaded for the asset (or is not configured), which is also the
+        /// fallback trigger for <see cref="DisplayImages"/>.
+        /// </summary>
+        [JsonPropertyName("thumbnailFiles")] public List<string> ThumbnailFiles { get; set; } = [];
+
+        /// <summary>
+        /// The image list every surface except the full-screen image page should bind to:
+        /// the compressed <see cref="ThumbnailFiles"/> when the indexer supplied them, the
+        /// full-resolution <see cref="Files"/> otherwise.
+        /// </summary>
+        [JsonIgnore] public IReadOnlyList<string> DisplayImages => ThumbnailFiles.Count > 0 ? ThumbnailFiles : Files;
 
         [JsonPropertyName("createdAt")] public DateTimeOffset CreatedAt { get; set; }
 

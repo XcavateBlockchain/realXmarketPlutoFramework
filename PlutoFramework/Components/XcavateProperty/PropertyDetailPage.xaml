@@ -30,7 +30,8 @@
 
                     <xcavate:RiskWarningView />
 
-                    <nft:NftMultiImageView ImageSources="{Binding PropertyImages}" />
+                    <nft:NftMultiImageView ImageSources="{Binding PropertyImages}"
+                                           FullImageSources="{Binding PropertyFullImages}" />
 
                     <!--<Label Text="{Binding PropertyStatus}"
                            FontSize="14"

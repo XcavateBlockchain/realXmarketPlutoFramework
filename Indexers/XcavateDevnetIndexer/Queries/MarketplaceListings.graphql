@@ -96,6 +96,10 @@ fragment ListingParts on Listing {
       createdAt
       updatedAt
       propertyImages
+      # 720x720 JPEG mirrors of `propertyImages` (same order); null until the mirror's
+      # first upload for the asset. The app shows these everywhere except the full-screen
+      # image page, which is the only surface that loads the full-resolution originals.
+      propertyImageThumbnails
       address {
         street
         townCity

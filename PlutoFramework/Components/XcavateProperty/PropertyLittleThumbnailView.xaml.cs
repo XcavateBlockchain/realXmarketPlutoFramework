@@ -22,7 +22,9 @@ public partial class PropertyLittleThumbnailView : ContentView
             control.nameLabelText.Text = metadata.PropertyName;
             control.locationView.LocationName = $"{metadata.Address.Street}, {metadata.Address.TownCity}";
 
-            var images = metadata.Files;
+            // Compressed mirror thumbnails when the indexer supplied them, else the
+            // full-resolution images (DisplayImages does the fallback).
+            var images = metadata.DisplayImages;
 
             if (images.Count() > 0)
             {

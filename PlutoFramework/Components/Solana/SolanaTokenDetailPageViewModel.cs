@@ -384,7 +384,7 @@ namespace PlutoFramework.Components.Solana
                 NameText = FirstNonEmpty(metadata?.PropertyName) ?? $"Listing #{position.Listing.ListingId}",
                 SubtitleText = location is null ? sharesText : $"{sharesText} · {location}",
                 ValueText = $"{XcavateReserveBalanceModel.Format(XcavateReserveBalanceModel.ComputePositionReservedValue(position))} tGBP",
-                ImageSource = FirstNonEmpty(position.Listing.Metadata?.Image, metadata?.Files.FirstOrDefault())
+                ImageSource = FirstNonEmpty(position.Listing.Metadata?.Image, metadata?.DisplayImages.FirstOrDefault())
                     ?? "noimage.png",
             };
         }

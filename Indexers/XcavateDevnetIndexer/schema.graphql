@@ -654,6 +654,8 @@ type PropertyMetadata {
   otherDocuments: String
   "Raw JSON array of URL strings."
   propertyImages: String
+  "Public thumbnail URLs - the mirror's 720x720 JPEGs, in the same order as\n`propertyImages`; `null` until the mirror's first upload for the asset. Only uploaded\nimages appear; stale entries beyond the current `propertyImages` length are filtered out."
+  propertyImageThumbnails: [String!]
 }
 
 "The document's `address` object."
