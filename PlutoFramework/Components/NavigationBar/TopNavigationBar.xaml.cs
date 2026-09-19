@@ -1,10 +1,15 @@
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Layouts;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Model;
+using PlutoFrameworkCore.Solana;
 
 namespace PlutoFramework.Components.NavigationBar;
 
 public partial class TopNavigationBar : ContentView
 {
+    private const double BarHeight = 45;
+
     public static readonly BindableProperty ExtraIsVisibleProperty = BindableProperty.Create(
         nameof(ExtraIsVisible), typeof(bool), typeof(TopNavigationBar),
         defaultBindingMode: BindingMode.TwoWay,
@@ -35,7 +40,26 @@ public partial class TopNavigationBar : ContentView
     public TopNavigationBar()
 	{
 		InitializeComponent();
+
+        UpdateBounds();
+
+        SolanaNetworkModel.ClusterChanged += OnClusterChanged;
 	}
+
+    private void OnClusterChanged(object? sender, SolanaCluster cluster)
+    {
+        // Same orphan guard as SolanaBalanceCellView.OnClusterChanged: a view left behind
+        // when its page was replaced stays subscribed to the static event forever.
+        if (Handler is null)
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(UpdateBounds);
+    }
+
+    private void UpdateBounds() =>
+        AbsoluteLayout.SetLayoutBounds(this, new Rect(0.5, 0, 1, BarHeight + SolanaDevnetWarningView.ExtraHeight));
 
     public string Title
     {

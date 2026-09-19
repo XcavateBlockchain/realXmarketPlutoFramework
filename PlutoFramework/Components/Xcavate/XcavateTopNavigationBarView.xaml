@@ -5,8 +5,11 @@
              AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
              xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
              x:Class="PlutoFramework.Components.Xcavate.XcavateTopNavigationBarView">
+    <Grid RowDefinitions="*,Auto">
     <xcavate:PageBottomBarView
+        Grid.Row="0"
         Padding="10"
         ColumnSpacing="10">
         <xcavate:PageBottomBarView.ColumnDefinitions>
@@ -124,4 +127,7 @@
 
         <card:TopPillBackgroundView Grid.ColumnSpan="5" HeightRequest="65" TranslationY="-65" Margin="-10" />
     </xcavate:PageBottomBarView>
+
+    <solana:SolanaDevnetWarningView Grid.Row="1" />
+    </Grid>
 </ContentView>

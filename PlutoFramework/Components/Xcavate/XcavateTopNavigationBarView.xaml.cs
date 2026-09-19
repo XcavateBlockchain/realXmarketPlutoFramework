@@ -1,10 +1,15 @@
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Layouts;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Model;
+using PlutoFrameworkCore.Solana;
 
 namespace PlutoFramework.Components.Xcavate;
 
 public partial class XcavateTopNavigationBarView : ContentView
 {
+    private const double BarHeight = 65;
+
     public static readonly BindableProperty TitleProperty = BindableProperty.Create(
         nameof(Title), typeof(string), 
         typeof(XcavateTopNavigationBarView),
@@ -212,7 +217,26 @@ public partial class XcavateTopNavigationBarView : ContentView
     public XcavateTopNavigationBarView()
 	{
 		InitializeComponent();
+
+        UpdateBounds();
+
+        SolanaNetworkModel.ClusterChanged += OnClusterChanged;
 	}
+
+    private void OnClusterChanged(object? sender, SolanaCluster cluster)
+    {
+        // Same orphan guard as SolanaBalanceCellView.OnClusterChanged: a view left behind
+        // when its page was replaced stays subscribed to the static event forever.
+        if (Handler is null)
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(UpdateBounds);
+    }
+
+    private void UpdateBounds() =>
+        AbsoluteLayout.SetLayoutBounds(this, new Rect(0.5, 0, 1, BarHeight + SolanaDevnetWarningView.ExtraHeight));
 
     public string Title
     {

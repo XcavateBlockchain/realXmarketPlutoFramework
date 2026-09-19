@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Templates.PageTemplate;
 using PlutoFramework.Model;
+using PlutoFrameworkCore.Solana;
 using System.Text;
 
 namespace PlutoFramework.Components.Messages;
@@ -23,6 +25,31 @@ public partial class MessageWebViewPage : PageTemplate
         {
             webView.Url = url;
         }
+
+        ApplyDevnetBannerOffset();
+
+        SolanaNetworkModel.ClusterChanged += OnClusterChanged;
+    }
+
+    private void OnClusterChanged(object? sender, SolanaCluster cluster)
+    {
+        // Same orphan guard as SolanaBalanceCellView.OnClusterChanged: a page left behind
+        // when its parent was replaced stays subscribed to the static event forever.
+        if (Handler is null)
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(ApplyDevnetBannerOffset);
+    }
+
+    /// <summary>
+    /// The header grows by the devnet warning strip's height while it is showing, so the
+    /// web view below it must move down by the same amount.
+    /// </summary>
+    private void ApplyDevnetBannerOffset()
+    {
+        contentLayout.Margin = new Thickness(0, 65 + SolanaDevnetWarningView.ExtraHeight, 0, 0);
     }
 
     protected override void OnApplyTemplate()

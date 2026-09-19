@@ -404,9 +404,9 @@ namespace PlutoFramework.Components.Solana
                 return;
             }
 
-            var wrapper = await XcavatePropertyModel.ToXcavateNftWrapperAsync(item.Listing, CancellationToken.None);
+            var wrapper = await PlutoFramework.Components.XcavateProperty.XcavatePropertyModel.ToXcavateNftWrapperAsync(item.Listing, CancellationToken.None);
 
-            await XcavatePropertyModel.NavigateToPropertyDetailPageAsync(wrapper, CancellationToken.None);
+            await PlutoFramework.Components.XcavateProperty.XcavatePropertyModel.NavigateToPropertyDetailPageAsync(wrapper, CancellationToken.None);
         }
 
         /// <summary>

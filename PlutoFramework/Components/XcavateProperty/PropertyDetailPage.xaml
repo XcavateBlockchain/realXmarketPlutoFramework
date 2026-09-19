@@ -19,7 +19,7 @@
                        Title="PropertyDetailPage"
                        NavigationBarIsVisible="False">
     <template:PageTemplate.MainContent>
-        <Grid>
+        <Grid x:Name="contentGrid">
             <!-- Shown until the details finish loading. Mirrors the content below block for
                  block, so the page appears instantly and the swap to real data is seamless. -->
             <loading:PropertyDetailSkeletonView IsVisible="{Binding IsLoading}" />

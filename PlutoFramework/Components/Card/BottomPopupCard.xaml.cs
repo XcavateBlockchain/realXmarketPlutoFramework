@@ -22,7 +22,10 @@ public partial class BottomPopupCard : AbsoluteLayout
             }
             else
             {
-                Task close = control.CloseCardAsync();
+                // Binding-driven closes can be superseded by a re-show before the closing
+                // animation ends (back-to-back Mobile Wallet Adapter signing sessions do
+                // exactly this), so their write-back must yield to the newer show.
+                Task close = control.CloseCardAsync(skipWriteBackIfReshown: true);
             }
         });
 
@@ -68,9 +71,22 @@ public partial class BottomPopupCard : AbsoluteLayout
         await AnimateToTop();
     }
 
-    public async Task CloseCardAsync()
+    public async Task CloseCardAsync(bool skipWriteBackIfReshown = false)
     {
         await AnimateToBottom();
+
+        // The closing animation spans 500ms, and the view model may already have been
+        // shown again by the next operation by the time it ends. Writing the stale hide
+        // back would flip the new session's IsVisible - and for popups whose hide cancels
+        // in-flight work (the MWA signature popup cancels the wallet session's token),
+        // silently abort an operation the user is still approving in the wallet app,
+        // surfacing as an "operation was canceled" error. Gesture-driven closes keep the
+        // unconditional write-back: there the view model has not been told yet, which is
+        // the whole point of the write-back.
+        if (skipWriteBackIfReshown && IsShown)
+        {
+            return;
+        }
 
         try
         {

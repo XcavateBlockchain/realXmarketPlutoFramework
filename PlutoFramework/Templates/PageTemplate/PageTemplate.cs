@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.Input;
 using MauiView = Microsoft.Maui.Controls.View;
+using PlutoFramework.Components.Solana;
 using PlutoFramework.Model;
+using PlutoFrameworkCore.Solana;
 using TopNavigationBarTemplateView = PlutoFramework.Templates.TopNavigationBarTemplate.TopNavigationBarTemplate;
 
 namespace PlutoFramework.Templates.PageTemplate
@@ -122,6 +124,20 @@ namespace PlutoFramework.Templates.PageTemplate
             AutomationProperties.SetIsInAccessibleTree(this, true);
 
             HideSoftInputOnTapped = true;
+
+            SolanaNetworkModel.ClusterChanged += OnClusterChanged;
+        }
+
+        private void OnClusterChanged(object? sender, SolanaCluster cluster)
+        {
+            // Same orphan guard as SolanaBalanceCellView.OnClusterChanged: a page left behind
+            // when the main page was replaced stays subscribed to the static event forever.
+            if (Handler is null)
+            {
+                return;
+            }
+
+            MainThread.BeginInvokeOnMainThread(ApplyScrollViewPadding);
         }
 
         protected override bool OnBackButtonPressed()
@@ -138,7 +154,8 @@ namespace PlutoFramework.Templates.PageTemplate
                 return;
             }
 
-            var topNavigationBarHeight = (double)Application.Current!.Resources["TopNavigationBarHeight"];
+            var topNavigationBarHeight = (double)Application.Current!.Resources["TopNavigationBarHeight"]
+                + SolanaDevnetWarningView.ExtraHeight;
 
             var scrollViewPadding = NavigationBarIsVisible ? new Thickness(0, topNavigationBarHeight, 0, 0) : new Thickness(0);
 
