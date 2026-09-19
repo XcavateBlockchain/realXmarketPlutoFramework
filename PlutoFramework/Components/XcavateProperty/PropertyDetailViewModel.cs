@@ -10,6 +10,7 @@ using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
+using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore.Xcavate;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
@@ -37,6 +38,13 @@ namespace PlutoFramework.Components.XcavateProperty
 
     public partial class PropertyDetailViewModel : ObservableObject
     {
+        /// <summary>
+        /// The messenger route that shows one namespace's buckets, mirroring the
+        /// indexed-bucket deep link format in <c>NotificationDeepLinkModel</c>.
+        /// </summary>
+        private const string NamespaceUrlFormat =
+            "https://realxmessenger.xcavate.io/messages/namespace/{0}?isHeaderVisible=false&primaryColor=%233B4F74";
+
         private MainActionStates getMainActionState()
         {
             if (NftWrapper!.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0)
@@ -725,7 +733,28 @@ namespace PlutoFramework.Components.XcavateProperty
             viewModel.DirectBuyIsOpen = DirectBuyIsOpen;
         }
 
+        /// <summary>
+        /// Opens the messenger on the namespace the profile API created for this property
+        /// (keyed by the marketplace listing id). A property whose namespace is not indexed
+        /// yet - or any lookup failure - falls back to the generic bucket dashboard.
+        /// </summary>
         [RelayCommand]
-        public Task MessageAsync() => Shell.Current.Navigation.PushAsync(new MessageWebViewPage());
+        public async Task MessageAsync()
+        {
+            long? namespaceId = null;
+
+            try
+            {
+                namespaceId = await PropertyNamespaceClient.GetNamespaceIdByPropertyIdAsync(ListingId, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to resolve the property's messaging namespace: " + ex);
+            }
+
+            await Shell.Current.Navigation.PushAsync(namespaceId is null
+                ? new MessageWebViewPage()
+                : new MessageWebViewPage(string.Format(NamespaceUrlFormat, namespaceId)));
+        }
     }
 }
