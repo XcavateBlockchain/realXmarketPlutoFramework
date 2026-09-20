@@ -30,6 +30,9 @@ namespace PlutoFramework.Components.XcavateProperty
         /// </summary>
         public ObservableCollection<object> FeedItems { get; } = new ObservableCollection<object>();
 
+        private readonly MarketplaceFeedSkeletonItem skeletonFeedItem;
+        private readonly MarketplaceFeedEmptyStateItem emptyStateFeedItem;
+
         private readonly PropertyMarketplaceFilterPopupViewModel filterPopupViewModel;
         private bool clientLoaded;
         private int offset = 0;
@@ -75,6 +78,9 @@ namespace PlutoFramework.Components.XcavateProperty
             filterPopupViewModel.ApplyRequested = ApplyFiltersAsync;
             searchText = filterPopupViewModel.SearchText;
 
+            skeletonFeedItem = new MarketplaceFeedSkeletonItem(this);
+            emptyStateFeedItem = new MarketplaceFeedEmptyStateItem(this);
+
             ResetFeedItems();
 
             // ShowSkeleton depends on the base-class Loading flag and the Items count, neither of
@@ -90,7 +96,11 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 if (e.PropertyName == nameof(Loading))
                 {
-                    MainThread.BeginInvokeOnMainThread(() => OnPropertyChanged(nameof(ShowSkeleton)));
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        OnPropertyChanged(nameof(ShowSkeleton));
+                        SyncFeedSlots();
+                    });
                 }
             };
             Items.CollectionChanged += (sender, e) =>
@@ -99,6 +109,7 @@ namespace PlutoFramework.Components.XcavateProperty
                     OnPropertyChanged(nameof(ShowSkeleton));
                     OnPropertyChanged(nameof(NoItems));
                     OnPropertyChanged(nameof(AnyItems));
+                    SyncFeedSlots();
                 });
 
             // A confirmed marketplace transaction (a reserve took shares off the market)
@@ -504,8 +515,40 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             FeedItems.Clear();
             FeedItems.Add(new MarketplaceFeedHeaderItem(this));
-            FeedItems.Add(new MarketplaceFeedSkeletonItem(this));
-            FeedItems.Add(new MarketplaceFeedEmptyStateItem(this));
+            SyncFeedSlots();
+        }
+
+        /// <summary>
+        /// Keeps the skeleton and empty-state markers in the feed only while they apply. They are
+        /// added/removed rather than hidden because an IsVisible=false item can keep its cell's
+        /// measured space inside the CollectionView, showing up as a gap under the header.
+        /// Runs on the main thread (all callers marshal there).
+        /// </summary>
+        private void SyncFeedSlots()
+        {
+            if (ShowSkeleton)
+            {
+                if (!FeedItems.Contains(skeletonFeedItem))
+                {
+                    FeedItems.Insert(1, skeletonFeedItem);
+                }
+            }
+            else
+            {
+                FeedItems.Remove(skeletonFeedItem);
+            }
+
+            if (NoItems)
+            {
+                if (!FeedItems.Contains(emptyStateFeedItem))
+                {
+                    FeedItems.Add(emptyStateFeedItem);
+                }
+            }
+            else
+            {
+                FeedItems.Remove(emptyStateFeedItem);
+            }
         }
 
         private async Task HydrateRemainingAsync(CancellationToken token)

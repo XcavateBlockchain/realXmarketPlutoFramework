@@ -161,8 +161,16 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(TokensAvailable))]
         [NotifyPropertyChangedFor(nameof(RentalIncome))]
         [NotifyPropertyChangedFor(nameof(TokensOwnedWorth))]
+        [NotifyPropertyChangedFor(nameof(TokensBoughtWorth))]
         [NotifyPropertyChangedFor(nameof(CompanyName))]
         [NotifyPropertyChangedFor(nameof(CompanyImage))]
+        [NotifyPropertyChangedFor(nameof(PropertyArea))]
+        [NotifyPropertyChangedFor(nameof(OffStreetParking))]
+        [NotifyPropertyChangedFor(nameof(OutdoorSpace))]
+        [NotifyPropertyChangedFor(nameof(NumberOfBedrooms))]
+        [NotifyPropertyChangedFor(nameof(ConstructionDate))]
+        [NotifyPropertyChangedFor(nameof(NumberOfBathrooms))]
+        [NotifyPropertyChangedFor(nameof(Quality))]
         private PropertyMetadata? metadata;
 
         [ObservableProperty]

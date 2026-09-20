@@ -22,12 +22,15 @@ namespace PlutoFrameworkCore.Solana
 
         /// <summary>
         /// A recent blockhash, which every transaction must carry to be accepted.
+        /// Fetched at confirmed rather than the RPC default finalized: a wallet-app
+        /// signing round trip has to fit inside the blockhash's ~150-slot lifetime,
+        /// and a finalized hash arrives already some 30 slots (~15 seconds) into it.
         /// </summary>
         public static async Task<string> GetLatestBlockHashAsync(SolanaCluster cluster, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
 
-            var result = await GetClient(cluster).GetLatestBlockHashAsync();
+            var result = await GetClient(cluster).GetLatestBlockHashAsync(Solnet.Rpc.Types.Commitment.Confirmed);
 
             var blockHash = Unwrap(result, $"fetch a recent blockhash on {cluster.GetName()}")
                 .Value?.Blockhash;

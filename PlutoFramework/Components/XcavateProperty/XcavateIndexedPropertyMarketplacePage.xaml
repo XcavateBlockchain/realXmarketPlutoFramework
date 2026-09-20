@@ -29,8 +29,10 @@
         the property cards. They are NOT CollectionView.Header/Footer: on iOS those are hosted
         as UICollectionView supplementary views, and self-sizing ones (MeasureAllItems) crash
         this page on navigation. Plain list items are measured as regular cells, which is safe.
-        The skeleton slot sits directly under the header, exactly where the first property card
-        appears, and collapses once any items are loaded (ShowSkeleton).
+        The skeleton item sits directly under the header, exactly where the first property card
+        appears; the view model inserts it only while the list is empty and loading, and the
+        empty-state item only when nothing matched - hiding them with IsVisible would leave
+        their measured space behind as a gap.
         The 90px bottom row keeps the list clear of the pinned XcavateNavigationBarView,
         which overlays the bottom of the page.
     -->
@@ -131,14 +133,13 @@
 
             <xcavateproperty:MarketplaceFeedTemplateSelector.SkeletonTemplate>
                 <DataTemplate>
-                    <loading:SkeletonCardView IsVisible="{Binding ViewModel.ShowSkeleton}" />
+                    <loading:SkeletonCardView />
                 </DataTemplate>
             </xcavateproperty:MarketplaceFeedTemplateSelector.SkeletonTemplate>
 
             <xcavateproperty:MarketplaceFeedTemplateSelector.EmptyStateTemplate>
                 <DataTemplate>
-                    <StackLayout HeightRequest="200"
-                                 IsVisible="{Binding ViewModel.NoItems}">
+                    <StackLayout HeightRequest="200">
                         <Label Text="{Binding ViewModel.NoItemsMessage}"
                                TextColor="#A6A6A6"
                                HorizontalOptions="Center"

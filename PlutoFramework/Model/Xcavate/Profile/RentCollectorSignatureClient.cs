@@ -39,10 +39,14 @@ namespace PlutoFramework.Model.Xcavate.Profile
         /// <paramref name="compiledMessage"/>.
         /// </summary>
         /// <remarks>
-        /// The account signs the signed-payload for authentication, which under a Mobile
-        /// Wallet Adapter wallet is a second user-facing prompt after the one the
-        /// transaction itself raises - deliberately the API call happens first, so a
-        /// 400/503 from the server costs the user one prompt rather than two.
+        /// The account signs the signed-payload for authentication. With a key held on
+        /// this device that is free; under a Mobile Wallet Adapter wallet it is a
+        /// user-facing prompt, so the marketplace's two-signature flow does not call
+        /// this - it signs the payload inside the same wallet session as the
+        /// transaction itself and posts with <see cref="PostSignedAsync"/>, keeping
+        /// the blockhash's short lifetime to one trip through the wallet app. Either
+        /// way the API call comes before the transaction prompt: a 400/503 from the
+        /// server never costs a transaction approval too.
         /// </remarks>
         public static async Task<byte[]> GetRentCollectorSignatureAsync(
             PlutoFrameworkSolanaAccount account,
@@ -60,14 +64,30 @@ namespace PlutoFramework.Model.Xcavate.Profile
 
             var signature = await signer.SignAsync(payload);
 
+            return await PostSignedAsync(
+                body, timestamp, signer.Address, signer.EncodeSignature(signature), token);
+        }
+
+        /// <summary>
+        /// The HTTP half of <see cref="GetRentCollectorSignatureAsync"/> for a payload
+        /// signed elsewhere - under Mobile Wallet Adapter, inside the wallet session
+        /// that goes on to sign the transaction itself.
+        /// </summary>
+        public static async Task<byte[]> PostSignedAsync(
+            string body,
+            string timestamp,
+            string signerAddress,
+            string encodedSignature,
+            CancellationToken token)
+        {
             using var request = new HttpRequestMessage(HttpMethod.Post, ApiBaseUrl + EndpointPath.TrimStart('/'));
 
             // "application/json", not just "json" - the .NET 10 media-type parser
             // throws a FormatException on the latter before the request is even sent.
             request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
-            request.Headers.Add("X-SS58-Address", signer.Address);
-            request.Headers.Add("X-Signature", signer.EncodeSignature(signature));
+            request.Headers.Add("X-SS58-Address", signerAddress);
+            request.Headers.Add("X-Signature", encodedSignature);
             request.Headers.Add("X-Timestamp", timestamp);
 
             using var httpClient = new HttpClient();
