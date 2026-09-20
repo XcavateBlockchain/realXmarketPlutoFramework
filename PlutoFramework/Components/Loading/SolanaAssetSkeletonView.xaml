@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.Loading.SolanaAssetSkeletonView"
+             HorizontalOptions="Fill">
+    <Grid>
+        <Border x:Name="cardBorder"
+                HorizontalOptions="Fill"
+                BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}"
+                StrokeThickness="{x:StaticResource CardBorderThickness}"
+                Stroke="{StaticResource CardBorderColor}"
+                Padding="10, 0, 10, 0"
+                Shadow="{StaticResource CardShadow}">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+            </Border.StrokeShape>
+            <!-- Same shape as SolanaAssetView: 70px row, 40px icon on the left, symbol
+                 beside it, amount and USD value stacked on the right. -->
+            <Grid ColumnDefinitions="70,*,130"
+                  HeightRequest="70">
+                <Border Grid.Column="0"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#dddddd, Dark=#222222}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20" />
+                    </Border.StrokeShape>
+                </Border>
+
+                <Border Grid.Column="1"
+                        WidthRequest="80"
+                        HeightRequest="16"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Center"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                </Border>
+
+                <VerticalStackLayout Grid.Column="2"
+                                     Spacing="2"
+                                     Margin="0, 0, 15, 0"
+                                     VerticalOptions="Center">
+                    <Border WidthRequest="90"
+                            HeightRequest="15"
+                            HorizontalOptions="End"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="7" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Border WidthRequest="60"
+                            HeightRequest="12"
+                            HorizontalOptions="End"
+                            StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light=#E0E0E0, Dark=#2F2F2F}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="6" />
+                        </Border.StrokeShape>
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <Border x:Name="shimmerBorder"
+                InputTransparent="True"
+                Padding="0"
+                StrokeThickness="0"
+                IsVisible="False">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+            </Border.StrokeShape>
+        </Border>
+    </Grid>
+</ContentView>

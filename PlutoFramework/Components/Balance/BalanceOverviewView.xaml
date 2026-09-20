@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+             xmlns:animations="clr-namespace:PlutoFramework.Components.Animations"
              x:Class="PlutoFramework.Components.Balance.BalanceOverviewView">
     <card:Card Padding="20">
         <card:Card.View>
@@ -19,19 +20,27 @@
                            />
                 </HorizontalStackLayout>
 
-                <Label VerticalTextAlignment="Center"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Start"
-                       HorizontalTextAlignment="Start"
-                       TextColor="{StaticResource Primary}"
-                       FontSize="25">
-                    <Label.FormattedText>
-                        <FormattedString>
-                            <Span FontAttributes="Bold"
-                                  Text="{Binding UsdSum}" />
-                        </FormattedString>
-                    </Label.FormattedText>
-                </Label>
+                <Grid>
+                    <Label x:Name="staticValueLabel"
+                           VerticalTextAlignment="Center"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Start"
+                           HorizontalTextAlignment="Start"
+                           TextColor="{StaticResource Primary}"
+                           FontSize="25">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span FontAttributes="Bold"
+                                      Text="{Binding UsdSum}" />
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                    <animations:RollingTickerView x:Name="rollingValue"
+                                                  Value="{Binding UsdSum}"
+                                                  FontSize="25"
+                                                  DigitHeight="34"
+                                                  IsVisible="False" />
+                </Grid>
 
                 <buttons:ReceiveAndTransferView x:Name="receiveAndTransferView" Margin="0" />
             </VerticalStackLayout>

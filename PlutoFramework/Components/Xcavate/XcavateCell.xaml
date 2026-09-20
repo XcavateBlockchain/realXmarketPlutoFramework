@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
+             xmlns:animations="clr-namespace:PlutoFramework.Components.Animations"
              x:Class="PlutoFramework.Components.Xcavate.XcavateCell"
              HeightRequest="80"
              Margin="0">
@@ -27,11 +28,11 @@
                                                                HeightRequest="28"
                                                                Margin="0, 5, 0, 0"/>
 
-                    <HorizontalStackLayout x:Name="valueContainer"
-                                           HeightRequest="30"
-                                           Margin="10, 0, 0, 0"
-                                           Spacing="0">
-                    </HorizontalStackLayout>
+                    <animations:RollingTickerView x:Name="rollingTicker"
+                                                  HeightRequest="30"
+                                                  Margin="10, 0, 0, 0"
+                                                  FontFamily="XcavateFont"
+                                                  IsRollingEnabled="False" />
 
                     <Label x:Name="secondaryValueLabel"
                            HeightRequest="18"

@@ -21,6 +21,15 @@ namespace PlutoFramework.Components.XcavateProperty
         [ObservableProperty]
         private string searchText = string.Empty;
 
+        /// <summary>
+        /// What the CollectionView actually shows: the scrolling header (risk warning, tabs,
+        /// search bar), the skeleton slot, the property cards from Items and the empty-state
+        /// slot. Items stays the source of truth for the card list (ItemsDict, ShowSkeleton,
+        /// NoItems); this only mirrors it so the chrome scrolls with the cards without using
+        /// CollectionView.Header/Footer, which crash this page on iOS.
+        /// </summary>
+        public ObservableCollection<object> FeedItems { get; } = new ObservableCollection<object>();
+
         private readonly PropertyMarketplaceFilterPopupViewModel filterPopupViewModel;
         private bool clientLoaded;
         private int offset = 0;
@@ -65,6 +74,8 @@ namespace PlutoFramework.Components.XcavateProperty
             filterPopupViewModel = DependencyService.Get<PropertyMarketplaceFilterPopupViewModel>();
             filterPopupViewModel.ApplyRequested = ApplyFiltersAsync;
             searchText = filterPopupViewModel.SearchText;
+
+            ResetFeedItems();
 
             // ShowSkeleton depends on the base-class Loading flag and the Items count, neither of
             // which auto-notifies this derived property. Re-raise it (on the main thread) whenever
@@ -207,6 +218,7 @@ namespace PlutoFramework.Components.XcavateProperty
                         foreach (var newNft in newItems)
                         {
                             Items.Add(newNft);
+                            FeedItems.Add(newNft);
                         }
                     });
 
@@ -477,9 +489,23 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             ItemsDict.Clear();
             Items.Clear();
+
+            // Clear can run off the main thread (the debounced search path); the feed mirror
+            // is reset on the main thread, where it is also queued ahead of the item adds the
+            // reload posts afterwards.
+            MainThread.BeginInvokeOnMainThread(ResetFeedItems);
+
             offset = 0;
             hasMore = true;
             isBackgroundHydrationRunning = false;
+        }
+
+        private void ResetFeedItems()
+        {
+            FeedItems.Clear();
+            FeedItems.Add(new MarketplaceFeedHeaderItem(this));
+            FeedItems.Add(new MarketplaceFeedSkeletonItem(this));
+            FeedItems.Add(new MarketplaceFeedEmptyStateItem(this));
         }
 
         private async Task HydrateRemainingAsync(CancellationToken token)

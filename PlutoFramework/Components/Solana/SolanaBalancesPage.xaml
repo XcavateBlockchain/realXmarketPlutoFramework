@@ -5,6 +5,7 @@
                        xmlns:address="clr-namespace:PlutoFramework.Components.AddressView"
                        xmlns:balance="clr-namespace:PlutoFramework.Components.Balance"
                        xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+                       xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
                        x:Class="PlutoFramework.Components.Solana.SolanaBalancesPage"
                        Title="Balance">
     <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
@@ -15,9 +16,11 @@
             <VerticalStackLayout Spacing="15">
 
                 <!-- Same overview card as the Polkadot balance page; Flow="Solana" routes
-                     its Add funds / Transfer buttons to the Solana flows. -->
+                     its Add funds / Transfer buttons to the Solana flows. RollingTicker makes
+                     the total roll digit-by-digit on load, like the InvestorMainPage cells. -->
                 <balance:BalanceOverviewView Margin="20, 20, 20, 0"
-                                             Flow="Solana" />
+                                             Flow="Solana"
+                                             RollingTicker="True" />
 
                 <address:AddressView Title="Solana address"
                                      Margin="20, 0, 20, 0"
@@ -47,6 +50,20 @@
                         </FormattedString>
                     </Label.FormattedText>
                 </Label>
+
+                <!-- Placeholder rows shaped like SolanaAssetView, shown only while the
+                     first load (or a cluster switch) has no rows to show yet. ItemMargin
+                     emulates the real list's Spacing="15". -->
+                <loading:SkeletonCardView Count="3"
+                                          Margin="20, 0, 20, 0"
+                                          ItemMargin="0, 0, 0, 15"
+                                          IsVisible="{Binding ShowAssetSkeletons}">
+                    <loading:SkeletonCardView.ItemTemplate>
+                        <DataTemplate>
+                            <loading:SolanaAssetSkeletonView />
+                        </DataTemplate>
+                    </loading:SkeletonCardView.ItemTemplate>
+                </loading:SkeletonCardView>
 
                 <VerticalStackLayout Margin="20, 0, 20, 100"
                                      BindableLayout.ItemsSource="{Binding Balances}"

@@ -90,8 +90,12 @@ public partial class NftImageView : ContentView
         {
             return;
         }
-        
-        await Browser.Default.OpenAsync(new Uri(ImageSource), BrowserLaunchMode.SystemPreferred);
+
+        // Open the full-resolution original when one is mirrored; the compressed
+        // indexer thumbnail is only a display fallback.
+        var downloadSource = string.IsNullOrWhiteSpace(FullImageSource) ? ImageSource : FullImageSource;
+
+        await Browser.Default.OpenAsync(new Uri(downloadSource), BrowserLaunchMode.SystemPreferred);
     }
     private async void OnExpandClicked(object sender, TappedEventArgs e)
     {

@@ -17,6 +17,11 @@ namespace PlutoFramework.Components.Xcavate
 
         private int currentConditionIndex = 0;
 
+        // Once the final condition is answered, currentConditionIndex sits past the end
+        // while the page stays in the navigation stack. Navigating back must re-show the
+        // last condition, so the cursor is clamped instead of indexing out of range.
+        private int CurrentConditionIndex => Math.Min(currentConditionIndex, requiredConditions.Count - 1);
+
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(CanContinue))]
         [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
@@ -33,7 +38,7 @@ namespace PlutoFramework.Components.Xcavate
 
         public int Steps => OnboardingStepperViewModel.TotalSteps;
 
-        public QuestionnaireCondition CurrentCondition => requiredConditions[currentConditionIndex];
+        public QuestionnaireCondition CurrentCondition => requiredConditions[CurrentConditionIndex];
 
         public string CurrentQuestionText => CurrentCondition.QuestionText;
 
@@ -76,6 +81,12 @@ namespace PlutoFramework.Components.Xcavate
             if (!CanContinue)
             {
                 return;
+            }
+
+            // Reached after navigating back from the next page: redo the last condition.
+            if (currentConditionIndex >= requiredConditions.Count)
+            {
+                currentConditionIndex = requiredConditions.Count - 1;
             }
 
             var value = IsOptionsVisible

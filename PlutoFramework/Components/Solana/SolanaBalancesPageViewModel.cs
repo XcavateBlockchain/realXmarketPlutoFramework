@@ -22,12 +22,14 @@ namespace PlutoFramework.Components.Solana
         public ObservableCollection<SolanaTokenBalance> Balances { get; } = [];
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowAssetSkeletons))]
         private bool isRefreshing = false;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(HasAccount))]
         [NotifyPropertyChangedFor(nameof(NoAccount))]
         [NotifyPropertyChangedFor(nameof(QrAddress))]
+        [NotifyPropertyChangedFor(nameof(ShowAssetSkeletons))]
         private string address = string.Empty;
 
         // Named UsdSum (not TotalText) because BalanceOverviewView - the same overview
@@ -44,6 +46,14 @@ namespace PlutoFramework.Components.Solana
 
         public bool HasAccount => !string.IsNullOrEmpty(Address);
 
+        /// <summary>
+        /// True only while a load is in flight with no rows on screen yet - the window in
+        /// which the page shows skeleton asset rows. Once any rows are present a refresh
+        /// keeps them visible (the pull-to-refresh spinner covers that case), matching the
+        /// marketplace skeleton's empty-list-only rule.
+        /// </summary>
+        public bool ShowAssetSkeletons => IsRefreshing && HasAccount && Balances.Count == 0;
+
         public bool NoAccount => !HasAccount;
 
         public bool ErrorIsVisible => !string.IsNullOrEmpty(ErrorMessage);
@@ -54,6 +64,10 @@ namespace PlutoFramework.Components.Solana
         {
             SolanaNetworkModel.ClusterChanged += OnClusterChanged;
             SolanaTransactionTracker.TransactionConfirmed += OnTransactionConfirmed;
+
+            // ShowAssetSkeletons also depends on the row count, which does not raise
+            // property change notifications on its own.
+            Balances.CollectionChanged += (sender, e) => OnPropertyChanged(nameof(ShowAssetSkeletons));
         }
 
         /// <summary>
