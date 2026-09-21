@@ -63,7 +63,8 @@ namespace PlutoFramework.Model.Solana
             TransactionBuilder builder,
             SolanaCluster cluster,
             string reason,
-            CancellationToken token) =>
+            CancellationToken token,
+            ulong? minContextSlot) =>
             RunAuthorizedAsync(
                 cluster,
                 reason,
@@ -80,7 +81,7 @@ namespace PlutoFramework.Model.Solana
                         compiled,
                         SolanaTransactionFramer.GetRequiredSignatures(compiled));
 
-                    var signatures = await client.SignAndSendTransactionsAsync([payload], operationToken);
+                    var signatures = await client.SignAndSendTransactionsAsync([payload], minContextSlot, operationToken);
 
                     if (signatures.Count == 0)
                     {
@@ -117,13 +118,14 @@ namespace PlutoFramework.Model.Solana
             byte[] wireTransaction,
             SolanaCluster cluster,
             string reason,
-            CancellationToken token) =>
+            CancellationToken token,
+            ulong? minContextSlot) =>
             RunAuthorizedAsync(
                 cluster,
                 reason,
                 async (client, operationToken) =>
                 {
-                    var signatures = await client.SignAndSendTransactionsAsync([wireTransaction], operationToken);
+                    var signatures = await client.SignAndSendTransactionsAsync([wireTransaction], minContextSlot, operationToken);
 
                     if (signatures.Count == 0)
                     {
@@ -154,7 +156,8 @@ namespace PlutoFramework.Model.Solana
             Func<byte[], Task<byte[]>> buildTransactionAsync,
             SolanaCluster cluster,
             string reason,
-            CancellationToken token) =>
+            CancellationToken token,
+            ulong? minContextSlot = null) =>
             RunAuthorizedAsync(
                 cluster,
                 reason,
@@ -172,7 +175,7 @@ namespace PlutoFramework.Model.Solana
 
                     var wireTransaction = await buildTransactionAsync(messageSignature);
 
-                    var signatures = await client.SignAndSendTransactionsAsync([wireTransaction], operationToken);
+                    var signatures = await client.SignAndSendTransactionsAsync([wireTransaction], minContextSlot, operationToken);
 
                     if (signatures.Count == 0)
                     {

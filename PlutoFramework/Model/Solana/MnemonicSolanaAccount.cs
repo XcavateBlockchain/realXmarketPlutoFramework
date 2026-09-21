@@ -39,8 +39,12 @@ namespace PlutoFramework.Model.Solana
             TransactionBuilder builder,
             SolanaCluster cluster,
             string reason,
-            CancellationToken token)
+            CancellationToken token,
+            ulong? minContextSlot)
         {
+            // minContextSlot goes unused: submission targets the node that served the
+            // blockhash, which plainly has it - the slot only matters to a wallet app
+            // preflighting against a different node.
             // Framed by hand rather than via Build(key): Build emits a single signature
             // slot no matter how many the message's header requires, and a node rejects
             // a slot count that disagrees with the header as a malformed ("failed to
@@ -77,8 +81,10 @@ namespace PlutoFramework.Model.Solana
             byte[] wireTransaction,
             SolanaCluster cluster,
             string reason,
-            CancellationToken token)
+            CancellationToken token,
+            ulong? minContextSlot)
         {
+            // minContextSlot goes unused, as in SignAndSubmitAsync above.
             var signed = Sign(wireTransaction);
 
             var signature = await SolanaRpcModel.SendTransactionAsync(cluster, signed, token);

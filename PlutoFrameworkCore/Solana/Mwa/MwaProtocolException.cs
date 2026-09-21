@@ -23,4 +23,15 @@ namespace PlutoFrameworkCore.Solana.Mwa
     {
         public MwaAuthorizationException(string message) : base(message) { }
     }
+
+    /// <summary>
+    /// The wallet approved and signed the transaction but could not get it onto the
+    /// network: its own RPC connection failed, or the blockhash had expired by
+    /// submission time. Distinct from a decline - the user said yes and the delivery
+    /// failed - and from a protocol fault, which would mean the two apps disagreed.
+    /// </summary>
+    public class MwaNotSubmittedException : MwaProtocolException
+    {
+        public MwaNotSubmittedException(string message) : base(message) { }
+    }
 }

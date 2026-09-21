@@ -141,7 +141,7 @@ namespace PlutoFramework.Model.Solana
 
             // Fetched here rather than in each subclass: both need it, and a transaction
             // without a recent blockhash is rejected regardless of who signs it.
-            var blockHash = await SolanaRpcModel.GetLatestBlockHashAsync(targetCluster, token);
+            var (blockHash, contextSlot) = await SolanaRpcModel.GetLatestBlockHashAsync(targetCluster, token);
 
             var builder = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash)
@@ -152,18 +152,25 @@ namespace PlutoFramework.Model.Solana
                 builder.AddInstruction(instruction);
             }
 
-            return await SignAndSubmitAsync(builder, targetCluster, reason, token);
+            return await SignAndSubmitAsync(builder, targetCluster, reason, token, contextSlot);
         }
 
         /// <summary>
         /// The only step that differs between a local and a remote signer. Implementations
         /// either sign and submit themselves, or hand the transaction to the wallet to do both.
         /// </summary>
+        /// <param name="minContextSlot">
+        /// The slot the blockhash was fetched at. A remote wallet preflights against its
+        /// own RPC node and gets this as <c>min_context_slot</c>, so its node has caught
+        /// up with the hash first; a local signer submits to the node that served the
+        /// hash and ignores it.
+        /// </param>
         protected abstract Task<string> SignAndSubmitAsync(
             TransactionBuilder builder,
             SolanaCluster cluster,
             string reason,
-            CancellationToken token);
+            CancellationToken token,
+            ulong? minContextSlot = null);
 
         /// <summary>
         /// Signs an already-serialized transaction and returns it with this account's
@@ -189,10 +196,17 @@ namespace PlutoFramework.Model.Solana
         /// request rather than from <see cref="Cluster"/>. The dapp chose its own RPC
         /// endpoint, and signing against a different network would fail on submission.
         /// </param>
+        /// <param name="minContextSlot">
+        /// The slot the transaction's blockhash was fetched at, when this app fetched it.
+        /// A remote wallet gets it as <c>min_context_slot</c> so its own RPC node has the
+        /// blockhash before preflight; a dapp-relayed transaction whose hash this app did
+        /// not fetch leaves it null.
+        /// </param>
         public abstract Task<byte[]> SignAndSendWireTransactionAsync(
             byte[] wireTransaction,
             SolanaCluster cluster,
             string reason,
-            CancellationToken token);
+            CancellationToken token,
+            ulong? minContextSlot = null);
     }
 }

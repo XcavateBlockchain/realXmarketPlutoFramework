@@ -187,7 +187,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             // The rent collector fronts the rent, so it is the fee payer - the program
             // rejects a buy or claim whose payer is anything else.
-            var blockHash = await SolanaRpcModel.GetLatestBlockHashAsync(cluster, CancellationToken.None);
+            var (blockHash, contextSlot) = await SolanaRpcModel.GetLatestBlockHashAsync(cluster, CancellationToken.None);
 
             var builder = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash)
@@ -220,7 +220,11 @@ namespace PlutoFramework.Components.XcavateProperty
                     },
                     cluster,
                     description,
-                    CancellationToken.None);
+                    CancellationToken.None,
+                    // The wallet submits against its own RPC node, which may lag the one
+                    // the blockhash came from - min_context_slot makes it wait rather
+                    // than fail on a blockhash it cannot see yet.
+                    contextSlot);
 
                 return SolanaBase58.Encode(signature);
             }

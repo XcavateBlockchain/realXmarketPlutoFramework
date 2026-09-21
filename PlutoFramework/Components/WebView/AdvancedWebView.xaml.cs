@@ -1,4 +1,4 @@
-﻿namespace PlutoFramework.Components.WebView;
+namespace PlutoFramework.Components.WebView;
 
 public partial class AdvancedWebView : ContentView
 {
@@ -14,6 +14,8 @@ public partial class AdvancedWebView : ContentView
     public AdvancedWebView()
     {
         InitializeComponent();
+
+        WebViewLoadFailureMonitor.Attach(webView, webErrorView);
     }
 
     public string Address

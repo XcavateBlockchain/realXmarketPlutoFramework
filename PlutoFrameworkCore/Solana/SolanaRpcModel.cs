@@ -21,26 +21,33 @@ namespace PlutoFrameworkCore.Solana
             Clients.GetOrAdd(cluster, key => ClientFactory.GetClient(key.ToSolnetCluster()));
 
         /// <summary>
-        /// A recent blockhash, which every transaction must carry to be accepted.
-        /// Fetched at confirmed rather than the RPC default finalized: a wallet-app
-        /// signing round trip has to fit inside the blockhash's ~150-slot lifetime,
-        /// and a finalized hash arrives already some 30 slots (~15 seconds) into it.
+        /// A recent blockhash, which every transaction must carry to be accepted, and the
+        /// slot it was fetched at. Fetched at confirmed rather than the RPC default
+        /// finalized: a wallet-app signing round trip has to fit inside the blockhash's
+        /// ~150-slot lifetime, and a finalized hash arrives already some 30 slots
+        /// (~15 seconds) into it.
         /// </summary>
-        public static async Task<string> GetLatestBlockHashAsync(SolanaCluster cluster, CancellationToken token)
+        /// <remarks>
+        /// The slot matters when a wallet app does the submitting: it preflights against
+        /// its own RPC node, and Mobile Wallet Adapter's <c>min_context_slot</c> option
+        /// tells it to wait for that node to reach this slot, so the blockhash is visible
+        /// to it. A submission to this same node needs no such wait.
+        /// </remarks>
+        public static async Task<(string BlockHash, ulong ContextSlot)> GetLatestBlockHashAsync(
+            SolanaCluster cluster, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
 
             var result = await GetClient(cluster).GetLatestBlockHashAsync(Solnet.Rpc.Types.Commitment.Confirmed);
 
-            var blockHash = Unwrap(result, $"fetch a recent blockhash on {cluster.GetName()}")
-                .Value?.Blockhash;
+            var latest = Unwrap(result, $"fetch a recent blockhash on {cluster.GetName()}");
 
-            if (string.IsNullOrEmpty(blockHash))
+            if (string.IsNullOrEmpty(latest.Value?.Blockhash))
             {
                 throw new SolanaRpcException($"{cluster.GetName()} returned an empty blockhash");
             }
 
-            return blockHash;
+            return (latest.Value.Blockhash, latest.Context?.Slot ?? 0);
         }
 
         /// <summary>

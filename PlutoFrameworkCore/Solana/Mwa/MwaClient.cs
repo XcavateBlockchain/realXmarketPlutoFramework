@@ -15,14 +15,20 @@ namespace PlutoFrameworkCore.Solana.Mwa
     public sealed class MwaClient
     {
         /// <summary>
-        /// Mobile Wallet Adapter error codes. -1 covers both a declining user and an
-        /// authorization the wallet no longer honours.
+        /// Mobile Wallet Adapter 2.0 error codes - the protocol version the association
+        /// URI negotiates (see MwaAssociationUri.PROTOCOL_VERSION). The 1.0 numbering
+        /// differed: -4 was ERROR_TOO_MANY_PAYLOADS and -5 ERROR_CLUSTER_NOT_SUPPORTED.
+        /// Decoding a 2.0 wallet with the 1.0 table turns "signed but could not submit"
+        /// (the wallet's own RPC unreachable, or the blockhash dead by submission time)
+        /// into a nonsense "too many payloads" message, hiding the real failure.
         /// </summary>
         private const int ERROR_AUTHORIZATION_FAILED = -1;
         private const int ERROR_INVALID_PAYLOADS = -2;
         private const int ERROR_NOT_SIGNED = -3;
-        private const int ERROR_TOO_MANY_PAYLOADS = -4;
-        private const int ERROR_CLUSTER_NOT_SUPPORTED = -5;
+        private const int ERROR_NOT_SUBMITTED = -4;
+        private const int ERROR_NOT_CLONED = -5;
+        private const int ERROR_TOO_MANY_PAYLOADS = -6;
+        private const int ERROR_CHAIN_NOT_SUPPORTED = -7;
 
         private readonly MwaSession session;
 
@@ -116,8 +122,15 @@ namespace PlutoFrameworkCore.Solana.Mwa
         /// Hands fully-formed transactions to the wallet, which signs and submits them.
         /// Returns the transaction signatures. No RPC endpoint is needed on this side.
         /// </summary>
+        /// <param name="minContextSlot">
+        /// The slot the transaction's blockhash was fetched at on this app's RPC node.
+        /// Forwarded as <c>min_context_slot</c> so the wallet waits for its own node to
+        /// reach it before preflight - without it, a wallet whose node lags the app's
+        /// fails the submission on a blockhash it cannot see yet.
+        /// </param>
         public async Task<IReadOnlyList<byte[]>> SignAndSendTransactionsAsync(
             IEnumerable<byte[]> transactions,
+            ulong? minContextSlot,
             CancellationToken token)
         {
             var response = await InvokeAsync<MwaSignAndSendTransactionsRequest, MwaSignAndSendTransactionsResponse>(
@@ -125,6 +138,9 @@ namespace PlutoFrameworkCore.Solana.Mwa
                 new MwaSignAndSendTransactionsRequest
                 {
                     Payloads = transactions.Select(Convert.ToBase64String).ToList(),
+                    Options = minContextSlot is null
+                        ? null
+                        : new MwaSignAndSendTransactionsOptions { MinContextSlot = minContextSlot.Value },
                 },
                 token);
 
@@ -202,20 +218,31 @@ namespace PlutoFrameworkCore.Solana.Mwa
             var code = error["code"]?.GetValue<int>();
             var message = error["message"]?.GetValue<string>() ?? "no message";
 
-            throw code switch
-            {
-                ERROR_AUTHORIZATION_FAILED => new MwaAuthorizationException(
-                    $"The wallet declined authorization: {message}"),
-                ERROR_CLUSTER_NOT_SUPPORTED => new MwaAuthorizationException(
-                    $"The wallet does not support the requested cluster: {message}"),
-                ERROR_NOT_SIGNED => new MwaAuthorizationException(
-                    $"The request was not signed: {message}"),
-                ERROR_INVALID_PAYLOADS => new MwaProtocolException(
-                    $"The wallet rejected the {method} payloads as invalid: {message}"),
-                ERROR_TOO_MANY_PAYLOADS => new MwaProtocolException(
-                    $"Too many payloads for a single {method} request: {message}"),
-                _ => new MwaProtocolException($"The wallet returned error {code} for {method}: {message}"),
-            };
+            throw MapError(method, code, message);
         }
+
+        /// <summary>
+        /// Translates a wallet's JSON-RPC error into the exception that best describes it,
+        /// keeping the wallet's own reason verbatim at the end of the message - the
+        /// blockhash-expiry retry matches on it, and it is all the user ever sees.
+        /// </summary>
+        internal static Exception MapError(string method, int? code, string message) => code switch
+        {
+            ERROR_AUTHORIZATION_FAILED => new MwaAuthorizationException(
+                $"The wallet declined authorization: {message}"),
+            ERROR_CHAIN_NOT_SUPPORTED => new MwaAuthorizationException(
+                $"The wallet does not support the requested cluster: {message}"),
+            ERROR_NOT_SIGNED => new MwaAuthorizationException(
+                $"The request was not signed: {message}"),
+            ERROR_INVALID_PAYLOADS => new MwaProtocolException(
+                $"The wallet rejected the {method} payloads as invalid: {message}"),
+            ERROR_NOT_SUBMITTED => new MwaNotSubmittedException(
+                $"The wallet signed the transaction but could not submit it: {message}"),
+            ERROR_NOT_CLONED => new MwaProtocolException(
+                $"The wallet could not clone the authorization: {message}"),
+            ERROR_TOO_MANY_PAYLOADS => new MwaProtocolException(
+                $"Too many payloads for a single {method} request: {message}"),
+            _ => new MwaProtocolException($"The wallet returned error {code} for {method}: {message}"),
+        };
     }
 }

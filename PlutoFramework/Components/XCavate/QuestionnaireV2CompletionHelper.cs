@@ -8,7 +8,8 @@ namespace PlutoFramework.Components.Xcavate
     {
         public static async Task NavigateNextOrCompleteAsync(QuestionnaireV2FlowState flowState, int currentSectionIndex)
         {
-            var address = KeysModel.GetPublicKey();
+            var address = KeysModel.GetSolanaAddress()
+                ?? throw new Exception("No Solana account is available for the questionnaire.");
             var firstSection = flowState.GetSectionById(QuestionnaireV2FlowState.HighNetWorthSectionId)
                 ?? throw new Exception($"Questionnaire section '{QuestionnaireV2FlowState.HighNetWorthSectionId}' is missing.");
             var secondSection = flowState.GetSectionById(QuestionnaireV2FlowState.SophisticatedInvestorSectionId);

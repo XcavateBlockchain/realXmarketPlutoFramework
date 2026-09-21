@@ -1,5 +1,6 @@
 namespace PlutoFramework.Components.Agreement;
 
+using PlutoFramework.Components.WebView;
 using PlutoFramework.Model.Xcavate;
 
 public partial class AgreementPage : ContentPage
@@ -20,6 +21,8 @@ public partial class AgreementPage : ContentPage
             AcceptFunction = acceptFunction ?? DefaultAcceptAsync,
             OnboardingStage = onboardingStage,
         };
+
+        WebViewLoadFailureMonitor.Attach(webView, webErrorView);
     }
 
     private async void OnWebViewNavigated(object sender, WebNavigatedEventArgs e)

@@ -7,14 +7,21 @@
              NavigationBarIsVisible="False"
             >
 
-    <webview:PolkadotExtensionWebView
-        AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-        AbsoluteLayout.LayoutFlags="All"
-        Scrolled="OnScrolled"
-        PropertyChanged="OnPropertyChanged"
-        x:Name="webView"
-        Navigated="OnNavigated"
-        Source="{Binding Source}"/>
+    <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                    AbsoluteLayout.LayoutFlags="All">
+        <webview:PolkadotExtensionWebView
+            AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+            AbsoluteLayout.LayoutFlags="All"
+            Scrolled="OnScrolled"
+            PropertyChanged="OnPropertyChanged"
+            x:Name="webView"
+            Navigated="OnNavigated"
+            Source="{Binding Source}"/>
+
+        <webview:WebViewErrorView x:Name="webErrorView"
+                                  AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                                  AbsoluteLayout.LayoutFlags="All"/>
+    </AbsoluteLayout>
 
     <page:PageTemplate.PopupContent>
         <webview:WebViewNavigationBarView x:Name="navigationBar"/>

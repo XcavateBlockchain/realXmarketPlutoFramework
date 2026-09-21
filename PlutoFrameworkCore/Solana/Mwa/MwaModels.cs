@@ -122,6 +122,23 @@ namespace PlutoFrameworkCore.Solana.Mwa
         /// <summary>Base64-encoded, fully-formed transaction payloads.</summary>
         [JsonPropertyName("payloads")]
         public required List<string> Payloads { get; set; }
+
+        /// <summary>Present only when there is a context slot to relay.</summary>
+        [JsonPropertyName("options")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public MwaSignAndSendTransactionsOptions? Options { get; set; }
+    }
+
+    internal record MwaSignAndSendTransactionsOptions
+    {
+        /// <summary>
+        /// The slot the transaction's blockhash was fetched at on the dapp's RPC node.
+        /// The wallet waits for its own node to reach it before preflighting, so the
+        /// blockhash is visible to it (Mobile Wallet Adapter 2.0 specification,
+        /// sign_and_send_transactions options).
+        /// </summary>
+        [JsonPropertyName("min_context_slot")]
+        public required ulong MinContextSlot { get; set; }
     }
 
     internal record MwaSignAndSendTransactionsResponse

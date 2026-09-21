@@ -18,6 +18,8 @@ public partial class ExtensionWebViewPage : PageTemplate
             ReloadFunction = webView.Reload,
             SearchbarCanEdit = searchbarCanEdit,
         };
+
+        WebViewLoadFailureMonitor.Attach(webView, webErrorView);
     }
 
     private async void OnScrolled(object sender, ScrolledEventArgs e)

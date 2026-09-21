@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Templates.PageTemplate;
+using PlutoFramework.Templates.PageTemplate;
 
 namespace PlutoFramework.Components.WebView;
 
@@ -10,5 +10,7 @@ public partial class WebViewPage : PageTemplate
 
         webView.Source = url;
         this.Title = url;
+
+        WebViewLoadFailureMonitor.Attach(webView, webErrorView);
     }
 }

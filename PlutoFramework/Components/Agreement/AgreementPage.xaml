@@ -20,6 +20,11 @@
                                   Margin="0,55,0,70"
                                   />
 
+        <webview:WebViewErrorView x:Name="webErrorView"
+                                  AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                                  AbsoluteLayout.LayoutFlags="All"
+                                  Margin="0,55,0,70" />
+
         <navigationbar:TopNavigationStepperBar AbsoluteLayout.LayoutBounds="0.5,0,1,55"
                                                AbsoluteLayout.LayoutFlags="PositionProportional,WidthProportional"
                                                Step="{Binding Step}"

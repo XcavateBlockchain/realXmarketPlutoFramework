@@ -4,7 +4,7 @@ using PlutoFrameworkCore.Solana;
 namespace PlutoFramework.Components.Solana;
 
 /// <summary>
-/// The thin orange strip appended below the top navigation bars, naming the network the app
+/// The thin blue strip appended below the top navigation bars, naming the network the app
 /// is talking to. Devnet only: Mainnet is the network a user expects to be on, so it gets no
 /// banner, and Testnet is not selectable (<see cref="SolanaNetworkOptions.Selectable"/>).
 /// </summary>

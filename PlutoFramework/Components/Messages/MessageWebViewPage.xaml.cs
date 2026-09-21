@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Solana;
+using PlutoFramework.Components.WebView;
 using PlutoFramework.Templates.PageTemplate;
 using PlutoFramework.Model;
 using PlutoFrameworkCore.Solana;
@@ -18,6 +19,8 @@ public partial class MessageWebViewPage : PageTemplate
     public MessageWebViewPage(string? url)
     {
         InitializeComponent();
+
+        WebViewLoadFailureMonitor.Attach(webView, webErrorView);
 
         webView.HeaderChanged += OnWebHeaderChanged;
 

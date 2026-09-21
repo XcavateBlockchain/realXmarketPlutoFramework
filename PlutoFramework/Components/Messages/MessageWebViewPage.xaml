@@ -3,6 +3,7 @@
                        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                        xmlns:template="clr-namespace:PlutoFramework.Templates.PageTemplate;assembly=PlutoFramework"
                        xmlns:local="clr-namespace:PlutoFramework.Components.Messages"
+                       xmlns:webview="clr-namespace:PlutoFramework.Components.WebView"
                        x:Class="PlutoFramework.Components.Messages.MessageWebViewPage"
                        Title="Messages"
                        BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}">
@@ -14,6 +15,10 @@
                         x:Name="webView"
                         AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
                         AbsoluteLayout.LayoutFlags="All"/>
+
+        <webview:WebViewErrorView x:Name="webErrorView"
+                                  AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                                  AbsoluteLayout.LayoutFlags="All"/>
     </AbsoluteLayout>
     
 </template:PageTemplate>

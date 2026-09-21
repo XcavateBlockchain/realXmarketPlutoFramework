@@ -1,3 +1,4 @@
+using PlutoFramework.Components.WebView;
 using PlutoFramework.Templates.PageTemplate;
 
 namespace PlutoFramework.Components.Xcavate;
@@ -10,6 +11,8 @@ public partial class HelpPage : PageTemplate
 	{
 		navigationBarViewModel = DependencyService.Get<XcavateNavigationBarViewModel>();
         InitializeComponent();
+
+        WebViewLoadFailureMonitor.Attach(webView, webErrorView);
 	}
 
 	protected override async void OnNavigatedTo(NavigatedToEventArgs args)

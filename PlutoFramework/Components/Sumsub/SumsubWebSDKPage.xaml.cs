@@ -1,4 +1,5 @@
 using PlutoFramework.Components.Onboarding;
+using PlutoFramework.Components.WebView;
 using PlutoFramework.Model.Sumsub;
 using PlutoFramework.Model.Xcavate;
 using PlutoFramework.Templates.PageTemplate;
@@ -17,6 +18,8 @@ namespace PlutoFramework.Components.Sumsub
             Shell.SetNavBarIsVisible(this, false);
 
             InitializeComponent();
+
+            WebViewLoadFailureMonitor.Attach(webView, webErrorView);
 
             BindingContext = new OnboardingStepperViewModel(OnboardingStage.KYC);
 

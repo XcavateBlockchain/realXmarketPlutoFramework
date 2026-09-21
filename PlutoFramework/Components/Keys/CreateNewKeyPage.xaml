@@ -17,12 +17,6 @@
                     Margin="20, 40, 20, 40"
                     HorizontalTextAlignment="Center"/>
             
-            <keys:NewKeyView KeyType="Sr25519" />
-
-            <keys:NewKeyView KeyType="PolkadotJson" />
-
-            <keys:NewKeyView KeyType="Did" />
-
             <keys:NewKeyView KeyType="EncryptionX25519" />
 
             <keys:NewKeyView KeyType="SolanaMnemonic" />
