@@ -56,10 +56,13 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
-        public void SelectableOffersDevnetAndMainnetInThatOrder()
+        public void SelectableOffersOnlyDevnetUntilMainnetProgramsDeploy()
         {
+            // XcavateProgramAddresses.Mainnet is null - nothing is deployed there - so
+            // offering mainnet would strand the app on a network where nothing works,
+            // and a testnet-mode wallet would reject its authorization outright.
             Assert.That(SolanaNetworkOptions.Selectable,
-                Is.EqualTo(new[] { SolanaCluster.Devnet, SolanaCluster.Mainnet }));
+                Is.EqualTo(new[] { SolanaCluster.Devnet }));
         }
 
         [Test]

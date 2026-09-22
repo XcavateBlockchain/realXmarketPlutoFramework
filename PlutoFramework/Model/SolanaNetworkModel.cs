@@ -28,8 +28,25 @@ namespace PlutoFramework.Model
         /// </summary>
         public static SolanaCluster SelectedCluster
         {
-            get => SolanaClusterExtensions.FromChainId(
-                Preferences.Get(PreferencesModel.SETTINGS_SOLANA_NETWORK, SolanaNetworkOptions.Default.ToChainId()));
+            get
+            {
+                var stored = SolanaClusterExtensions.FromChainId(
+                    Preferences.Get(PreferencesModel.SETTINGS_SOLANA_NETWORK, SolanaNetworkOptions.Default.ToChainId()));
+
+                // A stored network the app does not currently offer - mainnet while its
+                // programs are undeployed, or an unrecognised value FromChainId read as
+                // mainnet - would send every wallet request to a network nothing works
+                // on. Fall back to the default and repair the stored value, so the stale
+                // choice cannot quietly come back when the network becomes selectable.
+                if (!SolanaNetworkOptions.Selectable.Contains(stored))
+                {
+                    Preferences.Set(PreferencesModel.SETTINGS_SOLANA_NETWORK, SolanaNetworkOptions.Default.ToChainId());
+
+                    return SolanaNetworkOptions.Default;
+                }
+
+                return stored;
+            }
 
             set
             {
