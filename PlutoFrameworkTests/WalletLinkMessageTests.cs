@@ -19,7 +19,7 @@ namespace PlutoFrameworkTests
                 deviceId: "3f2504e0-4f89-11d3-9a0c-0305e82c3301");
 
             Assert.That(message, Is.EqualTo(
-                "PlutoFramework wallet link\n" +
+                "Enable realXmarket push notifications\n" +
                 "chain: solana\n" +
                 "address: ALSzrjtGi8MZGmAZa6ZhtUZq3rwurWuJqWFdgcj9MMFL\n" +
                 "nonce: A1PJjlqu8-KFVl36A5XlGAcbUEhOA2VITj30N8XPRmA\n" +

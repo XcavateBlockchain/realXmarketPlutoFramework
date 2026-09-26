@@ -1,10 +1,7 @@
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using PlutoFramework.Model.Solana;
 using PlutoFrameworkCore.Solana;
-using XcavateProfile.Client;
 
 namespace PlutoFramework.Model.Xcavate.Profile
 {
@@ -17,16 +14,15 @@ namespace PlutoFramework.Model.Xcavate.Profile
     /// rent collector and requires that key to have signed, but the investor's wallet
     /// cannot co-sign on its own machine - so the profile API holds the rent collector
     /// key (in its environment) and signs the exact compiled message the investor is
-    /// about to sign and submit. The investor is authenticated to that endpoint the
-    /// same way every other profile API request is: the app's Solana account signs the
-    /// signed-payload over the body's Blake2b-128 hash, and the server verifies it.
+    /// about to sign and submit. The endpoint does not authenticate the request: the
+    /// server only ever signs a message that also requires the investor's own on-chain
+    /// signature, so the rent collector's half is useless to anyone else. The investor's
+    /// address goes in the X-SS58-Address header just so the server can check that.
     ///
     /// The pinned <c>XcavateProfileApiClient</c> (1.0.68) predates the endpoint's
     /// request model, so the body is serialized here against its known wire shape - a
-    /// single <c>message</c> field with an explicit <see cref="JsonPropertyName"/> makes
-    /// the hash naming-policy-independent - while the hash itself reuses the package's
-    /// own <see cref="CryptoHelper.HashHex"/>, so the body hash is byte-identical to
-    /// the server's by construction.
+    /// single <c>message</c> field, already lowercase, so the naming policy cannot
+    /// change it.
     /// </remarks>
     internal static class RentCollectorSignatureClient
     {
@@ -39,56 +35,22 @@ namespace PlutoFramework.Model.Xcavate.Profile
         /// <paramref name="compiledMessage"/>.
         /// </summary>
         /// <remarks>
-        /// The account signs the signed-payload for authentication. With a key held on
-        /// this device that is free; under a Mobile Wallet Adapter wallet it is a
-        /// user-facing prompt, so the marketplace's two-signature flow does not call
-        /// this - it signs the payload inside the same wallet session as the
-        /// transaction itself and posts with <see cref="PostSignedAsync"/>, keeping
-        /// the blockhash's short lifetime to one trip through the wallet app. Either
-        /// way the API call comes before the transaction prompt: a 400/503 from the
-        /// server never costs a transaction approval too.
+        /// A plain HTTP call - nothing is signed locally, so it costs no wallet prompt
+        /// and always comes before the transaction approval: a 400/503 from the server
+        /// never costs a transaction approval too.
         /// </remarks>
         public static async Task<byte[]> GetRentCollectorSignatureAsync(
-            PlutoFrameworkSolanaAccount account,
+            string investorAddress,
             byte[] compiledMessage,
-            string description,
-            CancellationToken token)
-        {
-            var body = BuildBody(compiledMessage);
-
-            var timestamp = DateTime.UtcNow.ToString("o");
-
-            var payload = BuildPayload(body, timestamp);
-
-            var signer = new SolanaAccountRequestSigner(account, description);
-
-            var signature = await signer.SignAsync(payload);
-
-            return await PostSignedAsync(
-                body, timestamp, signer.Address, signer.EncodeSignature(signature), token);
-        }
-
-        /// <summary>
-        /// The HTTP half of <see cref="GetRentCollectorSignatureAsync"/> for a payload
-        /// signed elsewhere - under Mobile Wallet Adapter, inside the wallet session
-        /// that goes on to sign the transaction itself.
-        /// </summary>
-        public static async Task<byte[]> PostSignedAsync(
-            string body,
-            string timestamp,
-            string signerAddress,
-            string encodedSignature,
             CancellationToken token)
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, ApiBaseUrl + EndpointPath.TrimStart('/'));
 
             // "application/json", not just "json" - the .NET 10 media-type parser
             // throws a FormatException on the latter before the request is even sent.
-            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+            request.Content = new StringContent(BuildBody(compiledMessage), Encoding.UTF8, "application/json");
 
-            request.Headers.Add("X-SS58-Address", signerAddress);
-            request.Headers.Add("X-Signature", encodedSignature);
-            request.Headers.Add("X-Timestamp", timestamp);
+            request.Headers.Add("X-SS58-Address", investorAddress);
 
             using var httpClient = new HttpClient();
 
@@ -112,20 +74,13 @@ namespace PlutoFramework.Model.Xcavate.Profile
         }
 
         /// <summary>
-        /// The request body as the server hashes it: one <c>message</c> field holding the
-        /// base64 of the compiled message.
+        /// The request body: one <c>message</c> field holding the base64 of the
+        /// compiled message.
         /// </summary>
         internal static string BuildBody(byte[] compiledMessage) =>
             JsonSerializer.Serialize(
                 new { message = Convert.ToBase64String(compiledMessage) },
                 new JsonSerializerOptions(JsonSerializerDefaults.Web));
-
-        /// <summary>
-        /// The signed payload, in the profile API's <c>method:path:body_hash:timestamp</c>
-        /// format with the hash exactly as the server recomputes it.
-        /// </summary>
-        internal static string BuildPayload(string body, string timestamp) =>
-            $"POST:{EndpointPath}:{CryptoHelper.HashHex(body)}:{timestamp}";
 
         private sealed class RentCollectorSignatureResponse
         {

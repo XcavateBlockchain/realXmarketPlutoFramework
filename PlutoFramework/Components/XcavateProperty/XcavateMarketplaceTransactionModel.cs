@@ -6,7 +6,6 @@ using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore.Solana;
 using Solnet.Rpc.Builders;
 using Solnet.Rpc.Models;
-using System.Text;
 using SolanaPublicKey = Solnet.Wallet.PublicKey;
 
 namespace PlutoFramework.Components.XcavateProperty
@@ -200,42 +199,31 @@ namespace PlutoFramework.Components.XcavateProperty
 
             var compiledMessage = builder.CompileMessage();
 
+            // Asked for before the wallet is prompted: a server failure costs the user
+            // no wallet round trip, and the API signs exactly these bytes, so the
+            // message this wallet then signs is the one both signatures land on. The
+            // request itself is not signed - the endpoint only needs the investor's
+            // address to know whose on-chain signature the message must require.
+            var rentCollectorSignature = await RentCollectorSignatureClient.GetRentCollectorSignatureAsync(
+                investor, compiledMessage, CancellationToken.None);
+
+            var withRentCollector = ApplyRentCollectorSignature(compiledMessage, rentCollector, rentCollectorSignature);
+
             if (account is MwaSolanaAccount mwaAccount)
             {
-                // Both approvals - the API's auth message and the transaction - happen
-                // inside ONE wallet session: the blockhash above only has to outlive a
-                // single trip through the wallet app instead of two.
-                var body = RentCollectorSignatureClient.BuildBody(compiledMessage);
-                var timestamp = DateTime.UtcNow.ToString("o");
-                var payload = RentCollectorSignatureClient.BuildPayload(body, timestamp);
-
-                var signature = await mwaAccount.SignMessageAndSendTransactionAsync(
-                    Encoding.UTF8.GetBytes(payload),
-                    async messageSignature =>
-                    {
-                        var rentCollectorSignature = await RentCollectorSignatureClient.PostSignedAsync(
-                            body, timestamp, account.Address, SolanaBase58.Encode(messageSignature), CancellationToken.None);
-
-                        return ApplyRentCollectorSignature(compiledMessage, rentCollector, rentCollectorSignature);
-                    },
+                // The wallet fills its own signature slot and submits against its own
+                // RPC node, which may lag the one the blockhash came from -
+                // min_context_slot makes it wait rather than fail on a blockhash it
+                // cannot see yet.
+                var signature = await mwaAccount.SignAndSendWireTransactionAsync(
+                    withRentCollector,
                     cluster,
                     description,
                     CancellationToken.None,
-                    // The wallet submits against its own RPC node, which may lag the one
-                    // the blockhash came from - min_context_slot makes it wait rather
-                    // than fail on a blockhash it cannot see yet.
                     contextSlot);
 
                 return SolanaBase58.Encode(signature);
             }
-
-            // Asked for before the wallet is prompted: a server failure costs the user
-            // no unlock round trip, and the API signs exactly these bytes, so the
-            // message this wallet then signs is the one both signatures land on.
-            var rentCollectorSignature = await RentCollectorSignatureClient.GetRentCollectorSignatureAsync(
-                account, compiledMessage, description, CancellationToken.None);
-
-            var withRentCollector = ApplyRentCollectorSignature(compiledMessage, rentCollector, rentCollectorSignature);
 
             // The key lives on this device: sign the investor's slot locally, then
             // submit over RPC. The rent collector's slot stays pre-applied.

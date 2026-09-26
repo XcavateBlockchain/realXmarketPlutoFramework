@@ -137,56 +137,6 @@ namespace PlutoFramework.Model.Solana
                 token);
 
         /// <summary>
-        /// Signs a message and then a transaction that depends on that signature's use -
-        /// in ONE wallet session. The marketplace's two-signature flow is the caller: the
-        /// rent collector's API authenticates by a signed message whose answer shapes the
-        /// transaction, and running both approvals in separate sessions gave the blockhash
-        /// two full trips through the wallet app to expire in. Here the wallet approves the
-        /// message, <paramref name="buildTransactionAsync"/> runs app-side (the API call and
-        /// the wire framing) while the session stays open, and the wallet immediately
-        /// approves and submits the transaction - one trip, and the blockhash only has to
-        /// outlive that.
-        /// </summary>
-        /// <param name="buildTransactionAsync">
-        /// Receives the message signature and returns the wire-format transaction to hand
-        /// to the wallet. Runs between the session's two wallet requests.
-        /// </param>
-        public Task<byte[]> SignMessageAndSendTransactionAsync(
-            byte[] messageToSign,
-            Func<byte[], Task<byte[]>> buildTransactionAsync,
-            SolanaCluster cluster,
-            string reason,
-            CancellationToken token,
-            ulong? minContextSlot = null) =>
-            RunAuthorizedAsync(
-                cluster,
-                reason,
-                async (client, operationToken) =>
-                {
-                    var signedPayloads = await client.SignMessagesAsync(Address, [messageToSign], operationToken);
-
-                    if (signedPayloads.Count == 0)
-                    {
-                        throw new MwaProtocolException("The wallet returned no signed payload");
-                    }
-
-                    // sign_messages returns each message with its signature appended.
-                    var messageSignature = SolanaTransactionFramer.ExtractSignature(signedPayloads[0]);
-
-                    var wireTransaction = await buildTransactionAsync(messageSignature);
-
-                    var signatures = await client.SignAndSendTransactionsAsync([wireTransaction], minContextSlot, operationToken);
-
-                    if (signatures.Count == 0)
-                    {
-                        throw new MwaProtocolException("The wallet returned no transaction signature");
-                    }
-
-                    return signatures[0];
-                },
-                token);
-
-        /// <summary>
         /// Opens a session, authorizes on <paramref name="cluster"/> using the stored token,
         /// keeps any refreshed authorization, then runs the operation in that same session.
         ///

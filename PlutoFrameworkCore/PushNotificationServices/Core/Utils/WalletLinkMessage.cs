@@ -11,7 +11,7 @@ namespace PlutoFrameworkCore.PushNotificationServices.Core.Utils;
 public static class WalletLinkMessage
 {
     public static string Build(string chain, string address, string nonce, string deviceId) =>
-        "PlutoFramework wallet link\n" +
+        "Enable realXmarket push notifications\n" +
         $"chain: {chain}\n" +
         $"address: {address}\n" +
         $"nonce: {nonce}\n" +
