@@ -39,6 +39,19 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public void ToLegacyClusterIdProducesMwa1ClusterNames()
+        {
+            // The Mobile Wallet Adapter 1.0 "cluster" field predates the 2.0 chain ids:
+            // mainnet is spelled "mainnet-beta" there.
+            Assert.Multiple(() =>
+            {
+                Assert.That(SolanaCluster.Devnet.ToLegacyClusterId(), Is.EqualTo("devnet"));
+                Assert.That(SolanaCluster.Testnet.ToLegacyClusterId(), Is.EqualTo("testnet"));
+                Assert.That(SolanaCluster.Mainnet.ToLegacyClusterId(), Is.EqualTo("mainnet-beta"));
+            });
+        }
+
+        [Test]
         public void GetNameProducesDisplayableLabels()
         {
             Assert.That(SolanaCluster.Devnet.GetName(), Is.EqualTo("Devnet"));

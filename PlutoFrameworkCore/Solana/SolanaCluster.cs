@@ -20,6 +20,21 @@ namespace PlutoFrameworkCore.Solana
         };
 
         /// <summary>
+        /// The Mobile Wallet Adapter 1.0 "cluster" value, sent alongside the 2.0
+        /// "chain" field in authorize. The 2.0 specification keeps it as an alias that
+        /// v2 wallets ignore when "chain" is present; wallets that only read the 1.0
+        /// field - Phantom included - default a missing one to mainnet, which is how a
+        /// devnet authorize gets presented as a mainnet connection. The legacy mainnet
+        /// value really is "mainnet-beta".
+        /// </summary>
+        public static string ToLegacyClusterId(this SolanaCluster cluster) => cluster switch
+        {
+            SolanaCluster.Devnet => "devnet",
+            SolanaCluster.Testnet => "testnet",
+            _ => "mainnet-beta",
+        };
+
+        /// <summary>
         /// The corresponding Solnet cluster, which selects the public RPC endpoint.
         /// </summary>
         public static Solnet.Rpc.Cluster ToSolnetCluster(this SolanaCluster cluster) => cluster switch

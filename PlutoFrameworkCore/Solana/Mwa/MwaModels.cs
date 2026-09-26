@@ -34,6 +34,14 @@ namespace PlutoFrameworkCore.Solana.Mwa
         public required string Chain { get; set; }
 
         /// <summary>
+        /// Mobile Wallet Adapter 1.0 alias for <see cref="Chain"/>. Version 2.0 wallets
+        /// ignore it when "chain" is present; wallets that only read the 1.0 field -
+        /// Phantom included - see nothing else, and treat a missing cluster as mainnet.
+        /// </summary>
+        [JsonPropertyName("cluster")]
+        public required string Cluster { get; set; }
+
+        /// <summary>
         /// Present only when reauthorizing an existing grant. Mobile Wallet Adapter 2.0
         /// deprecated the separate reauthorize method in favour of this field.
         /// </summary>

@@ -53,12 +53,7 @@ namespace PlutoFrameworkCore.Solana.Mwa
 
             var response = await InvokeAsync<MwaAuthorizeRequest, MwaAuthorizeResponse>(
                 "authorize",
-                new MwaAuthorizeRequest
-                {
-                    Identity = identity,
-                    Chain = chain,
-                    AuthToken = authToken,
-                },
+                BuildAuthorizeRequest(identity, cluster, authToken),
                 token);
 
             if (string.IsNullOrEmpty(response.AuthToken))
@@ -82,6 +77,24 @@ namespace PlutoFrameworkCore.Solana.Mwa
                 AccountLabel = account.Label,
             };
         }
+
+        /// <summary>
+        /// Builds the authorize params with the cluster stated twice: the 2.0 "chain"
+        /// field and its 1.0 "cluster" alias. Specification-compliant wallets read the
+        /// former and ignore the latter; wallets that only understand the 1.0 field
+        /// would otherwise fall back to mainnet regardless of the requested network.
+        /// </summary>
+        internal static MwaAuthorizeRequest BuildAuthorizeRequest(
+            MwaIdentity identity,
+            SolanaCluster cluster,
+            string? authToken) =>
+            new()
+            {
+                Identity = identity,
+                Chain = cluster.ToChainId(),
+                Cluster = cluster.ToLegacyClusterId(),
+                AuthToken = authToken,
+            };
 
         public Task DeauthorizeAsync(string authToken, CancellationToken token) =>
             InvokeAsync<MwaDeauthorizeRequest, JsonObject>(
