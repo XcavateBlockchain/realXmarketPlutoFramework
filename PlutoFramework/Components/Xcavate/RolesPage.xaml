@@ -13,7 +13,7 @@
                     AbsoluteLayout.LayoutFlags="All">
         <messages:X25519WebView
                         x:Name="webView"
-                        Url="https://roles.xcavate.io/"
+                        Url="https://roles.xcavate.io/?headerIsVisible=false"
                         AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
                         AbsoluteLayout.LayoutFlags="All"/>
 
