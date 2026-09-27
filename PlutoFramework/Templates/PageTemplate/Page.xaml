@@ -14,6 +14,7 @@
                     xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                     xmlns:form="clr-namespace:PlutoFramework.Components.Form"
                     xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+                    xmlns:components="clr-namespace:PlutoFramework.Components"
                     xmlns:solanastatus="clr-namespace:PlutoFramework.Components.Solana.Status"
                     xmlns:solanatransfer="clr-namespace:PlutoFramework.Components.Solana.Transfer"
                     x:Class="PlutoFramework.Templates.PageTemplate.Page">
@@ -82,17 +83,19 @@
                  can be requested from anywhere - transfers, dapp bridges, notification wallet
                  linking - so they are hosted here. Above the transfer popups, which are one
                  of the things that trigger them. Transactions show the first, messages the
-                 second; an operation uses exactly one, so sharing the layer is safe. -->
-            <solana:MwaSignPopupView ZIndex="12" />
+                 second; an operation uses exactly one, so sharing the layer is safe.
+                 The layer is PopupLayers.MwaSigning = Loading + 1, so a signature requested
+                 while something is loading is never buried under the overlay below. -->
+            <solana:MwaSignPopupView ZIndex="{x:Static components:PopupLayers.MwaSigning}" />
 
-            <solana:MwaSignMessagePopupView ZIndex="12" />
+            <solana:MwaSignMessagePopupView ZIndex="{x:Static components:PopupLayers.MwaSigning}" />
 
             <!-- Above the popup layer, not in it: a phone field usually sits inside a bottom
                  card of its own, and its country picker has to stack over that card the way
                  the token picker above stacks over the transfer popup. -->
             <form:CountrySelectPopupView ZIndex="13" />
 
-            <loading:FullPageLoadingView ZIndex="20" />
+            <loading:FullPageLoadingView ZIndex="{x:Static components:PopupLayers.Loading}" />
 
             <extrinsic:ExtrinsicStatusStackLayout ZIndex="5" />
 

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.AspNetCore.WebUtilities;
 using PlutoFramework.Model;
+using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore;
 
 namespace PlutoFramework.Components.Keys
@@ -15,6 +16,13 @@ namespace PlutoFramework.Components.Keys
 
         [ObservableProperty]
         private string secretKey = "";
+
+        /// <summary>
+        /// Pushes the new public key onto the stored profile, when there is one. Fire-and-forget:
+        /// the key is already saved locally, and the service logs and swallows its own failures.
+        /// </summary>
+        private static void UpdateProfileX25519Key() =>
+            _ = DependencyService.Get<XcavateProfileService>().UpdateX25519PublicKeyAsync();
 
         [RelayCommand]
         public async Task ContinueAsync()
@@ -31,6 +39,8 @@ namespace PlutoFramework.Components.Keys
                 await Model.KeysModel.SaveEncryptionX25519KeyAsync(
                     secretKeyBytes
                 );
+
+                UpdateProfileX25519Key();
 
                 await Navigation.Invoke();
             }
@@ -53,7 +63,9 @@ namespace PlutoFramework.Components.Keys
         public async Task GenerateNewKeyAsync()
         {
             await Model.KeysModel.GenerateNewEncryptionX25519KeyAsync();
-            
+
+            UpdateProfileX25519Key();
+
             await Navigation.Invoke();
         }
 
@@ -64,6 +76,8 @@ namespace PlutoFramework.Components.Keys
             // and leaving would strand the replace flow's caller two pages up.
             if (await KeysModel.ImportJsonX25519KeyAsync())
             {
+                UpdateProfileX25519Key();
+
                 await Navigation.Invoke();
             }
         }

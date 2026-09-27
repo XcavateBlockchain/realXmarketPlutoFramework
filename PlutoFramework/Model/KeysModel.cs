@@ -7,7 +7,6 @@ using Plugin.Fingerprint;
 using Plugin.Fingerprint.Abstractions;
 using PlutoFramework.Components.Password;
 using PlutoFramework.Model.SQLite;
-using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Keys;
 using Substrate.NET.Schnorrkel.Keys;
@@ -508,9 +507,9 @@ namespace PlutoFramework.Model
             // The X25519-missing banner reads a cached answer, and saving the key flips it.
             await X25519WarningModel.RefreshAsync();
 
-            // Fire-and-forget like the wallet links in SaveKeyAsync: the save must not wait
-            // on a network call, and the service logs and swallows its own failures.
-            _ = DependencyService.Get<XcavateProfileService>().UpdateX25519PublicKeyAsync();
+            // No profile update here: this also runs mid-onboarding (EnsureEncryptionX25519KeyAsync),
+            // and the profile's X25519 key is written only at the profile step - the last
+            // onboarding page, or an explicit import/replace from the Keys pages.
         }
 
         public static async Task ImportJsonKeyAsync()
