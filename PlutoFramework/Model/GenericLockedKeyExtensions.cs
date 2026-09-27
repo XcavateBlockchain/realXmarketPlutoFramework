@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Model.SQLite;
+using PlutoFramework.Model.SQLite;
 using PlutoFrameworkCore;
 using PlutoFrameworkCore.Keys;
 
@@ -6,7 +6,7 @@ namespace PlutoFramework.Model
 {
     public static class GenericLockedKeyExtensions
     {
-        public static Task RemoveAsync(this GenericLockedKey key)
+        public static async Task RemoveAsync(this GenericLockedKey key)
         {
             PlutoConfigurationModel.SecureStorage.Remove(key.SecretStorageKey);
 
@@ -22,7 +22,13 @@ namespace PlutoFramework.Model
                 Preferences.Remove(PreferencesModel.SOLANA_PUBLIC_KEY);
             }
 
-            return KeysDatabase.DeleteKeyAsync(key);
+            await KeysDatabase.DeleteKeyAsync(key);
+
+            // The X25519-missing banner reads a cached answer, and deleting the key flips it.
+            if (key.Type == KeyTypeEnum.EncryptionX25519)
+            {
+                await X25519WarningModel.RefreshAsync();
+            }
         }
     }
 }

@@ -18,7 +18,7 @@
                                      Spacing="20"
                                      Padding="20, 10, 20, 10">
                     <Label Text="Are you sure you want to log out?" />
-                    <Label Text="This will delete all of your keys permanently from the device." />
+                    <Label Text="This will delete all of your keys permanently from the device. Make sure you have backed up all of your keys to be able to recover them later." />
                 </VerticalStackLayout>
 
                 <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 145"

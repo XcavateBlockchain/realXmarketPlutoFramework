@@ -5,6 +5,7 @@
                        xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                        xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
                        xmlns:address="clr-namespace:PlutoFramework.Components.AddressView"
+                       xmlns:settings="clr-namespace:PlutoFramework.Components.Settings"
                        x:Class="PlutoFramework.Components.Solana.SolanaMwaKeyDetailPage"
                        Title="Solana wallet">
     <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
@@ -61,5 +62,6 @@
 
     <template:PageTemplate.PopupContent>
         <address:AddressQrCodeView />
+        <settings:LogOutPopup />
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>

@@ -75,9 +75,18 @@ namespace PlutoFramework.Components.Menu
         {
             User = await XcavateUserDatabase.GetUserInformationAsync();
 
-            // Roles come from the Xcavate whitelist Solana program, so they follow the Solana
-            // key rather than the main one. A Substrate-only user simply has none, and the
-            // badge layout renders nothing for an empty list.
+            await LoadRolesAsync();
+        }
+
+        /// <summary>
+        /// Roles come from the Xcavate whitelist Solana program on the selected network, so
+        /// they follow the Solana key rather than the main one. A Substrate-only user simply
+        /// has none, and neither does a wallet on a network the programs are not deployed on;
+        /// the badge layout renders nothing for an empty list. Best effort: a failed query
+        /// keeps whatever roles were shown before.
+        /// </summary>
+        private async Task LoadRolesAsync()
+        {
             var address = KeysModel.GetSolanaAddress();
 
             if (address is null)
@@ -85,7 +94,23 @@ namespace PlutoFramework.Components.Menu
                 return;
             }
 
-            Roles = [.. await WhitelistModel.GetRolesCachedAsync(address, CancellationToken.None)];
+            var cluster = SolanaNetworkModel.SelectedCluster;
+
+            if (!XcavateDeploymentModel.IsDeployed(cluster))
+            {
+                Roles = [];
+
+                return;
+            }
+
+            try
+            {
+                Roles = [.. await WhitelistModel.GetRolesCachedAsync(address, cluster, CancellationToken.None)];
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load the wallet's Xcavate roles: {ex}");
+            }
         }
 
         /// <summary>
@@ -95,6 +120,10 @@ namespace PlutoFramework.Components.Menu
         /// </summary>
         public async Task LoadProfileAsync()
         {
+            // Settings is pushed over this page, so coming back re-reads the roles for the
+            // network the user may just have switched to.
+            _ = LoadRolesAsync();
+
             var address = MainKeyModel.GetAddress();
 
             if (address != Address)
@@ -141,5 +170,8 @@ namespace PlutoFramework.Components.Menu
 
         [RelayCommand]
         public Task SupportActionAsync() => Shell.Current.Navigation.PushAsync(new ImportantLinksPage());
+
+        [RelayCommand]
+        public Task RolesActionAsync() => Shell.Current.Navigation.PushAsync(new RolesPage());
     }
 }

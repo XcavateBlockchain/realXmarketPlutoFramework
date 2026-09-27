@@ -189,14 +189,15 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 if (nft.NftBase is XcavateSolanaListingNft solanaListing)
                 {
-                    // Solana-sourced items refresh from the Xcavate devnet indexer; the SubQuery
-                    // indexer below knows nothing about them. On failure the list-time data is
-                    // simply kept - stale beats no detail page.
+                    // Solana-sourced items refresh from the selected cluster's Xcavate indexer;
+                    // the SubQuery indexer below knows nothing about them. On failure the
+                    // list-time data is simply kept - stale beats no detail page.
                     try
                     {
                         var solanaAddress = KeysModel.GetSolanaAddress();
 
                         var freshListing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
+                                SolanaNetworkModel.SelectedCluster,
                                 solanaListing.ListingId,
                                 solanaAddress,
                                 token)
@@ -289,9 +290,12 @@ namespace PlutoFramework.Components.XcavateProperty
                 {
                     var rolesAddress = KeysModel.GetSolanaAddress();
 
-                    if (rolesAddress is not null)
+                    // On a cluster with no deployment the wallet holds no roles there;
+                    // answering empty without querying keeps the gated actions off.
+                    if (rolesAddress is not null && XcavateDeploymentModel.IsDeployed(SolanaNetworkModel.SelectedCluster))
                     {
-                        roles = await WhitelistModel.GetRolesCachedAsync(rolesAddress, token).ConfigureAwait(false);
+                        roles = await WhitelistModel.GetRolesCachedAsync(
+                            rolesAddress, SolanaNetworkModel.SelectedCluster, token).ConfigureAwait(false);
                     }
                 }
                 catch (Exception ex)

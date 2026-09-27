@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Alerts;
 using Microsoft.Maui.Handlers;
 using PlutoFramework.Components.WebView;
 using PlutoFramework.Model;
@@ -1358,6 +1359,11 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
             if (encryptionKey?.SecretKey is null or { Length: not 32 })
             {
                 System.Diagnostics.Debug.WriteLine("X25519 key injection skipped: no valid key found.");
+
+                // Said out loud, not only logged: without the key the dashboard cannot
+                // decrypt anything, and a silent skip reads as an empty-broken page.
+                await Toast.Make("Encryption key is not available on this device. Import or replace it from the Keys page.").Show();
+
                 return;
             }
 

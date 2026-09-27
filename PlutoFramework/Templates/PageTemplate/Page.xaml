@@ -78,11 +78,14 @@
 
             <solanatransfer:SolanaTokenSelectView ZIndex="11" />
 
-            <!-- Every Mobile Wallet Adapter signature shows this, and a signature can be
-                 requested from anywhere - transfers, dapp bridges, notification wallet
-                 linking - so it is hosted here. Above the transfer popups, which are one
-                 of the things that trigger it. -->
+            <!-- Every Mobile Wallet Adapter signature shows one of these, and a signature
+                 can be requested from anywhere - transfers, dapp bridges, notification wallet
+                 linking - so they are hosted here. Above the transfer popups, which are one
+                 of the things that trigger them. Transactions show the first, messages the
+                 second; an operation uses exactly one, so sharing the layer is safe. -->
             <solana:MwaSignPopupView ZIndex="12" />
+
+            <solana:MwaSignMessagePopupView ZIndex="12" />
 
             <!-- Above the popup layer, not in it: a phone field usually sits inside a bottom
                  card of its own, and its country picker has to stack over that card the way

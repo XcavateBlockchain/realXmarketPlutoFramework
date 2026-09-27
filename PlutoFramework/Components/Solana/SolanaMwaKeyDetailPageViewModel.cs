@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.Keys;
+using PlutoFramework.Components.Settings;
 using PlutoFramework.Model;
 using PlutoFrameworkCore.Keys;
 using PlutoFrameworkCore.Solana;
@@ -37,6 +38,8 @@ namespace PlutoFramework.Components.Solana
         /// Revokes the authorization with the wallet where possible, then removes it
         /// locally either way. Reopening the wallet app to revoke can fail for reasons
         /// outside the user's control, and that must not leave them stuck connected.
+        /// Removing the key removes the account with it, so the confirmation is the
+        /// logout popup and a confirmed disconnect ends in a full logout.
         /// </summary>
         [RelayCommand]
         public async Task DisconnectAsync()
@@ -53,17 +56,28 @@ namespace PlutoFramework.Components.Solana
                 return;
             }
 
+            var lockedKey = LockedKey;
+
+            var popupViewModel = DependencyService.Get<LogOutPopupViewModel>();
+
+            popupViewModel.ContinueRequested = () => DisconnectConfirmedAsync(lockedKey);
+
+            popupViewModel.IsVisible = true;
+        }
+
+        private async Task DisconnectConfirmedAsync(GenericLockedKey lockedKey)
+        {
             IsDisconnecting = true;
 
             try
             {
-                var revoked = await SolanaMwaModel.DisconnectAsync(LockedKey, CancellationToken.None);
+                var revoked = await SolanaMwaModel.DisconnectAsync(lockedKey, CancellationToken.None);
 
                 await Toast.Make(revoked
                     ? "Wallet disconnected."
                     : "Wallet removed. You may also want to revoke this app inside your wallet app.").Show();
 
-                await Shell.Current.Navigation.PopAsync();
+                await LogOutModel.LogOutAsync();
             }
             finally
             {

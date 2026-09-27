@@ -1,34 +1,23 @@
-using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Keys;
 using PlutoFramework.Components.Solana;
 using PlutoFramework.Components.WebView;
 using PlutoFramework.Templates.PageTemplate;
 using PlutoFramework.Model;
 using PlutoFrameworkCore.Solana;
-using System.Text;
 
-namespace PlutoFramework.Components.Messages;
+namespace PlutoFramework.Components.Xcavate;
 
-public partial class MessageWebViewPage : PageTemplate
+/// <summary>
+/// Hosts the Xcavate roles dashboard (roles.xcavate.io) in an <see cref="Messages.X25519WebView"/>,
+/// which injects the user's Solana wallet (Wallet Standard) into the page.
+/// </summary>
+public partial class RolesPage : PageTemplate
 {
-    private const string DefaultTitle = "Messages";
-
-    public MessageWebViewPage() : this(null)
-    {
-    }
-
-    public MessageWebViewPage(string? url)
+    public RolesPage()
     {
         InitializeComponent();
 
         WebViewLoadFailureMonitor.Attach(webView, webErrorView);
-
-        webView.HeaderChanged += OnWebHeaderChanged;
-
-        if (url is not null)
-        {
-            webView.Url = url;
-        }
 
         ApplyDevnetBannerOffset();
 
@@ -39,7 +28,7 @@ public partial class MessageWebViewPage : PageTemplate
 
     private void OnClusterChanged(object? sender, SolanaCluster cluster)
     {
-        // Same orphan guard as SolanaBalanceCellView.OnClusterChanged: a page left behind
+        // Same orphan guard as MessageWebViewPage.OnClusterChanged: a page left behind
         // when its parent was replaced stays subscribed to the static event forever.
         if (Handler is null)
         {
@@ -102,84 +91,6 @@ public partial class MessageWebViewPage : PageTemplate
         }
     }
 
-    /// <summary>
-    /// Mirrors the hosted page's header into the native TopNavigationBar: the title
-    /// replaces the page title and each web action button becomes an icon slot.
-    /// Already dispatched on the main thread by <see cref="X25519WebView"/>.
-    /// </summary>
-    private void OnWebHeaderChanged(object? sender, WebPageHeader header)
-    {
-        if (!header.Present)
-        {
-            Title = DefaultTitle;
-            NavigationBarExtra1Command = null!;
-            NavigationBarExtra2Command = null!;
-            return;
-        }
-
-        Title = string.IsNullOrWhiteSpace(header.Title) ? DefaultTitle : header.Title;
-
-        // The TopNavigationBar exposes two icon slots: Extra1 (right-most / primary)
-        // and Extra2. Map the header's action buttons onto them in order, so the
-        // first web button lands in the primary slot.
-        ApplyHeaderAction(header.Buttons, index: 0, isPrimary: true);
-        ApplyHeaderAction(header.Buttons, index: 1, isPrimary: false);
-    }
-
-    private void ApplyHeaderAction(IReadOnlyList<string> buttons, int index, bool isPrimary)
-    {
-        var hasButton = index < buttons.Count && !string.IsNullOrWhiteSpace(buttons[index]);
-
-        if (!hasButton)
-        {
-            // Clearing the command hides the slot (its IsVisible tracks the command).
-            if (isPrimary)
-            {
-                NavigationBarExtra1Command = null!;
-            }
-            else
-            {
-                NavigationBarExtra2Command = null!;
-            }
-
-            return;
-        }
-
-        var image = ImageSource.FromFile(ButtonTextToIconFile(buttons[index]));
-        var command = new AsyncRelayCommand(() => webView.InvokeHeaderActionAsync(index));
-
-        if (isPrimary)
-        {
-            NavigationBarExtra1Image = image;
-            NavigationBarExtra1Command = command;
-        }
-        else
-        {
-            NavigationBarExtra2Image = image;
-            NavigationBarExtra2Command = command;
-        }
-    }
-
-    /// <summary>
-    /// Maps a header button's visible text to its icon file name using the agreed
-    /// scheme: lower-cased with all whitespace removed, suffixed with ".png".
-    /// e.g. "New Chat" -> "newchat.png".
-    /// </summary>
-    private static string ButtonTextToIconFile(string text)
-    {
-        var builder = new StringBuilder(text.Length);
-
-        foreach (var c in text)
-        {
-            if (!char.IsWhiteSpace(c))
-            {
-                builder.Append(char.ToLowerInvariant(c));
-            }
-        }
-
-        return builder.Length == 0 ? string.Empty : $"{builder}.png";
-    }
-
     protected override bool OnBackButtonPressed()
     {
         // A visible popup (e.g. a dApp connection request raised by the hosted page) is
@@ -211,8 +122,7 @@ public partial class MessageWebViewPage : PageTemplate
     {
         // CanGoBackInPage / GoBackInPage rather than the WebView's own CanGoBack and
         // GoBack: those go through MAUI's cached copy of the back-forward list, which does
-        // not keep up with the dashboard's client-side routing and sent every tap on the
-        // back button straight to PopAsync.
+        // not keep up with client-side routing.
         if (!webView.CanGoBackInPage)
         {
             return false;

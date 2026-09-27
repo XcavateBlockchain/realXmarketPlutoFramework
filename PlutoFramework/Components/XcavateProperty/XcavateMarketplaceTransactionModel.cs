@@ -13,8 +13,8 @@ namespace PlutoFramework.Components.XcavateProperty
     /// <summary>
     /// Submits a marketplace program call the way the Solana transfer flow submits a
     /// transfer: status toast registered before any slow work, instructions built for
-    /// the signing wallet, sent on the marketplace's own cluster, then tracked to
-    /// confirmation. The replacement for the Substrate extrinsic pipeline
+    /// the signing wallet, sent on the selected cluster - the one the listing came from,
+    /// then tracked to confirmation. The replacement for the Substrate extrinsic pipeline
     /// (TransactionAnalyzer + extrinsic status stack) on the property pages. When the
     /// program additionally requires the rent collector's signature (reserve, buy and claim),
     /// that signature comes from the profile API - which holds the rent collector key -
@@ -41,22 +41,31 @@ namespace PlutoFramework.Components.XcavateProperty
         /// <summary>
         /// Builds and submits one marketplace transaction.
         /// <paramref name="buildInstructionsAsync"/> receives the signing wallet's
-        /// address - the investor/confirmer the program instructions are keyed by.
+        /// address - the investor/confirmer the program instructions are keyed by - and
+        /// the cluster the listing came from, resolved once up front.
         /// </summary>
         public static async Task SubmitAsync(
             string description,
-            Func<string, CancellationToken, Task<List<TransactionInstruction>>> buildInstructionsAsync)
+            Func<string, SolanaCluster, CancellationToken, Task<List<TransactionInstruction>>> buildInstructionsAsync)
         {
-            // Deliberately the marketplace's cluster, not the app-wide selection: the
-            // listing being acted on came from this deployment, whatever network the
-            // user picked for their wallet.
-            var cluster = XcavateMarketplaceCallsModel.MarketplaceCluster;
+            // The marketplace follows the selected network: the listing being acted on came
+            // from this cluster's deployment, and so must the transaction. Where nothing is
+            // deployed there is nothing to build against - fail before any wallet trip.
+            var cluster = SolanaNetworkModel.SelectedCluster;
 
             var stack = DependencyService.Get<SolanaTransactionStatusStackViewModel>();
 
             // Registered before anything slow, so the user sees the action acknowledged
             // the moment they tap rather than after an unlock prompt and a round trip.
             var info = stack.Register(description, cluster);
+
+            if (!XcavateDeploymentModel.IsDeployed(cluster))
+            {
+                info.Status = SolanaTransactionStatus.Error;
+                info.ErrorMessage = XcavateDeploymentModel.NotDeployedMessage(cluster);
+
+                return;
+            }
 
             try
             {
@@ -71,8 +80,8 @@ namespace PlutoFramework.Components.XcavateProperty
                 }
 
                 // Built before the key is unlocked: a build failure (no position, closed
-                // listing, marketplace not deployed) should not cost an unlock prompt.
-                var instructions = await buildInstructionsAsync(address, CancellationToken.None);
+                // listing) should not cost an unlock prompt.
+                var instructions = await buildInstructionsAsync(address, cluster, CancellationToken.None);
 
                 // Reserve, buy and claim all take a rent-fronting payer that the
                 // deployed program pins to the config's rent collector AND requires

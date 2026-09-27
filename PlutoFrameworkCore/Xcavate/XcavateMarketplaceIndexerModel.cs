@@ -25,16 +25,15 @@ namespace PlutoFramework.Model.Xcavate
     /// either way - the old town/type/name filters are answered client-side by
     /// <see cref="MatchesFilter"/>.
     /// </para>
+    /// <para>
+    /// The cluster is the caller's - the app's selected Solana network. Callers gate on
+    /// <see cref="XcavateDeploymentModel.IsDeployed"/> first: on a cluster with no deployment
+    /// these readers throw <see cref="NotSupportedException"/> from the indexer client, and a
+    /// marketplace that is not there must look like an empty placeholder, not an error.
+    /// </para>
     /// </summary>
     public static class XcavateMarketplaceIndexerModel
     {
-        /// <summary>
-        /// The cluster whose marketplace program listings are read. Devnet for the same
-        /// reason as <see cref="WhitelistModel.WhitelistCluster"/>: the Xcavate programs
-        /// are only deployed there today.
-        /// </summary>
-        public const SolanaCluster MarketplaceCluster = SolanaCluster.Devnet;
-
         /// <summary>
         /// Decimals of the listing's share price. The marketplace config's accepted payment
         /// mints are USD stablecoins (tUSDC / USDC) with 6 decimals, and sharePrice is
@@ -49,11 +48,12 @@ namespace PlutoFramework.Model.Xcavate
         private const int HoldingsPageSize = 100;
 
         public static async Task<IReadOnlyList<XcavateSolanaListingNft>> GetMarketplaceListedPropertiesAsync(
+            SolanaCluster cluster,
             int first,
             int offset,
             CancellationToken token = default)
         {
-            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var result = await client.MarketplaceListings
                 .ExecuteAsync(first, offset, token)
@@ -83,11 +83,12 @@ namespace PlutoFramework.Model.Xcavate
         /// exist or its account has been closed.
         /// </summary>
         public static async Task<XcavateSolanaListingNft?> GetListingFullInfoAsync(
+            SolanaCluster cluster,
             long listingId,
             string? investor,
             CancellationToken token = default)
         {
-            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var result = await client.MarketplaceListing
                 .ExecuteAsync(listingId.ToString(CultureInfo.InvariantCulture), token)
@@ -190,6 +191,7 @@ namespace PlutoFramework.Model.Xcavate
         /// </para>
         /// </summary>
         public static async Task<IReadOnlyList<XcavateSolanaInvestorProperty>> GetInvestorPropertiesAsync(
+            SolanaCluster cluster,
             string investor,
             bool? owned,
             bool? reserved,
@@ -200,7 +202,7 @@ namespace PlutoFramework.Model.Xcavate
             int offset,
             CancellationToken token = default)
         {
-            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var result = await client.InvestorProperties
                 .ExecuteAsync(investor, owned, reserved, name, townCity, propertyType, first, offset, token)

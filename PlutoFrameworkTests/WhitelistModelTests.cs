@@ -1,4 +1,5 @@
 using PlutoFramework.Model.Xcavate;
+using PlutoFrameworkCore.Solana;
 
 namespace PlutoFrameworkTests
 {
@@ -20,7 +21,7 @@ namespace PlutoFrameworkTests
         [TestCase("3krQjt3Nsb3qKwLWdatXN1kUV9p7fP6WrwWYvUHHwVGu", XcavateRole.SpvConfirmation)]
         public async Task GetRolesAsync_ReturnsRolesForAddressAsync(string address, XcavateRole expected)
         {
-            HashSet<XcavateRole> roles = await WhitelistModel.GetRolesAsync(address, CancellationToken.None);
+            HashSet<XcavateRole> roles = await WhitelistModel.GetRolesAsync(address, SolanaCluster.Devnet, CancellationToken.None);
 
             Assert.That(roles, Is.Not.Null);
             Assert.That(roles, Does.Contain(expected));
@@ -38,6 +39,7 @@ namespace PlutoFrameworkTests
             // empty result here is a real answer rather than a lookup that silently failed.
             HashSet<XcavateRole> roles = await WhitelistModel.GetRolesAsync(
                 "11111111111111111111111111111111",
+                SolanaCluster.Devnet,
                 CancellationToken.None);
 
             Assert.That(roles, Is.Empty);
@@ -51,7 +53,7 @@ namespace PlutoFrameworkTests
         [TestCase("EJpEpZ8rQY5gVkv6exjZ2urQpPwF6BS6RTaE4UzvhhsF", XcavateRole.ModuleCreator, false)]
         public async Task HasRoleAsync_MatchesTheRoleSetAsync(string address, XcavateRole role, bool expected)
         {
-            bool hasRole = await WhitelistModel.HasRoleAsync(address, role, CancellationToken.None);
+            bool hasRole = await WhitelistModel.HasRoleAsync(address, role, SolanaCluster.Devnet, CancellationToken.None);
 
             Assert.That(hasRole, Is.EqualTo(expected));
         }

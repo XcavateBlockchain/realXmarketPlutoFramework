@@ -1,4 +1,4 @@
-﻿extern alias bc26;
+extern alias bc26;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Model;
@@ -15,6 +15,26 @@ namespace PlutoFramework.Components.Keys
         [NotifyPropertyChangedFor(nameof(SecretKey))]
         private EncryptionX25519Key? unlockedKey;
         public string SecretKey => UnlockedKey is not null ? WebEncoders.Base64UrlEncode(UnlockedKey.SecretKey) : "No secret key";
+
+        [RelayCommand]
+        public void ReplaceKey()
+        {
+            var popupViewModel = DependencyService.Get<X25519BackupWarningPopupViewModel>();
+
+            popupViewModel.ContinueRequested = () => Shell.Current.Navigation.PushAsync(new ImportEncryptionX25519KeyPage(new ImportEncryptionX25519KeyPageViewModel
+            {
+                // The detail page below still shows the replaced key's secret, so leave it
+                // too; the key list underneath reloads in its OnAppearing.
+                Navigation = async () =>
+                {
+                    await Shell.Current.Navigation.PopAsync();
+
+                    await Shell.Current.Navigation.PopAsync();
+                },
+            }));
+
+            popupViewModel.IsVisible = true;
+        }
 
         [RelayCommand]
         public async Task ExportJsonAsync()

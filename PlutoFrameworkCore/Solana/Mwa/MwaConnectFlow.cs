@@ -72,13 +72,19 @@ namespace PlutoFrameworkCore.Solana.Mwa
         /// <param name="operation">
         /// Receives the client and the fresh authorization. Its result is returned to the caller.
         /// </param>
+        /// <param name="walletReopener">
+        /// When supplied, armed with the association's launch URI so the waiting UI can
+        /// re-fire the wallet intent - the user may have dismissed the wallet app, or the
+        /// first intent may have gone nowhere.
+        /// </param>
         public static async Task<T> WithAuthorizedSessionAsync<T>(
             MwaIdentity identity,
             SolanaCluster cluster,
             string? existingAuthToken,
             Func<MwaClient, MwaAuthorizationResult, CancellationToken, Task<T>> operation,
             IProgress<MwaConnectStage>? progress,
-            CancellationToken token)
+            CancellationToken token,
+            MwaWalletReopener? walletReopener = null)
         {
             var launcher = PlutoConfigurationModel.MwaIntentLauncher;
 
@@ -94,6 +100,10 @@ namespace PlutoFrameworkCore.Solana.Mwa
             var port = MwaAssociationUri.GeneratePort();
 
             var associationUri = MwaAssociationUri.BuildLocal(association.AssociationToken, port);
+
+            // Re-firing the same URI is safe at any point in the session: a wallet that
+            // already connected just comes back to the foreground with its pending request.
+            walletReopener?.Arm(() => launcher.LaunchAsync(associationUri));
 
             progress?.Report(MwaConnectStage.LaunchingWallet);
 
@@ -163,5 +173,24 @@ namespace PlutoFrameworkCore.Solana.Mwa
     public record SolanaMwaKeyDeauthorizeRequest
     {
         public required string AuthToken { get; set; }
+    }
+
+    /// <summary>
+    /// Lets the waiting UI re-fire the wallet intent for an association that is still in
+    /// flight. The connect flow arms it once the association URI exists; before that, and
+    /// on platforms without a launcher, reopening is a no-op that reports false.
+    /// </summary>
+    public sealed class MwaWalletReopener
+    {
+        private Func<Task<bool>>? reopen;
+
+        /// <summary>Called by the connect flow with the association's launch delegate.</summary>
+        public void Arm(Func<Task<bool>> reopen) => this.reopen = reopen;
+
+        /// <summary>
+        /// Repeats the wallet intent. False means no installed app handled it - the same
+        /// meaning <see cref="IMwaIntentLauncher.LaunchAsync"/> gives the first launch.
+        /// </summary>
+        public Task<bool> ReopenAsync() => reopen?.Invoke() ?? Task.FromResult(false);
     }
 }

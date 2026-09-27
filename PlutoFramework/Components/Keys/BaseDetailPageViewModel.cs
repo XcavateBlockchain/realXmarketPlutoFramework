@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Mnemonics;
 using PlutoFramework.Model;
@@ -42,7 +42,13 @@ namespace PlutoFramework.Components.Keys
                 Preferences.Clear(PreferencesModel.PUBLIC_KEY);
 
                 NavigationModel.SetWelcomeShell();
+
+                return;
             }
+
+            // Every other key type leaves the detail page, since staying on the detail
+            // view of a deleted key shows stale secrets.
+            await Shell.Current.Navigation.PopAsync();
         }
     }
 }

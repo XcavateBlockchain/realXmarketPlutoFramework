@@ -1,4 +1,4 @@
-﻿using PlutoFramework.Model.Xcavate;
+using PlutoFramework.Model.Xcavate;
 
 namespace PlutoFramework.Model
 {
@@ -27,6 +27,10 @@ namespace PlutoFramework.Model
 
             // Files
             XcavateFileModel.DeleteAll();
+
+            // The X25519-missing banner reads a cached answer, and the account it keys on
+            // is gone now. Fire-and-forget: Clear is synchronous.
+            _ = X25519WarningModel.RefreshAsync();
         }
     }
 }

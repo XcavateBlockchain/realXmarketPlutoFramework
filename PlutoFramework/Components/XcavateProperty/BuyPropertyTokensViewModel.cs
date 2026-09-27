@@ -212,9 +212,10 @@ namespace PlutoFramework.Components.XcavateProperty
             try
             {
                 var balanceTask = XcavateReserveBalanceModel.GetPaymentTokenBalanceAsync(
-                    XcavateMarketplaceCallsModel.MarketplaceCluster, address, PaymentTokenSymbol, CancellationToken.None);
+                    SolanaNetworkModel.SelectedCluster, address, PaymentTokenSymbol, CancellationToken.None);
 
-                var reservedTask = XcavateReserveBalanceModel.GetReservedValuesAsync(address, CancellationToken.None);
+                var reservedTask = XcavateReserveBalanceModel.GetReservedValuesAsync(
+                    SolanaNetworkModel.SelectedCluster, address, CancellationToken.None);
 
                 await Task.WhenAll(balanceTask, reservedTask);
 
@@ -294,9 +295,10 @@ namespace PlutoFramework.Components.XcavateProperty
                 try
                 {
                     var balanceTask = XcavateReserveBalanceModel.GetPaymentTokenBalanceAsync(
-                        XcavateMarketplaceCallsModel.MarketplaceCluster, address, PaymentTokenSymbol, CancellationToken.None);
+                        SolanaNetworkModel.SelectedCluster, address, PaymentTokenSymbol, CancellationToken.None);
 
-                    var reservedTask = XcavateReserveBalanceModel.GetReservedValuesAsync(address, CancellationToken.None);
+                    var reservedTask = XcavateReserveBalanceModel.GetReservedValuesAsync(
+                        SolanaNetworkModel.SelectedCluster, address, CancellationToken.None);
 
                     await Task.WhenAll(balanceTask, reservedTask);
 
@@ -354,9 +356,9 @@ namespace PlutoFramework.Components.XcavateProperty
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 description,
-                (investor, ct) => directBuyIsOpen
-                    ? XcavateMarketplaceCallsModel.BuyPropertySharesAsync(investor, listingId, parsedTokens, ct)
-                    : XcavateMarketplaceCallsModel.ReserveSharesAsync(investor, listingId, parsedTokens, ct));
+                (investor, cluster, ct) => directBuyIsOpen
+                    ? XcavateMarketplaceCallsModel.BuyPropertySharesAsync(cluster, investor, listingId, parsedTokens, ct)
+                    : XcavateMarketplaceCallsModel.ReserveSharesAsync(cluster, investor, listingId, parsedTokens, ct));
         }
 
         [RelayCommand]

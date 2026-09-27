@@ -39,7 +39,10 @@ namespace PlutoFramework.Components.WebView
 
         private const string SIGN_MESSAGE_REASON = "Sign a message for a web app";
         private const string SIGN_TRANSACTION_REASON = "Sign a transaction for a web app";
-        private const string SEND_TRANSACTION_REASON = "Sign and send a transaction for a web app";
+
+        // Reads as the transaction's name in the waiting popup: "Approve the web app
+        // transaction request."
+        private const string SEND_TRANSACTION_REASON = "web app transaction";
 
         /// <summary>
         /// Every Solana cluster this wallet will act on. Declared in full rather than limited

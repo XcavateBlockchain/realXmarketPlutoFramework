@@ -60,7 +60,7 @@
                     </BindableLayout.ItemTemplate>
                 </HorizontalStackLayout>
 
-                <Label Text="Used for every Solana address and transaction in the app. A connected wallet stays authorized only on the network it was connected on."
+                <Label Text="Used for every Solana address and transaction in the app. Property investing runs on the Xcavate programs, which are deployed on Devnet only for now. A connected wallet stays authorized only on the network it was connected on."
                        FontSize="11"
                        TextColor="#A6A6A6" />
             </VerticalStackLayout>

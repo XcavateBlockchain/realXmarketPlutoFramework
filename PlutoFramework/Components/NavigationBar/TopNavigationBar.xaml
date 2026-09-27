@@ -2,11 +2,12 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+             xmlns:keys="clr-namespace:PlutoFramework.Components.Keys"
              x:Class="PlutoFramework.Components.NavigationBar.TopNavigationBar"
              AbsoluteLayout.LayoutBounds="0.5, 0, 1, 45"
              AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
              >
-    <Grid RowDefinitions="*,Auto">
+    <Grid RowDefinitions="*,Auto,Auto">
     <AbsoluteLayout Grid.Row="0"
                     BackgroundColor="#88888888">
 
@@ -60,6 +61,8 @@
     </AbsoluteLayout>
 
     <solana:SolanaDevnetWarningView Grid.Row="1" />
+
+    <keys:X25519MissingWarningView Grid.Row="2" />
     </Grid>
 </ContentView>
 

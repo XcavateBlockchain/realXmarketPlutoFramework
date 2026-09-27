@@ -9,21 +9,22 @@ namespace PlutoFrameworkCore.Solana
     {
         /// <summary>
         /// Devnet. The Xcavate Solana programs are only deployed there today, so a user
-        /// who never opens Settings lands on the network where the app actually works.
-        /// When the mainnet programs deploy, flip this to <see cref="SolanaCluster.Mainnet"/>
-        /// and re-add mainnet to <see cref="Selectable"/>.
+        /// who never opens Settings lands on the network where everything works.
+        /// For the production release - once idls/mainnet/ is filled in and
+        /// XcavateProgramAddresses.Mainnet and XcavateWhitelistIndexer.MainnetUrl point at
+        /// the mainnet deployment - flip this to <see cref="SolanaCluster.Mainnet"/>. The
+        /// picker, the stored-preference repair and every consumer follow automatically.
         /// </summary>
         public const SolanaCluster Default = SolanaCluster.Devnet;
 
         /// <summary>
-        /// Devnet only, for now: mainnet has no Xcavate programs deployed
-        /// (XcavateProgramAddresses.Mainnet is null), so offering it would put the whole
-        /// app on a network where nothing works - and a wallet in testnet mode rejects
-        /// the mainnet authorization outright. Re-add <see cref="SolanaCluster.Mainnet"/>
-        /// when idls/mainnet/ is filled in. Testnet is deliberately absent too: it exists
-        /// to stage validator releases, not as a place this app's programs are deployed.
+        /// Both networks the wallet layer works on. Where the Xcavate programs are not
+        /// deployed the marketplace degrades to a placeholder
+        /// (XcavateDeploymentModel.IsDeployed) rather than blocking the network. Testnet is
+        /// deliberately absent: it exists to stage validator releases, not as a place this
+        /// app's programs are deployed.
         /// </summary>
         public static readonly SolanaCluster[] Selectable =
-            [SolanaCluster.Devnet];
+            [SolanaCluster.Devnet, SolanaCluster.Mainnet];
     }
 }

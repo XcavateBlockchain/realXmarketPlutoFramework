@@ -6,8 +6,9 @@
              xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+             xmlns:keys="clr-namespace:PlutoFramework.Components.Keys"
              x:Class="PlutoFramework.Components.Xcavate.XcavateTopNavigationBarView">
-    <Grid RowDefinitions="*,Auto">
+    <Grid RowDefinitions="*,Auto,Auto">
     <xcavate:PageBottomBarView
         Grid.Row="0"
         Padding="10"
@@ -129,5 +130,7 @@
     </xcavate:PageBottomBarView>
 
     <solana:SolanaDevnetWarningView Grid.Row="1" />
+
+    <keys:X25519MissingWarningView Grid.Row="2" />
     </Grid>
 </ContentView>

@@ -6,6 +6,7 @@
                        xmlns:kilt="clr-namespace:PlutoFramework.Components.Kilt"
                        xmlns:mnemonics="clr-namespace:PlutoFramework.Components.Mnemonics"
                        xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
+                       xmlns:keys="clr-namespace:PlutoFramework.Components.Keys"
                        x:Class="PlutoFramework.Components.Keys.EncryptionX25519KeyDetailPage"
                        Title="Manage Encryption Key">
     <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
@@ -21,9 +22,17 @@
                                     Command="{Binding ExportJsonCommand}"
                                     x:Name="exportJsonButton" />
 
+            <buttons:ElevatedButton ButtonState="Enabled"
+                                    Text="Replace"
+                                    Command="{Binding ReplaceKeyCommand}" />
+
             <buttons:ElevatedButton ButtonState="Warning"
                                     Text="Delete"
                                     Command="{Binding DeleteKeyCommand}" />
         </VerticalStackLayout>
     </ScrollView>
+
+    <template:PageTemplate.PopupContent>
+        <keys:X25519BackupWarningPopupView />
+    </template:PageTemplate.PopupContent>
 </template:PageTemplate>

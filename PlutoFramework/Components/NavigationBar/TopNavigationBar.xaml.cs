@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Layouts;
+using PlutoFramework.Components.Keys;
 using PlutoFramework.Components.Solana;
 using PlutoFramework.Model;
 using PlutoFrameworkCore.Solana;
@@ -44,6 +45,8 @@ public partial class TopNavigationBar : ContentView
         UpdateBounds();
 
         SolanaNetworkModel.ClusterChanged += OnClusterChanged;
+
+        X25519WarningModel.AvailabilityChanged += OnX25519AvailabilityChanged;
 	}
 
     private void OnClusterChanged(object? sender, SolanaCluster cluster)
@@ -58,8 +61,19 @@ public partial class TopNavigationBar : ContentView
         MainThread.BeginInvokeOnMainThread(UpdateBounds);
     }
 
+    private void OnX25519AvailabilityChanged(object? sender, EventArgs e)
+    {
+        // Same orphan guard as OnClusterChanged above.
+        if (Handler is null)
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(UpdateBounds);
+    }
+
     private void UpdateBounds() =>
-        AbsoluteLayout.SetLayoutBounds(this, new Rect(0.5, 0, 1, BarHeight + SolanaDevnetWarningView.ExtraHeight));
+        AbsoluteLayout.SetLayoutBounds(this, new Rect(0.5, 0, 1, BarHeight + SolanaDevnetWarningView.ExtraHeight + X25519MissingWarningView.ExtraHeight));
 
     public string Title
     {

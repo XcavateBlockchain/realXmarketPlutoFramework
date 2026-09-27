@@ -39,6 +39,66 @@ namespace PlutoFramework.Model.Xcavate.Profile
         }
 
         /// <summary>
+        /// Pushes the current X25519 public key onto the stored profile, when there is one.
+        /// Called after every X25519 key creation/import/replace, so the profile never keeps
+        /// advertising a key the device no longer holds.
+        /// </summary>
+        /// <remarks>
+        /// Never throws: the key operation that triggered this has already succeeded locally,
+        /// and its caller must not fail over a profile sync. Never prompts when there is
+        /// nothing to update either - the address is the preferences-based one and the
+        /// profile lookup runs before the signer (the part that prompts) is asked for, which
+        /// is what keeps Solana onboarding quiet: it creates the key before any profile
+        /// exists.
+        /// </remarks>
+        public async Task UpdateX25519PublicKeyAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var address = MainKeyModel.GetAddress();
+
+                if (address is null)
+                {
+                    return;
+                }
+
+                var existingProfile = await GetProfileAsync(cancellationToken);
+
+                if (existingProfile is null)
+                {
+                    return;
+                }
+
+                var signer = await MainKeyModel.GetSignerAsync("To update your encryption key on your public profile.", cancellationToken);
+
+                if (signer is null)
+                {
+                    return;
+                }
+
+                var x25519key = await KeysModel.GetX25519KeyNoAuthAsync();
+
+                if (x25519key is null)
+                {
+                    return;
+                }
+
+                // The update replaces every field it sends, so it writes the stored profile
+                // back unchanged - same reason RegisterProfileCoreAsync carries the picture
+                // URL - with only the key swapped.
+                existingProfile.X25519Key = x25519key.PublicKeyString;
+
+                await _client.UpdateProfileAsync(address, existingProfile, signer, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to update the X25519 key on the public profile: " + ex);
+
+                await Toast.Make("Your encryption key was saved, but the public profile could not be updated.").Show();
+            }
+        }
+
+        /// <summary>
         /// Whether <paramref name="nickname"/> is free for this user to publish under. True
         /// when nobody holds it, and true when the holder is this user's own profile.
         /// </summary>

@@ -16,6 +16,12 @@ namespace PlutoFramework.Model.Xcavate
     /// resolves what the encoding needs from live state: the listing's current price and
     /// fees, the investor's recorded position, the config's rent collector and accepted
     /// payment mints.
+    /// <para>
+    /// Every method takes the cluster explicitly - the app's selected Solana network - so a
+    /// transaction is always built against the deployment its listing came from. Callers
+    /// gate on <see cref="XcavateDeploymentModel.IsDeployed"/> first; where that is false,
+    /// <see cref="XcavateProgramAddresses.Require"/> throws the real reason.
+    /// </para>
     /// </summary>
     /// <remarks>
     /// On the payer: reserve_shares, buy_property_shares and claim_shares
@@ -33,13 +39,6 @@ namespace PlutoFramework.Model.Xcavate
     public static class XcavateMarketplaceCallsModel
     {
         /// <summary>
-        /// The cluster whose marketplace is transacted with - the same deployment the
-        /// listing feed reads from, deliberately not the user's selected network (see
-        /// <see cref="XcavateMarketplaceIndexerModel.MarketplaceCluster"/>).
-        /// </summary>
-        public const SolanaCluster MarketplaceCluster = XcavateMarketplaceIndexerModel.MarketplaceCluster;
-
-        /// <summary>
         /// reserve_shares for <paramref name="amount"/> shares of listing
         /// <paramref name="listingId"/> - the sale-phase purchase behind the Reserve button.
         /// The deployed program pins the rent-fronting payer to the config's rent
@@ -51,11 +50,12 @@ namespace PlutoFramework.Model.Xcavate
         /// reflects the listing as it is now, not as the page loaded it.
         /// </summary>
         public static Task<List<TransactionInstruction>> ReserveSharesAsync(
+            SolanaCluster cluster,
             string investor,
             long listingId,
             uint amount,
             CancellationToken token = default) =>
-            PurchaseAsync(XcavateMarketplaceProgram.ReserveShares, investor, listingId, amount, token, sponsorFrontsRent: true);
+            PurchaseAsync(XcavateMarketplaceProgram.ReserveShares, cluster, investor, listingId, amount, token, sponsorFrontsRent: true);
 
         /// <summary>
         /// buy_property_shares for <paramref name="amount"/> shares - the direct purchase
@@ -64,29 +64,31 @@ namespace PlutoFramework.Model.Xcavate
         /// closed; while the listing sells it goes through <see cref="ReserveSharesAsync"/>.
         /// </summary>
         public static Task<List<TransactionInstruction>> BuyPropertySharesAsync(
+            SolanaCluster cluster,
             string investor,
             long listingId,
             uint amount,
             CancellationToken token = default) =>
-            PurchaseAsync(XcavateMarketplaceProgram.BuyPropertyShares, investor, listingId, amount, token, sponsorFrontsRent: true);
+            PurchaseAsync(XcavateMarketplaceProgram.BuyPropertyShares, cluster, investor, listingId, amount, token, sponsorFrontsRent: true);
 
         private static async Task<List<TransactionInstruction>> PurchaseAsync(
             Func<XcavateProgramSet, PublicKey, PublicKey, ulong, uint, ulong, PublicKey, PublicKey, PublicKey, TransactionInstruction> build,
+            SolanaCluster cluster,
             string investor,
             long listingId,
             uint amount,
             CancellationToken token,
             bool sponsorFrontsRent)
         {
-            var programs = XcavateProgramAddresses.Require(MarketplaceCluster);
-            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var listing = await GetListingAsync(client, listingId, token).ConfigureAwait(false)
                 ?? throw new InvalidOperationException($"Listing {listingId} does not exist or is closed.");
 
-            var config = await GetConfigAsync(client, token).ConfigureAwait(false);
+            var config = await GetConfigAsync(cluster, client, token).ConfigureAwait(false);
 
-            var payment = await ResolvePaymentAsync(client, investor, listingId, config, token).ConfigureAwait(false);
+            var payment = await ResolvePaymentAsync(cluster, client, investor, listingId, config, token).ConfigureAwait(false);
 
             var sharePrice = ParseUInt64(listing.SharePrice);
             var maxTotalCost = ScaleToMintDecimals(
@@ -129,6 +131,7 @@ namespace PlutoFramework.Model.Xcavate
         /// position dictates the route; only a first purchase gets to pick a mint.
         /// </summary>
         private static async Task<PaymentRoute> ResolvePaymentAsync(
+            SolanaCluster cluster,
             IXcavateDevnetIndexerClient client,
             string investor,
             long listingId,
@@ -140,25 +143,25 @@ namespace PlutoFramework.Model.Xcavate
             if (position is not null)
             {
                 var recordedMint = new PublicKey(position.PaymentMint);
-                var (recordedTokenProgram, recordedDecimals) = await ResolveMintAsync(recordedMint, token).ConfigureAwait(false);
+                var (recordedTokenProgram, recordedDecimals) = await ResolveMintAsync(cluster, recordedMint, token).ConfigureAwait(false);
 
                 return new PaymentRoute(recordedMint, new PublicKey(position.PaymentAccount), recordedTokenProgram, recordedDecimals);
             }
 
-            var mint = PickPaymentMint(config.AcceptedPaymentMints);
-            var (tokenProgram, decimals) = await ResolveMintAsync(mint, token).ConfigureAwait(false);
+            var mint = PickPaymentMint(cluster, config.AcceptedPaymentMints);
+            var (tokenProgram, decimals) = await ResolveMintAsync(cluster, mint, token).ConfigureAwait(false);
 
             var investorKey = new PublicKey(investor);
             var paymentAccount = SolanaAssociatedTokenAccount.Derive(investorKey, mint, tokenProgram);
 
             // A first reservation binds this account, so it has to exist and hold funds -
             // fail here with the real reason rather than on chain with a raw account error.
-            var accountInfo = await SolanaRpcModel.GetAccountInfoAsync(MarketplaceCluster, paymentAccount.Key, token).ConfigureAwait(false);
+            var accountInfo = await SolanaRpcModel.GetAccountInfoAsync(cluster, paymentAccount.Key, token).ConfigureAwait(false);
 
             if (accountInfo is null)
             {
                 throw new InvalidOperationException(
-                    $"This wallet holds no {DescribeMint(mint)} to pay with.");
+                    $"This wallet holds no {DescribeMint(cluster, mint)} to pay with.");
             }
 
             return new PaymentRoute(mint, paymentAccount, tokenProgram, decimals);
@@ -170,18 +173,19 @@ namespace PlutoFramework.Model.Xcavate
         /// by it).
         /// </summary>
         public static async Task<List<TransactionInstruction>> ClaimSharesAsync(
+            SolanaCluster cluster,
             string investor,
             long listingId,
             CancellationToken token = default)
         {
-            var programs = XcavateProgramAddresses.Require(MarketplaceCluster);
-            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var position = await GetPositionAsync(client, listingId, investor, token).ConfigureAwait(false);
-            var config = await GetConfigAsync(client, token).ConfigureAwait(false);
+            var config = await GetConfigAsync(cluster, client, token).ConfigureAwait(false);
 
             var paymentMint = new PublicKey(position.PaymentMint);
-            var (paymentTokenProgram, _) = await ResolveMintAsync(paymentMint, token).ConfigureAwait(false);
+            var (paymentTokenProgram, _) = await ResolveMintAsync(cluster, paymentMint, token).ConfigureAwait(false);
 
             return
             [
@@ -201,11 +205,12 @@ namespace PlutoFramework.Model.Xcavate
         /// SpvConfirmation role holder. Pure - nothing has to be looked up.
         /// </summary>
         public static Task<List<TransactionInstruction>> CreateSpvAsync(
+            SolanaCluster cluster,
             string confirmer,
             long listingId,
             CancellationToken token = default)
         {
-            var programs = XcavateProgramAddresses.Require(MarketplaceCluster);
+            var programs = XcavateProgramAddresses.Require(cluster);
 
             return Task.FromResult<List<TransactionInstruction>>(
             [
@@ -218,12 +223,13 @@ namespace PlutoFramework.Model.Xcavate
         /// investor's reservation, the successor to the pallet's cancel_property_purchase.
         /// </summary>
         public static async Task<List<TransactionInstruction>> CancelReservationAsync(
+            SolanaCluster cluster,
             string investor,
             long listingId,
             CancellationToken token = default)
         {
-            var programs = XcavateProgramAddresses.Require(MarketplaceCluster);
-            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var position = await GetPositionAsync(client, listingId, investor, token).ConfigureAwait(false);
 
@@ -239,33 +245,34 @@ namespace PlutoFramework.Model.Xcavate
 
         /// <summary>withdraw_expired - refund after the listing expired unsold.</summary>
         public static Task<List<TransactionInstruction>> WithdrawExpiredAsync(
-            string investor, long listingId, CancellationToken token = default) =>
-            WithdrawAsync(XcavateMarketplaceProgram.WithdrawExpired, investor, listingId, token);
+            SolanaCluster cluster, string investor, long listingId, CancellationToken token = default) =>
+            WithdrawAsync(XcavateMarketplaceProgram.WithdrawExpired, cluster, investor, listingId, token);
 
         /// <summary>withdraw_cancelled - refund from a cancelled or refunding listing.</summary>
         public static Task<List<TransactionInstruction>> WithdrawCancelledAsync(
-            string investor, long listingId, CancellationToken token = default) =>
-            WithdrawAsync(XcavateMarketplaceProgram.WithdrawCancelled, investor, listingId, token);
+            SolanaCluster cluster, string investor, long listingId, CancellationToken token = default) =>
+            WithdrawAsync(XcavateMarketplaceProgram.WithdrawCancelled, cluster, investor, listingId, token);
 
         /// <summary>withdraw_legal_process_expired - refund after the legal phase blew its deadline.</summary>
         public static Task<List<TransactionInstruction>> WithdrawLegalProcessExpiredAsync(
-            string investor, long listingId, CancellationToken token = default) =>
-            WithdrawAsync(XcavateMarketplaceProgram.WithdrawLegalProcessExpired, investor, listingId, token);
+            SolanaCluster cluster, string investor, long listingId, CancellationToken token = default) =>
+            WithdrawAsync(XcavateMarketplaceProgram.WithdrawLegalProcessExpired, cluster, investor, listingId, token);
 
         private static async Task<List<TransactionInstruction>> WithdrawAsync(
             Func<XcavateProgramSet, PublicKey, ulong, PublicKey, PublicKey, PublicKey, PublicKey, TransactionInstruction> build,
+            SolanaCluster cluster,
             string investor,
             long listingId,
             CancellationToken token)
         {
-            var programs = XcavateProgramAddresses.Require(MarketplaceCluster);
-            var client = XcavateWhitelistIndexer.GetClient(MarketplaceCluster);
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var position = await GetPositionAsync(client, listingId, investor, token).ConfigureAwait(false);
-            var config = await GetConfigAsync(client, token).ConfigureAwait(false);
+            var config = await GetConfigAsync(cluster, client, token).ConfigureAwait(false);
 
             var paymentMint = new PublicKey(position.PaymentMint);
-            var (paymentTokenProgram, _) = await ResolveMintAsync(paymentMint, token).ConfigureAwait(false);
+            var (paymentTokenProgram, _) = await ResolveMintAsync(cluster, paymentMint, token).ConfigureAwait(false);
             var investorKey = new PublicKey(investor);
 
             // The refund handlers deliberately do not pin the destination to the recorded
@@ -284,13 +291,13 @@ namespace PlutoFramework.Model.Xcavate
             var shareTokenProgram = new PublicKey(SolanaTokenProgram.Token2022);
             var shareAccount = SolanaAssociatedTokenAccount.Derive(investorKey, shareMint, shareTokenProgram);
 
-            if (await SolanaRpcModel.GetAccountInfoAsync(MarketplaceCluster, refundAccount.Key, token).ConfigureAwait(false) is null)
+            if (await SolanaRpcModel.GetAccountInfoAsync(cluster, refundAccount.Key, token).ConfigureAwait(false) is null)
             {
                 instructions.Add(SolanaAssociatedTokenAccount.CreateIdempotentInstruction(
                     investorKey, investorKey, paymentMint, paymentTokenProgram));
             }
 
-            if (await SolanaRpcModel.GetAccountInfoAsync(MarketplaceCluster, shareAccount.Key, token).ConfigureAwait(false) is null)
+            if (await SolanaRpcModel.GetAccountInfoAsync(cluster, shareAccount.Key, token).ConfigureAwait(false) is null)
             {
                 instructions.Add(SolanaAssociatedTokenAccount.CreateIdempotentInstruction(
                     investorKey, investorKey, shareMint, shareTokenProgram));
@@ -339,7 +346,7 @@ namespace PlutoFramework.Model.Xcavate
         /// knows (so the user can actually see and hold it), else the first accepted mint.
         /// <paramref name="acceptedPaymentMintsJson"/> is the config's raw JSON list.
         /// </summary>
-        public static PublicKey PickPaymentMint(string acceptedPaymentMintsJson)
+        public static PublicKey PickPaymentMint(SolanaCluster cluster, string acceptedPaymentMintsJson)
         {
             var accepted = JsonSerializer.Deserialize<List<string>>(acceptedPaymentMintsJson) ?? [];
 
@@ -348,7 +355,7 @@ namespace PlutoFramework.Model.Xcavate
                 throw new InvalidOperationException("The marketplace config accepts no payment mints.");
             }
 
-            var known = SolanaTokenWhitelist.ForCluster(MarketplaceCluster);
+            var known = SolanaTokenWhitelist.ForCluster(cluster);
 
             var mint = accepted.FirstOrDefault(candidate => known.Any(entry => entry.Mint == candidate))
                 ?? accepted[0];
@@ -363,9 +370,10 @@ namespace PlutoFramework.Model.Xcavate
         /// at offset 44 of the mint layout).
         /// </summary>
         private static async Task<(PublicKey TokenProgram, int Decimals)> ResolveMintAsync(
+            SolanaCluster cluster,
             PublicKey mint, CancellationToken token)
         {
-            var entry = SolanaTokenWhitelist.ForCluster(MarketplaceCluster)
+            var entry = SolanaTokenWhitelist.ForCluster(cluster)
                 .FirstOrDefault(entry => entry.Mint == mint.Key);
 
             if (entry is not null)
@@ -373,8 +381,8 @@ namespace PlutoFramework.Model.Xcavate
                 return (new PublicKey(entry.ProgramId), entry.Decimals);
             }
 
-            var accountInfo = await SolanaRpcModel.GetAccountInfoAsync(MarketplaceCluster, mint.Key, token).ConfigureAwait(false)
-                ?? throw new InvalidOperationException($"Payment mint {mint.Key} does not exist on {MarketplaceCluster.GetName()}.");
+            var accountInfo = await SolanaRpcModel.GetAccountInfoAsync(cluster, mint.Key, token).ConfigureAwait(false)
+                ?? throw new InvalidOperationException($"Payment mint {mint.Key} does not exist on {cluster.GetName()}.");
 
             var data = Convert.FromBase64String(accountInfo.Data[0]);
 
@@ -417,8 +425,8 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>The mint's whitelist symbol when the app knows it, else its address.</summary>
-        private static string DescribeMint(PublicKey mint) =>
-            SolanaTokenWhitelist.ForCluster(MarketplaceCluster)
+        private static string DescribeMint(SolanaCluster cluster, PublicKey mint) =>
+            SolanaTokenWhitelist.ForCluster(cluster)
                 .FirstOrDefault(entry => entry.Mint == mint.Key)?.Symbol ?? mint.Key;
 
         private static async Task<IListingParts?> GetListingAsync(
@@ -452,7 +460,9 @@ namespace PlutoFramework.Model.Xcavate
                     $"This wallet has no open position on listing {listingId}.");
 
         private static async Task<IMarketplaceConfigInfo_MarketplaceConfig> GetConfigAsync(
-            IXcavateDevnetIndexerClient client, CancellationToken token)
+            SolanaCluster cluster,
+            IXcavateDevnetIndexerClient client,
+            CancellationToken token)
         {
             var result = await client.MarketplaceConfigInfo
                 .ExecuteAsync(token)
@@ -462,7 +472,7 @@ namespace PlutoFramework.Model.Xcavate
 
             return result.Data?.MarketplaceConfig
                 ?? throw new InvalidOperationException(
-                    $"The marketplace is not initialized on {MarketplaceCluster.GetName()}.");
+                    $"The marketplace is not initialized on {cluster.GetName()}.");
         }
 
         private static ulong ParseUInt64(string? value) =>

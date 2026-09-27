@@ -230,7 +230,8 @@ namespace PlutoFramework.Components.Solana
 
             try
             {
-                var reservedValues = await XcavateReserveBalanceModel.GetReservedValuesAsync(address, token);
+                var reservedValues = await XcavateReserveBalanceModel.GetReservedValuesAsync(
+                    SolanaNetworkModel.SelectedCluster, address, token);
 
                 token.ThrowIfCancellationRequested();
 

@@ -11,6 +11,7 @@ using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
 using PlutoFramework.Model.Xcavate.Profile;
+using PlutoFrameworkCore.Solana;
 using PlutoFrameworkCore.Xcavate;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
@@ -372,7 +373,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 var solanaAddress = KeysModel.GetSolanaAddress();
 
                 var freshListing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
-                        solanaListing.ListingId, solanaAddress, token)
+                        SolanaNetworkModel.SelectedCluster, solanaListing.ListingId, solanaAddress, token)
                     .ConfigureAwait(false);
 
                 if (freshListing is null)
@@ -488,7 +489,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 "Create SPV",
-                (confirmer, ct) => XcavateMarketplaceCallsModel.CreateSpvAsync(confirmer, ListingId, ct));
+                (confirmer, cluster, ct) => XcavateMarketplaceCallsModel.CreateSpvAsync(cluster, confirmer, ListingId, ct));
         }
 
         public async Task ClaimAsync()
@@ -514,7 +515,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 "Claim property tokens",
-                (investor, ct) => XcavateMarketplaceCallsModel.ClaimSharesAsync(investor, ListingId, ct));
+                (investor, cluster, ct) => XcavateMarketplaceCallsModel.ClaimSharesAsync(cluster, investor, ListingId, ct));
         }
 
         public async Task RefundBoughtAsync()
@@ -540,7 +541,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 "Refund property tokens",
-                (investor, ct) => XcavateMarketplaceCallsModel.WithdrawExpiredAsync(investor, ListingId, ct));
+                (investor, cluster, ct) => XcavateMarketplaceCallsModel.WithdrawExpiredAsync(cluster, investor, ListingId, ct));
         }
 
         public async Task RefundUnclaimedAsync()
@@ -602,13 +603,13 @@ namespace PlutoFramework.Components.XcavateProperty
         /// withdraw_legal_process_expired.
         /// </summary>
         private Task<List<Solnet.Rpc.Models.TransactionInstruction>> BuildClaimPhaseRefundAsync(
-            string investor, CancellationToken ct)
+            string investor, SolanaCluster cluster, CancellationToken ct)
         {
             var isTornDown = (NftWrapper?.NftBase as XcavateSolanaListingNft)?.IsTornDown == true;
 
             return isTornDown
-                ? XcavateMarketplaceCallsModel.WithdrawCancelledAsync(investor, ListingId, ct)
-                : XcavateMarketplaceCallsModel.WithdrawLegalProcessExpiredAsync(investor, ListingId, ct);
+                ? XcavateMarketplaceCallsModel.WithdrawCancelledAsync(cluster, investor, ListingId, ct)
+                : XcavateMarketplaceCallsModel.WithdrawLegalProcessExpiredAsync(cluster, investor, ListingId, ct);
         }
 
         [RelayCommand]
@@ -708,7 +709,7 @@ namespace PlutoFramework.Components.XcavateProperty
             // cancel_property_purchase: it releases the investor's reservation.
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 "Cancel reservation",
-                (investor, ct) => XcavateMarketplaceCallsModel.CancelReservationAsync(investor, ListingId, ct));
+                (investor, cluster, ct) => XcavateMarketplaceCallsModel.CancelReservationAsync(cluster, investor, ListingId, ct));
         }
 
         [RelayCommand]

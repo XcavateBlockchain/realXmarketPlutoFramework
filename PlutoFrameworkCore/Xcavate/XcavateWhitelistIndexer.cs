@@ -26,8 +26,8 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// Placeholder. Xcavate's programs are not deployed to Solana mainnet yet, so there is
         /// no mainnet indexer to point at. Fill this in when there is; nothing else has to
-        /// change, and <see cref="WhitelistModel.WhitelistCluster"/> is the switch that starts
-        /// using it.
+        /// change - <see cref="GetClient"/> starts serving mainnet from it, and
+        /// <see cref="XcavateDeploymentModel.IsDeployed"/> flips on for the cluster.
         /// </summary>
         public const string? MainnetUrl = null;
 

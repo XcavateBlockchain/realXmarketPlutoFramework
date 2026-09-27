@@ -3,11 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"     
              xmlns:layouts="clr-namespace:Microsoft.Maui.Layouts;assembly=Microsoft.Maui"
              xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+             xmlns:keys="clr-namespace:PlutoFramework.Components.Keys"
              x:Class="PlutoFramework.Templates.TopNavigationBarTemplate.TopNavigationBar">
     <x:Double x:Key="TopNavigationBarHeight">45</x:Double>
 
     <ControlTemplate x:Key="TopNavigationBarTemplate">
-        <Grid RowDefinitions="*,Auto">
+        <Grid RowDefinitions="*,Auto,Auto">
         <AbsoluteLayout Grid.Row="0"
                 BackgroundColor="#88888888">
 
@@ -58,6 +59,8 @@
         </AbsoluteLayout>
 
         <solana:SolanaDevnetWarningView Grid.Row="1" />
+
+        <keys:X25519MissingWarningView Grid.Row="2" />
         </Grid>
     </ControlTemplate>
 </ResourceDictionary>

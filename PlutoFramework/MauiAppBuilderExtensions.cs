@@ -1,4 +1,4 @@
-﻿using FFImageLoading.Maui;
+using FFImageLoading.Maui;
 using Microcharts.Maui;
 using PlutoFramework.Components.Account;
 using PlutoFramework.Components.AddressView;
@@ -231,7 +231,11 @@ namespace PlutoFramework
 
             DependencyService.Register<MwaSignPopupViewModel>();
 
+            DependencyService.Register<MwaSignMessagePopupViewModel>();
+
             DependencyService.Register<LogOutPopupViewModel>();
+
+            DependencyService.Register<X25519BackupWarningPopupViewModel>();
 
             DependencyService.Register<CancelReservationPopupViewModel>();
 
@@ -294,7 +298,9 @@ namespace PlutoFramework
                 DependencyService.Get<EnterSolanaMnemonicsPopupViewModel>(),
                 DependencyService.Get<ConnectMwaPopupViewModel>(),
                 DependencyService.Get<MwaSignPopupViewModel>(),
+                DependencyService.Get<MwaSignMessagePopupViewModel>(),
                 DependencyService.Get<LogOutPopupViewModel>(),
+                DependencyService.Get<X25519BackupWarningPopupViewModel>(),
                 DependencyService.Get<CancelReservationPopupViewModel>(),
                 DependencyService.Get<OnboardingInProgressPopupViewModel>(),
                 DependencyService.Get<NoDidPopupViewModel>(),

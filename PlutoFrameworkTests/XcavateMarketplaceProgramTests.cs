@@ -263,7 +263,7 @@ namespace PlutoFrameworkTests
                 PlutoFrameworkCore.PlutoConfigurationModel.WhitelistedSolanaTokens = [];
 
                 Assert.That(
-                    XcavateMarketplaceCallsModel.PickPaymentMint(accepted).Key,
+                    XcavateMarketplaceCallsModel.PickPaymentMint(SolanaCluster.Devnet, accepted).Key,
                     Is.EqualTo("71G3dc4B9p9QBosLx3XhWY3ULRPAxjopngsin66M9HUb"));
 
                 PlutoFrameworkCore.PlutoConfigurationModel.WhitelistedSolanaTokens =
@@ -278,7 +278,7 @@ namespace PlutoFrameworkTests
                 ];
 
                 Assert.That(
-                    XcavateMarketplaceCallsModel.PickPaymentMint(accepted).Key,
+                    XcavateMarketplaceCallsModel.PickPaymentMint(SolanaCluster.Devnet, accepted).Key,
                     Is.EqualTo("8umv4NXybZFGiT3tQb1DqJ6DXxLa3rLNhPbcqbQsjXxW"));
             }
             finally

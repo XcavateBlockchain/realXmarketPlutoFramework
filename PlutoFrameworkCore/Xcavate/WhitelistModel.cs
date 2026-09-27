@@ -1,4 +1,4 @@
-﻿using PlutoFrameworkCore.Solana;
+using PlutoFrameworkCore.Solana;
 using StrawberryShake;
 using XcavateDevnetIndexer;
 
@@ -29,21 +29,14 @@ namespace PlutoFramework.Model.Xcavate
     /// Addresses here are Solana addresses (base58), not Substrate ones. The whitelist moved
     /// off the XcavatePaseo pallet, so a wallet's Substrate key says nothing about its roles.
     /// </para>
+    /// <para>
+    /// The cluster is the caller's - the app's selected Solana network. On a cluster with no
+    /// deployment the caller gates on <see cref="XcavateDeploymentModel.IsDeployed"/> and
+    /// treats the wallet as role-less rather than querying an indexer that is not there.
+    /// </para>
     /// </summary>
     public class WhitelistModel
     {
-        /// <summary>
-        /// The cluster whose whitelist program roles are read from.
-        /// <para>
-        /// Devnet, and deliberately not the user's selected Solana network: the Xcavate
-        /// programs are only deployed on devnet, so following the network picker would leave
-        /// every mainnet user with no roles and no explanation. Once
-        /// <see cref="XcavateWhitelistIndexer.MainnetUrl"/> is real, this is the one line to
-        /// change - to a per-call cluster from the caller, or to mainnet outright.
-        /// </para>
-        /// </summary>
-        public const SolanaCluster WhitelistCluster = SolanaCluster.Devnet;
-
         /// <summary>
         /// Enough to hold every role a wallet can possibly have: the program keys assignments
         /// by (user, role) - which is why the indexer's <c>roleAssignment</c> returns a single
@@ -63,9 +56,6 @@ namespace PlutoFramework.Model.Xcavate
             rolesCluster = null;
         }
 
-        public static Task<HashSet<XcavateRole>> GetRolesCachedAsync(string address, CancellationToken token)
-            => GetRolesCachedAsync(address, WhitelistCluster, token);
-
         /// <summary>
         /// The cached roles when they belong to this exact address and cluster, otherwise a
         /// fresh query. An empty result is never served from cache: a user who has just been
@@ -80,9 +70,6 @@ namespace PlutoFramework.Model.Xcavate
 
             return GetRolesAsync(address, cluster, token);
         }
-
-        public static Task<HashSet<XcavateRole>> GetRolesAsync(string address, CancellationToken token)
-            => GetRolesAsync(address, WhitelistCluster, token);
 
         /// <summary>
         /// Every role the whitelist program currently grants <paramref name="address"/>.
@@ -117,9 +104,6 @@ namespace PlutoFramework.Model.Xcavate
 
             return found;
         }
-
-        public static Task<bool> HasRoleAsync(string address, XcavateRole role, CancellationToken token)
-            => HasRoleAsync(address, role, WhitelistCluster, token);
 
         /// <summary>
         /// Whether <paramref name="address"/> holds <paramref name="role"/>, asked of the

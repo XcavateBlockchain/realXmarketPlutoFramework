@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Keys;
+using PlutoFramework.Components.Settings;
 using PlutoFramework.Model;
 using PlutoFrameworkCore.Keys;
 
@@ -24,8 +25,9 @@ namespace PlutoFramework.Components.Solana
         public string QrAddress => $"solana:{Address}";
 
         /// <summary>
-        /// Deletes the key and leaves the page, since staying on the detail view of a
-        /// deleted key shows stale secrets.
+        /// Deletes the key, which is also the account, so confirmation goes through the
+        /// logout popup and a confirmed delete logs out rather than popping back to a
+        /// key list that no longer has an owner.
         /// </summary>
         [RelayCommand]
         public async Task DeleteSolanaKeyAsync()
@@ -37,9 +39,18 @@ namespace PlutoFramework.Components.Solana
                 return;
             }
 
-            await LockedKey.RemoveAsync();
+            var lockedKey = LockedKey;
 
-            await Shell.Current.Navigation.PopAsync();
+            var popupViewModel = DependencyService.Get<LogOutPopupViewModel>();
+
+            popupViewModel.ContinueRequested = async () =>
+            {
+                await lockedKey.RemoveAsync();
+
+                await LogOutModel.LogOutAsync();
+            };
+
+            popupViewModel.IsVisible = true;
         }
     }
 }

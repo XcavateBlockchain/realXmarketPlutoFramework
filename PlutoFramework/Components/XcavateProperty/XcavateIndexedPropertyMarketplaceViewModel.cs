@@ -5,6 +5,7 @@ using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
+using PlutoFrameworkCore.Solana;
 using PlutoFrameworkCore.Xcavate;
 using System.Collections.ObjectModel;
 using NftKey = (UniqueryPlus.NftTypeEnum, System.Numerics.BigInteger, System.Numerics.BigInteger);
@@ -65,12 +66,16 @@ namespace PlutoFramework.Components.XcavateProperty
             || !string.IsNullOrEmpty(includesPropertyType);
 
         /// <summary>
-        /// The empty-state caption. The filter-specific wording is only used when a filter is
-        /// actually applied; otherwise the generic wording is shown.
+        /// The empty-state caption. A cluster with no marketplace deployment explains itself
+        /// instead of pretending the search found nothing; otherwise the filter-specific
+        /// wording is only used when a filter is actually applied.
         /// </summary>
-        public string NoItemsMessage => HasActiveFilter
-            ? "No properties were found for this filter. Try to search for something different."
-            : "No properties were found";
+        public string NoItemsMessage =>
+            !XcavateDeploymentModel.IsDeployed(SolanaNetworkModel.SelectedCluster)
+                ? XcavateDeploymentModel.NotDeployedMessage(SolanaNetworkModel.SelectedCluster)
+                : HasActiveFilter
+                    ? "No properties were found for this filter. Try to search for something different."
+                    : "No properties were found";
 
         public XcavateIndexedPropertyMarketplaceViewModel()
         {
@@ -117,6 +122,11 @@ namespace PlutoFramework.Components.XcavateProperty
             // singleton - like SolanaBalanceCellView it has no disposal hook, so it never
             // unsubscribes: the static event can only keep a singleton alive.
             XcavateMarketplaceTransactionModel.TransactionConfirmed += OnMarketplaceTransactionConfirmed;
+
+            // Switching the Solana network swaps which deployment the feed reads, so the list
+            // is re-read just like after a confirmed transaction. Same singleton lifetime,
+            // same no-unsubscribe convention as the subscription above.
+            SolanaNetworkModel.ClusterChanged += OnSolanaClusterChanged;
         }
 
         /// <summary>
@@ -124,6 +134,13 @@ namespace PlutoFramework.Components.XcavateProperty
         /// re-fetch is pure async I/O, so nothing blocks the UI while it runs.
         /// </summary>
         private void OnMarketplaceTransactionConfirmed(object? sender, EventArgs e) =>
+            MainThread.BeginInvokeOnMainThread(() => _ = RefreshInBackgroundAsync());
+
+        /// <summary>
+        /// Runs on the main thread - the event already is - and fire-and-forget: the
+        /// re-fetch is pure async I/O, so nothing blocks the UI while it runs.
+        /// </summary>
+        private void OnSolanaClusterChanged(object? sender, SolanaCluster cluster) =>
             MainThread.BeginInvokeOnMainThread(() => _ = RefreshInBackgroundAsync());
 
         /// <summary>
@@ -142,6 +159,14 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
+            // The marketplace exists only where the Xcavate programs are deployed; anywhere
+            // else the feed is the placeholder caption, not an error.
+            if (!XcavateDeploymentModel.IsDeployed(SolanaNetworkModel.SelectedCluster))
+            {
+                hasMore = false;
+                return;
+            }
+
             await loadMoreSemaphore.WaitAsync(token).ConfigureAwait(false);
 
             try
@@ -156,7 +181,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 Loading = true;
 
-                // The devnet indexer has no server-side text filters, so the old
+                // The indexer has no server-side text filters, so the old
                 // town/type/name filters apply here, to each fetched page. A raw page can
                 // filter down to nothing while deeper pages still match, and a scroll that
                 // appends nothing never re-fires the CollectionView's remaining-items
@@ -167,6 +192,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 while (newItems.Count == 0 && hasMore)
                 {
                     var results = await XcavateMarketplaceIndexerModel.GetMarketplaceListedPropertiesAsync(
+                            SolanaNetworkModel.SelectedCluster,
                             first: (int)LIMIT,
                             offset: offset,
                             token)

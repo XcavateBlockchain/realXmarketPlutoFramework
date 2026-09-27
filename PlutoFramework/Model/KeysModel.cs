@@ -7,6 +7,7 @@ using Plugin.Fingerprint;
 using Plugin.Fingerprint.Abstractions;
 using PlutoFramework.Components.Password;
 using PlutoFramework.Model.SQLite;
+using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Keys;
 using Substrate.NET.Schnorrkel.Keys;
@@ -503,6 +504,13 @@ namespace PlutoFramework.Model
                 password: password!,
                 type: KeyTypeEnum.EncryptionX25519
             );
+
+            // The X25519-missing banner reads a cached answer, and saving the key flips it.
+            await X25519WarningModel.RefreshAsync();
+
+            // Fire-and-forget like the wallet links in SaveKeyAsync: the save must not wait
+            // on a network call, and the service logs and swallows its own failures.
+            _ = DependencyService.Get<XcavateProfileService>().UpdateX25519PublicKeyAsync();
         }
 
         public static async Task ImportJsonKeyAsync()
@@ -547,7 +555,7 @@ namespace PlutoFramework.Model
             }
         }
 
-        public static async Task ImportJsonX25519KeyAsync()
+        public static async Task<bool> ImportJsonX25519KeyAsync()
         {
             var jsonType = new FilePickerFileType(
                 new Dictionary<DevicePlatform, IEnumerable<string>>
@@ -566,7 +574,7 @@ namespace PlutoFramework.Model
             });
 
             if (result is null || !result.FileName.Contains(".json"))
-                return;
+                return false;
 
             using var jsonStream = await result.OpenReadAsync();
 
@@ -589,11 +597,15 @@ namespace PlutoFramework.Model
 
                 var toast = Toast.Make($"X25519 key JSON imported successfully.");
                 await toast.Show();
+
+                return true;
             }
             catch
             {
                 var toast = Toast.Make($"Failed to import X25519 key JSON.");
                 await toast.Show();
+
+                return false;
             }
         }
 

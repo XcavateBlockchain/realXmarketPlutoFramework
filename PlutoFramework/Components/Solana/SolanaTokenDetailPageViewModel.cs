@@ -317,11 +317,17 @@ namespace PlutoFramework.Components.Solana
 
             try
             {
+                var cluster = SolanaNetworkModel.SelectedCluster;
+
                 // One indexer query feeds both the section's total and its per-property
-                // list - a second round trip would only risk the two disagreeing.
-                var positions = await XcavateMarketplaceIndexerModel.GetInvestorPropertiesAsync(
-                    address, null, null, null, null, null,
-                    XcavateReserveBalanceModel.InvestorPropertiesPageSize, 0, token);
+                // list - a second round trip would only risk the two disagreeing. On a
+                // cluster with no marketplace deployment there are no positions to find
+                // and no indexer to ask, so the section answers empty without querying.
+                IReadOnlyList<XcavateSolanaInvestorProperty> positions = XcavateDeploymentModel.IsDeployed(cluster)
+                    ? await XcavateMarketplaceIndexerModel.GetInvestorPropertiesAsync(
+                        cluster, address, null, null, null, null, null,
+                        XcavateReserveBalanceModel.InvestorPropertiesPageSize, 0, token)
+                    : [];
 
                 token.ThrowIfCancellationRequested();
 

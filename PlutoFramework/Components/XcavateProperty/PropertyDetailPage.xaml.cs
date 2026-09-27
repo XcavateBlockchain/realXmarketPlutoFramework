@@ -1,3 +1,4 @@
+using PlutoFramework.Components.Keys;
 using PlutoFramework.Components.Solana;
 using PlutoFramework.Model;
 using PlutoFramework.Templates.PageTemplate;
@@ -22,6 +23,8 @@ public partial class PropertyDetailPage : PageTemplate
         ApplyDevnetBannerOffset();
 
         SolanaNetworkModel.ClusterChanged += OnClusterChanged;
+
+        X25519WarningModel.AvailabilityChanged += OnX25519AvailabilityChanged;
     }
 
     protected override void OnAppearing()
@@ -53,13 +56,24 @@ public partial class PropertyDetailPage : PageTemplate
         MainThread.BeginInvokeOnMainThread(ApplyDevnetBannerOffset);
     }
 
+    private void OnX25519AvailabilityChanged(object? sender, EventArgs e)
+    {
+        // Same orphan guard as OnClusterChanged above.
+        if (Handler is null)
+        {
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(ApplyDevnetBannerOffset);
+    }
+
     /// <summary>
-    /// The header grows by the devnet warning strip's height while it is showing, so the
+    /// The header grows by the warning strips' heights while they are showing, so the
     /// content below it must move down by the same amount. Shifted on the whole content
     /// grid - skeleton and loaded data alike - so the swap to real data does not jump.
     /// </summary>
     private void ApplyDevnetBannerOffset()
     {
-        contentGrid.Margin = new Thickness(0, SolanaDevnetWarningView.ExtraHeight, 0, 0);
+        contentGrid.Margin = new Thickness(0, SolanaDevnetWarningView.ExtraHeight + X25519MissingWarningView.ExtraHeight, 0, 0);
     }
 }

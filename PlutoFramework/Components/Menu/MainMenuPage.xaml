@@ -28,6 +28,7 @@
               Margin="20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -59,6 +60,12 @@
                                       Icon="infogray.png"
                                       Title="Documents"
                                       Command="{Binding SupportActionCommand}"
+                                      />
+                <menu:QuickActionItemView Grid.Column="0"
+                                      Grid.Row="1"
+                                      Icon="rolegray.png"
+                                      Title="Roles"
+                                      Command="{Binding RolesActionCommand}"
                                       />
             </Grid>
         </VerticalStackLayout>

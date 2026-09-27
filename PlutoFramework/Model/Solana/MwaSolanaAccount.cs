@@ -57,7 +57,8 @@ namespace PlutoFramework.Model.Solana
                     // sign_messages returns each message with its signature appended.
                     return SolanaTransactionFramer.ExtractSignature(signedPayloads[0]);
                 },
-                token);
+                token,
+                message);
 
         protected override Task<string> SignAndSubmitAsync(
             TransactionBuilder builder,
@@ -145,9 +146,11 @@ namespace PlutoFramework.Model.Solana
         /// authorization across, rather than failing and asking the user to reconnect.
         ///
         /// The waiting popup covers the whole session, and cancelling it cancels the session.
-        /// There is deliberately no local password/biometric gate anywhere on this path:
-        /// the user approves every request inside the wallet app itself, which is the
-        /// stronger check, so a second local prompt would only double-ask.
+        /// Message signing shows the message variant, which displays the payload being
+        /// signed; everything else shows the transaction variant. There is deliberately no
+        /// local password/biometric gate anywhere on this path: the user approves every
+        /// request inside the wallet app itself, which is the stronger check, so a second
+        /// local prompt would only double-ask.
         /// </summary>
         /// <param name="cluster">
         /// Usually <see cref="PlutoFrameworkSolanaAccount.Cluster"/>, but a dapp relaying
@@ -157,13 +160,15 @@ namespace PlutoFramework.Model.Solana
             SolanaCluster cluster,
             string reason,
             Func<MwaClient, CancellationToken, Task<T>> operation,
-            CancellationToken token)
+            CancellationToken token,
+            byte[]? messageToSign = null)
         {
-            var popup = DependencyService.Get<MwaSignPopupViewModel>();
+            MwaSigningPopupViewModel popup = messageToSign is null
+                ? DependencyService.Get<MwaSignPopupViewModel>()
+                : DependencyService.Get<MwaSignMessagePopupViewModel>();
 
-            var result = await popup.ShowWhileAsync(
-                reason,
-                (progress, operationToken) => MwaConnectFlow.WithAuthorizedSessionAsync(
+            Func<IProgress<MwaConnectStage>, MwaWalletReopener, CancellationToken, Task<T>> sessionOperation =
+                (progress, walletReopener, operationToken) => MwaConnectFlow.WithAuthorizedSessionAsync(
                     SolanaMwaModel.BuildIdentity(),
                     cluster,
                     key.AuthToken,
@@ -174,8 +179,12 @@ namespace PlutoFramework.Model.Solana
                         return await operation(client, innerToken);
                     },
                     progress,
-                    operationToken),
-                token);
+                    operationToken,
+                    walletReopener);
+
+            var result = messageToSign is null
+                ? await popup.ShowWhileAsync(reason, sessionOperation, token)
+                : await popup.ShowWhileAsync(messageToSign, reason, sessionOperation, token);
 
             // The session above is closed, so a follow-up wallet trip cannot collide with
             // it. This is how an address that missed its notifications link (connected

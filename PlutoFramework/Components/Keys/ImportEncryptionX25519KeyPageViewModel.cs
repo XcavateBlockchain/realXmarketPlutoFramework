@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.AspNetCore.WebUtilities;
 using PlutoFramework.Model;
@@ -60,9 +60,12 @@ namespace PlutoFramework.Components.Keys
         [RelayCommand]
         public async Task ImportJsonAsync()
         {
-            await KeysModel.ImportJsonX25519KeyAsync();
-
-            await Navigation.Invoke();
+            // Cancelled or failed imports stay on the page: the toast already said why,
+            // and leaving would strand the replace flow's caller two pages up.
+            if (await KeysModel.ImportJsonX25519KeyAsync())
+            {
+                await Navigation.Invoke();
+            }
         }
     }
 }

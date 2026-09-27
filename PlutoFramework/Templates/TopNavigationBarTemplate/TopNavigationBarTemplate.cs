@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Layouts;
+using PlutoFramework.Components.Keys;
 using PlutoFramework.Components.Solana;
 using PlutoFramework.Model;
 using PlutoFrameworkCore.Solana;
@@ -106,6 +107,8 @@ namespace PlutoFramework.Templates.TopNavigationBarTemplate
             UpdateBounds();
 
             SolanaNetworkModel.ClusterChanged += OnClusterChanged;
+
+            X25519WarningModel.AvailabilityChanged += OnX25519AvailabilityChanged;
         }
 
         private void OnClusterChanged(object? sender, SolanaCluster cluster)
@@ -120,11 +123,23 @@ namespace PlutoFramework.Templates.TopNavigationBarTemplate
             MainThread.BeginInvokeOnMainThread(UpdateBounds);
         }
 
+        private void OnX25519AvailabilityChanged(object? sender, EventArgs e)
+        {
+            // Same orphan guard as OnClusterChanged above.
+            if (Handler is null)
+            {
+                return;
+            }
+
+            MainThread.BeginInvokeOnMainThread(UpdateBounds);
+        }
+
         private void UpdateBounds()
         {
-            // The devnet warning strip below the bar adds its height to the bar's own.
+            // The warning strips below the bar add their heights to the bar's own.
             var height = (double)Application.Current!.Resources["TopNavigationBarHeight"]
-                + SolanaDevnetWarningView.ExtraHeight;
+                + SolanaDevnetWarningView.ExtraHeight
+                + X25519MissingWarningView.ExtraHeight;
 
             AbsoluteLayout.SetLayoutBounds(this, new Rect(0.5, 0, 1, height));
             AbsoluteLayout.SetLayoutFlags(this, AbsoluteLayoutFlags.PositionProportional | AbsoluteLayoutFlags.WidthProportional);

@@ -34,6 +34,17 @@ namespace PlutoFrameworkTests
         public void TearDown() => PlutoConfigurationModel.WhitelistedSolanaTokens = [];
 
         [Test]
+        public async Task GetReservedValuesAsync_UndeployedCluster_ReturnsEmptyWithoutQuerying()
+        {
+            // Mainnet has no indexer to ask, so the answer comes back empty immediately -
+            // querying would throw NotSupportedException from XcavateWhitelistIndexer.GetClient.
+            var reserved = await XcavateReserveBalanceModel.GetReservedValuesAsync(
+                SolanaCluster.Mainnet, "11111111111111111111111111111111", CancellationToken.None);
+
+            Assert.That(reserved, Is.Empty);
+        }
+
+        [Test]
         public void CanAfford_WhenBalanceExactlyCoversReservedPlusCost() =>
             Assert.That(XcavateReserveBalanceModel.CanAfford(70m, 30m, 40m), Is.True);
 

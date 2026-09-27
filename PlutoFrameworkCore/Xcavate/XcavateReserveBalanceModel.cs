@@ -135,16 +135,21 @@ namespace PlutoFramework.Model.Xcavate
             values.TryGetValue(symbol, out var value) ? value : 0m;
 
         /// <summary>
-        /// The wallet-wide value <paramref name="address"/> has bound through
-        /// reservations, grouped by payment token symbol, in display units. The Xcavate
-        /// devnet marketplace is the only cluster the reservation flow knows, so the
-        /// cluster is not a parameter.
+        /// The wallet-wide value <paramref name="address"/> has bound through reservations,
+        /// grouped by payment token symbol, in display units. Empty on a cluster with no
+        /// marketplace deployment: there is no indexer to ask, and "no marketplace" must net
+        /// the same as "nothing reserved" in every balance view.
         /// </summary>
         public static async Task<IReadOnlyDictionary<string, decimal>> GetReservedValuesAsync(
-            string address, CancellationToken token)
+            SolanaCluster cluster, string address, CancellationToken token)
         {
+            if (!XcavateDeploymentModel.IsDeployed(cluster))
+            {
+                return new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            }
+
             var positions = await XcavateMarketplaceIndexerModel
-                .GetInvestorPropertiesAsync(address, null, null, null, null, null, InvestorPropertiesPageSize, 0, token)
+                .GetInvestorPropertiesAsync(cluster, address, null, null, null, null, null, InvestorPropertiesPageSize, 0, token)
                 .ConfigureAwait(false);
 
             return ComputeReservedValues(positions);
@@ -152,15 +157,20 @@ namespace PlutoFramework.Model.Xcavate
 
         /// <summary>
         /// The wallet-wide value of every property the investor has bought or reserved
-        /// shares in, grouped by payment token symbol, in display units. Same query and
-        /// page cap as <see cref="GetReservedValuesAsync"/>: no filters, so both reserved
-        /// and purchased positions are in the total.
+        /// shares in, grouped by payment token symbol, in display units. Same query, page cap
+        /// and undeployed-cluster guard as <see cref="GetReservedValuesAsync"/>: no filters, so
+        /// both reserved and purchased positions are in the total.
         /// </summary>
         public static async Task<IReadOnlyDictionary<string, decimal>> GetTotalAssetValuesAsync(
-            string address, CancellationToken token)
+            SolanaCluster cluster, string address, CancellationToken token)
         {
+            if (!XcavateDeploymentModel.IsDeployed(cluster))
+            {
+                return new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            }
+
             var positions = await XcavateMarketplaceIndexerModel
-                .GetInvestorPropertiesAsync(address, null, null, null, null, null, InvestorPropertiesPageSize, 0, token)
+                .GetInvestorPropertiesAsync(cluster, address, null, null, null, null, null, InvestorPropertiesPageSize, 0, token)
                 .ConfigureAwait(false);
 
             return ComputeTotalAssetValues(positions);

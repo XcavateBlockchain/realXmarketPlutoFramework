@@ -69,13 +69,14 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
-        public void SelectableOffersOnlyDevnetUntilMainnetProgramsDeploy()
+        public void SelectableOffersDevnetAndMainnet()
         {
-            // XcavateProgramAddresses.Mainnet is null - nothing is deployed there - so
-            // offering mainnet would strand the app on a network where nothing works,
-            // and a testnet-mode wallet would reject its authorization outright.
+            // The wallet layer (MWA authorization, balances, transfers) works on both
+            // networks. Where the Xcavate programs are not deployed, the marketplace
+            // degrades to a placeholder (XcavateDeploymentModel.IsDeployed) instead of
+            // being a reason to keep the network locked away.
             Assert.That(SolanaNetworkOptions.Selectable,
-                Is.EqualTo(new[] { SolanaCluster.Devnet }));
+                Is.EqualTo(new[] { SolanaCluster.Devnet, SolanaCluster.Mainnet }));
         }
 
         [Test]

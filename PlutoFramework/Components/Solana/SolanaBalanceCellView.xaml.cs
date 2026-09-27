@@ -147,7 +147,8 @@ public partial class SolanaBalanceCellView : ContentView, ILocalLoadableAsyncVie
 
         try
         {
-            var reservedValues = await XcavateReserveBalanceModel.GetReservedValuesAsync(address, token);
+            var reservedValues = await XcavateReserveBalanceModel.GetReservedValuesAsync(
+                SolanaNetworkModel.SelectedCluster, address, token);
 
             token.ThrowIfCancellationRequested();
 

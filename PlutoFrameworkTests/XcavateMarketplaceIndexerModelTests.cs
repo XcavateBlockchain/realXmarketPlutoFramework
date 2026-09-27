@@ -1,4 +1,5 @@
 using PlutoFramework.Model.Xcavate;
+using PlutoFrameworkCore.Solana;
 using UniqueryPlus.Metadata;
 
 namespace PlutoFrameworkTests
@@ -14,6 +15,7 @@ namespace PlutoFrameworkTests
         public async Task GetMarketplaceListedPropertiesAsync_QueriesAndMapsWithoutErrorsAsync()
         {
             var properties = await XcavateMarketplaceIndexerModel.GetMarketplaceListedPropertiesAsync(
+                SolanaCluster.Devnet,
                 first: 20,
                 offset: 0,
                 CancellationToken.None);
@@ -72,6 +74,7 @@ namespace PlutoFrameworkTests
             // No deployment will ever mint this listing id, so null is a real "not found"
             // answer rather than a lookup that silently failed.
             var listing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
+                SolanaCluster.Devnet,
                 long.MaxValue,
                 investor: null,
                 CancellationToken.None);

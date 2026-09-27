@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Alerts;
 using Plugin.Fingerprint;
 using Plugin.Fingerprint.Abstractions;
 using PlutoFramework.Components.Account;
@@ -77,11 +78,24 @@ namespace PlutoFramework.Model
                 return false;
             }
 
+            // On a network with no Xcavate programs there are no roles to hold: say so,
+            // rather than querying an indexer that is not there and reporting
+            // "not whitelisted".
+            var cluster = SolanaNetworkModel.SelectedCluster;
+
+            if (!XcavateDeploymentModel.IsDeployed(cluster))
+            {
+                var toast = Toast.Make(XcavateDeploymentModel.NotDeployedMessage(cluster));
+                await toast.Show(token);
+
+                return false;
+            }
+
             var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
 
             fullPageLoadingViewModel.Message = "Querying roles";
 
-            if (!await WhitelistModel.HasRoleAsync(address, role, token))
+            if (!await WhitelistModel.HasRoleAsync(address, role, cluster, token))
             {
                 var notWhitelistedPopupViewModel = DependencyService.Get<NotWhitelistedPopupViewModel>();
 
