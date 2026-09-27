@@ -35,7 +35,7 @@ namespace PlutoFramework.Components.Solana
         /// opens, because the shared instance outlives any single network selection.
         /// </summary>
         [ObservableProperty]
-        private string networkName = SelectedCluster.GetName();
+        private string networkName = $"Solana {SelectedCluster.GetName()}";
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ConnectButtonState))]

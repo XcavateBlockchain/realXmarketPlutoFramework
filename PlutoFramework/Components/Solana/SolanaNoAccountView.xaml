@@ -17,7 +17,7 @@
                 <Label Text="Create a new Solana account, or import one you already have."
                        FontSize="13"
                        TextColor="#A6A6A6"
-                       HorizontalTextAlignment="Center" />
+                       HorizontalTextAlignment="Start" />
 
                 <buttons:ElevatedButton Text="Create account"
                                         ButtonState="Enabled"

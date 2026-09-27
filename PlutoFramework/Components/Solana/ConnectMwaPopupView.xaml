@@ -17,7 +17,7 @@
 
                     <Label Text="Connect an existing Solana wallet app on this device. Your seed phrase never leaves that app - this app only receives permission to request signatures."
                            FontSize="13"
-                           HorizontalTextAlignment="Center" />
+                           HorizontalTextAlignment="Start" />
 
                     <!-- Android-only: the protocol relies on intents and Digital Asset Links. -->
                     <VerticalStackLayout IsVisible="{Binding IsUnsupported}"
@@ -46,7 +46,7 @@
                                            FontSize="14"
                                            AutomationId="solanaClusterName" />
 
-                                    <Label Text="Change the network in Settings. An authorization is only valid for the network it was granted on."
+                                    <Label Text="Make sure your wallet app is connected on the same network."
                                            FontSize="11"
                                            TextColor="#A6A6A6" />
                                 </VerticalStackLayout>
