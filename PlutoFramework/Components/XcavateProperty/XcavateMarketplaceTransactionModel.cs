@@ -18,7 +18,7 @@ namespace PlutoFramework.Components.XcavateProperty
     /// (TransactionAnalyzer + extrinsic status stack) on the property pages. When the
     /// program additionally requires the rent collector's signature (reserve, buy and claim),
     /// that signature comes from the profile API - which holds the rent collector key -
-    /// and the investor signs and submits the same compiled message.
+    /// and the investor signs the same compiled message, which this app then submits.
     /// </summary>
     public static class XcavateMarketplaceTransactionModel
     {
@@ -172,8 +172,8 @@ namespace PlutoFramework.Components.XcavateProperty
         /// collector AND requires its signature (devnet-verified), and this wallet is
         /// not the rent collector. The rent collector's half comes from the profile
         /// API - which holds the key - pre-applied to the wire transaction, then this
-        /// wallet signs and submits the same bytes, so both signatures land on one
-        /// message.
+        /// wallet signs the same bytes and this app submits, so both signatures land on
+        /// one message.
         /// </summary>
         private static async Task<string> SubmitTwoSignerAsync(
             PlutoFrameworkSolanaAccount account,
@@ -195,7 +195,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             // The rent collector fronts the rent, so it is the fee payer - the program
             // rejects a buy or claim whose payer is anything else.
-            var (blockHash, contextSlot) = await SolanaRpcModel.GetLatestBlockHashAsync(cluster, CancellationToken.None);
+            var (blockHash, _) = await SolanaRpcModel.GetLatestBlockHashAsync(cluster, CancellationToken.None);
 
             var builder = new TransactionBuilder()
                 .SetRecentBlockHash(blockHash)
@@ -218,24 +218,14 @@ namespace PlutoFramework.Components.XcavateProperty
 
             var withRentCollector = ApplyRentCollectorSignature(compiledMessage, rentCollector, rentCollectorSignature);
 
-            if (account is MwaSolanaAccount mwaAccount)
-            {
-                // The wallet fills its own signature slot and submits against its own
-                // RPC node, which may lag the one the blockhash came from -
-                // min_context_slot makes it wait rather than fail on a blockhash it
-                // cannot see yet.
-                var signature = await mwaAccount.SignAndSendWireTransactionAsync(
-                    withRentCollector,
-                    cluster,
-                    description,
-                    CancellationToken.None,
-                    contextSlot);
-
-                return SolanaBase58.Encode(signature);
-            }
-
-            // The key lives on this device: sign the investor's slot locally, then
-            // submit over RPC. The rent collector's slot stays pre-applied.
+            // The investor's slot is signed - locally, or by the wallet app over MWA -
+            // and this app submits over RPC. The wallet never submits on this path: a
+            // wallet whose own send fails can still return a signature for a transaction
+            // it never broadcast (observed with Phantom 26.30.2: its preflight failed,
+            // the signature came back, nothing reached the chain), and the tracker would
+            // then wait on that signature forever. Submitting app-side surfaces the
+            // node's real rejection and lets the blockhash-expiry retry above repair an
+            // expired blockhash.
             var signed = await account.SignWireTransactionAsync(
                 withRentCollector, description, CancellationToken.None);
 

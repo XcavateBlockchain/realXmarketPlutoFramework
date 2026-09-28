@@ -4,6 +4,7 @@ using PlutoFramework.Components.Mnemonics;
 using PlutoFramework.Components.Solana;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
+using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore.Keys;
 
 namespace PlutoFramework.Components.Keys;
@@ -102,6 +103,13 @@ public partial class NewKeyView : ContentView
             return;
         }
 
+        // X25519 is single-slot but replaceable: its buttons stay live and the tap warns
+        // with a popup instead of blocking, so there is nothing to dim.
+        if (KeyType == KeyTypeEnum.EncryptionX25519)
+        {
+            return;
+        }
+
         import.Opacity = 0.3;
         plus.Opacity = 0.3;
     }
@@ -133,6 +141,26 @@ public partial class NewKeyView : ContentView
     }
     private async void OnAddClicked(object sender, TappedEventArgs e)
     {
+        // X25519 gets no hard block: one key at a time, but the user may replace it after
+        // confirming the warning. SaveEncryptionX25519KeyAsync deletes the old key itself.
+        if (KeyType == KeyTypeEnum.EncryptionX25519)
+        {
+            if (await CheckKeyExistsAsync(disableToast: true))
+            {
+                var popup = DependencyService.Get<SingleX25519KeyPopupViewModel>();
+
+                popup.ContinueRequested = GenerateNewX25519KeyAsync;
+
+                popup.IsVisible = true;
+
+                return;
+            }
+
+            await GenerateNewX25519KeyAsync();
+
+            return;
+        }
+
         if (await CheckKeyExistsAsync())
         {
             return;
@@ -155,13 +183,6 @@ public partial class NewKeyView : ContentView
                 await didToast.Show();
 
                 break;
-            case KeyTypeEnum.EncryptionX25519:
-                await KeysModel.GenerateNewEncryptionX25519KeyAsync();
-
-                var encryptionX25519Toast = Toast.Make($"{KeyType.GetName()} created successfully.");
-                await encryptionX25519Toast.Show();
-
-                break;
             case KeyTypeEnum.SolanaMnemonic:
                 // Asks rather than generating inline, so the seed phrase is shown for
                 // backup before it becomes the only copy of the key.
@@ -180,8 +201,49 @@ public partial class NewKeyView : ContentView
 
         await ChangeButtonsIfKeyExistsAsync();
     }
+    /// <summary>
+    /// Generates a fresh X25519 key, replacing the current one when there is one (the save
+    /// deletes it), and pushes the new public key onto the stored profile, when there is one.
+    /// </summary>
+    private async Task GenerateNewX25519KeyAsync()
+    {
+        await KeysModel.GenerateNewEncryptionX25519KeyAsync();
+
+        // Fire-and-forget: the key is saved locally, and the service logs and swallows
+        // its own failures.
+        _ = DependencyService.Get<XcavateProfileService>().UpdateX25519PublicKeyAsync();
+
+        var toast = Toast.Make($"{KeyTypeEnum.EncryptionX25519.GetName()} created successfully.");
+        await toast.Show();
+    }
+
+    private Task PushX25519ImportPageAsync() =>
+        Shell.Current.Navigation.PushAsync(new ImportEncryptionX25519KeyPage(new ImportEncryptionX25519KeyPageViewModel
+        {
+            Navigation = Shell.Current.Navigation.PopAsync,
+        }));
+
     private async void OnImportClicked(object sender, TappedEventArgs e)
     {
+        // Same single-slot rule as Add: warn and let the import page replace on save.
+        if (KeyType == KeyTypeEnum.EncryptionX25519)
+        {
+            if (await CheckKeyExistsAsync(disableToast: true))
+            {
+                var popup = DependencyService.Get<SingleX25519KeyPopupViewModel>();
+
+                popup.ContinueRequested = PushX25519ImportPageAsync;
+
+                popup.IsVisible = true;
+
+                return;
+            }
+
+            await PushX25519ImportPageAsync();
+
+            return;
+        }
+
         if (await CheckKeyExistsAsync())
         {
             import.Opacity = 0.3;
@@ -213,14 +275,6 @@ public partial class NewKeyView : ContentView
 
             case KeyTypeEnum.Did:
                 await Shell.Current.Navigation.PushAsync(new ImportDidPage(new ImportDidViewModel
-                {
-                    Navigation = Shell.Current.Navigation.PopAsync,
-                }));
-
-                break;
-
-            case KeyTypeEnum.EncryptionX25519:
-                await Shell.Current.Navigation.PushAsync(new ImportEncryptionX25519KeyPage(new ImportEncryptionX25519KeyPageViewModel
                 {
                     Navigation = Shell.Current.Navigation.PopAsync,
                 }));

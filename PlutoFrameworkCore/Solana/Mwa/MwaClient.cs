@@ -7,10 +7,16 @@ namespace PlutoFrameworkCore.Solana.Mwa
     /// <summary>
     /// JSON-RPC 2.0 over an established Mobile Wallet Adapter session.
     ///
-    /// The deprecated <c>reauthorize</c> and <c>sign_transactions</c> methods are not
-    /// implemented. Reauthorization goes through <see cref="AuthorizeAsync"/> with an
-    /// existing token, and signing a transaction without submitting it is not something
-    /// this app needs.
+    /// The deprecated <c>reauthorize</c> method is not implemented: reauthorization goes
+    /// through <see cref="AuthorizeAsync"/> with an existing token.
+    ///
+    /// <c>sign_transactions</c> is deprecated by Mobile Wallet Adapter 2.0 but implemented
+    /// here deliberately: a flow that submits the transaction itself must not rely on the
+    /// wallet's send. A wallet whose own submission fails can still return a signature for
+    /// a transaction it never broadcast (observed with Phantom 26.30.2 on devnet: its
+    /// preflight failed and the signature came back with nothing on the chain), which a
+    /// confirmation tracker then waits on forever. Sign-only keeps the send - and its
+    /// failure - visible to this app.
     /// </summary>
     public sealed class MwaClient
     {
@@ -126,6 +132,32 @@ namespace PlutoFrameworkCore.Solana.Mwa
             if (response.SignedPayloads is null)
             {
                 throw new MwaProtocolException("The wallet returned no signed payloads");
+            }
+
+            return response.SignedPayloads.Select(Convert.FromBase64String).ToList();
+        }
+
+        /// <summary>
+        /// Asks the wallet to sign fully-formed transactions without submitting them.
+        /// Returns the signed transactions, ready to submit over RPC. Deprecated by
+        /// Mobile Wallet Adapter 2.0, so a wallet may refuse - that refusal surfaces
+        /// as an error rather than being worked around.
+        /// </summary>
+        public async Task<IReadOnlyList<byte[]>> SignTransactionsAsync(
+            IEnumerable<byte[]> transactions,
+            CancellationToken token)
+        {
+            var response = await InvokeAsync<MwaSignTransactionsRequest, MwaSignTransactionsResponse>(
+                "sign_transactions",
+                new MwaSignTransactionsRequest
+                {
+                    Payloads = transactions.Select(Convert.ToBase64String).ToList(),
+                },
+                token);
+
+            if (response.SignedPayloads is null)
+            {
+                throw new MwaProtocolException("The wallet returned no signed transactions");
             }
 
             return response.SignedPayloads.Select(Convert.FromBase64String).ToList();

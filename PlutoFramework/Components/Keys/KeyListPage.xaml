@@ -4,7 +4,13 @@
                    x:Class="PlutoFramework.Components.Keys.KeyListPage"
                    xmlns:page="clr-namespace:PlutoFramework.Templates.PageTemplate"
                    xmlns:keys="clr-namespace:PlutoFramework.Components.Keys"
-                   Title="Keys">
+                   Title="Keys"
+                   NavigationBarExtra1Command="{Binding Extra1Command}">
+    <page:PageTemplate.NavigationBarExtra1Image>
+        <FontImageSource Color="{StaticResource Primary}"
+                         Glyph="+"
+                         Size="20" />
+    </page:PageTemplate.NavigationBarExtra1Image>
     <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
             AbsoluteLayout.LayoutFlags="All">
         <VerticalStackLayout Spacing="15">

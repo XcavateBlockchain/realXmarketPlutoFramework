@@ -125,6 +125,20 @@ namespace PlutoFrameworkCore.Solana.Mwa
         public List<string>? SignedPayloads { get; set; }
     }
 
+    internal record MwaSignTransactionsRequest
+    {
+        /// <summary>Base64-encoded, fully-formed transaction payloads.</summary>
+        [JsonPropertyName("payloads")]
+        public required List<string> Payloads { get; set; }
+    }
+
+    internal record MwaSignTransactionsResponse
+    {
+        /// <summary>Base64-encoded signed transactions.</summary>
+        [JsonPropertyName("signed_payloads")]
+        public List<string>? SignedPayloads { get; set; }
+    }
+
     internal record MwaSignAndSendTransactionsRequest
     {
         /// <summary>Base64-encoded, fully-formed transaction payloads.</summary>

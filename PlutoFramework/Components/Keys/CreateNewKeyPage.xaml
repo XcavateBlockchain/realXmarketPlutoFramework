@@ -4,8 +4,7 @@
                    x:Class="PlutoFramework.Components.Keys.CreateNewKeyPage"
                    xmlns:keys="clr-namespace:PlutoFramework.Components.Keys"
                    xmlns:page="clr-namespace:PlutoFramework.Templates.PageTemplate"
-                   xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
-                   Title="Generate new key">
+                   Title="Add key">
     <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
                 AbsoluteLayout.LayoutFlags="All">
 
@@ -13,16 +12,10 @@
 
             <keys:NewKeyView KeyType="EncryptionX25519" />
 
-            <keys:NewKeyView KeyType="SolanaMnemonic" />
-
-            <keys:NewKeyView KeyType="SolanaMwa" />
-
         </VerticalStackLayout>
     </ScrollView>
 
     <page:PageTemplate.PopupContent>
-        <!-- ConnectMwaPopupView is supplied by the page template. -->
-        <solana:CreateSolanaMnemonicsPopupView />
-        <solana:EnterSolanaMnemonicsPopupView />
+        <keys:SingleX25519KeyPopupView />
     </page:PageTemplate.PopupContent>
 </page:PageTemplate>

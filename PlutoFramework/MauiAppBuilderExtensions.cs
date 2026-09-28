@@ -237,6 +237,8 @@ namespace PlutoFramework
 
             DependencyService.Register<X25519BackupWarningPopupViewModel>();
 
+            DependencyService.Register<SingleX25519KeyPopupViewModel>();
+
             DependencyService.Register<CancelReservationPopupViewModel>();
 
             DependencyService.Register<OnboardingInProgressPopupViewModel>();
@@ -301,6 +303,7 @@ namespace PlutoFramework
                 DependencyService.Get<MwaSignMessagePopupViewModel>(),
                 DependencyService.Get<LogOutPopupViewModel>(),
                 DependencyService.Get<X25519BackupWarningPopupViewModel>(),
+                DependencyService.Get<SingleX25519KeyPopupViewModel>(),
                 DependencyService.Get<CancelReservationPopupViewModel>(),
                 DependencyService.Get<OnboardingInProgressPopupViewModel>(),
                 DependencyService.Get<NoDidPopupViewModel>(),

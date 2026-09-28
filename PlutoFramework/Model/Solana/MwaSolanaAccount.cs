@@ -97,19 +97,37 @@ namespace PlutoFramework.Model.Solana
                 token);
 
         /// <summary>
-        /// Not available under Mobile Wallet Adapter, which is why the injected wallet does
-        /// not advertise <c>solana:signTransaction</c> for this key type.
+        /// Signs without submitting, for flows that pre-apply another signer's signature
+        /// and submit over RPC themselves.
         /// </summary>
         /// <remarks>
-        /// MWA 2.0 deprecated <c>sign_transactions</c> and made <c>sign_and_send_transactions</c>
-        /// mandatory instead, so a wallet app may simply refuse to sign without submitting.
+        /// MWA 2.0 deprecated <c>sign_transactions</c> in favour of
+        /// <c>sign_and_send_transactions</c>, and a wallet may refuse it - that refusal
+        /// surfaces as a protocol error rather than a silent fallback. It is still the
+        /// right method here: a wallet whose own submission fails can report success with
+        /// a signature that never reaches the chain (observed with Phantom 26.30.2 on
+        /// devnet), which the transaction tracker then waits on forever. Submitting
+        /// app-side keeps the send result visible and retryable.
         /// </remarks>
         public override Task<byte[]> SignWireTransactionAsync(
             byte[] wireTransaction,
             string reason,
             CancellationToken token) =>
-            throw new NotSupportedException(
-                "Signing without submitting is not available under Mobile Wallet Adapter");
+            RunAuthorizedAsync(
+                Cluster,
+                reason,
+                async (client, operationToken) =>
+                {
+                    var signedPayloads = await client.SignTransactionsAsync([wireTransaction], operationToken);
+
+                    if (signedPayloads.Count == 0)
+                    {
+                        throw new MwaProtocolException("The wallet returned no signed transaction");
+                    }
+
+                    return signedPayloads[0];
+                },
+                token);
 
         /// <summary>
         /// Hands the transaction over exactly as it arrived. The wallet fills in its signature
