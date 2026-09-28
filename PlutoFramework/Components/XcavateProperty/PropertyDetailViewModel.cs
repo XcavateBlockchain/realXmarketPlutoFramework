@@ -11,6 +11,7 @@ using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
 using PlutoFramework.Model.Xcavate.Profile;
+using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Solana;
 using PlutoFrameworkCore.Xcavate;
 using UniqueryPlus.Metadata;
@@ -44,7 +45,7 @@ namespace PlutoFramework.Components.XcavateProperty
         /// indexed-bucket deep link format in <c>NotificationDeepLinkModel</c>.
         /// </summary>
         private const string NamespaceUrlFormat =
-            "https://realxmessenger.xcavate.io/messages/namespace/{0}?isHeaderVisible=false&primaryColor=%233B4F74";
+            "https://" + MessengerDashboard.Host + "/messages/namespace/{0}?isHeaderVisible=false&primaryColor=%233B4F74";
 
         private MainActionStates getMainActionState()
         {

@@ -77,12 +77,17 @@ namespace PlutoFramework.Components.Solana.Status
 
                     // The node's reason for an on-chain failure is the only error the error
                     // page can show, and it is only available here, while the poll still
-                    // holds the status response.
+                    // holds the status response. Custom program errors decode through the
+                    // cluster's bundled IDLs and the transaction's own instruction list.
                     if (status is SolanaTransactionStatus.ConfirmedFailed
                         or SolanaTransactionStatus.FinalizedFailed)
                     {
                         SetErrorMessage(
-                            info, SolanaTransactionErrorDescriber.Describe(signatureStatus!.Error));
+                            info,
+                            SolanaTransactionErrorDescriber.Describe(
+                                signatureStatus!.Error,
+                                SolanaProgramErrorCatalogs.Get(cluster),
+                                info.InstructionProgramIds));
                     }
                 }
                 catch (OperationCanceledException)

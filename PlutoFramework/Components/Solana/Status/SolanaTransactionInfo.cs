@@ -50,6 +50,15 @@ namespace PlutoFramework.Components.Solana.Status
         private string? errorMessage;
 
         /// <summary>
+        /// The program each instruction of the submitted transaction targeted, in order.
+        /// The tracker reads it to decode "Instruction N: custom program error" against
+        /// the right program's bundled IDL - the code alone is ambiguous across programs.
+        /// Null for transactions that never got built (or built nowhere that records it);
+        /// decoding then falls back to the undecoded wording.
+        /// </summary>
+        public IReadOnlyList<string>? InstructionProgramIds { get; set; }
+
+        /// <summary>
         /// Null until submission returns one, and permanently null when submission failed —
         /// so the explorer link is hidden rather than pointing at nothing.
         /// </summary>

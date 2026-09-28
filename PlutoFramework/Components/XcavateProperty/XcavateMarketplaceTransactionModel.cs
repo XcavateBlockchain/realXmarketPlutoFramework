@@ -67,6 +67,10 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
+            // Hoisted out of the try so the failure handler can resolve which program a
+            // rejected instruction targeted; null when the build itself failed.
+            List<TransactionInstruction>? instructions = null;
+
             try
             {
                 var address = KeysModel.GetSolanaAddress();
@@ -81,7 +85,15 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 // Built before the key is unlocked: a build failure (no position, closed
                 // listing) should not cost an unlock prompt.
-                var instructions = await buildInstructionsAsync(address, cluster, CancellationToken.None);
+                instructions = await buildInstructionsAsync(address, cluster, CancellationToken.None);
+
+                // The program behind each instruction, in order: a "custom program error"
+                // code is only meaningful against the program that raised it (6013 exists
+                // in three of the bundled IDLs), and both the submission failure below and
+                // the tracker's on-chain failure decode through this.
+                info.InstructionProgramIds = instructions
+                    .Select(instruction => new SolanaPublicKey(instruction.ProgramId).Key)
+                    .ToList();
 
                 // Reserve, buy and claim all take a rent-fronting payer that the
                 // deployed program pins to the config's rent collector AND requires
@@ -161,9 +173,12 @@ namespace PlutoFramework.Components.XcavateProperty
             catch (Exception ex)
             {
                 // The toast is the failure report now: its error page shows this message,
-                // so no popup alongside it.
+                // so no popup alongside it. A program rejection is decoded through the
+                // bundled IDLs into the program author's own words; anything the metadata
+                // cannot explain keeps the node's raw reason.
                 info.Status = SolanaTransactionStatus.Error;
-                info.ErrorMessage = ex.Message;
+                info.ErrorMessage = SolanaSubmissionErrorDescriber.Describe(
+                    ex.Message, SolanaProgramErrorCatalogs.Get(cluster), info.InstructionProgramIds);
             }
         }
 

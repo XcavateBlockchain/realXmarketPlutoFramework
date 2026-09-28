@@ -48,6 +48,45 @@ namespace PlutoFrameworkCore.Solana
         }
 
         /// <summary>
+        /// The same reason, with custom program errors decoded through the cluster's
+        /// bundled IDL catalog. <paramref name="instructionProgramIds"/> maps instruction
+        /// index to the program it targeted - the transaction's own instruction list - so
+        /// a code only ever resolves against the program that actually raised it. Anything
+        /// the catalog cannot decode falls back to <see cref="Describe(TransactionError?)"/>.
+        /// </summary>
+        public static string Describe(
+            TransactionError? error,
+            AnchorIdlErrorCatalog? catalog,
+            IReadOnlyList<string>? instructionProgramIds)
+        {
+            if (error?.Type == TransactionErrorType.InstructionError
+                && error.InstructionError is { Type: InstructionErrorType.Custom, CustomError: not null } inner
+                && catalog is not null
+                && instructionProgramIds is not null
+                && inner.InstructionIndex >= 0
+                && inner.InstructionIndex < instructionProgramIds.Count
+                && catalog.ContainsProgram(instructionProgramIds[inner.InstructionIndex]))
+            {
+                var programId = instructionProgramIds[inner.InstructionIndex];
+
+                var subject = catalog.ProgramName(programId) is string name
+                    ? $"The {name} program"
+                    : "The program";
+
+                if (catalog.TryDescribe(programId, inner.CustomError.Value, out var idlError) && idlError is not null)
+                {
+                    return $"{subject} rejected instruction {inner.InstructionIndex}: {idlError.Message} (error {idlError.Code}).";
+                }
+
+                // Stale metadata: the program deployed errors this app version does not
+                // know. Name the program and keep the code so the failure stays matchable.
+                return $"{subject} rejected instruction {inner.InstructionIndex} with an error this app version cannot decode (code {inner.CustomError.Value}).";
+            }
+
+            return Describe(error);
+        }
+
+        /// <summary>
         /// "InsufficientFundsForFee" becomes "Insufficient funds for fee".
         /// </summary>
         private static string Readable(Enum value)

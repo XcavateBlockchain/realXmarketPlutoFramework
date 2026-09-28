@@ -19,13 +19,22 @@ public sealed class WebViewLoadFailureMonitor
     private readonly Microsoft.Maui.Controls.WebView webView;
 
     /// <summary>
+    /// Urls for which an http error status is not a failure. Single-page apps on static
+    /// hosting answer client-side routes with the complete, working app shell but an
+    /// error status (the messenger returns 404 for /messages/namespace/{id}), and only
+    /// the hosted app itself can tell such a route apart from a real error page.
+    /// </summary>
+    private readonly Func<string?, bool>? ignoreHttpErrorStatusFor;
+
+    /// <summary>
     /// Raised when the hosted page fails to load.
     /// </summary>
     public event EventHandler<WebViewLoadFailureEventArgs>? FailureOccurred;
 
-    public WebViewLoadFailureMonitor(Microsoft.Maui.Controls.WebView webView)
+    public WebViewLoadFailureMonitor(Microsoft.Maui.Controls.WebView webView, Func<string?, bool>? ignoreHttpErrorStatusFor = null)
     {
         this.webView = webView;
+        this.ignoreHttpErrorStatusFor = ignoreHttpErrorStatusFor;
 
         webView.Navigated += OnNavigated;
     }
@@ -34,9 +43,14 @@ public sealed class WebViewLoadFailureMonitor
     /// Wires a web view and its error page together: failures raise the page, Retry reloads
     /// the last url, and a successful navigation hides the page again.
     /// </summary>
-    public static WebViewLoadFailureMonitor Attach(Microsoft.Maui.Controls.WebView webView, WebViewErrorView errorView)
+    /// <param name="ignoreHttpErrorStatusFor">
+    /// Optional predicate naming the urls whose host serves working pages with an http
+    /// error status; those statuses are not reported as failures. Genuine load failures
+    /// (no network, dns, refused connection) are reported regardless.
+    /// </param>
+    public static WebViewLoadFailureMonitor Attach(Microsoft.Maui.Controls.WebView webView, WebViewErrorView errorView, Func<string?, bool>? ignoreHttpErrorStatusFor = null)
     {
-        var monitor = new WebViewLoadFailureMonitor(webView);
+        var monitor = new WebViewLoadFailureMonitor(webView, ignoreHttpErrorStatusFor);
 
         monitor.FailureOccurred += (_, args) => errorView.ShowFailure(args);
         errorView.RetryRequested += (_, _) => monitor.Retry();
@@ -94,7 +108,7 @@ public sealed class WebViewLoadFailureMonitor
             return;
         }
 
-        if (statusCode >= 400)
+        if (statusCode >= 400 && ignoreHttpErrorStatusFor?.Invoke(e.Url) != true)
         {
             FailureOccurred?.Invoke(this, new WebViewLoadFailureEventArgs(e.Url, statusCode));
         }

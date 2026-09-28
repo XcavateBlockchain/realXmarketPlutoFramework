@@ -1,0 +1,9 @@
+{
+  "address": "dj9Q3CpHvDHwexCbkgJ5APDx4JsTxPssNebkvP15g1T",
+  "metadata": { "name": "marketplace", "version": "0.1.0", "spec": "0.1.0" },
+  "instructions": [],
+  "errors": [
+    { "code": 6000, "name": "NotAuthority", "msg": "Signer is not the authority" },
+    { "code": 6013, "name": "ListingNotActive", "msg": "Listing is not active" }
+  ]
+}

@@ -1,6 +1,7 @@
 using PlutoFramework.Components.Messages;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Xcavate;
+using PlutoFrameworkCore.AssetDidComm;
 
 namespace PlutoFramework.Components.Notifications;
 
@@ -12,7 +13,7 @@ namespace PlutoFramework.Components.Notifications;
 public static class NotificationDeepLinkModel
 {
     private const string BucketUrlFormat =
-        "https://realxmessenger.xcavate.io/indexed-bucket/{0}?isHeaderVisible=false&primaryColor=%233B4F74";
+        "https://" + MessengerDashboard.Host + "/indexed-bucket/{0}?isHeaderVisible=false&primaryColor=%233B4F74";
 
     private static string? pendingBucketId;
 

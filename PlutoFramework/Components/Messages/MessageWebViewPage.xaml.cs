@@ -4,6 +4,7 @@ using PlutoFramework.Components.Solana;
 using PlutoFramework.Components.WebView;
 using PlutoFramework.Templates.PageTemplate;
 using PlutoFramework.Model;
+using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Solana;
 using System.Text;
 
@@ -21,7 +22,10 @@ public partial class MessageWebViewPage : PageTemplate
     {
         InitializeComponent();
 
-        WebViewLoadFailureMonitor.Attach(webView, webErrorView);
+        // The messenger host serves client-side routes (a namespace deep link from a
+        // property page is one) with the working app shell but a 404 status - not a load
+        // failure, so those statuses are left to the hosted app instead of the error page.
+        WebViewLoadFailureMonitor.Attach(webView, webErrorView, ignoreHttpErrorStatusFor: MessengerDashboard.IsHost);
 
         webView.HeaderChanged += OnWebHeaderChanged;
 
