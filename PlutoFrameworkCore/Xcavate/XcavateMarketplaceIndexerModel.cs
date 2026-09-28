@@ -118,16 +118,23 @@ namespace PlutoFramework.Model.Xcavate
                 var position = positionsResult.Data?.InvestorPositions.Nodes.FirstOrDefault();
                 if (position is not null)
                 {
-                    // Bought plus reserved: both are shares the investor has committed
-                    // money to, and the reserved part is what the cancel-reservation UI
-                    // (gated on this figure downstream) exists for.
-                    var committedShares = ParseInt64(position.ShareAmount) + ParseInt64(position.ReservedShareAmount);
+                    // Reserved only: the ongoing listing's ShareOwners feeds the wrapper's
+                    // TokensBought, which the detail page prints as "You reserved" and the
+                    // claim / cancel-reservation / refund states gate on. claim_shares
+                    // moves the reserved shares into share_amount and zeroes
+                    // reserved_share_amount, so adding the bought part here would show a
+                    // claimed position as still reserved. The owned part arrives through
+                    // the asset's share holdings below.
+                    var reservedShares = ParseInt64(position.ReservedShareAmount);
 
-                    nft.OngoingObjectListingDetails.ShareOwners[position.Investor] = new ShareOwner
+                    if (reservedShares > 0)
                     {
-                        Account = position.Investor,
-                        ShareAmount = (uint)Math.Clamp(committedShares, 0, uint.MaxValue),
-                    };
+                        nft.OngoingObjectListingDetails.ShareOwners[position.Investor] = new ShareOwner
+                        {
+                            Account = position.Investor,
+                            ShareAmount = (uint)Math.Clamp(reservedShares, 0, uint.MaxValue),
+                        };
+                    }
                 }
             }
 
@@ -184,9 +191,13 @@ namespace PlutoFramework.Model.Xcavate
         /// </para>
         /// <para>
         /// A position with no bought and no reserved shares carries nothing to show and
-        /// is dropped. The investor's committed total (bought plus reserved) is stored
-        /// under their own address in <c>OngoingObjectListingDetails.ShareOwners</c>, the
-        /// same figure the detail page shows, so a record wrapped from
+        /// is dropped. On the nested listing the two counts are kept apart the way the
+        /// views read them: the reserved count sits under the investor's address in
+        /// <c>OngoingObjectListingDetails.ShareOwners</c> (the wrapper's
+        /// <c>TokensBought</c> - "You reserved", the claim and cancel-reservation gates),
+        /// the bought count in <c>RealWorldAssetDetails.ShareOwners</c> (the wrapper's
+        /// <c>TokensOwned</c> - "You own"), the same split the detail page's
+        /// <see cref="GetListingFullInfoAsync"/> produces, so a record wrapped from
         /// <see cref="Listing"/> agrees with it.
         /// </para>
         /// </summary>
@@ -228,12 +239,32 @@ namespace PlutoFramework.Model.Xcavate
                 var boughtShares = ParseInt64(node.ShareAmount);
                 var reservedShares = ParseInt64(node.ReservedShareAmount);
 
-                if (listing.OngoingObjectListingDetails is not null)
+                // The two figures feed different views: the ongoing listing's
+                // ShareOwners becomes the wrapper's TokensBought ("You reserved", the
+                // claim and cancel-reservation gates), the asset's ShareOwners becomes
+                // TokensOwned ("You own"). claim_shares moves reserved_share_amount into
+                // share_amount, so summing them into one bucket would show a claimed
+                // position as still reserved. Zero entries are simply absent - every
+                // reader falls back to 0 on a missing key.
+                if (reservedShares > 0 && listing.OngoingObjectListingDetails is not null)
                 {
                     listing.OngoingObjectListingDetails.ShareOwners[investor] = new ShareOwner
                     {
                         Account = investor,
-                        ShareAmount = (uint)Math.Clamp(boughtShares + reservedShares, 0, uint.MaxValue),
+                        ShareAmount = (uint)Math.Clamp(reservedShares, 0, uint.MaxValue),
+                    };
+                }
+
+                if (boughtShares > 0 && listing.RealWorldAssetDetails is not null)
+                {
+                    // This path does not join share holdings; the position's share_amount
+                    // stands in for the owned count. The two diverge only after
+                    // secondary-market moves, which this position-scoped list (filtered
+                    // on the same figure server-side) does not track either.
+                    listing.RealWorldAssetDetails.ShareOwners[investor] = new ShareOwner
+                    {
+                        Account = investor,
+                        ShareAmount = (uint)Math.Clamp(boughtShares, 0, uint.MaxValue),
                     };
                 }
 

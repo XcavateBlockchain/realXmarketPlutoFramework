@@ -6,9 +6,12 @@ namespace PlutoFramework.Model.Xcavate
     /// the existing views render it) plus how many shares the investor has actually bought
     /// and how many they have only reserved.
     /// <para>
-    /// <c>OngoingObjectListingDetails.ShareOwners</c> on the nested listing already carries
-    /// the investor's committed total (bought plus reserved), the same figure the detail
-    /// page shows, so a wrapped record's <c>TokensBought</c> agrees with it.
+    /// On the nested listing the counts are split the way the views read them: the
+    /// reserved shares sit under the investor's address in
+    /// <c>OngoingObjectListingDetails.ShareOwners</c> (the wrapper's <c>TokensBought</c>),
+    /// the bought shares in <c>RealWorldAssetDetails.ShareOwners</c> (the wrapper's
+    /// <c>TokensOwned</c>) - the same split the detail page shows, so a wrapped record
+    /// agrees with it.
     /// </para>
     /// </summary>
     public sealed record XcavateSolanaInvestorProperty

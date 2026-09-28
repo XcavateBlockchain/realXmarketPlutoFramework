@@ -127,5 +127,101 @@ namespace PlutoFrameworkTests
 
             Assert.That(matches, Is.EqualTo(expected));
         }
+
+        // The devnet fixture the claim-split tests pin: this investor reserved 72 shares of
+        // listing 5 and later claimed them, so the position reads shareAmount=72 /
+        // reservedShareAmount=0 and the ShareHolding carries the 72. If devnet moves on
+        // (position closed, more shares reserved), the tests go Inconclusive rather than red.
+        private const string ClaimedInvestor = "CsEy5p6kLmhPaHULMBriu5XGcs4hTv6yxi1SKyni4i5M";
+        private const long ClaimedListingId = 5;
+
+        /// <summary>
+        /// The pinned position in its claimed state (bought shares, none reserved), or null
+        /// when devnet no longer holds it - the caller turns that into Inconclusive.
+        /// </summary>
+        private static async Task<XcavateSolanaInvestorProperty?> FetchClaimedPositionAsync()
+        {
+            var properties = await XcavateMarketplaceIndexerModel.GetInvestorPropertiesAsync(
+                SolanaCluster.Devnet,
+                ClaimedInvestor,
+                owned: null,
+                reserved: null,
+                name: null,
+                townCity: null,
+                propertyType: null,
+                first: 100,
+                offset: 0,
+                CancellationToken.None);
+
+            return properties.FirstOrDefault(property =>
+                property.Listing.ListingId == ClaimedListingId
+                && property.BoughtShares > 0
+                && property.ReservedShares == 0);
+        }
+
+        [Test]
+        public async Task GetInvestorPropertiesAsync_AfterClaim_ReportsReservedAndOwnedSeparatelyAsync()
+        {
+            var claimed = await FetchClaimedPositionAsync();
+            if (claimed is null)
+            {
+                Assert.Inconclusive("The pinned devnet position (listing 5, claimed shares) is gone or changed.");
+                return;
+            }
+
+            // The wrapper's TokensBought ("You reserved", the claim and cancel-reservation
+            // gates) reads the ongoing listing's ShareOwners: after a claim nothing is
+            // reserved, so the entry must carry the reserved figure alone - not the
+            // bought-plus-reserved sum, which would resurrect the claimed shares as
+            // "reserved".
+            var reserved = claimed.Listing.OngoingObjectListingDetails?.ShareOwners
+                .TryGetValue(ClaimedInvestor, out var reservedOwner) == true
+                ? reservedOwner.ShareAmount
+                : 0u;
+            Assert.That(reserved, Is.EqualTo(claimed.ReservedShares));
+
+            // The wrapper's TokensOwned ("You own") reads the asset's ShareOwners: the
+            // claimed shares must show up there, or the list card says "Tokens bought"
+            // for a position whose claim already went through.
+            uint? owned = claimed.Listing.RealWorldAssetDetails?.ShareOwners
+                .TryGetValue(ClaimedInvestor, out var owner) == true
+                ? owner.ShareAmount
+                : null;
+            Assert.That(owned, Is.EqualTo(claimed.BoughtShares));
+        }
+
+        [Test]
+        public async Task GetListingFullInfoAsync_AfterClaim_ReportsReservedAndOwnedSeparatelyAsync()
+        {
+            var claimed = await FetchClaimedPositionAsync();
+            if (claimed is null)
+            {
+                Assert.Inconclusive("The pinned devnet position (listing 5, claimed shares) is gone or changed.");
+                return;
+            }
+
+            var listing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
+                SolanaCluster.Devnet,
+                ClaimedListingId,
+                ClaimedInvestor,
+                CancellationToken.None);
+
+            Assert.That(listing, Is.Not.Null);
+
+            // Same split as the list path, on the detail page's fresh refetch: the
+            // position's ShareOwners entry is the reserved count only (0 after the
+            // claim), the asset's holdings carry the owned count.
+            var reserved = listing!.OngoingObjectListingDetails?.ShareOwners
+                .TryGetValue(ClaimedInvestor, out var reservedOwner) == true
+                ? reservedOwner.ShareAmount
+                : 0u;
+            Assert.That(reserved, Is.EqualTo(claimed.ReservedShares));
+
+            uint? owned = listing.RealWorldAssetDetails?.ShareOwners
+                .TryGetValue(ClaimedInvestor, out var owner) == true
+                ? owner.ShareAmount
+                : null;
+            Assert.That(owned, Is.EqualTo(claimed.BoughtShares));
+        }
     }
 }
