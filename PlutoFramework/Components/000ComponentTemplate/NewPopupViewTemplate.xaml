@@ -22,13 +22,51 @@
                     <!-- Add your content here -->
 
                 </VerticalStackLayout>
+
+                <!-- ========================================================================
+                     STANDARD POPUP BUTTON AREA - always bottom-anchor 1-2 buttons this way.
+                     Pattern B (live block below): side-by-side Cancel + Confirm pair.
+                       1-button variant: drop the second ColumnDefinition and the second button.
+                     Pattern A: two PRIMARY route choices (e.g. "Create New Account" vs
+                       "Import Account") - stacked full-width buttons. Use this instead:
+
+                    <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 145"
+                        AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+                        <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 115"
+                              AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                              ColumnSpacing="15" RowSpacing="15" Margin="10, 0, 10, 10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <buttons:ElevatedButton Text="Primary action 1" Grid.Row="0"
+                                                    Command="{Binding FirstCommand}"/>
+                            <buttons:ElevatedButton Text="Primary action 2" Grid.Row="1"
+                                                    Command="{Binding SecondCommand}"/>
+                        </Grid>
+                    </AbsoluteLayout>
+
+                     Content clearance: full-size/scrollable content must clear the button
+                       area - bottom margin >= 90 for Pattern B, >= 155 for Pattern A.
+                       Top-anchored AutoSize content stacks need no extra padding.
+                     Exemptions: 0-button popups, 3+ button popups, and scrollable
+                       option-list selectors (country/network/asset/token pickers).
+                     Geometry: button height from ButtonHeight static resource (48); grid
+                       row area 50; spacing 15; horizontal/bottom inset 10.
+                     References: Account/NoAccountPopup.xaml (Pattern A);
+                       Password/EnterPasswordPopupView.xaml (B, 2 buttons);
+                       Account/CreateAccountPopup.xaml (B, 1 button).
+                     ======================================================================== -->
                 <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
                     AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
 
                     <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
                       AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
                       ColumnSpacing="15"
-                      Margin="0, 0, 0, 10">
+                      Margin="10, 0, 10, 10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />

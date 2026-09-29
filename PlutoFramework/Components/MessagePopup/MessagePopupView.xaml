@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              x:Class="PlutoFramework.Components.MessagePopup.MessagePopupView"
@@ -14,7 +14,8 @@
 
                 <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
                                      AbsoluteLayout.LayoutFlags="WidthProportional"
-                                     Spacing="10">
+                                     Spacing="10"
+                                     Padding="0, 0, 0, 90">
                      <Label
                         FontAttributes="Bold"
                         Text="{Binding Title}"
@@ -25,10 +26,23 @@
                         x:Name="text"
                         Text="{Binding Text}"
                         HorizontalOptions="CenterAndExpand" />
-
-                    <Button Text="Back"
-                            Clicked="OnBackClicked" />
                 </VerticalStackLayout>
+
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          ColumnSpacing="15"
+                          Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Button Text="Back"
+                                Grid.Column="0"
+                                Clicked="OnBackClicked" />
+                    </Grid>
+                </AbsoluteLayout>
 
                 <AbsoluteLayout AbsoluteLayout.LayoutBounds="0, 0, 40, 40">
                     <Image AbsoluteLayout.LayoutBounds="0, 0, 20, 20"

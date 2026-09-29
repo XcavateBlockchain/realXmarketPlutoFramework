@@ -21,28 +21,29 @@
                            TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
                 </VerticalStackLayout>
 
-                <Grid AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
                           AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
                           ColumnSpacing="15"
-                          RowSpacing="15"
-                          Margin="10, 10, 10, 10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                          Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-
-                    <buttons:BasicGrayButton Text="Cancel"
+                        <buttons:BasicGrayButton Text="Cancel"
                                                  Grid.Column="0"
                                                  Grid.Row="0"
                                                  Command="{Binding CancelCommand}"
                                                  ButtonState="Enabled"/>
-                    <buttons:ElevatedButton Text="Proceed"
-                            Grid.Column="1"
-                            Grid.Row="0"
-                            Command="{Binding ContinueCommand}"
-                            ButtonState="Enabled"/>
-                </Grid>
+                        <buttons:ElevatedButton Text="Proceed"
+                                                Grid.Column="1"
+                                                Grid.Row="0"
+                                                Command="{Binding ContinueCommand}"
+                                                ButtonState="Enabled"/>
+                    </Grid>
+                </AbsoluteLayout>
             </AbsoluteLayout>
         </card:BottomPopupCard.View>
     </card:BottomPopupCard>

@@ -11,21 +11,48 @@
     <card:BottomPopupCard Title="Add funds"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
-            <VerticalStackLayout Spacing="15"
-                                 Padding="10, 10, 10, 20">
+            <AbsoluteLayout>
 
-                <Label Text="Deposit tokens to your address, or buy them with the Xcavate on-ramp."
-                       FontSize="13"
-                       TextColor="#A6A6A6" />
+                <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
+                                     AbsoluteLayout.LayoutFlags="WidthProportional"
+                                     Spacing="15"
+                                     Padding="10, 10, 10, 20">
 
-                <buttons:ElevatedButton Text="Deposit"
-                                        ButtonState="Enabled"
-                                        Command="{Binding DepositCommand}" />
+                    <Label Text="Deposit tokens to your address, or buy them with the Xcavate on-ramp."
+                           FontSize="13"
+                           TextColor="#A6A6A6" />
+                </VerticalStackLayout>
 
-                <buttons:ElevatedButton Text="Buy"
-                                        ButtonState="Enabled"
-                                        Command="{Binding BuyCommand}" />
-            </VerticalStackLayout>
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 145"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 115"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          ColumnSpacing="15"
+                          RowSpacing="15"
+                          Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <buttons:ElevatedButton Text="Deposit"
+                                                Grid.Column="0"
+                                                Grid.Row="0"
+                                                ButtonState="Enabled"
+                                                Command="{Binding DepositCommand}" />
+
+                        <buttons:ElevatedButton Text="Buy"
+                                                Grid.Column="0"
+                                                Grid.Row="1"
+                                                ButtonState="Enabled"
+                                                Command="{Binding BuyCommand}" />
+                    </Grid>
+                </AbsoluteLayout>
+
+            </AbsoluteLayout>
         </card:BottomPopupCard.View>
     </card:BottomPopupCard>
 </ContentView>

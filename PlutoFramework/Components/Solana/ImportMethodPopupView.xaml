@@ -11,28 +11,53 @@
     <card:BottomPopupCard Title="Import your Solana account"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
-            <VerticalStackLayout Spacing="15"
-                                 Padding="10, 10, 10, 20">
+            <AbsoluteLayout>
+                <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
+                                     AbsoluteLayout.LayoutFlags="WidthProportional"
+                                     Spacing="15"
+                                     Padding="10, 10, 10, 20">
 
-                <Label Text="Connect the wallet app that already holds your account, or enter its seed phrase."
-                       FontSize="13"
-                       TextColor="#A6A6A6" />
+                    <Label Text="Connect the wallet app that already holds your account, or enter its seed phrase."
+                           FontSize="13"
+                           TextColor="#A6A6A6" />
 
-                <buttons:ElevatedButton Text="Connect wallet app"
-                                        ButtonState="Enabled"
-                                        IsVisible="{Binding MwaIsSupported}"
-                                        Command="{Binding ChooseMwaCommand}" />
+                    <Label Text="Connecting a wallet app is only available on Android."
+                           FontSize="12"
+                           TextColor="#A6A6A6"
+                           IsVisible="{Binding MwaIsUnsupported}"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
 
-                <Label Text="Connecting a wallet app is only available on Android."
-                       FontSize="12"
-                       TextColor="#A6A6A6"
-                       IsVisible="{Binding MwaIsUnsupported}"
-                       HorizontalTextAlignment="Center" />
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 145"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 115"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          ColumnSpacing="15"
+                          RowSpacing="15"
+                          Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
 
-                <buttons:ElevatedButton Text="Enter seed phrase"
-                                        ButtonState="Enabled"
-                                        Command="{Binding ChooseSeedPhraseCommand}" />
-            </VerticalStackLayout>
+                        <buttons:ElevatedButton Text="Connect wallet app"
+                                                Grid.Column="0"
+                                                Grid.Row="0"
+                                                ButtonState="Enabled"
+                                                IsVisible="{Binding MwaIsSupported}"
+                                                Command="{Binding ChooseMwaCommand}" />
+
+                        <buttons:ElevatedButton Text="Enter seed phrase"
+                                                Grid.Column="0"
+                                                Grid.Row="1"
+                                                ButtonState="Enabled"
+                                                Command="{Binding ChooseSeedPhraseCommand}" />
+                    </Grid>
+                </AbsoluteLayout>
+            </AbsoluteLayout>
         </card:BottomPopupCard.View>
     </card:BottomPopupCard>
 </ContentView>

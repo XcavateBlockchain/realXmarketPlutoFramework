@@ -11,45 +11,59 @@
     <card:BottomPopupCard Title="Waiting for signature from wallet"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
-            <VerticalStackLayout Spacing="15"
-                                 Padding="10, 10, 10, 20">
+            <AbsoluteLayout>
+                <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
+                                     AbsoluteLayout.LayoutFlags="WidthProportional"
+                                     Spacing="15"
+                                     Padding="10, 10, 10, 20">
 
-                <Label Text="{Binding Description}"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                       FontSize="14"
-                       HorizontalTextAlignment="Center"
-                       Margin="10, 0, 10, 0" />
+                    <Label Text="{Binding Description}"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                           FontSize="14"
+                           HorizontalTextAlignment="Center"
+                           Margin="10, 0, 10, 0" />
 
-                <Label Text="Approve the request in your Solana wallet app. The wallet shows you exactly what is being signed and hands back only the signature - your keys never leave it."
-                       FontSize="13"
-                       HorizontalTextAlignment="Center" />
-
-                <HorizontalStackLayout HorizontalOptions="Center"
-                                       Spacing="10"
-                                       IsVisible="{Binding StatusIsVisible}">
-                    <ActivityIndicator IsRunning="{Binding IsVisible}"
-                                       HeightRequest="16"
-                                       WidthRequest="16"
-                                       VerticalOptions="Center" />
-
-                    <Label Text="{Binding Status}"
+                    <Label Text="Approve the request in your Solana wallet app. The wallet shows you exactly what is being signed and hands back only the signature - your keys never leave it."
                            FontSize="13"
-                           VerticalTextAlignment="Center" />
-                </HorizontalStackLayout>
+                           HorizontalTextAlignment="Center" />
 
-                <Grid ColumnDefinitions="*, *"
-                      ColumnSpacing="10"
-                      Margin="10, 5, 10, 0">
-                    <buttons:BasicGrayButton Text="Cancel"
-                                             AutomationId="cancelMwaSignature"
-                                             Command="{Binding CancelCommand}" />
+                    <HorizontalStackLayout HorizontalOptions="Center"
+                                           Spacing="10"
+                                           IsVisible="{Binding StatusIsVisible}">
+                        <ActivityIndicator IsRunning="{Binding IsVisible}"
+                                           HeightRequest="16"
+                                           WidthRequest="16"
+                                           VerticalOptions="Center" />
 
-                    <buttons:ElevatedButton Grid.Column="1"
-                                            Text="Open Wallet"
-                                            AutomationId="openMwaWallet"
-                                            Command="{Binding OpenWalletCommand}" />
-                </Grid>
-            </VerticalStackLayout>
+                        <Label Text="{Binding Status}"
+                               FontSize="13"
+                               VerticalTextAlignment="Center" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          ColumnSpacing="15"
+                          Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <buttons:BasicGrayButton Text="Cancel"
+                                                 Grid.Column="0"
+                                                 AutomationId="cancelMwaSignature"
+                                                 Command="{Binding CancelCommand}" />
+
+                        <buttons:ElevatedButton Grid.Column="1"
+                                                Text="Open Wallet"
+                                                AutomationId="openMwaWallet"
+                                                Command="{Binding OpenWalletCommand}" />
+                    </Grid>
+                </AbsoluteLayout>
+            </AbsoluteLayout>
         </card:BottomPopupCard.View>
     </card:BottomPopupCard>
 </ContentView>

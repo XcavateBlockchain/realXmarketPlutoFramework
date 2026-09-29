@@ -21,20 +21,16 @@
 
                     <Label Text="{Binding WarningText}" />
                 </VerticalStackLayout>
-                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 100"
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
                                 AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
 
-                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 80"
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
                           AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
                           ColumnSpacing="15"
-                          RowSpacing="15"
                           Margin="10, 0, 10, 10">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
 
                         <buttons:ElevatedButton Text="Continue"
                                                Grid.Column="0"

@@ -12,18 +12,35 @@
     <card:BottomPopupCard Title="Import your Solana wallet"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
-            <ScrollView>
-                <VerticalStackLayout Spacing="15"
-                                     Padding="10, 10, 10, 20">
+            <AbsoluteLayout>
+                <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                            AbsoluteLayout.LayoutFlags="All"
+                            Margin="0, 0, 0, 90">
+                    <VerticalStackLayout Spacing="15"
+                                         Padding="10, 10, 10, 20">
 
-                    <solana:SolanaMnemonicsEntryView BindingContext="{Binding Entry}" />
+                        <solana:SolanaMnemonicsEntryView BindingContext="{Binding Entry}" />
+                    </VerticalStackLayout>
+                </ScrollView>
 
-                    <buttons:ElevatedButton Text="Continue"
-                                            AutomationId="ContinueSolanaMnemonics"
-                                            ButtonState="Enabled"
-                                            Command="{Binding ContinueWithMnemonicsCommand}" />
-                </VerticalStackLayout>
-            </ScrollView>
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          ColumnSpacing="15"
+                          Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <buttons:ElevatedButton Text="Continue"
+                                                Grid.Column="0"
+                                                AutomationId="ContinueSolanaMnemonics"
+                                                ButtonState="Enabled"
+                                                Command="{Binding ContinueWithMnemonicsCommand}" />
+                    </Grid>
+                </AbsoluteLayout>
+            </AbsoluteLayout>
         </card:BottomPopupCard.View>
     </card:BottomPopupCard>
 </ContentView>

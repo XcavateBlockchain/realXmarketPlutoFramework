@@ -35,7 +35,7 @@
                         </Grid.ColumnDefinitions>
 
                         <buttons:PlutoFrameworkElevatedButton Text="Continue"
-                                                               Grid.Column="1"
+                                                               Grid.Column="0"
                                                                Command="{Binding ContinueCommand}"
                                                                ButtonState="{Binding ContinueButtonState}"/>
                     </Grid>

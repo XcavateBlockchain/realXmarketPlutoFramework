@@ -11,67 +11,81 @@
     <card:BottomPopupCard Title="Waiting for message signature"
                           IsShown="{Binding IsVisible}">
         <card:BottomPopupCard.View>
-            <VerticalStackLayout Spacing="15"
-                                 Padding="10, 10, 10, 20">
+            <AbsoluteLayout>
+                <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
+                                     AbsoluteLayout.LayoutFlags="WidthProportional"
+                                     Spacing="15"
+                                     Padding="10, 10, 10, 20">
 
-                <Label Text="{Binding Description}"
-                       TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                       FontSize="14"
-                       HorizontalTextAlignment="Center"
-                       Margin="10, 0, 10, 0" />
+                    <Label Text="{Binding Description}"
+                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                           FontSize="14"
+                           HorizontalTextAlignment="Center"
+                           Margin="10, 0, 10, 0" />
 
-                <Label Text="Approve the message signing request in your Solana wallet app. A signature proves you hold this wallet - it moves no funds and costs nothing."
-                       FontSize="13"
-                       HorizontalTextAlignment="Center" />
+                    <Label Text="Approve the message signing request in your Solana wallet app. A signature proves you hold this wallet - it moves no funds and costs nothing."
+                           FontSize="13"
+                           HorizontalTextAlignment="Center" />
 
-                <VerticalStackLayout Spacing="5"
-                                     Margin="10, 0, 10, 0">
-                    <Label Text="Message to sign:"
-                           FontSize="12"
-                           TextColor="#A6A6A6" />
+                    <VerticalStackLayout Spacing="5"
+                                         Margin="10, 0, 10, 0">
+                        <Label Text="Message to sign:"
+                               FontSize="12"
+                               TextColor="#A6A6A6" />
 
-                    <Border Stroke="{StaticResource CardBorderColor}"
-                            StrokeThickness="{StaticResource CardBorderThickness}"
-                            BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#141414}"
-                            Padding="10">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="10" />
-                        </Border.StrokeShape>
+                        <Border Stroke="{StaticResource CardBorderColor}"
+                                StrokeThickness="{StaticResource CardBorderThickness}"
+                                BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#141414}"
+                                Padding="10">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
 
-                        <ScrollView MaximumHeightRequest="160">
-                            <Label Text="{Binding MessageText}"
-                                   TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                   FontSize="12" />
-                        </ScrollView>
-                    </Border>
+                            <ScrollView MaximumHeightRequest="160">
+                                <Label Text="{Binding MessageText}"
+                                       TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                       FontSize="12" />
+                            </ScrollView>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <HorizontalStackLayout HorizontalOptions="Center"
+                                           Spacing="10"
+                                           IsVisible="{Binding StatusIsVisible}">
+                        <ActivityIndicator IsRunning="{Binding IsVisible}"
+                                           HeightRequest="16"
+                                           WidthRequest="16"
+                                           VerticalOptions="Center" />
+
+                        <Label Text="{Binding Status}"
+                               FontSize="13"
+                               VerticalTextAlignment="Center" />
+                    </HorizontalStackLayout>
                 </VerticalStackLayout>
 
-                <HorizontalStackLayout HorizontalOptions="Center"
-                                       Spacing="10"
-                                       IsVisible="{Binding StatusIsVisible}">
-                    <ActivityIndicator IsRunning="{Binding IsVisible}"
-                                       HeightRequest="16"
-                                       WidthRequest="16"
-                                       VerticalOptions="Center" />
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          ColumnSpacing="15"
+                          Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                    <Label Text="{Binding Status}"
-                           FontSize="13"
-                           VerticalTextAlignment="Center" />
-                </HorizontalStackLayout>
+                        <buttons:BasicGrayButton Text="Cancel"
+                                                 Grid.Column="0"
+                                                 AutomationId="cancelMwaMessageSignature"
+                                                 Command="{Binding CancelCommand}" />
 
-                <Grid ColumnDefinitions="*, *"
-                      ColumnSpacing="10"
-                      Margin="10, 5, 10, 0">
-                    <buttons:BasicGrayButton Text="Cancel"
-                                             AutomationId="cancelMwaMessageSignature"
-                                             Command="{Binding CancelCommand}" />
-
-                    <buttons:ElevatedButton Grid.Column="1"
-                                            Text="Open Wallet"
-                                            AutomationId="openMwaWalletFromMessage"
-                                            Command="{Binding OpenWalletCommand}" />
-                </Grid>
-            </VerticalStackLayout>
+                        <buttons:ElevatedButton Grid.Column="1"
+                                                Text="Open Wallet"
+                                                AutomationId="openMwaWalletFromMessage"
+                                                Command="{Binding OpenWalletCommand}" />
+                    </Grid>
+                </AbsoluteLayout>
+            </AbsoluteLayout>
         </card:BottomPopupCard.View>
     </card:BottomPopupCard>
 </ContentView>
