@@ -143,10 +143,10 @@
                                             MaximumTitle="£270,000"
                                             InfoCommand="{Binding NavigateToFeesCommand}"/>
 
-                    <Line Stroke="#888888"
-                      X2="{Binding Width, Source={RelativeSource Self}}"
-                      HorizontalOptions="Fill"
-                      StrokeThickness="1" />
+                    <Border HeightRequest="1"
+                            BackgroundColor="#888888"
+                            StrokeThickness="0"
+                            HorizontalOptions="Fill" />
 
                     <xcavateproperty:PropertyTitleWithInfoView Title="Rental income pcm"
                                                            Command="{Binding NavigateToFeesCommand}"/>
@@ -154,10 +154,10 @@
                     <Label Text="{Binding RentalIncome}"
                        HorizontalTextAlignment="Start" />
 
-                    <Line Stroke="#888888"
-                      X2="{Binding Width, Source={RelativeSource Self}}"
-                      HorizontalOptions="Fill"
-                      StrokeThickness="1" />
+                    <Border HeightRequest="1"
+                            BackgroundColor="#888888"
+                            StrokeThickness="0"
+                            HorizontalOptions="Fill" />
 
                     <xcavateproperty:SliderView Title="Rental demand in the area"
                                             Percentage="{Binding RentalDemandPercentage}"
@@ -169,7 +169,7 @@
 
                     <xcavateproperty:BoughtPropertyTokensView IsVisible="{Binding BoughtPropertyTokensViewIsVisible}" />
 
-                    <StackLayout BackgroundColor="#22888888"
+                    <VerticalStackLayout BackgroundColor="#22888888"
                                 Padding="20,30,20,30"
                                 Margin="-20,20,-20,0"
                                 Spacing="15">
@@ -249,7 +249,7 @@
                                           Value="{Binding Quality}"
                                           HasShadow="False"
                                           CardBackgroundColor="{AppThemeBinding Light=#dfdfdf, Dark=#181818}" />
-                    </StackLayout>
+                    </VerticalStackLayout>
 
                     <map:PropertyMapView x:Name="propertyMapView"
                                          HeightRequest="350"

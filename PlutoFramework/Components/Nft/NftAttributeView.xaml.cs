@@ -41,13 +41,10 @@ public partial class NftAttributeView : ContentView
             {
                 return;
             }
-            control.border.Shadow = (bool)newValue ? (Shadow)Application.Current!.Resources["CardShadow"] : new()
-            {
-                Brush = Brush.Black,
-                Offset = new Point(0, 0),
-                Radius = 0,
-                Opacity = 0,
-            };
+            // No shadow at all when disabled: even a zero-opacity Shadow keeps the
+            // shadow-drawing wrapper around the platform view, and this view is repeated
+            // for every attribute row inside the detail page's ScrollView.
+            control.border.Shadow = (bool)newValue ? (Shadow)Application.Current!.Resources["CardShadow"] : null!;
         });
 
     public NftAttributeView()

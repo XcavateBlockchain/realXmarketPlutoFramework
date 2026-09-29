@@ -18,9 +18,20 @@
             </CollectionView.ItemsLayout>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <nft:NftImageView WidthRequest="60"
-                                      ExtraButtonsVisible="False"
-                                      ImageSource="{Binding .}" />
+                    <!-- Lean thumbnail: the full NftImageView (shadow wrapper, grey
+                         background, hidden action buttons, AbsoluteLayout) is wasted on a
+                         60px preview and its per-item shadow bitmap is pure cost. -->
+                    <Border WidthRequest="60"
+                            HeightRequest="60"
+                            Padding="0"
+                            StrokeThickness="0"
+                            BackgroundColor="Gray">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                        <Image Source="{Binding .}"
+                               Aspect="AspectFill" />
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
