@@ -5,6 +5,7 @@
                     xmlns:txanalyzer="clr-namespace:PlutoFramework.Components.TransactionAnalyzer"
                     xmlns:password="clr-namespace:PlutoFramework.Components.Password"
                     xmlns:account="clr-namespace:PlutoFramework.Components.Account"
+                    xmlns:keys="clr-namespace:PlutoFramework.Components.Keys"
                     xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
                     xmlns:kilt="clr-namespace:PlutoFramework.Components.Kilt"
                     xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
@@ -57,6 +58,11 @@
                  (RequirementsModel, the navigation bar, a resumed onboarding), continues its
                  Import Account button into this popup. Hosting it per-page left that button
                  dead on every page that had not thought to include it. -->
+            <!-- Hosted here for the same reason as NoAccountPopup: the messenger gate
+                 (MessengerAccessModel) raises it from anywhere a Messages entry point
+                 lives - the top navigation bar, a push notification, a property page. -->
+            <keys:X25519KeyRequiredPopupView ZIndex="10" />
+
             <!-- Raised by the Solana "Add funds" button, which any page with a balance
                  overview can host, so it lives here rather than per page. -->
             <addfunds:AddFundsPopupView ZIndex="10" />

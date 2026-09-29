@@ -21,11 +21,6 @@
             <mnemonics:MnemonicsView Title="Seed phrase:"
                                      Mnemonics="{Binding Mnemonics}" />
 
-            <Label Text="Derived at m/44'/501'/0'/0', the same path Phantom, Solflare and Backpack use, so this phrase can be imported into any of them."
-                   FontSize="12"
-                   TextColor="#A6A6A6"
-                   HorizontalTextAlignment="Center" />
-
             <buttons:ElevatedButton ButtonState="Enabled"
                                     Text="What are mnemonics?"
                                     Command="{Binding GoToMnemonicsExplanationCommand}" />

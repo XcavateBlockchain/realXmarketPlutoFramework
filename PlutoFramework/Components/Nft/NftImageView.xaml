@@ -9,8 +9,7 @@
             Grid.Column="0"
             StrokeThickness="0"
             Stroke="{AppThemeBinding Light=White, Dark=Black}"
-            BackgroundColor="Gray"
-            Shadow="{StaticResource CardShadow}">
+            BackgroundColor="Gray">
         <Border.StrokeShape>
             <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
 

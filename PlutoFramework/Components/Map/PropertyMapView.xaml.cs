@@ -160,11 +160,11 @@ public partial class PropertyMapView : ContentView
 
     private string? GetGoogleMapsEmbedUrl()
     {
-        string? mapQuery = GetMapQuery();
+        string? mapQuery = GetMapQuery() ?? GetQueryFromMapUrl(MapUrl);
 
         if (string.IsNullOrWhiteSpace(mapQuery))
         {
-            return MapUrl;
+            return null;
         }
 
         IConfiguration? configuration = MauiAppBuilderExtensions.Services.GetService<IConfiguration>();
@@ -221,7 +221,7 @@ public partial class PropertyMapView : ContentView
 
     private string? GetMapQuery()
     {
-        if (!string.IsNullOrWhiteSpace(LocationName) && LocationName != "Unknown address")
+        if (LocationName != "Unknown address" && HasLocationContent(LocationName))
         {
             return LocationName;
         }
@@ -243,6 +243,42 @@ public partial class PropertyMapView : ContentView
         string address = string.Join(", ", addressParts.Where(part => !string.IsNullOrWhiteSpace(part)));
 
         return string.IsNullOrWhiteSpace(address) ? null : address;
+    }
+
+    /// <summary>
+    /// True when the value holds an actual place - not just the stray commas that
+    /// PropertyAddressLine leaves behind when the metadata carries no address fields.
+    /// A ", , , " query geocodes to nothing, so the map would render without the
+    /// property's location.
+    /// </summary>
+    private static bool HasLocationContent(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        return value.Any(char.IsLetterOrDigit);
+    }
+
+    /// <summary>
+    /// The place a stored map URL (Metadata.Map, e.g. "https://maps.google.com/?q=...")
+    /// points at. Those URLs are X-Frame-Options-blocked inside the map WebView's
+    /// iframe, so the query is reused through the embeddable embed endpoint instead
+    /// of loading the URL itself.
+    /// </summary>
+    private static string? GetQueryFromMapUrl(string? mapUrl)
+    {
+        if (string.IsNullOrWhiteSpace(mapUrl) || !Uri.TryCreate(mapUrl, UriKind.Absolute, out Uri uri))
+        {
+            return null;
+        }
+
+        System.Collections.Specialized.NameValueCollection parameters = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        string? query = parameters["q"] ?? parameters["query"];
+
+        return string.IsNullOrWhiteSpace(query) ? null : query;
     }
 
     private async Task OpenMapAsync()

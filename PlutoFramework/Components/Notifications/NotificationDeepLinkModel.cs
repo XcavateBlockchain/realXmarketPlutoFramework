@@ -73,7 +73,10 @@ public static class NotificationDeepLinkModel
         {
             try
             {
-                await Shell.Current.Navigation.PushAsync(new MessageWebViewPage(url));
+                // The messenger gate (MessengerAccessModel) raises the create/import
+                // X25519 popup instead of opening the page when the account has no key
+                // yet - the no-wallet case is dropped above, where it belongs.
+                await MessengerAccessModel.TryOpenMessagesAsync(url);
             }
             catch (Exception e)
             {

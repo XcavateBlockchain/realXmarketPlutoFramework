@@ -763,9 +763,12 @@ namespace PlutoFramework.Components.XcavateProperty
                 Console.WriteLine("Failed to resolve the property's messaging namespace: " + ex);
             }
 
-            await Shell.Current.Navigation.PushAsync(namespaceId is null
-                ? new MessageWebViewPage()
-                : new MessageWebViewPage(string.Format(NamespaceUrlFormat, namespaceId)));
+            // The messenger gate (MessengerAccessModel) raises NoAccountPopup or the
+            // create/import X25519 popup instead of opening the page when the account
+            // is not ready.
+            await MessengerAccessModel.TryOpenMessagesAsync(namespaceId is null
+                ? null
+                : string.Format(NamespaceUrlFormat, namespaceId));
         }
     }
 }

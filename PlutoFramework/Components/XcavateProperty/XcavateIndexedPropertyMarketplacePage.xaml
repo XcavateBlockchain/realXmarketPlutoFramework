@@ -11,6 +11,7 @@
              xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
              xmlns:transfer="clr-namespace:PlutoFramework.Components.TransferView"
              xmlns:account="clr-namespace:PlutoFramework.Components.Account"
+             xmlns:keys="clr-namespace:PlutoFramework.Components.Keys"
              xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
              xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
              HideSoftInputOnTapped="True"
@@ -204,6 +205,10 @@
         <assetselect:AssetSelectView />
 
         <account:NoAccountPopup ZIndex="10" />
+
+        <!-- Raised by the messenger gate (MessengerAccessModel); hosted here because this
+             page is not a PageTemplate. -->
+        <keys:X25519KeyRequiredPopupView ZIndex="10" />
 
         <solana:ConnectMwaPopupView ZIndex="10" />
 

@@ -1,4 +1,5 @@
-﻿using PlutoFramework.Model;
+using PlutoFramework.Model;
+using PlutoFrameworkCore.Keys;
 using SkiaSharp;
 using ZXing;
 using ZXing.Net.Maui;
@@ -115,6 +116,15 @@ public partial class UniversalScannerPage : ContentPage
     {
         await Navigation.PopAsync();
 
-        ReceiveAndTransferModel.Receive();
+        // "My QR Code" must show the main account's address on its selected network
+        // (Solana by default), not always a Polkadot one.
+        if (MainKeyModel.ResolvedChain == MainKeyChain.Solana)
+        {
+            ReceiveAndTransferModel.ReceiveSolana();
+        }
+        else
+        {
+            ReceiveAndTransferModel.Receive();
+        }
     }
 }
