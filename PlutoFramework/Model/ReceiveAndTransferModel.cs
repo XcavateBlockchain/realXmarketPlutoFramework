@@ -84,6 +84,26 @@ namespace PlutoFramework.Model
         }
 
         /// <summary>
+        /// Solana "Add funds" entry point: asks whether the user wants to deposit to their
+        /// address (<see cref="ReceiveSolana"/>) or buy through the Xcavate on-ramp.
+        /// </summary>
+        public static void AddFundsSolana()
+        {
+            if (string.IsNullOrEmpty(KeysModel.GetSolanaAddress()))
+            {
+                var noAccountPopupViewModel = DependencyService.Get<NoAccountPopupViewModel>();
+
+                noAccountPopupViewModel.IsVisible = true;
+
+                return;
+            }
+
+            var viewModel = DependencyService.Get<Components.AddFunds.AddFundsPopupViewModel>();
+
+            viewModel.IsVisible = true;
+        }
+
+        /// <summary>
         /// Solana counterpart of <see cref="Receive"/>: raises the QR popup with the
         /// Solana address (same "solana:" URI the Solana address card uses) instead of
         /// deriving a Substrate address from the selected endpoint.

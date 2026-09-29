@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                     xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
@@ -14,6 +14,7 @@
                     xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                     xmlns:form="clr-namespace:PlutoFramework.Components.Form"
                     xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
+                    xmlns:addfunds="clr-namespace:PlutoFramework.Components.AddFunds"
                     xmlns:components="clr-namespace:PlutoFramework.Components"
                     xmlns:solanastatus="clr-namespace:PlutoFramework.Components.Solana.Status"
                     xmlns:solanatransfer="clr-namespace:PlutoFramework.Components.Solana.Transfer"
@@ -56,6 +57,10 @@
                  (RequirementsModel, the navigation bar, a resumed onboarding), continues its
                  Import Account button into this popup. Hosting it per-page left that button
                  dead on every page that had not thought to include it. -->
+            <!-- Raised by the Solana "Add funds" button, which any page with a balance
+                 overview can host, so it lives here rather than per page. -->
+            <addfunds:AddFundsPopupView ZIndex="10" />
+
             <solana:ImportMethodPopupView ZIndex="10" />
 
             <!-- Hosted here for the same reason as the popup above: the import-method popup

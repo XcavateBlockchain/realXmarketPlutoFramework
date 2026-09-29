@@ -24,7 +24,7 @@ public partial class ReceiveAndTransferView : ContentView
     {
         if (Flow == ReceiveTransferFlowEnum.Solana)
         {
-            ReceiveAndTransferModel.ReceiveSolana();
+            ReceiveAndTransferModel.AddFundsSolana();
 
             return;
         }

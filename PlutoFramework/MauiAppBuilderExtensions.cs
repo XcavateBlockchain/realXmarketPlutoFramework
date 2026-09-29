@@ -1,6 +1,7 @@
 using FFImageLoading.Maui;
 using Microcharts.Maui;
 using PlutoFramework.Components.Account;
+using PlutoFramework.Components.AddFunds;
 using PlutoFramework.Components.AddressView;
 using PlutoFramework.Components.AssetSelect;
 using PlutoFramework.Components.AzeroId;
@@ -163,6 +164,8 @@ namespace PlutoFramework
 
             DependencyService.Register<AddressQrCodeViewModel>();
 
+            DependencyService.Register<AddFundsPopupViewModel>();
+
             DependencyService.Register<DAppConnectionViewModel>();
 
             DependencyService.Register<StakingRegistrationRequestViewModel>();
@@ -284,6 +287,7 @@ namespace PlutoFramework
                 DependencyService.Get<DAppConnectionRequestViewModel>(),
                 DependencyService.Get<MessagePopupViewModel>(),
                 DependencyService.Get<AddressQrCodeViewModel>(),
+                DependencyService.Get<AddFundsPopupViewModel>(),
                 DependencyService.Get<Components.Solana.Transfer.SolanaTransferViewModel>(),
                 DependencyService.Get<Components.Solana.Transfer.SolanaTokenSelectViewModel>(),
                 DependencyService.Get<MessageSignRequestViewModel>(),
