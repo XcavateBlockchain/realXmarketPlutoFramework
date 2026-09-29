@@ -318,8 +318,10 @@ namespace PlutoFramework.Model.Xcavate
             Withdraw(WithdrawExpiredDiscriminator, programs, investor, listingId, rentCollector, paymentMint, investorPaymentAccount, paymentTokenProgram);
 
         /// <summary>
-        /// withdraw_cancelled(listing_id): refund from a cancelled or refunding listing -
-        /// the closest successor to the pallet's withdraw_unclaimed refund path.
+        /// withdraw_cancelled(listing_id): refund from a cancelled listing - the only
+        /// status the program accepts it for. A refunding listing is mid-exit of the
+        /// legal-deadline refund and takes <see cref="WithdrawLegalProcessExpired"/>
+        /// instead. The closest successor to the pallet's withdraw_unclaimed refund path.
         /// </summary>
         public static TransactionInstruction WithdrawCancelled(
             XcavateProgramSet programs,

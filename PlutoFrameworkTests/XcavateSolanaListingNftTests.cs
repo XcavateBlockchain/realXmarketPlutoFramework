@@ -22,6 +22,28 @@ namespace PlutoFrameworkTests
                 IsTornDown = false,
             };
 
+        /// <summary>
+        /// The refund router sends withdraw_cancelled only to a Cancelled listing - the
+        /// program rejects it for every other status with ListingNotActive (6013). A
+        /// Refunding listing (the legal deadline blew out and exits already started)
+        /// still belongs to withdraw_legal_process_expired, so it must not read as
+        /// cancelled here. This is the regression pin for the claim-phase refund that
+        /// used to route on IsTornDown (Cancelled OR Refunding).
+        /// </summary>
+        [Test]
+        [TestCase("Cancelled", true)]
+        [TestCase("Refunding", false)]
+        [TestCase("SoldOut", false)]
+        [TestCase("Legal", false)]
+        [TestCase("Expired", false)]
+        [TestCase("Listed", false)]
+        public void IsCancelled_TrueOnlyForTheCancelledStatus(string status, bool expected)
+        {
+            var listing = ListingWithClaimDeadline(0) with { ListingStatus = status };
+
+            Assert.That(listing.IsCancelled, Is.EqualTo(expected));
+        }
+
         [Test]
         public void DirectBuyIsOpen_FalseBeforeTheSpvOpensTheWindow()
         {

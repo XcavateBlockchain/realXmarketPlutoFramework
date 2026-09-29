@@ -59,11 +59,19 @@ namespace PlutoFramework.Model.Xcavate
 
         /// <summary>
         /// True for CANCELLED and REFUNDING: the listing died and whatever an investor
-        /// paid in comes back through withdraw_cancelled rather than the legal-deadline
-        /// refund. Distinct from !<see cref="OpenForSale"/>, which also covers the
-        /// pre-sale PENDING_ASSETS state where there is nothing to refund.
+        /// paid in comes back through a refund rather than a settlement. Distinct from
+        /// !<see cref="OpenForSale"/>, which also covers the pre-sale PENDING_ASSETS
+        /// state where there is nothing to refund.
         /// </summary>
         public required bool IsTornDown { get; set; }
+
+        /// <summary>
+        /// True only for CANCELLED - the single status the program's withdraw_cancelled
+        /// accepts. REFUNDING is mid-exit of the legal-deadline refund and still belongs
+        /// to withdraw_legal_process_expired; sending withdraw_cancelled for it is
+        /// rejected with ListingNotActive.
+        /// </summary>
+        public bool IsCancelled => ListingStatus == "Cancelled";
 
         public MetadataBase? Metadata { get; set; }
         public PropertyMetadata? XcavateMetadata { get; set; }

@@ -598,17 +598,18 @@ namespace PlutoFramework.Components.XcavateProperty
         }
 
         /// <summary>
-        /// The claim-phase refund instruction depends on how the phase ended, not on what
-        /// the caller holds: a torn-down (cancelled/refunding) listing refunds through
-        /// withdraw_cancelled, one whose legal deadline blew out through
-        /// withdraw_legal_process_expired.
+        /// The claim-phase refund instruction keys off the listing's exact on-chain
+        /// status, not on what the caller holds: withdraw_cancelled takes only a
+        /// cancelled listing, while a refunding one - the legal deadline blew out and
+        /// exits already started - still goes through withdraw_legal_process_expired,
+        /// the same instruction that moved it into refunding with the first withdrawal.
         /// </summary>
         private Task<List<Solnet.Rpc.Models.TransactionInstruction>> BuildClaimPhaseRefundAsync(
             string investor, SolanaCluster cluster, CancellationToken ct)
         {
-            var isTornDown = (NftWrapper?.NftBase as XcavateSolanaListingNft)?.IsTornDown == true;
+            var isCancelled = (NftWrapper?.NftBase as XcavateSolanaListingNft)?.IsCancelled == true;
 
-            return isTornDown
+            return isCancelled
                 ? XcavateMarketplaceCallsModel.WithdrawCancelledAsync(cluster, investor, ListingId, ct)
                 : XcavateMarketplaceCallsModel.WithdrawLegalProcessExpiredAsync(cluster, investor, ListingId, ct);
         }

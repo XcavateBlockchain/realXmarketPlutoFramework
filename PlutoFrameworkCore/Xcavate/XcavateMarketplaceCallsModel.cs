@@ -248,7 +248,7 @@ namespace PlutoFramework.Model.Xcavate
             SolanaCluster cluster, string investor, long listingId, CancellationToken token = default) =>
             WithdrawAsync(XcavateMarketplaceProgram.WithdrawExpired, cluster, investor, listingId, token);
 
-        /// <summary>withdraw_cancelled - refund from a cancelled or refunding listing.</summary>
+        /// <summary>withdraw_cancelled - refund from a cancelled listing (the only status it accepts).</summary>
         public static Task<List<TransactionInstruction>> WithdrawCancelledAsync(
             SolanaCluster cluster, string investor, long listingId, CancellationToken token = default) =>
             WithdrawAsync(XcavateMarketplaceProgram.WithdrawCancelled, cluster, investor, listingId, token);
