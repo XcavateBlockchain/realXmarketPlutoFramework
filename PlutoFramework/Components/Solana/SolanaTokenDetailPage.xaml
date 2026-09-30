@@ -139,6 +139,11 @@
                     </card:Card.View>
                 </card:Card>
 
+                <!-- tGBP only: sells the wallet's tGBP through the redemption off-ramp. -->
+                <buttons:ElevatedButton Text="Redeem"
+                                        Command="{Binding RedeemCommand}"
+                                        IsVisible="{Binding RedeemIsVisible}" />
+
                 <!-- tGBP only: the amount property reservations hold, broken down per
                      property - each row opens that property's detail page. Hidden unless
                      the indexer confirmed a non-zero reserved value. -->
@@ -324,12 +329,10 @@
     </ScrollView>
 
     <template:PageTemplate.PopupContent>
-        <xcavate:PageBottomBarView x:Name="bottomBar"
-                                   AbsoluteLayout.LayoutBounds="0.5, 1, 1, 90"
+        <xcavate:PageBottomBarView AbsoluteLayout.LayoutBounds="0.5, 1, 1, 90"
                                    AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
                                    ColumnSpacing="10">
             <xcavate:PageBottomBarView.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </xcavate:PageBottomBarView.ColumnDefinitions>
@@ -340,17 +343,9 @@
                                     Margin="10, 10, 0, 10" />
 
             <!-- Opens the transfer popup with this token already chosen. -->
-            <buttons:ElevatedButton x:Name="transferButton"
-                                    Text="Transfer"
+            <buttons:ElevatedButton Text="Transfer"
                                     Command="{Binding TransferCommand}"
                                     Grid.Column="1"
-                                    Margin="0, 10, 0, 10" />
-
-            <!-- tGBP only; the page drops the button and its column for every other token. -->
-            <buttons:ElevatedButton x:Name="redeemButton"
-                                    Text="Redeem"
-                                    Command="{Binding RedeemCommand}"
-                                    Grid.Column="2"
                                     Margin="0, 10, 10, 10" />
         </xcavate:PageBottomBarView>
 

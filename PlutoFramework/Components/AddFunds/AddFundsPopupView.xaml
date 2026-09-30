@@ -18,7 +18,7 @@
                                      Spacing="15"
                                      Padding="10, 10, 10, 20">
 
-                    <Label Text="Deposit tokens to your address, or buy them with the Xcavate on-ramp."
+                    <Label Text="Deposit assets to your address, or buy them."
                            FontSize="13"
                            TextColor="#A6A6A6" />
                 </VerticalStackLayout>

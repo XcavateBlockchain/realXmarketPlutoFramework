@@ -132,5 +132,14 @@ namespace UniqueryPlus.Metadata
         [JsonPropertyName("annualServiceCharge")]
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
         public decimal AnnualServiceCharge { get; set; }
+
+        // The document's own copies of the price fields. The Solana marketplace mapping
+        // (XcavateMarketplaceIndexerModel.MapListing) overwrites the live fields above with
+        // chain-derived values at the chain's price decimals, while EstimatedRentalIncome
+        // keeps the document's scale - a yield ratio must not mix the two, so yield math
+        // reads these instead. Null when the record did not come from a property document.
+        [JsonIgnore] public decimal? DocumentPropertyPrice { get; set; }
+        [JsonIgnore] public decimal? DocumentPricePerToken { get; set; }
+        [JsonIgnore] public int? DocumentNumberOfShares { get; set; }
     }
 }

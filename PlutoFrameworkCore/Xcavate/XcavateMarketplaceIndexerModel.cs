@@ -522,15 +522,25 @@ namespace PlutoFramework.Model.Xcavate
             var attributes = metadata.Attributes;
             var finances = metadata.Finances;
 
+            var documentPropertyPrice = ParseDecimal(finances?.PropertyPrice);
+            var documentSharePrice = ParseDecimal(finances?.SharePrice);
+            var documentShares = (int)Math.Clamp(ParseInt64(finances?.NumberOfShares), 0, int.MaxValue);
+
             return new PropertyMetadata
             {
                 Status = metadata.Status,
                 PropertyName = metadata.PropertyName,
                 Financials = new PropertyFinancials
                 {
-                    PropertyPrice = ParseDecimal(finances?.PropertyPrice),
-                    NumberOfTokens = (int)Math.Clamp(ParseInt64(finances?.NumberOfShares), 0, int.MaxValue),
-                    PricePerToken = ParseDecimal(finances?.SharePrice),
+                    PropertyPrice = documentPropertyPrice,
+                    NumberOfTokens = documentShares,
+                    PricePerToken = documentSharePrice,
+                    // MapListing overwrites the three live fields above with chain-derived
+                    // values; yield math reads these document-scale copies so the ratio
+                    // never mixes the document's scale with the chain's price decimals.
+                    DocumentPropertyPrice = documentPropertyPrice,
+                    DocumentPricePerToken = documentSharePrice,
+                    DocumentNumberOfShares = documentShares,
                     EstimatedRentalIncome = ParseDecimal(finances?.EstimatedRentalIncome),
                     AnnualServiceCharge = ParseDecimal(finances?.AnnualServiceCharge),
                     StampDutyTax = ParseDecimal(finances?.StampDutyTax),

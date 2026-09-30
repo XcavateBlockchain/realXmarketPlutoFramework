@@ -203,7 +203,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public string PricePerTokenText => $"{((decimal)(Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString()}";
 
-        public string Apy => PropertyModel.GetAPY(Metadata?.Financials.EstimatedRentalIncome ?? (decimal)1, Metadata?.Financials.PropertyPrice ?? 1);
+        public string Apy => PropertyModel.GetAPY(Metadata?.Financials);
 
         public string TokensAvailable => $"{ListingDetails?.ListedTokens.ToString() ?? "-"} / {Metadata?.Financials.NumberOfTokens.ToString() ?? "-"}";
 
