@@ -95,6 +95,7 @@
                                                Text="{Binding ViewModel.SearchText}"
                                                ReturnType="Search"
                                                ReturnCommand="{Binding ViewModel.SearchCommand}"
+                                               Completed="OnSearchCompleted"
                                                VerticalOptions="Center"
                                                BackgroundColor="Transparent"
                                                ClearButtonVisibility="Never" />

@@ -192,11 +192,17 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
-        [TestCase(10_400_000u, 6, 10_400_000u)]
-        // The 9-decimal accepted mint: the cap scales up by the decimal difference.
-        [TestCase(10_400_000u, 9, 10_400_000_000u)]
+        public void SharePriceDecimals_IsNine()
+        {
+            Assert.That(XcavateMarketplaceIndexerModel.SharePriceDecimals, Is.EqualTo(9));
+        }
+
+        [Test]
+        [TestCase(10_400_000_000u, 9, 10_400_000_000u)]
+        // The 6-decimal accepted mint: the cap scales down by the decimal difference.
+        [TestCase(10_400_000_000u, 6, 10_400_000u)]
         // Scaling down rounds up, so the cap never lands under the program's charge.
-        [TestCase(10_400_001u, 5, 1_040_001u)]
+        [TestCase(10_400_000_001u, 6, 10_400_001u)]
         public void ScaleToMintDecimals_ConvertsByDecimalCountAlone(ulong total, int mintDecimals, ulong expected)
         {
             Assert.That(

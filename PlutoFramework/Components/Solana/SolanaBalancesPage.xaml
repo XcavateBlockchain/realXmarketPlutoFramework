@@ -3,81 +3,99 @@
                        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                        xmlns:template="clr-namespace:PlutoFramework.Templates.PageTemplate"
                        xmlns:address="clr-namespace:PlutoFramework.Components.AddressView"
+                       xmlns:animations="clr-namespace:PlutoFramework.Components.Animations"
                        xmlns:balance="clr-namespace:PlutoFramework.Components.Balance"
                        xmlns:solana="clr-namespace:PlutoFramework.Components.Solana"
                        xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
                        x:Class="PlutoFramework.Components.Solana.SolanaBalancesPage"
                        Title="Balance">
-    <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-                 AbsoluteLayout.LayoutFlags="All"
-                 Command="{Binding RefreshCommand}"
-                 IsRefreshing="{Binding IsRefreshing}">
-        <ScrollView>
-            <VerticalStackLayout Spacing="15">
+    <!-- Same pull-to-refresh animation as InvestorMainPage and the marketplace page: the
+         native spinner is transparent, PullProgressBehavior reports the pull distance, and
+         the particle band is the visible indicator, overlaid here above the content. -->
+    <AbsoluteLayout>
+        <RefreshView AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                     AbsoluteLayout.LayoutFlags="All"
+                     Command="{Binding RefreshCommand}"
+                     RefreshColor="Transparent"
+                     IsRefreshing="{Binding IsRefreshing}">
+            <RefreshView.Behaviors>
+                <animations:PullProgressBehavior x:Name="balancesPullProgress" />
+            </RefreshView.Behaviors>
+            <ScrollView>
+                <VerticalStackLayout Spacing="15">
 
-                <!-- Same overview card as the Polkadot balance page; Flow="Solana" routes
-                     its Add funds / Transfer buttons to the Solana flows. RollingTicker makes
-                     the total roll digit-by-digit on load, like the InvestorMainPage cells. -->
-                <balance:BalanceOverviewView Margin="20, 20, 20, 0"
-                                             Flow="Solana"
-                                             RollingTicker="True" />
+                    <!-- Same overview card as the Polkadot balance page; Flow="Solana" routes
+                         its Add funds / Transfer buttons to the Solana flows. RollingTicker makes
+                         the total roll digit-by-digit on load, like the InvestorMainPage cells. -->
+                    <balance:BalanceOverviewView Margin="20, 20, 20, 0"
+                                                 Flow="Solana"
+                                                 RollingTicker="True" />
 
-                <address:AddressView Title="Solana address"
-                                     Margin="20, 0, 20, 0"
-                                     IsVisible="{Binding HasAccount}"
-                                     Address="{Binding Address}"
-                                     QrAddress="{Binding QrAddress}" />
+                    <address:AddressView Title="Solana address"
+                                         Margin="20, 0, 20, 0"
+                                         IsVisible="{Binding HasAccount}"
+                                         Address="{Binding Address}"
+                                         QrAddress="{Binding QrAddress}" />
 
-                <Label Text="{Binding ErrorMessage}"
-                       IsVisible="{Binding ErrorIsVisible}"
-                       TextColor="#C33"
-                       FontSize="13"
-                       HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding ErrorMessage}"
+                           IsVisible="{Binding ErrorIsVisible}"
+                           TextColor="#C33"
+                           FontSize="13"
+                           HorizontalTextAlignment="Center" />
 
-                <solana:SolanaNoAccountView IsVisible="{Binding NoAccount}"
-                                            Margin="20, 0, 20, 0"
-                                            AccountAddedCommand="{Binding RefreshCommand}" />
+                    <solana:SolanaNoAccountView IsVisible="{Binding NoAccount}"
+                                                Margin="20, 0, 20, 0"
+                                                AccountAddedCommand="{Binding RefreshCommand}" />
 
-                <Label HorizontalOptions="Start"
-                       HorizontalTextAlignment="Start"
-                       FontSize="20"
-                       Margin="20, 0, 20, 0"
-                       IsVisible="{Binding HasAccount}">
-                    <Label.FormattedText>
-                        <FormattedString>
-                            <Span Text="Assets"
-                                  FontAttributes="Bold"/>
-                        </FormattedString>
-                    </Label.FormattedText>
-                </Label>
+                    <Label HorizontalOptions="Start"
+                           HorizontalTextAlignment="Start"
+                           FontSize="20"
+                           Margin="20, 0, 20, 0"
+                           IsVisible="{Binding HasAccount}">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="Assets"
+                                      FontAttributes="Bold"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
 
-                <!-- Placeholder rows shaped like SolanaAssetView, shown only while the
-                     first load (or a cluster switch) has no rows to show yet. ItemMargin
-                     emulates the real list's Spacing="15". -->
-                <loading:SkeletonCardView Count="3"
-                                          Margin="20, 0, 20, 0"
-                                          ItemMargin="0, 0, 0, 15"
-                                          IsVisible="{Binding ShowAssetSkeletons}">
-                    <loading:SkeletonCardView.ItemTemplate>
-                        <DataTemplate>
-                            <loading:SolanaAssetSkeletonView />
-                        </DataTemplate>
-                    </loading:SkeletonCardView.ItemTemplate>
-                </loading:SkeletonCardView>
+                    <!-- Placeholder rows shaped like SolanaAssetView, shown only while the
+                         first load (or a cluster switch) has no rows to show yet. ItemMargin
+                         emulates the real list's Spacing="15". -->
+                    <loading:SkeletonCardView Count="3"
+                                              Margin="20, 0, 20, 0"
+                                              ItemMargin="0, 0, 0, 15"
+                                              IsVisible="{Binding ShowAssetSkeletons}">
+                        <loading:SkeletonCardView.ItemTemplate>
+                            <DataTemplate>
+                                <loading:SolanaAssetSkeletonView />
+                            </DataTemplate>
+                        </loading:SkeletonCardView.ItemTemplate>
+                    </loading:SkeletonCardView>
 
-                <VerticalStackLayout Margin="20, 0, 20, 100"
-                                     BindableLayout.ItemsSource="{Binding Balances}"
-                                     IsVisible="{Binding HasAccount}"
-                                     Spacing="15">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate>
-                            <solana:SolanaAssetView Balance="{Binding .}" />
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
+                    <VerticalStackLayout Margin="20, 0, 20, 100"
+                                         BindableLayout.ItemsSource="{Binding Balances}"
+                                         IsVisible="{Binding HasAccount}"
+                                         Spacing="15">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <solana:SolanaAssetView Balance="{Binding .}" />
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
-            </VerticalStackLayout>
-        </ScrollView>
-    </RefreshView>
+            </ScrollView>
+        </RefreshView>
+
+        <!-- LayoutBounds are set in the code-behind, which knows the top navigation bar's
+             height from the app resources and cannot be reached from XAML. -->
+        <animations:ParticleStreamView x:Name="particleStreamView"
+                                       AbsoluteLayout.LayoutFlags="XProportional,WidthProportional"
+                                       ParticleColor="{StaticResource Primary}"
+                                       Playing="{Binding IsRefreshing}"
+                                       PullProgress="{Binding Source={x:Reference balancesPullProgress}, Path=Progress}" />
+    </AbsoluteLayout>
 
     <template:PageTemplate.PopupContent>
         <address:AddressQrCodeView />

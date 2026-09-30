@@ -49,7 +49,7 @@ namespace PlutoFramework.Components.Solana
         /// <summary>
         /// True only while a load is in flight with no rows on screen yet - the window in
         /// which the page shows skeleton asset rows. Once any rows are present a refresh
-        /// keeps them visible (the pull-to-refresh spinner covers that case), matching the
+        /// keeps them visible (the pull-to-refresh particle band covers that case), matching the
         /// marketplace skeleton's empty-list-only rule.
         /// </summary>
         public bool ShowAssetSkeletons => IsRefreshing && HasAccount && Balances.Count == 0;
@@ -138,8 +138,8 @@ namespace PlutoFramework.Components.Solana
                 UsdSum = "-";
 
                 // RefreshView.IsRefreshing is two-way bound, so a pull sets it true before the
-                // command runs. Returning without clearing it would leave the spinner turning
-                // forever - which is exactly what a Substrate-only user sees on this page.
+                // command runs. Returning without clearing it would leave the refresh animation
+                // playing forever - which is exactly what a Substrate-only user sees on this page.
                 // No staleness guard is needed: nothing is awaited between ReplaceLoadingToken
                 // and here, so loadToken is always still the current one.
                 IsRefreshing = false;
@@ -192,7 +192,7 @@ namespace PlutoFramework.Components.Solana
             }
             finally
             {
-                // Only the load that is still current should clear the spinner - otherwise a
+                // Only the load that is still current should clear the indicator - otherwise a
                 // superseded load's finally could turn it off while its replacement is still
                 // running.
                 if (loadCts is not null && loadToken == loadCts.Token)

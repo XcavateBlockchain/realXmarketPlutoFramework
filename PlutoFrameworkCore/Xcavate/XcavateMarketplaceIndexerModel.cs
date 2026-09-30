@@ -35,11 +35,12 @@ namespace PlutoFramework.Model.Xcavate
     public static class XcavateMarketplaceIndexerModel
     {
         /// <summary>
-        /// Decimals of the listing's share price. The marketplace config's accepted payment
-        /// mints are USD stablecoins (tUSDC / USDC) with 6 decimals, and sharePrice is
-        /// denominated in their base units.
+        /// Decimals of the listing's share price: sharePrice is denominated at 9 decimal
+        /// places, whatever payment mint a purchase settles in - the program converts
+        /// prices between mints by decimal count alone (see
+        /// <see cref="XcavateMarketplaceCallsModel.ScaleToMintDecimals"/>).
         /// </summary>
-        public const int SharePriceDecimals = 6;
+        public const int SharePriceDecimals = 9;
 
         /// <summary>
         /// Share holdings are read per property; one page of this size per request. Holder

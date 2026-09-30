@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Core.Platform;
 using PlutoFramework.Model;
 
 namespace PlutoFramework.Components.XcavateProperty;
@@ -75,5 +76,15 @@ public partial class XcavateIndexedPropertyMarketplacePage : ContentPage
     private async void OnNoticeboardTapped(object? sender, TappedEventArgs e)
     {
         await Shell.Current.GoToAsync("//Noticeboard", animate: false);
+    }
+
+    // The IME search button runs SearchCommand via ReturnCommand but keeps the Entry
+    // focused, so the keyboard would stay up without hiding it here.
+    private async void OnSearchCompleted(object? sender, EventArgs e)
+    {
+        if (sender is Entry entry && entry.IsSoftInputShowing())
+        {
+            await entry.HideSoftInputAsync(CancellationToken.None);
+        }
     }
 }
