@@ -110,8 +110,9 @@
 
             <extrinsic:ExtrinsicStatusStackLayout ZIndex="5" />
 
-            <!-- Offsets itself below the Substrate stack, which shares these bounds. -->
-            <solanastatus:SolanaTransactionStatusStackLayout ZIndex="5" />
+            <!-- Raised by every Solana submission (transfers, marketplace calls), from
+                 wherever the user happened to tap, so it lives here rather than per page. -->
+            <solanastatus:SolanaTransactionPopupView ZIndex="{x:Static components:PopupLayers.TransactionStatus}" />
 
             <card:BottomPillBackgroundView />
 

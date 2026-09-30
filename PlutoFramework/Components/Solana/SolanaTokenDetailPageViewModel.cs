@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microcharts;
 using PlutoFramework.Components.AddressView;
+using PlutoFramework.Components.Redemption;
 using PlutoFramework.Components.XcavateProperty;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Constants;
@@ -478,6 +479,23 @@ namespace PlutoFramework.Components.Solana
             qrViewModel.QrAddress = $"solana:{address}";
             qrViewModel.IsVisible = true;
         }
+
+        /// <summary>
+        /// Only a tGBP page offers redemption: the off-ramp buys tGBP back, so the button is
+        /// hidden for every other token. Matches every whitelisted tGBP mint on the current
+        /// cluster - devnet configures two.
+        /// </summary>
+        public bool RedeemIsVisible => SolanaTokenWhitelist
+            .ForCluster(SolanaNetworkModel.SelectedCluster)
+            .Any(entry =>
+                string.Equals(entry.Symbol, XcavateReserveBalanceModel.TgBpSymbol, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(entry.Mint, Mint, StringComparison.Ordinal));
+
+        /// <summary>
+        /// Opens the Xcavate redemption off-ramp, which pays out the tGBP the wallet sells.
+        /// </summary>
+        [RelayCommand]
+        public Task RedeemAsync() => RedemptionModel.RedeemAsync();
 
         /// <summary>
         /// Opens the transfer popup on the token being viewed.

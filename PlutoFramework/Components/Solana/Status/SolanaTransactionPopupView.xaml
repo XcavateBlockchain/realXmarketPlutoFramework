@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+             x:Class="PlutoFramework.Components.Solana.Status.SolanaTransactionPopupView"
+             IsVisible="{Binding IsVisible}"
+             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+             AbsoluteLayout.LayoutFlags="All">
+
+    <card:BottomPopupCard Title="{Binding Title}"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
+            <AbsoluteLayout>
+                <ScrollView AbsoluteLayout.LayoutBounds="0.5, 0, 1, 1"
+                            AbsoluteLayout.LayoutFlags="PositionProportional, SizeProportional"
+                            Margin="0, 0, 0, 90">
+                    <VerticalStackLayout Spacing="12"
+                                         Padding="15, 5, 15, 20">
+
+                        <Label Text="{Binding CurrentInfo.Description}"
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                               FontAttributes="Bold"
+                               FontSize="16"
+                               HorizontalTextAlignment="Center" />
+
+                        <!-- Status icon: pulsing ring + spinner while in flight, then the
+                             success check springs in or the failure alert shakes in
+                             (animations run in the code-behind). -->
+                        <Grid HeightRequest="64"
+                              WidthRequest="64"
+                              HorizontalOptions="Center"
+                              Margin="0, 5, 0, 0">
+
+                            <Border x:Name="pulseRing"
+                                    HeightRequest="52"
+                                    WidthRequest="52"
+                                    Stroke="{StaticResource Primary}"
+                                    StrokeThickness="2"
+                                    BackgroundColor="Transparent"
+                                    Opacity="0.25"
+                                    IsVisible="{Binding IsInFlight}"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="Center">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="26" />
+                                </Border.StrokeShape>
+                            </Border>
+
+                            <Border x:Name="rippleRing"
+                                    HeightRequest="56"
+                                    WidthRequest="56"
+                                    Stroke="{StaticResource Positive}"
+                                    StrokeThickness="3"
+                                    BackgroundColor="Transparent"
+                                    Opacity="0"
+                                    IsVisible="False"
+                                    VerticalOptions="Center"
+                                    HorizontalOptions="Center">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="28" />
+                                </Border.StrokeShape>
+                            </Border>
+
+                            <ActivityIndicator x:Name="spinner"
+                                               IsRunning="{Binding IsInFlight}"
+                                               IsVisible="{Binding IsInFlight}"
+                                               HeightRequest="28"
+                                               WidthRequest="28"
+                                               Color="{StaticResource Primary}"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="Center" />
+
+                            <Image x:Name="successIcon"
+                                   Source="checkgreen.png"
+                                   HeightRequest="52"
+                                   WidthRequest="52"
+                                   Opacity="0"
+                                   IsVisible="False"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center" />
+
+                            <Image x:Name="failureIcon"
+                                   Source="{AppThemeBinding Light=alertblack.png, Dark=alertwhite.png}"
+                                   HeightRequest="52"
+                                   WidthRequest="52"
+                                   Opacity="0"
+                                   IsVisible="False"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center" />
+                        </Grid>
+
+                        <Label x:Name="statusLabel"
+                               Text="{Binding StatusText}"
+                               TextColor="{Binding StatusColor}"
+                               FontAttributes="Bold"
+                               FontSize="15"
+                               AutomationId="solanaTransactionStatus"
+                               HorizontalTextAlignment="Center" />
+
+                        <Label x:Name="statusDescriptionLabel"
+                               Text="{Binding StatusDescription}"
+                               FontSize="13"
+                               TextColor="#A6A6A6"
+                               HorizontalTextAlignment="Center" />
+
+                        <VerticalStackLayout IsVisible="{Binding ErrorIsVisible}"
+                                             Spacing="4"
+                                             Margin="0, 5, 0, 0">
+                            <Label Text="What went wrong"
+                                   FontSize="12"
+                                   TextColor="#A6A6A6"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Text="{Binding CurrentInfo.ErrorMessage}"
+                                   FontSize="13"
+                                   MaxLines="6"
+                                   LineBreakMode="TailTruncation"
+                                   HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <!-- Standard popup button area (Pattern B). Two columns once the network
+                     has returned a signature to look at; one column before that, or when
+                     the transaction never reached the network. -->
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                                IsVisible="{Binding ExplorerIsVisible}">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          ColumnSpacing="15"
+                          Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <buttons:BasicGrayButton Text="Close"
+                                                 Grid.Column="0"
+                                                 AutomationId="solanaTransactionClose"
+                                                 Command="{Binding CloseCommand}" />
+
+                        <buttons:ElevatedButton Text="View in Solana Explorer"
+                                                Grid.Column="1"
+                                                AutomationId="solanaTransactionExplorer"
+                                                ButtonState="Enabled"
+                                                Command="{Binding OpenExplorerCommand}" />
+                    </Grid>
+                </AbsoluteLayout>
+
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                                IsVisible="{Binding ExplorerIsHidden}">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <buttons:BasicGrayButton Text="Close"
+                                                 Grid.Column="0"
+                                                 AutomationId="solanaTransactionClose"
+                                                 Command="{Binding CloseCommand}" />
+                    </Grid>
+                </AbsoluteLayout>
+            </AbsoluteLayout>
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+</ContentView>

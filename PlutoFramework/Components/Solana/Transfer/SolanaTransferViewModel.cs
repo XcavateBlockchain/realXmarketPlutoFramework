@@ -269,17 +269,17 @@ namespace PlutoFramework.Components.Solana.Transfer
             var cluster = SolanaNetworkModel.SelectedCluster;
             var description = $"Transfer {DisplayAmount(token, baseUnits)} {token.Symbol}";
 
-            var stack = DependencyService.Get<SolanaTransactionStatusStackViewModel>();
+            var statusPopup = DependencyService.Get<SolanaTransactionPopupViewModel>();
 
             // Registered before anything slow, so the user sees the transfer acknowledged the
             // moment they tap rather than after an unlock prompt and a round trip.
-            var info = stack.Register(description, cluster);
+            var info = statusPopup.Register(description, cluster);
 
             var recipientAddress = Recipient;
 
             // Closed before submitting: a Mobile Wallet Adapter key launches an intent and
-            // backgrounds the app, and coming back to a stale popup over a toast that already
-            // says "Submitting" reads as a transfer that did not happen.
+            // backgrounds the app, and coming back to a stale transfer form over a status
+            // popup that already says "Submitting" reads as a transfer that did not happen.
             SetToDefault();
 
             try
@@ -292,7 +292,7 @@ namespace PlutoFramework.Components.Solana.Transfer
 
                 if (account is null)
                 {
-                    // No key, or the unlock prompt was declined. Either way the toast must
+                    // No key, or the unlock prompt was declined. Either way the popup must
                     // not sit at Submitting forever.
                     info.Status = SolanaTransactionStatus.Error;
                     info.ErrorMessage = "No Solana account is set up in this wallet, or the unlock prompt was declined.";
@@ -311,8 +311,8 @@ namespace PlutoFramework.Components.Solana.Transfer
             }
             catch (Exception ex)
             {
-                // The toast is the failure report now: its error page shows this message,
-                // so no popup alongside it.
+                // The status popup is the failure report now: it shows this message,
+                // so nothing alongside it.
                 info.Status = SolanaTransactionStatus.Error;
                 info.ErrorMessage = DescribeFailure(ex, token);
             }

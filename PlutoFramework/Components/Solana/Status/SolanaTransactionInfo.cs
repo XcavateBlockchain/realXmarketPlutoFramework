@@ -5,23 +5,17 @@ using PlutoFrameworkCore.Solana;
 namespace PlutoFramework.Components.Solana.Status
 {
     /// <summary>
-    /// One tracked transaction, as the toast stack shows it.
+    /// One tracked transaction, as the status popup shows it.
     /// </summary>
     /// <remarks>
     /// The Solana counterpart of <c>ExtrinsicInfo</c>, which cannot be reused: it carries a
-    /// <c>Substrate.NetApi</c> hash, an <c>Endpoint</c> whose icon drives the toast, and a
-    /// <c>TaskCompletionSource&lt;EventsListViewModel&gt;</c> that its tap handler awaits.
-    /// A Solana row has none of those, and filling them with stand-ins would leave the toast
-    /// awaiting a source nothing ever completes.
+    /// <c>Substrate.NetApi</c> hash, an <c>Endpoint</c> whose icon drives the Substrate
+    /// toast, and a <c>TaskCompletionSource&lt;EventsListViewModel&gt;</c> that its tap
+    /// handler awaits. A Solana transaction has none of those, and filling them with
+    /// stand-ins would leave that toast awaiting a source nothing ever completes.
     /// </remarks>
     public partial class SolanaTransactionInfo : ObservableObject
     {
-        /// <summary>
-        /// Identifies the toast in the stack. Not the signature: the toast exists from the
-        /// moment the user taps Transfer, and no signature is known until submission returns.
-        /// </summary>
-        public required string Id { get; init; }
-
         /// <summary>What the transaction does, e.g. "Transfer 0.5 SOL".</summary>
         public required string Description { get; init; }
 
@@ -38,8 +32,8 @@ namespace PlutoFramework.Components.Solana.Status
         private SolanaTransactionStatus status = SolanaTransactionStatus.Submitting;
 
         /// <summary>
-        /// Why the transaction failed, in words the error page shows. Null while nothing
-        /// has failed: the page is only reachable from a failed toast.
+        /// Why the transaction failed, in words the popup shows. Null while nothing
+        /// has failed.
         /// </summary>
         /// <remarks>
         /// Filled where the failure is known — the submitter for a submission that threw
@@ -67,8 +61,8 @@ namespace PlutoFramework.Components.Solana.Status
         public bool HasErrorMessage => !string.IsNullOrEmpty(ErrorMessage);
 
         /// <summary>
-        /// True for every status the toast offers the error page for. A submission that
-        /// threw and a transaction the cluster rejected are both worth a look.
+        /// True for every status the popup treats as a failure. A submission that
+        /// threw and a transaction the cluster rejected both earn the error section.
         /// </summary>
         public bool IsFailure => Status is
             SolanaTransactionStatus.Error
@@ -76,10 +70,10 @@ namespace PlutoFramework.Components.Solana.Status
             or SolanaTransactionStatus.ConfirmedFailed
             or SolanaTransactionStatus.FinalizedFailed;
 
-        public string ExplorerUrl => Solscan.TransactionUrl(Signature ?? string.Empty, Cluster);
+        public string ExplorerUrl => SolanaExplorer.TransactionUrl(Signature ?? string.Empty, Cluster);
 
         /// <summary>
-        /// Parallel to the Substrate toast's wording, so the two stacks read alike.
+        /// Parallel to the Substrate toast's wording, so the two reports read alike.
         /// "Confirmed" stands where that one says "In block".
         /// </summary>
         public string StatusText => Status switch

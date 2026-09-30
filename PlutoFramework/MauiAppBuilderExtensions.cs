@@ -180,7 +180,7 @@ namespace PlutoFramework
 
             DependencyService.Register<ExtrinsicStatusStackViewModel>();
 
-            DependencyService.Register<Components.Solana.Status.SolanaTransactionStatusStackViewModel>();
+            DependencyService.Register<Components.Solana.Status.SolanaTransactionPopupViewModel>();
 
             DependencyService.Register<Components.Solana.Transfer.SolanaTransferViewModel>();
 
@@ -307,6 +307,7 @@ namespace PlutoFramework
                 DependencyService.Get<ConnectMwaPopupViewModel>(),
                 DependencyService.Get<MwaSignPopupViewModel>(),
                 DependencyService.Get<MwaSignMessagePopupViewModel>(),
+                DependencyService.Get<Components.Solana.Status.SolanaTransactionPopupViewModel>(),
                 DependencyService.Get<LogOutPopupViewModel>(),
                 DependencyService.Get<X25519BackupWarningPopupViewModel>(),
                 DependencyService.Get<SingleX25519KeyPopupViewModel>(),

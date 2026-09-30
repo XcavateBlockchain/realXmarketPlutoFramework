@@ -7,6 +7,14 @@ namespace PlutoFramework.Components
     /// </summary>
     public static class PopupLayers
     {
+        /// <summary>
+        /// The Solana transaction status popup. Above the ordinary popup layer (10): a
+        /// submission is often the last step of a flow whose own popup just closed, and
+        /// the status must never open underneath a stale one. Below the loading overlay
+        /// and the Mobile Wallet Adapter signing popup, which the submission itself raises.
+        /// </summary>
+        public const int TransactionStatus = 15;
+
         /// <summary>The full-screen loading overlay.</summary>
         public const int Loading = 20;
 

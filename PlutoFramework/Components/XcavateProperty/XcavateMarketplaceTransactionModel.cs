@@ -12,7 +12,7 @@ namespace PlutoFramework.Components.XcavateProperty
 {
     /// <summary>
     /// Submits a marketplace program call the way the Solana transfer flow submits a
-    /// transfer: status toast registered before any slow work, instructions built for
+    /// transfer: status popup registered before any slow work, instructions built for
     /// the signing wallet, sent on the selected cluster - the one the listing came from,
     /// then tracked to confirmation. The replacement for the Substrate extrinsic pipeline
     /// (TransactionAnalyzer + extrinsic status stack) on the property pages. When the
@@ -53,11 +53,11 @@ namespace PlutoFramework.Components.XcavateProperty
             // deployed there is nothing to build against - fail before any wallet trip.
             var cluster = SolanaNetworkModel.SelectedCluster;
 
-            var stack = DependencyService.Get<SolanaTransactionStatusStackViewModel>();
+            var statusPopup = DependencyService.Get<SolanaTransactionPopupViewModel>();
 
             // Registered before anything slow, so the user sees the action acknowledged
             // the moment they tap rather than after an unlock prompt and a round trip.
-            var info = stack.Register(description, cluster);
+            var info = statusPopup.Register(description, cluster);
 
             if (!XcavateDeploymentModel.IsDeployed(cluster))
             {
@@ -114,7 +114,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 if (account is null)
                 {
-                    // No key, or the unlock prompt was declined. Either way the toast
+                    // No key, or the unlock prompt was declined. Either way the popup
                     // must not sit at Submitting forever.
                     info.Status = SolanaTransactionStatus.Error;
                     info.ErrorMessage = "No Solana account is set up in this wallet, or the unlock prompt was declined.";
@@ -172,8 +172,8 @@ namespace PlutoFramework.Components.XcavateProperty
             }
             catch (Exception ex)
             {
-                // The toast is the failure report now: its error page shows this message,
-                // so no popup alongside it. A program rejection is decoded through the
+                // The status popup is the failure report now: it shows this message,
+                // so nothing alongside it. A program rejection is decoded through the
                 // bundled IDLs into the program author's own words; anything the metadata
                 // cannot explain keeps the node's raw reason.
                 info.Status = SolanaTransactionStatus.Error;

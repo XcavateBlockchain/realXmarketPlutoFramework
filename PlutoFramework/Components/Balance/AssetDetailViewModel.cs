@@ -1,9 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microcharts;
+using PlutoFramework.Components.Redemption;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.HydraDX;
+using PlutoFramework.Model.Xcavate;
 using SkiaSharp;
 
 namespace PlutoFramework.Components.Balance
@@ -15,7 +17,14 @@ namespace PlutoFramework.Components.Balance
         private const uint CHART_STEPS = 24;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(RedeemIsVisible))]
         private AssetInfo? assetInfo;
+
+        /// <summary>
+        /// Only the tGBP detail page offers redemption: the off-ramp buys tGBP back, so the
+        /// button is hidden for every other asset.
+        /// </summary>
+        public bool RedeemIsVisible => string.Equals(AssetInfo?.Symbol, XcavateReserveBalanceModel.TgBpSymbol, StringComparison.Ordinal);
 
         [ObservableProperty]
         private string? time1Text;
@@ -245,5 +254,11 @@ namespace PlutoFramework.Components.Balance
         {
             ReceiveAndTransferModel.Transfer();
         }
+
+        /// <summary>
+        /// Opens the Xcavate redemption off-ramp, which pays out the tGBP the wallet sells.
+        /// </summary>
+        [RelayCommand]
+        public Task RedeemAsync() => RedemptionModel.RedeemAsync();
     }
 }

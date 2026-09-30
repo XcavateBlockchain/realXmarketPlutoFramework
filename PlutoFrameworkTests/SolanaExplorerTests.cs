@@ -3,19 +3,20 @@ using PlutoFrameworkCore.Solana;
 
 namespace PlutoFrameworkTests
 {
-    public class SolscanTests
+    public class SolanaExplorerTests
     {
         private const string Signature =
             "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4tjF3ZpRzrFmBV6UjKdiSZkQUW";
 
         /// <summary>
-        /// Solscan defaults to mainnet, so the parameter is omitted rather than spelled out.
+        /// Solana Explorer defaults to mainnet, so the parameter is omitted rather than
+        /// spelled out.
         /// </summary>
         [Test]
         public void MainnetUrlCarriesNoClusterParameter()
         {
-            Assert.That(Solscan.TransactionUrl(Signature, SolanaCluster.Mainnet),
-                Is.EqualTo($"https://solscan.io/tx/{Signature}"));
+            Assert.That(SolanaExplorer.TransactionUrl(Signature, SolanaCluster.Mainnet),
+                Is.EqualTo($"https://explorer.solana.com/tx/{Signature}"));
         }
 
         /// <summary>
@@ -25,15 +26,15 @@ namespace PlutoFrameworkTests
         [Test]
         public void DevnetUrlCarriesTheCluster()
         {
-            Assert.That(Solscan.TransactionUrl(Signature, SolanaCluster.Devnet),
-                Is.EqualTo($"https://solscan.io/tx/{Signature}?cluster=devnet"));
+            Assert.That(SolanaExplorer.TransactionUrl(Signature, SolanaCluster.Devnet),
+                Is.EqualTo($"https://explorer.solana.com/tx/{Signature}?cluster=devnet"));
         }
 
         [Test]
         public void TestnetUrlCarriesTheCluster()
         {
-            Assert.That(Solscan.TransactionUrl(Signature, SolanaCluster.Testnet),
-                Is.EqualTo($"https://solscan.io/tx/{Signature}?cluster=testnet"));
+            Assert.That(SolanaExplorer.TransactionUrl(Signature, SolanaCluster.Testnet),
+                Is.EqualTo($"https://explorer.solana.com/tx/{Signature}?cluster=testnet"));
         }
     }
 }
