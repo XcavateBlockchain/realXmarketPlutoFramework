@@ -9,7 +9,7 @@ namespace PlutoFramework.Components.Solana.Status
 {
     /// <summary>
     /// Drives the Solana transaction status popup: one bottom card that follows a submitted
-    /// transaction from submission to finality.
+    /// transaction from submission to finality, and stays open until the user dismisses it.
     /// </summary>
     /// <remarks>
     /// The replacement for the toast stack (<c>SolanaTransactionStatusStackViewModel</c>).
@@ -22,18 +22,12 @@ namespace PlutoFramework.Components.Solana.Status
     /// replaced transaction is still tracked to finality in the background — the tracker
     /// holds its own reference and its confirmation events still fire — it just stops
     /// being shown.
+    ///
+    /// Never auto-dismisses, on success any more than on failure: the outcome is where the
+    /// explorer button lives, and a popup that removes itself is easy to miss.
     /// </remarks>
     public partial class SolanaTransactionPopupViewModel : ObservableObject, IPopup, ISetToDefault
     {
-        /// <summary>
-        /// How long a finalized success stays on screen before the popup closes itself.
-        /// A failure never auto-dismisses — the user has to find out somehow, and a popup
-        /// that removes itself is easy to miss.
-        /// </summary>
-        private static readonly TimeSpan AutoDismissDelay = TimeSpan.FromSeconds(5);
-
-        private CancellationTokenSource? autoDismissCts;
-
         [ObservableProperty]
         private bool isVisible;
 
@@ -164,8 +158,6 @@ namespace PlutoFramework.Components.Solana.Status
         {
             IsVisible = false;
 
-            CancelAutoDismiss();
-
             Detach();
 
             CurrentInfo = null;
@@ -197,55 +189,6 @@ namespace PlutoFramework.Components.Solana.Status
             OnPropertyChanged(nameof(ErrorIsVisible));
 
             StatusVersion++;
-
-            ScheduleAutoDismissIfSettled();
-        }
-
-        private void ScheduleAutoDismissIfSettled()
-        {
-            CancelAutoDismiss();
-
-            if (CurrentInfo?.Status != SolanaTransactionStatus.FinalizedSuccess)
-            {
-                return;
-            }
-
-            var cts = new CancellationTokenSource();
-            autoDismissCts = cts;
-
-            var dismissing = CurrentInfo;
-
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(AutoDismissDelay, cts.Token);
-
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        // Re-checked on the UI thread: the popup may have been closed, or
-                        // re-registered to a newer transaction, while the delay was running.
-                        if (cts.IsCancellationRequested
-                            || CurrentInfo != dismissing
-                            || dismissing.Status != SolanaTransactionStatus.FinalizedSuccess)
-                        {
-                            return;
-                        }
-
-                        SetToDefault();
-                    });
-                }
-                catch (OperationCanceledException)
-                {
-                }
-            });
-        }
-
-        private void CancelAutoDismiss()
-        {
-            autoDismissCts?.Cancel();
-            autoDismissCts?.Dispose();
-            autoDismissCts = null;
         }
 
         private void Detach()

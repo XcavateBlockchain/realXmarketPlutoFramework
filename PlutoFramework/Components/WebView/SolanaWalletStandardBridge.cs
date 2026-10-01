@@ -1,3 +1,4 @@
+using PlutoFramework.Components.Solana.Status;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Solana;
@@ -19,6 +20,9 @@ namespace PlutoFramework.Components.WebView
     /// distinguished by the <c>solana:</c> method prefix. The two share the connection
     /// approval screen and the sign-message sheet, so a dapp on either chain shows the user
     /// the same thing.
+    ///
+    /// A submitted transaction additionally raises the app-wide transaction status popup
+    /// and is tracked to finality, the way an in-app transfer is.
     /// </summary>
     public class SolanaWalletStandardBridge
     {
@@ -304,12 +308,85 @@ namespace PlutoFramework.Components.WebView
 
             var cluster = ParseChain(request.Chain);
 
-            var account = await ResolveForSigningAsync(SEND_TRANSACTION_REASON);
+            // Registered before the unlock prompt and any wallet round trip, so the user
+            // sees the submission acknowledged the moment the page asks for it. Null when
+            // the popup cannot be raised, in which case the submission proceeds untracked.
+            var info = await RegisterStatusPopupAsync(cluster);
 
-            var signature = await account.SignAndSendWireTransactionAsync(
-                Convert.FromBase64String(request.Transaction), cluster, SEND_TRANSACTION_REASON, CancellationToken.None);
+            try
+            {
+                var account = await ResolveForSigningAsync(SEND_TRANSACTION_REASON);
 
-            return new SignAndSendTransactionResult { Signature = Convert.ToBase64String(signature) };
+                var signatureBytes = await account.SignAndSendWireTransactionAsync(
+                    Convert.FromBase64String(request.Transaction), cluster, SEND_TRANSACTION_REASON, CancellationToken.None);
+
+                // The dapp gets the raw 64 bytes; the tracker and the explorer link read
+                // base58.
+                await TrackStatusPopupAsync(info, SolanaBase58.Encode(signatureBytes), cluster);
+
+                return new SignAndSendTransactionResult { Signature = Convert.ToBase64String(signatureBytes) };
+            }
+            catch (Exception ex)
+            {
+                // The dapp still gets its error response - HandleAsync converts the throw -
+                // but the popup is what the user actually reads.
+                await FailStatusPopupAsync(info, ex.Message);
+
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Shows the transaction status popup at Submitting and returns its info, so the
+        /// tracker can drive the rest. Bridge callbacks arrive off the UI thread on
+        /// Android, and registration drives bindings.
+        /// </summary>
+        private static async Task<SolanaTransactionInfo?> RegisterStatusPopupAsync(SolanaCluster cluster)
+        {
+            try
+            {
+                return await MainThread.InvokeOnMainThreadAsync(() =>
+                    DependencyService.Get<SolanaTransactionPopupViewModel>()
+                        .Register("Web app transaction", cluster));
+            }
+            catch (Exception ex)
+            {
+                // A popup that cannot be raised must not sink the submission.
+                Console.WriteLine(ex);
+
+                return null;
+            }
+        }
+
+        private static async Task TrackStatusPopupAsync(
+            SolanaTransactionInfo? info, string signature, SolanaCluster cluster)
+        {
+            if (info is null)
+            {
+                return;
+            }
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                info.Signature = signature;
+                info.Status = SolanaTransactionStatus.Pending;
+            });
+
+            _ = SolanaTransactionTracker.TrackAsync(signature, cluster, info, CancellationToken.None);
+        }
+
+        private static async Task FailStatusPopupAsync(SolanaTransactionInfo? info, string message)
+        {
+            if (info is null)
+            {
+                return;
+            }
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                info.Status = SolanaTransactionStatus.Error;
+                info.ErrorMessage = message;
+            });
         }
 
         /// <summary>

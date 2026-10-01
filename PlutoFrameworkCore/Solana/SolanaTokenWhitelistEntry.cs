@@ -1,7 +1,7 @@
 namespace PlutoFrameworkCore.Solana
 {
     /// <summary>
-    /// One SPL token the app displays, on one cluster. Symbol and decimals are configured
+    /// One SPL token the app displays, on one cluster. Name, symbol and decimals are configured
     /// rather than read from chain so a token the user holds no account for can still be
     /// listed at zero.
     /// </summary>
@@ -13,6 +13,9 @@ namespace PlutoFrameworkCore.Solana
         public required string Mint { get; init; }
 
         public required string Symbol { get; init; }
+
+        /// <summary>Human-readable token name, e.g. "USD Coin" for USDC.</summary>
+        public required string Name { get; init; }
 
         public required int Decimals { get; init; }
 

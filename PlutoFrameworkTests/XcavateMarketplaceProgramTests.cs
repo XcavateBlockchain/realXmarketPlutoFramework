@@ -279,6 +279,7 @@ namespace PlutoFrameworkTests
                         Cluster = SolanaCluster.Devnet,
                         Mint = "8umv4NXybZFGiT3tQb1DqJ6DXxLa3rLNhPbcqbQsjXxW",
                         Symbol = "tUSDC",
+                        Name = "test USD Coin",
                         Decimals = 6,
                     },
                 ];

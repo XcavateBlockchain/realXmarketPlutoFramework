@@ -26,6 +26,7 @@ namespace PlutoFrameworkTests
                 Cluster = SolanaCluster.Mainnet,
                 Mint = Usdc,
                 Symbol = "USDC",
+                Name = "USD Coin",
                 Decimals = 6,
                 ProgramId = programId ?? SolanaTokenProgram.Legacy,
             },

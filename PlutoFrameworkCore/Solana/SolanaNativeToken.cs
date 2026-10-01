@@ -8,6 +8,8 @@ namespace PlutoFrameworkCore.Solana
     {
         public const string Symbol = "SOL";
 
+        public const string Name = "Solana";
+
         /// <summary>
         /// The wrapped-SOL mint. SOL itself has no mint; this is the address price feeds
         /// key it by.

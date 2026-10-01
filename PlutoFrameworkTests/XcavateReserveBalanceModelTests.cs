@@ -16,6 +16,7 @@ namespace PlutoFrameworkTests
             Cluster = SolanaCluster.Devnet,
             Mint = TgBpMint,
             Symbol = XcavateReserveBalanceModel.TgBpSymbol,
+            Name = "tokenised GBP",
             Decimals = 9,
         };
 
@@ -24,6 +25,7 @@ namespace PlutoFrameworkTests
             Cluster = SolanaCluster.Devnet,
             Mint = UsdcMint,
             Symbol = UsdcSymbol,
+            Name = "test USD Coin",
             Decimals = 6,
         };
 
@@ -110,6 +112,7 @@ namespace PlutoFrameworkTests
                     Cluster = SolanaCluster.Devnet,
                     Mint = TgBpMint,
                     Symbol = "TGBP",
+                    Name = "tokenised GBP",
                     Decimals = 9,
                 },
             ];

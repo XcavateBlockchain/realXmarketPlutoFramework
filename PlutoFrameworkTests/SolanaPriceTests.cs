@@ -121,6 +121,7 @@ namespace PlutoFrameworkTests
             Cluster = SolanaCluster.Mainnet,
             Mint = UsdcMint,
             Symbol = "USDC",
+            Name = "USD Coin",
             Decimals = 6,
             PinnedUsdPrice = 1.00,
         };
@@ -130,6 +131,7 @@ namespace PlutoFrameworkTests
             Cluster = SolanaCluster.Mainnet,
             Mint = UnpinnedMint,
             Symbol = "TEST",
+            Name = "Test Token",
             Decimals = 6,
         };
 

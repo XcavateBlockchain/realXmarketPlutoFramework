@@ -16,27 +16,6 @@ namespace PlutoFramework.Model.Constants
             return "unknown.png";
         }
 
-        public static string GetAssetName(string assetSymbol)
-        {
-            var lowercaseAssetSymbol = assetSymbol.ToLower();
-
-            if (AssetNames.ContainsKey(lowercaseAssetSymbol))
-            {
-                return AssetNames[lowercaseAssetSymbol];
-            }
-
-            return assetSymbol;
-        }
-
-        public static readonly ReadOnlyDictionary<string, string> AssetNames = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()
-        {
-            { "usdc", "USD Coin" },
-            { "tusdc", "test USD Coin" },
-            { "tgbp", "tokenised GBP" },
-            { "xcav", "Xcavate" },
-            { "sol", "Solana" },
-        });
-
         public static readonly ReadOnlyDictionary<string, string> AssetIcons = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>()
         {
             { "usdc", "usdc.png" },
