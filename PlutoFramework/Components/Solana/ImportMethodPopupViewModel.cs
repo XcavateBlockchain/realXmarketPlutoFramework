@@ -39,9 +39,14 @@ public partial class ImportMethodPopupViewModel : ObservableObject, IPopup, ISet
     [RelayCommand]
     public async Task ChooseSeedPhraseAsync()
     {
+        // Capture before hiding: the card's close path runs SetToDefault, which resets
+        // the delegates, and with the animator effectively instant it does so before the
+        // invoke below would read them.
+        var chosen = SeedPhraseChosen;
+
         IsVisible = false;
 
-        await SeedPhraseChosen.Invoke();
+        await chosen.Invoke();
     }
 
     [RelayCommand]
@@ -52,8 +57,11 @@ public partial class ImportMethodPopupViewModel : ObservableObject, IPopup, ISet
             return;
         }
 
+        // See ChooseSeedPhraseAsync: the close path resets the delegates.
+        var chosen = MwaChosen;
+
         IsVisible = false;
 
-        await MwaChosen.Invoke();
+        await chosen.Invoke();
     }
 }
