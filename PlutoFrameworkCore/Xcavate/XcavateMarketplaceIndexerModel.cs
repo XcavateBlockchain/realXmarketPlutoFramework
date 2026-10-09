@@ -48,6 +48,226 @@ namespace PlutoFramework.Model.Xcavate
         /// </summary>
         private const int HoldingsPageSize = 100;
 
+        /// <summary>
+        /// A listing's full governance surface for the property detail page: the
+        /// pre-settlement SPV-lawyer election (the "terms" vote; marketplace id space,
+        /// keyed by the marketplace listing id) and the letting seat's post-settlement
+        /// votes (property id space, keyed by the asset id).
+        /// </summary>
+        public sealed record XcavateGovernanceState
+        {
+            /// <summary>
+            /// The SPV-lawyer election the listing is running (the candidacy investors
+            /// vote on - the "terms" flow). Rounds repeat until a lawyer wins, so the
+            /// listing's own counters are the live round. Null while no election has
+            /// opened (round 0, e.g. the listing is still selling).
+            /// </summary>
+            public sealed record SpvElectionState(
+                ulong Round,
+                long Expiry,
+                long CandidateCount,
+                long SoldShareAmount,
+                long TotalVotePower,
+                SpvCandidacy? LeadingCandidacy);
+
+            /// <summary>One lawyer's candidacy with the votes backing it.</summary>
+            public sealed record SpvCandidacy(string Lawyer, long VotePower, long Costs);
+
+            /// <summary>The seat's live spending proposal with its running tallies.</summary>
+            public sealed record ProposalState(
+                long ProposalId,
+                long Expiry,
+                long TallyYes,
+                long TallyNo,
+                long TallyAbstain,
+                int QuorumBps,
+                int ThresholdBps);
+
+            /// <summary>The live challenge against the sitting agent with its running tallies.</summary>
+            public sealed record ChallengeState(
+                long ChallengeId,
+                long Expiry,
+                long TallyYes,
+                long TallyNo,
+                long TallyAbstain,
+                int QuorumBps);
+
+            /// <summary>
+            /// The connected wallet's share ledger and its free voting power: on-chain the
+            /// effective lock is the LARGEST single reason's counter (locks overlap across
+            /// reasons), and listed shares count in amount but not in votes.
+            /// </summary>
+            public sealed record HoldingState(uint Amount, uint Listed, uint MaxLock)
+            {
+                public uint Votable => Amount - Math.Min(Listed + MaxLock, Amount);
+            }
+
+            public SpvElectionState? SpvElection { get; init; }
+
+            /// <summary>The letting seat's election counters; zeroes while no election runs.</summary>
+            public long ElectionRound { get; init; }
+            public long ElectionExpiry { get; init; }
+            public long ElectionCandidateCount { get; init; }
+            public int ElectionQuorumBps { get; init; }
+
+            public ProposalState? ActiveProposal { get; init; }
+            public ChallengeState? ActiveChallenge { get; init; }
+
+            /// <summary>The connected wallet's ledger; null for wallets holding nothing.</summary>
+            public HoldingState? Holding { get; init; }
+        }
+
+        /// <summary>
+        /// One listing's governance state for the property detail page's voting sections.
+        /// The terms vote lives in the marketplace id space (<paramref name="listingId"/>);
+        /// the letting seat, proposals and challenges in the property program's
+        /// (<paramref name="assetId"/>). The caller's own ledger joins in when
+        /// <paramref name="voter"/> is known. A missing piece (no vote opened yet, no
+        /// active proposal, no holding) reads as null rather than an error.
+        /// </summary>
+        public static async Task<XcavateGovernanceState> GetGovernanceStateAsync(
+            SolanaCluster cluster,
+            long listingId,
+            long assetId,
+            string? voter,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            var listingIdArg = listingId.ToString(CultureInfo.InvariantCulture);
+            var assetIdArg = assetId.ToString(CultureInfo.InvariantCulture);
+
+            var listingResult = await client.MarketplaceListing
+                .ExecuteAsync(listingIdArg, token)
+                .ConfigureAwait(false);
+            listingResult.EnsureNoErrors();
+            var listingNode = listingResult.Data?.Listings.Nodes.FirstOrDefault();
+
+            var candidaciesResult = await client.MarketplaceLawyerCandidacies
+                .ExecuteAsync(listingIdArg, first: 5, offset: 0, token)
+                .ConfigureAwait(false);
+            candidaciesResult.EnsureNoErrors();
+            var candidacies = candidaciesResult.Data?.LawyerCandidacies.Nodes;
+
+            var lettingResult = await client.PropertyLettingGovernance
+                .ExecuteAsync(assetIdArg, token)
+                .ConfigureAwait(false);
+            lettingResult.EnsureNoErrors();
+            var lettingNode = lettingResult.Data?.PropertyLettings.Nodes.FirstOrDefault();
+
+            var proposalsResult = await client.PropertyProposals
+                .ExecuteAsync(assetIdArg, first: 1, offset: 0, token)
+                .ConfigureAwait(false);
+            proposalsResult.EnsureNoErrors();
+            var proposalNode = proposalsResult.Data?.Proposals.Nodes.FirstOrDefault();
+
+            var challengesResult = await client.PropertyChallenges
+                .ExecuteAsync(assetIdArg, first: 1, offset: 0, token)
+                .ConfigureAwait(false);
+            challengesResult.EnsureNoErrors();
+            var challengeNode = challengesResult.Data?.Challenges.Nodes.FirstOrDefault();
+
+            XcavateGovernanceState.HoldingState? holding = null;
+            if (voter is not null)
+            {
+                var holdingResult = await client.MarketplaceShareHoldingOf
+                    .ExecuteAsync(assetIdArg, voter, token)
+                    .ConfigureAwait(false);
+                holdingResult.EnsureNoErrors();
+                var holdingNode = holdingResult.Data?.ShareHoldings.Nodes.FirstOrDefault();
+                if (holdingNode is not null)
+                {
+                    var maxLock = Math.Max(
+                        Math.Max(ToUInt32(holdingNode.LockLawyerElection), ToUInt32(holdingNode.LockAgentElection)),
+                        Math.Max(ToUInt32(holdingNode.LockProposal), ToUInt32(holdingNode.LockChallenge)));
+                    holding = new XcavateGovernanceState.HoldingState(
+                        ToUInt32(holdingNode.Amount),
+                        ToUInt32(holdingNode.Listed),
+                        maxLock);
+                }
+            }
+
+            return new XcavateGovernanceState
+            {
+                SpvElection = BuildSpvElection(listingNode, candidacies),
+                ElectionRound = ParseInt64(lettingNode?.ElectionRound),
+                ElectionExpiry = ParseInt64(lettingNode?.ElectionExpiry),
+                ElectionCandidateCount = ParseInt64(lettingNode?.ElectionCandidateCount),
+                ElectionQuorumBps = lettingNode?.ElectionQuorumBps ?? 0,
+                ActiveProposal = proposalNode is null
+                    ? null
+                    : new XcavateGovernanceState.ProposalState(
+                        ParseInt64(proposalNode.ProposalId),
+                        ParseInt64(proposalNode.Expiry),
+                        ParseInt64(proposalNode.TallyYes),
+                        ParseInt64(proposalNode.TallyNo),
+                        ParseInt64(proposalNode.TallyAbstain),
+                        proposalNode.QuorumBps,
+                        proposalNode.ThresholdBps),
+                ActiveChallenge = challengeNode is null
+                    ? null
+                    : new XcavateGovernanceState.ChallengeState(
+                        ParseInt64(challengeNode.ChallengeId),
+                        ParseInt64(challengeNode.Expiry),
+                        ParseInt64(challengeNode.TallyYes),
+                        ParseInt64(challengeNode.TallyNo),
+                        ParseInt64(challengeNode.TallyAbstain),
+                        challengeNode.QuorumBps),
+                Holding = holding,
+            };
+        }
+
+        /// <summary>
+        /// The listing's live SPV-lawyer election assembled from its own counters (the
+        /// fragment's spvElection* fields) plus the round's active candidacies: the summed
+        /// vote power and the strongest candidacy - the one the page's Approve action
+        /// backs. Null while no election has opened (round 0).
+        /// </summary>
+        private static XcavateGovernanceState.SpvElectionState? BuildSpvElection(
+            IMarketplaceListing_Listings_Nodes? listing,
+            IReadOnlyList<IMarketplaceLawyerCandidacies_LawyerCandidacies_Nodes>? candidacies)
+        {
+            if (listing is null)
+            {
+                return null;
+            }
+
+            var round = (ulong)Math.Max(0, ParseInt64(listing.SpvElectionRound));
+            if (round == 0)
+            {
+                return null;
+            }
+
+            long totalPower = 0;
+            XcavateGovernanceState.SpvCandidacy? leading = null;
+            if (candidacies is not null)
+            {
+                foreach (var node in candidacies)
+                {
+                    if (ParseInt64(node.Round) != (long)round)
+                    {
+                        continue;
+                    }
+
+                    var power = ParseInt64(node.VotePower);
+                    totalPower += power;
+                    if (leading is null || power > leading.VotePower)
+                    {
+                        leading = new XcavateGovernanceState.SpvCandidacy(
+                            node.Lawyer, power, ParseInt64(node.Costs));
+                    }
+                }
+            }
+
+            return new XcavateGovernanceState.SpvElectionState(
+                round,
+                ParseInt64(listing.SpvElectionExpiry),
+                ParseInt64(listing.SpvElectionCandidateCount),
+                ParseInt64(listing.SoldShareAmount),
+                totalPower,
+                leading);
+        }
+
         public static async Task<IReadOnlyList<XcavateSolanaListingNft>> GetMarketplaceListedPropertiesAsync(
             SolanaCluster cluster,
             int first,

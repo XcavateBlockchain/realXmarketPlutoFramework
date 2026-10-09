@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<VerticalStackLayout xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                     x:Class="PlutoFramework.Components.XcavateProperty.TermsVotingSectionView"
+                     Spacing="12"
+                     IsVisible="{Binding SpvElectionSectionIsVisible}">
+
+    <!-- Legal phase banner (Figma 2.6.0): the SPV lawyer's terms gate settlement -->
+    <Border Padding="15"
+            BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}"
+            Stroke="{StaticResource CardBorderColor}"
+            StrokeThickness="{StaticResource CardBorderThickness}">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+        </Border.StrokeShape>
+
+        <VerticalStackLayout Spacing="10">
+            <Label Text="Before the sale can be finalized, you need to review and vote on the terms submitted by the SPV lawyer. The sale cannot be completed until the SPV lawyer election closes."
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            <HorizontalStackLayout Spacing="6">
+                <Label Text="&#x1F4C4;" VerticalOptions="Center" />
+                <Label Text="SPV Terms of Agreement"
+                       TextColor="{StaticResource Primary}"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+
+    <!-- Live round: title, clock, turnout bar -->
+    <VerticalStackLayout Spacing="6"
+                         IsVisible="{Binding SpvElectionIsLive}">
+        <Grid ColumnSpacing="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Column="0"
+                   Text="Voting in progress"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                   VerticalOptions="Center" />
+            <HorizontalStackLayout Grid.Column="1"
+                                   Spacing="4"
+                                   VerticalOptions="Center">
+                <Label Text="&#x23F1;"
+                       TextColor="{StaticResource Primary}"
+                       VerticalOptions="Center" />
+                <Label Text="{Binding SpvTimeRemainingText}"
+                       TextColor="{StaticResource Primary}"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <!-- Turnout (green) over the still-unsent supply (red) -->
+        <ProgressBar Progress="{Binding SpvTurnoutRatio}"
+                     ProgressColor="{StaticResource Positive}"
+                     BackgroundColor="{StaticResource DangerousRed}"
+                     HeightRequest="8" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0"
+                   Text="{Binding SpvTurnoutPercent, StringFormat='Approve {0}%'}"
+                   TextColor="{StaticResource Positive}"
+                   FontAttributes="Bold" />
+            <Label Grid.Column="1"
+                   Text="{Binding SpvNotVotedPercent, StringFormat='Not voted {0}%'}"
+                   TextColor="{StaticResource DangerousRed}"
+                   FontAttributes="Bold" />
+        </Grid>
+
+        <Label Text="{Binding VotingPowerText}"
+               FontSize="12"
+               TextColor="{StaticResource Primary}" />
+
+        <buttons:ElevatedButton IsVisible="{Binding SpvCanVote}"
+                                Text="Approve terms"
+                                Command="{Binding ApproveSpvTermsCommand}" />
+        <Label IsVisible="{Binding SpvCanVote}"
+               Text="Not voting counts as rejecting the terms."
+               FontSize="12"
+               TextColor="{StaticResource DangerousRed}" />
+    </VerticalStackLayout>
+
+    <!-- A closed round keeps the banner but drops the vote -->
+    <Label IsVisible="{Binding SpvElectionClosedIsVisible}"
+           Text="The SPV lawyer election has closed."
+           TextColor="{StaticResource DangerousRed}" />
+</VerticalStackLayout>

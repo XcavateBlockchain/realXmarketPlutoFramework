@@ -10,6 +10,30 @@ query MarketplaceShareHoldings($assetId: I64!, $first: Int!, $offset: Int!) {
       id
       owner
       amount
+      listed
+      lockLawyerElection
+      lockAgentElection
+      lockProposal
+      lockChallenge
+    }
+  }
+}
+
+# One owner's share ledger for one asset: the detail page's voting sections read
+# their voting power (amount minus listed minus the locks other votes already hold)
+# from it. One row max - the (asset, owner) pair keys its PDA.
+query MarketplaceShareHoldingOf($assetId: I64!, $owner: String!) {
+  shareHoldings(assetId: $assetId, owner: $owner, active: true, first: 1, offset: 0) {
+    totalCount
+    nodes {
+      id
+      owner
+      amount
+      listed
+      lockLawyerElection
+      lockAgentElection
+      lockProposal
+      lockChallenge
     }
   }
 }

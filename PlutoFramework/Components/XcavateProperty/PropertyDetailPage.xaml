@@ -91,6 +91,12 @@
                         </Border>
                     </Grid>
 
+                    <!-- Governance voting: the SPV-terms ratification (legal phase) and
+                         the letting seat's proposals/challenges (post-settlement) -->
+                    <xcavateproperty:TermsVotingSectionView Margin="0,10,0,0" />
+
+                    <xcavateproperty:GovernanceVotingSectionView Margin="0,10,0,0" />
+
                     <Label Text="Developer"
                            Margin="0,10,0,0"
                            HorizontalTextAlignment="Start" />
@@ -300,5 +306,7 @@
         <card:BottomPillBackgroundView />
 
         <xcavateproperty:CancelReservationPopup />
+
+        <xcavateproperty:CastVotePopupView />
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>

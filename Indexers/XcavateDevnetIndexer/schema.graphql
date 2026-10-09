@@ -1201,4 +1201,4 @@ type WhitelistAction {
 type WhitelistActionConnection {
   nodes: [WhitelistAction!]!
   totalCount: Int!
-}
+}

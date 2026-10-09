@@ -1,3 +1,4 @@
+using Solnet.Programs;
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Solana;
 using Solnet.Rpc.Builders;
@@ -32,6 +33,7 @@ namespace PlutoFrameworkTests
         [TestCase("withdraw_expired")]
         [TestCase("withdraw_cancelled")]
         [TestCase("withdraw_legal_process_expired")]
+        [TestCase("vote_on_spv_lawyer")]
         public void Discriminators_MatchTheAnchorFormula(string instructionName)
         {
             var expected = SHA256.HashData(Encoding.UTF8.GetBytes($"global:{instructionName}"))[..8];
@@ -53,6 +55,8 @@ namespace PlutoFrameworkTests
                     Programs, SyntheticKey(1), 7, SyntheticKey(2), SyntheticKey(3), SyntheticKey(4), new PublicKey(SolanaTokenProgram.Legacy)),
                 "withdraw_legal_process_expired" => XcavateMarketplaceProgram.WithdrawLegalProcessExpired(
                     Programs, SyntheticKey(1), 7, SyntheticKey(2), SyntheticKey(3), SyntheticKey(4), new PublicKey(SolanaTokenProgram.Legacy)),
+                "vote_on_spv_lawyer" => XcavateMarketplaceProgram.VoteOnSpvLawyer(
+                    Programs, SyntheticKey(1), SyntheticKey(2), 7, 1, SyntheticKey(3), null, 5),
                 _ => throw new ArgumentOutOfRangeException(nameof(instructionName)),
             };
 
@@ -189,6 +193,101 @@ namespace PlutoFrameworkTests
             var compiled = builder.CompileMessage();
 
             Assert.That(SolanaTransactionFramer.GetRequiredSignatures(compiled), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void VoteOnSpvLawyer_HasTheIdlAccountShape()
+        {
+            var voter = SyntheticKey(1);
+            var payer = SyntheticKey(2);
+            var candidate = SyntheticKey(3);
+
+            var vote = XcavateMarketplaceProgram.VoteOnSpvLawyer(
+                Programs, voter, payer, 7, 2, candidate, null, 5);
+
+            Assert.Multiple(() =>
+            {
+                // voter, payer, voter_role, listing, holding, vote_record, candidacy,
+                // previous_candidacy, system_program - 9 accounts, in IDL order.
+                Assert.That(vote.Keys, Has.Count.EqualTo(9));
+                Assert.That(vote.Keys[0].PublicKey, Is.EqualTo(voter.Key));
+                Assert.That(vote.Keys[0].IsSigner, Is.True);
+                Assert.That(vote.Keys[1].PublicKey, Is.EqualTo(payer.Key));
+                Assert.That(vote.Keys[1].IsSigner, Is.True);
+
+                // Every non-signer account meta is writable (the deployed-binary
+                // escalation quirk documented on the program class) - except the
+                // previous-candidacy sentinel, which is the program's own id.
+                Assert.That(vote.Keys[7].PublicKey, Is.EqualTo(new PublicKey(Programs.Marketplace).Key));
+
+                Assert.That(vote.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveRoleAccount(Programs, voter, XcavateRole.RealEstateInvestor).Key));
+                Assert.That(vote.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveListing(Programs, 7).Key));
+                Assert.That(vote.Keys[4].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveHolding(Programs, 7, voter).Key));
+                Assert.That(vote.Keys[5].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyerVote(Programs, 7, 2, voter).Key));
+                Assert.That(vote.Keys[6].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyerCandidacy(Programs, 7, 2, candidate).Key));
+                Assert.That(vote.Keys[8].PublicKey, Is.EqualTo(SystemProgram.ProgramIdKey.Key));
+
+                // A vote switch keys the previous candidacy instead of the sentinel.
+                var previous = SyntheticKey(4);
+                var switchVote = XcavateMarketplaceProgram.VoteOnSpvLawyer(
+                    Programs, voter, payer, 7, 2, candidate, previous, 5);
+                Assert.That(switchVote.Keys[7].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyerCandidacy(Programs, 7, 2, previous).Key));
+            });
+        }
+
+        [Test]
+        public void VoteOnSpvLawyer_EncodesArgsLittleEndian()
+        {
+            var instruction = XcavateMarketplaceProgram.VoteOnSpvLawyer(
+                Programs,
+                voter: SyntheticKey(1),
+                payer: SyntheticKey(2),
+                listingId: 0x0102030405060708,
+                round: 0x0A0B0C0D0E0F1011,
+                candidate: SyntheticKey(3),
+                previousCandidate: null,
+                amount: 0x0C0D0E0F);
+
+            // discriminator + u64 listing_id + u32 amount (no choice field)
+            Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8 + 4));
+            Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+            Assert.That(instruction.Data[16..20], Is.EqualTo(new byte[] { 0x0F, 0x0E, 0x0D, 0x0C }));
+        }
+
+        [Test]
+        public void LawyerElectionPdas_AreKeyedByTheListingIdAndTheU64Round()
+        {
+            // The vote record: [b"lawyer-vote", listing_id LE, round LE (u64), voter].
+            var voter = SyntheticKey(1);
+            var expectedVote = SolanaProgramAddress.Derive(
+                new PublicKey(Programs.Marketplace),
+                Encoding.UTF8.GetBytes("lawyer-vote"),
+                BitConverter.GetBytes(7UL),
+                BitConverter.GetBytes(0x0A0B0C0D0E0F1011UL),
+                voter.KeyBytes);
+
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveLawyerVote(Programs, 7, 0x0A0B0C0D0E0F1011, voter).Key,
+                Is.EqualTo(expectedVote.Key));
+
+            // The candidacy: [b"lawyer-candidate", listing_id LE, round LE (u64), lawyer].
+            var lawyer = SyntheticKey(3);
+            var expectedCandidacy = SolanaProgramAddress.Derive(
+                new PublicKey(Programs.Marketplace),
+                Encoding.UTF8.GetBytes("lawyer-candidate"),
+                BitConverter.GetBytes(7UL),
+                BitConverter.GetBytes(2UL),
+                lawyer.KeyBytes);
+
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveLawyerCandidacy(Programs, 7, 2, lawyer).Key,
+                Is.EqualTo(expectedCandidacy.Key));
         }
 
         [Test]

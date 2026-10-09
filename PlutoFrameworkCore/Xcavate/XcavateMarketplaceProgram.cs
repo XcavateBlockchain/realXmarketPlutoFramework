@@ -33,6 +33,7 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] WithdrawExpiredDiscriminator = [58, 40, 206, 163, 80, 59, 31, 1];
         private static readonly byte[] WithdrawCancelledDiscriminator = [211, 39, 47, 234, 73, 113, 193, 59];
         private static readonly byte[] WithdrawLegalProcessExpiredDiscriminator = [64, 222, 8, 241, 156, 43, 91, 129];
+        private static readonly byte[] VoteOnSpvLawyerDiscriminator = [245, 181, 143, 227, 83, 159, 141, 147];
 
         // PDA seed prefixes, from the IDL's constants section.
         private static readonly byte[] ConfigSeed = Encoding.UTF8.GetBytes("config");
@@ -45,6 +46,8 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] ListingVaultSeed = Encoding.UTF8.GetBytes("listing-vault");
         private static readonly byte[] PropertyVaultSeed = Encoding.UTF8.GetBytes("property-vault");
         private static readonly byte[] ReservationSeed = Encoding.UTF8.GetBytes("reservation");
+        private static readonly byte[] LawyerVoteSeed = Encoding.UTF8.GetBytes("lawyer-vote");
+        private static readonly byte[] LawyerCandidacySeed = Encoding.UTF8.GetBytes("lawyer-candidate");
 
         /// <summary>ROLE_SEED of the whitelist program, whose RoleAccount PDAs gate the calls.</summary>
         private static readonly byte[] RoleSeed = Encoding.UTF8.GetBytes("role");
@@ -82,6 +85,24 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>Keyed by the payment token account the reservation binds, not by the investor.</summary>
         public static PublicKey DeriveReservation(XcavateProgramSet programs, PublicKey paymentAccount) =>
             SolanaProgramAddress.Derive(new(programs.Marketplace), ReservationSeed, paymentAccount.KeyBytes);
+
+        /// <summary>
+        /// One voter's vote record in one SPV election round:
+        /// [b"lawyer-vote", listing_id LE, round LE (u64), voter]. The round comes from the
+        /// listing's election state (it is 1-based), so a vote built against a stale round
+        /// fails the program's seed check.
+        /// </summary>
+        public static PublicKey DeriveLawyerVote(XcavateProgramSet programs, ulong listingId, ulong round, PublicKey voter) =>
+            SolanaProgramAddress.Derive(
+                new(programs.Marketplace), LawyerVoteSeed, U64(listingId), U64(round), voter.KeyBytes);
+
+        /// <summary>
+        /// One lawyer's candidacy in one SPV election round:
+        /// [b"lawyer-candidate", listing_id LE, round LE (u64), lawyer].
+        /// </summary>
+        public static PublicKey DeriveLawyerCandidacy(XcavateProgramSet programs, ulong listingId, ulong round, PublicKey lawyer) =>
+            SolanaProgramAddress.Derive(
+                new(programs.Marketplace), LawyerCandidacySeed, U64(listingId), U64(round), lawyer.KeyBytes);
 
         /// <summary>
         /// The whitelist program's RoleAccount PDA for one (user, role) pair - what the
@@ -304,6 +325,54 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// vote_on_spv_lawyer(listing_id, amount): the investor's share-weighted vote
+        /// backing one candidacy in the listing's SPV-lawyer election - the pre-settlement
+        /// vote the property page surfaces as the "terms" approval. The shares lock under
+        /// LockReason::LawyerElection until unlock_voting_shares; revoting within the same
+        /// candidacy reuses the record. <paramref name="round"/> is the election's current
+        /// round, read from the indexer - the vote record's PDA is seeded with it.
+        /// </summary>
+        /// <param name="payer">
+        /// Whoever fronts the vote record's rent - the program accepts any willing wallet;
+        /// the app sends the config's rent collector, like on the purchase flow.
+        /// </param>
+        /// <param name="previousCandidate">
+        /// The candidacy the voter backed earlier in this round, when switching votes;
+        /// null on a first vote (the encoder then passes the program's own id, Anchor's
+        /// sentinel for a None optional account).
+        /// </param>
+        public static TransactionInstruction VoteOnSpvLawyer(
+            XcavateProgramSet programs,
+            PublicKey voter,
+            PublicKey payer,
+            ulong listingId,
+            ulong round,
+            PublicKey candidate,
+            PublicKey? previousCandidate,
+            uint amount)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(voter, true),
+                    AccountMeta.Writable(payer, true),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, voter, XcavateRole.RealEstateInvestor), false),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.Writable(DeriveHolding(programs, listingId, voter), false),
+                    AccountMeta.Writable(DeriveLawyerVote(programs, listingId, round, voter), false),
+                    AccountMeta.Writable(DeriveLawyerCandidacy(programs, listingId, round, candidate), false),
+                    AccountMeta.Writable(previousCandidate is not null
+                        ? DeriveLawyerCandidacy(programs, listingId, round, previousCandidate)
+                        : new PublicKey(programs.Marketplace), false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(VoteOnSpvLawyerDiscriminator, U64(listingId), U32(amount)),
+            };
+        }
+
+        /// <summary>
         /// withdraw_expired(listing_id): refund after the listing expired unsold - the
         /// replacement for the pallet's withdraw_expired.
         /// </summary>
@@ -405,6 +474,13 @@ namespace PlutoFramework.Model.Xcavate
         {
             var bytes = new byte[4];
             BinaryPrimitives.WriteUInt32LittleEndian(bytes, value);
+            return bytes;
+        }
+
+        private static byte[] U16(ushort value)
+        {
+            var bytes = new byte[2];
+            BinaryPrimitives.WriteUInt16LittleEndian(bytes, value);
             return bytes;
         }
 

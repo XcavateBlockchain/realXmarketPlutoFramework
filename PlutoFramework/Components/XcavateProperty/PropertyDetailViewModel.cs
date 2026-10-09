@@ -345,6 +345,316 @@ namespace PlutoFramework.Components.XcavateProperty
             XcavateMarketplaceTransactionModel.TransactionConfirmed -= OnMarketplaceTransactionConfirmed;
         }
 
+        // ── Governance voting (terms ratification, proposals, challenges, elections) ──
+
+        /// <summary>
+        /// The listing's live governance surface: the SPV-terms ratification vote during
+        /// the legal phase and the letting seat's proposals / challenges / election
+        /// afterwards, plus the connected wallet's share ledger (the voting power).
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(SpvElectionSectionIsVisible))]
+        [NotifyPropertyChangedFor(nameof(SpvElectionIsLive))]
+        [NotifyPropertyChangedFor(nameof(SpvElectionClosedIsVisible))]
+        [NotifyPropertyChangedFor(nameof(SpvTurnoutPercent))]
+        [NotifyPropertyChangedFor(nameof(SpvNotVotedPercent))]
+        [NotifyPropertyChangedFor(nameof(SpvTurnoutRatio))]
+        [NotifyPropertyChangedFor(nameof(SpvTimeRemainingText))]
+        [NotifyPropertyChangedFor(nameof(SpvCanVote))]
+        [NotifyPropertyChangedFor(nameof(GovernanceVoteIsVisible))]
+        [NotifyPropertyChangedFor(nameof(ProposalIsVisible))]
+        [NotifyPropertyChangedFor(nameof(ChallengeIsVisible))]
+        [NotifyPropertyChangedFor(nameof(ProposalTitleText))]
+        [NotifyPropertyChangedFor(nameof(ProposalTalliesText))]
+        [NotifyPropertyChangedFor(nameof(ProposalApprovePercent))]
+        [NotifyPropertyChangedFor(nameof(ProposalApproveRatio))]
+        [NotifyPropertyChangedFor(nameof(ProposalTimeRemainingText))]
+        [NotifyPropertyChangedFor(nameof(ChallengeTitleText))]
+        [NotifyPropertyChangedFor(nameof(ChallengeTalliesText))]
+        [NotifyPropertyChangedFor(nameof(ChallengeApprovePercent))]
+        [NotifyPropertyChangedFor(nameof(ChallengeApproveRatio))]
+        [NotifyPropertyChangedFor(nameof(ChallengeTimeRemainingText))]
+        [NotifyPropertyChangedFor(nameof(VotingPowerText))]
+        private XcavateMarketplaceIndexerModel.XcavateGovernanceState? governance;
+
+        /// <summary>The unix expiry of whichever vote the section shows, minus now.</summary>
+        private static string TimeRemainingText(long expiry)
+        {
+            var remaining = TimeSpan.FromSeconds(expiry - DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            if (remaining <= TimeSpan.Zero)
+            {
+                return "closed";
+            }
+
+            return remaining.TotalHours >= 24
+                ? $"{(int)remaining.TotalDays}d {remaining.Hours}h left"
+                : $"{(int)remaining.TotalHours}h {remaining.Minutes}m left";
+        }
+
+        private static int PercentOf(long part, long whole) =>
+            whole <= 0 ? 0 : (int)Math.Round(part * 100.0 / whole);
+
+        /// <summary>The listing is running an SPV-lawyer election round (the "terms" vote).</summary>
+        public bool SpvElectionSectionIsVisible => Governance?.SpvElection is { } election && election.Expiry > 0;
+        public bool SpvElectionIsLive => Governance?.SpvElection is { } election
+            && election.Expiry > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        /// <summary>A closed (expired) round keeps the banner but drops the bar.</summary>
+        public bool SpvElectionClosedIsVisible => SpvElectionSectionIsVisible && !SpvElectionIsLive;
+        /// <summary>Share of the sold supply already backing a candidacy, capped at 100.</summary>
+        public int SpvTurnoutPercent => PercentOf(
+            Math.Min(Governance?.SpvElection?.TotalVotePower ?? 0, Governance?.SpvElection?.SoldShareAmount ?? 0),
+            Governance?.SpvElection?.SoldShareAmount ?? 0);
+        public int SpvNotVotedPercent => Governance?.SpvElection is { SoldShareAmount: > 0 } ? 100 - SpvTurnoutPercent : 0;
+        public double SpvTurnoutRatio => SpvTurnoutPercent / 100.0;
+        public string SpvTimeRemainingText => TimeRemainingText(Governance?.SpvElection?.Expiry ?? 0);
+
+        /// <summary>
+        /// The wallet may vote when it is an investor the indexer shows free shares for
+        /// (owned, not listed, not already locked behind another vote) and a candidacy
+        /// exists to back.
+        /// </summary>
+        public bool SpvCanVote => SpvElectionIsLive
+            && Governance?.SpvElection?.LeadingCandidacy is not null
+            && (Governance?.Holding?.Votable ?? 0) > 0;
+
+        public bool GovernanceVoteIsVisible => Governance?.ActiveProposal is not null || Governance?.ActiveChallenge is not null;
+        public bool ProposalIsVisible => Governance?.ActiveProposal is not null;
+        public bool ChallengeIsVisible => Governance?.ActiveChallenge is not null;
+
+        public string ProposalTitleText => $"Agent spending proposal #{Governance?.ActiveProposal?.ProposalId}";
+        public string ProposalTalliesText =>
+            $"Yes {Governance?.ActiveProposal?.TallyYes ?? 0} · No {Governance?.ActiveProposal?.TallyNo ?? 0} · Abstain {Governance?.ActiveProposal?.TallyAbstain ?? 0}";
+        public int ProposalApprovePercent => PercentOf(
+            Governance?.ActiveProposal?.TallyYes ?? 0,
+            (Governance?.ActiveProposal?.TallyYes ?? 0) + (Governance?.ActiveProposal?.TallyNo ?? 0));
+        public double ProposalApproveRatio => ProposalApprovePercent / 100.0;
+        public string ProposalTimeRemainingText => TimeRemainingText(Governance?.ActiveProposal?.Expiry ?? 0);
+
+        public string ChallengeTitleText => $"Challenge against the letting agent #{Governance?.ActiveChallenge?.ChallengeId}";
+        public string ChallengeTalliesText =>
+            $"Yes {Governance?.ActiveChallenge?.TallyYes ?? 0} · No {Governance?.ActiveChallenge?.TallyNo ?? 0} · Abstain {Governance?.ActiveChallenge?.TallyAbstain ?? 0}";
+        public int ChallengeApprovePercent => PercentOf(
+            Governance?.ActiveChallenge?.TallyYes ?? 0,
+            (Governance?.ActiveChallenge?.TallyYes ?? 0) + (Governance?.ActiveChallenge?.TallyNo ?? 0));
+        public double ChallengeApproveRatio => ChallengeApprovePercent / 100.0;
+        public string ChallengeTimeRemainingText => TimeRemainingText(Governance?.ActiveChallenge?.Expiry ?? 0);
+
+        public string VotingPowerText => Governance?.Holding is { } holding
+            ? $"Voting power: {holding.Votable} shares"
+            : "No voting power";
+
+        /// <summary>
+        /// Re-reads the listing's governance state from the indexer (the terms vote, the
+        /// live proposal/challenge, the wallet's ledger). Runs on the same trigger as
+        /// <see cref="RefreshListingAsync"/>: after any confirmed transaction and on the
+        /// detail page's first load. Tolerant like the listing refresh - a failure keeps
+        /// whatever the page already shows.
+        /// </summary>
+        public async Task RefreshVotingAsync(CancellationToken token)
+        {
+            if (NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                return;
+            }
+
+            try
+            {
+                var governanceState = await XcavateMarketplaceIndexerModel.GetGovernanceStateAsync(
+                        SolanaNetworkModel.SelectedCluster,
+                        solanaListing.ListingId,
+                        ListingDetails?.AssetId ?? solanaListing.ListingId,
+                        KeysModel.GetSolanaAddress(),
+                        token)
+                    .ConfigureAwait(false);
+
+                token.ThrowIfCancellationRequested();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    Governance = governanceState;
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // The page went away mid-query.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the governance state: ");
+                Console.WriteLine(ex);
+            }
+        }
+
+        /// <summary>
+        /// Approving the SPV lawyer's terms = voting for their candidacy in the listing's
+        /// SPV election (the only pre-settlement investor vote the program has; not voting
+        /// is the on-chain "reject"). Opens the confirmation sheet; the submit rides the
+        /// popup's ContinueRequested back to <see cref="ExecuteApproveSpvTermsAsync"/>.
+        /// </summary>
+        [RelayCommand]
+        public void ApproveSpvTerms()
+        {
+            var popupViewModel = DependencyService.Get<CastVotePopupViewModel>();
+            popupViewModel.VoteKind = "terms";
+            popupViewModel.IsApprove = true;
+            popupViewModel.ContinueRequested = ExecuteApproveSpvTermsAsync;
+            popupViewModel.IsVisible = true;
+        }
+
+        private async Task ExecuteApproveSpvTermsAsync()
+        {
+            var election = Governance?.SpvElection;
+            var candidacy = election?.LeadingCandidacy;
+            if (election is null || candidacy is null)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            var amount = Governance?.Holding?.Votable ?? 0;
+            if (amount < 1)
+            {
+                return;
+            }
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Approve SPV terms",
+                (voter, cluster, ct) => XcavateMarketplaceCallsModel.VoteOnSpvLawyerAsync(
+                    cluster, voter, ListingId, election.Round, candidacy.Lawyer, amount, ct));
+        }
+
+        /// <summary>
+        /// Yes/No on the letting seat's live spending proposal - same sheet, same flow.
+        /// </summary>
+        [RelayCommand]
+        public void ApproveProposal() => VoteOnProposal(true);
+
+        [RelayCommand]
+        public void RejectProposal() => VoteOnProposal(false);
+
+        private void VoteOnProposal(bool approve)
+        {
+            var popupViewModel = DependencyService.Get<CastVotePopupViewModel>();
+            popupViewModel.VoteKind = "proposal";
+            popupViewModel.IsApprove = approve;
+            popupViewModel.ContinueRequested = () => ExecuteVoteOnProposalAsync(approve);
+            popupViewModel.IsVisible = true;
+        }
+
+        private async Task ExecuteVoteOnProposalAsync(bool approve)
+        {
+            var proposal = Governance?.ActiveProposal;
+            if (proposal is null)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            var amount = Governance?.Holding?.Votable ?? 0;
+            if (amount < 1)
+            {
+                return;
+            }
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                (approve ? "Vote Yes" : "Vote No") + " on proposal",
+                (voter, cluster, ct) => XcavatePropertyCallsModel.VoteOnProposalAsync(
+                    cluster, voter, ListingDetails!.AssetId, proposal.ProposalId,
+                    approve ? XcavateVoteChoice.Yes : XcavateVoteChoice.No, amount, ct));
+        }
+
+        /// <summary>
+        /// Yes/No on the live challenge against the letting agent - Yes backs the
+        /// challenger (a slash + strike; three strikes remove the agent).
+        /// </summary>
+        [RelayCommand]
+        public void ApproveChallenge() => VoteOnChallenge(true);
+
+        [RelayCommand]
+        public void RejectChallenge() => VoteOnChallenge(false);
+
+        private void VoteOnChallenge(bool approve)
+        {
+            var popupViewModel = DependencyService.Get<CastVotePopupViewModel>();
+            popupViewModel.VoteKind = "challenge";
+            popupViewModel.IsApprove = approve;
+            popupViewModel.ContinueRequested = () => ExecuteVoteOnChallengeAsync(approve);
+            popupViewModel.IsVisible = true;
+        }
+
+        private async Task ExecuteVoteOnChallengeAsync(bool approve)
+        {
+            var challenge = Governance?.ActiveChallenge;
+            if (challenge is null)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            var amount = Governance?.Holding?.Votable ?? 0;
+            if (amount < 1)
+            {
+                return;
+            }
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                (approve ? "Vote Yes" : "Vote No") + " on challenge",
+                (voter, cluster, ct) => XcavatePropertyCallsModel.VoteOnChallengeAsync(
+                    cluster, voter, ListingDetails!.AssetId, challenge.ChallengeId,
+                    approve ? XcavateVoteChoice.Yes : XcavateVoteChoice.No, amount, ct));
+        }
+
         /// <summary>
         /// A confirmed marketplace transaction (a reserve, buy or claim) changed this
         /// listing's on-chain state, so the figures on screen - tokens still available,
@@ -396,6 +706,10 @@ namespace PlutoFramework.Components.XcavateProperty
                     TokensOwned = freshWrapper.TokensOwned;
                     SpvCreated = freshWrapper.SpvCreated;
                 });
+
+                // The vote sections ride the same refresh: the listing figures and the
+                // governance tallies always come from the same moment.
+                await RefreshVotingAsync(token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

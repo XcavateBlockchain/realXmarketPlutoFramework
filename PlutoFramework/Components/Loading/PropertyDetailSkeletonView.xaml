@@ -141,6 +141,13 @@
                     </Border>
                 </HorizontalStackLayout>
 
+                <!-- TermsVotingSectionView: the legal-phase voting banner may sit here. -->
+                <Border Style="{StaticResource SkeletonCell}" HeightRequest="90">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                    </Border.StrokeShape>
+                </Border>
+
                 <!-- "Developer" section header. -->
                 <Border Style="{StaticResource SkeletonBar}" HeightRequest="12" WidthRequest="100" HorizontalOptions="Start">
                     <Border.StrokeShape>

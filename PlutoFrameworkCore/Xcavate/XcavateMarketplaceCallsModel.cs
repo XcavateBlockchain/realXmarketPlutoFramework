@@ -126,6 +126,58 @@ namespace PlutoFramework.Model.Xcavate
             int Decimals);
 
         /// <summary>
+        /// vote_on_spv_lawyer for <paramref name="amount"/> shares: the investor's
+        /// share-weighted vote backing one candidacy in the listing's SPV-lawyer election -
+        /// the pre-settlement vote the property page surfaces as the "terms" approval. The
+        /// vote record's rent goes through the config's rent collector like every purchase
+        /// (the deployed program accepts any paying wallet, so the two-signer flow the
+        /// transaction model already runs for purchases covers this unchanged);
+        /// <paramref name="round"/> is the election's current round, read from the
+        /// indexer's listing row first — a stale round fails the record PDA's seed check.
+        /// First votes only: switching an existing vote to a different candidacy needs the
+        /// previous candidacy account, which the property page does not offer.
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> VoteOnSpvLawyerAsync(
+            SolanaCluster cluster,
+            string voter,
+            long listingId,
+            ulong round,
+            string candidate,
+            uint amount,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            var config = await GetConfigAsync(cluster, client, token).ConfigureAwait(false);
+
+            return
+            [
+                XcavateMarketplaceProgram.VoteOnSpvLawyer(
+                    programs,
+                    new PublicKey(voter),
+                    new PublicKey(config.RentCollector),
+                    (ulong)listingId,
+                    round,
+                    new PublicKey(candidate),
+                    previousCandidate: null,
+                    amount),
+            ];
+        }
+
+        /// <summary>
+        /// The marketplace program's config row (the rent collector's home), shared with
+        /// the property program's calls model: its votes pin their payer the same way.
+        /// </summary>
+        public static Task<IMarketplaceConfigInfo_MarketplaceConfig> GetMarketplaceConfigAsync(
+            SolanaCluster cluster,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+            return GetConfigAsync(cluster, client, token);
+        }
+
+        /// <summary>
         /// The program pins one payment mint and account per position ("later buys must
         /// use the same one, so every refund is a single transfer"), so an existing
         /// position dictates the route; only a first purchase gets to pick a mint.

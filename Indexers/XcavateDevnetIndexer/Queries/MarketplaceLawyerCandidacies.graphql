@@ -1,0 +1,19 @@
+# One listing's SPV-lawyer election candidacies with their running vote power (the
+# detail page's legal-phase voting section). The election's expiry, round and candidate
+# count ride the listing row itself (see MarketplaceListings' ListingParts fragment);
+# active-only rows - a losing candidacy closes when the election finalizes.
+#
+# `first`/`offset` are explicit like everywhere else: this indexer rejects defaults
+# on non-null variables.
+query MarketplaceLawyerCandidacies($listingId: I64!, $first: Int!, $offset: Int!) {
+  lawyerCandidacies(listingId: $listingId, active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      listingId
+      round
+      lawyer
+      costs
+      votePower
+    }
+  }
+}

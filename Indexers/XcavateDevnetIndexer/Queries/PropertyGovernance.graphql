@@ -1,0 +1,107 @@
+# The property program's post-settlement governance surface for one asset, read by
+# the detail page's voting sections: the letting seat (which election round and
+# which proposal/challenge ids are live), the spending proposals, the challenges
+# against the sitting agent, the caller's own votes, and the agent-election
+# candidacies with their tallies.
+#
+# `assetId` is the property program's asset id, which is the marketplace listing id
+# (the two id spaces coincide). `active: true` keeps only rows whose PDA is still
+# open - a finalized proposal's or challenge's account is closed, so it drops out
+# of these answers and the page stops showing it.
+#
+# `first`/`offset` are explicit like everywhere else: this indexer rejects defaults
+# on non-null variables.
+query PropertyLettingGovernance($assetId: I64!) {
+  propertyLettings(assetId: $assetId, active: true, first: 1, offset: 0) {
+    nodes {
+      assetId
+      agent
+      electionExpiry
+      electionCandidateCount
+      electionRound
+      electionQuorumBps
+      governanceActiveProposal
+      governanceActiveChallenge
+      governanceProposalCount
+      governanceChallengeCount
+    }
+  }
+}
+
+query PropertyProposals($assetId: I64!, $first: Int!, $offset: Int!) {
+  proposals(assetId: $assetId, active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      assetId
+      proposalId
+      proposer
+      amount
+      detailsHash
+      expiry
+      tallyYes
+      tallyNo
+      tallyAbstain
+      quorumBps
+      thresholdBps
+    }
+  }
+}
+
+query PropertyChallenges($assetId: I64!, $first: Int!, $offset: Int!) {
+  challenges(assetId: $assetId, active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      assetId
+      challengeId
+      challenger
+      agent
+      deposit
+      expiry
+      tallyYes
+      tallyNo
+      tallyAbstain
+      quorumBps
+    }
+  }
+}
+
+# The caller's own proposal/challenge votes. One account type sits behind both;
+# join `voteId` against the proposals/challenges answers to tell them apart.
+query PropertyGovVotes($assetId: I64!, $voter: String!, $first: Int!, $offset: Int!) {
+  govVotes(assetId: $assetId, voter: $voter, active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      assetId
+      voteId
+      voter
+      choice
+      power
+    }
+  }
+}
+
+query PropertyAgentCandidacies($assetId: I64!, $first: Int!, $offset: Int!) {
+  agentCandidacies(assetId: $assetId, active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      assetId
+      round
+      agent
+      votePower
+    }
+  }
+}
+
+# The caller's own agent-election vote (one per election round).
+query PropertyAgentVotes($assetId: I64!, $voter: String!, $first: Int!, $offset: Int!) {
+  agentVotes(assetId: $assetId, voter: $voter, active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      assetId
+      round
+      voter
+      choice
+      power
+    }
+  }
+}

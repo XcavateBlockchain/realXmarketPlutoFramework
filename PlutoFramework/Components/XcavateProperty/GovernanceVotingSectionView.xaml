@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<VerticalStackLayout xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                     x:Class="PlutoFramework.Components.XcavateProperty.GovernanceVotingSectionView"
+                     Spacing="12"
+                     IsVisible="{Binding GovernanceVoteIsVisible}">
+
+    <!-- The letting seat's live spending proposal -->
+    <Border Padding="15"
+            IsVisible="{Binding ProposalIsVisible}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}"
+            Stroke="{StaticResource CardBorderColor}"
+            StrokeThickness="{StaticResource CardBorderThickness}">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+        </Border.StrokeShape>
+
+        <VerticalStackLayout Spacing="8">
+            <Label Text="{Binding ProposalTitleText}"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            <Label Text="{Binding ProposalTalliesText}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+
+            <ProgressBar Progress="{Binding ProposalApproveRatio}"
+                         ProgressColor="{StaticResource Positive}"
+                         BackgroundColor="{StaticResource DangerousRed}"
+                         HeightRequest="8" />
+
+            <HorizontalStackLayout Spacing="4">
+                <Label Text="&#x23F1;"
+                       TextColor="{StaticResource Primary}"
+                       VerticalOptions="Center" />
+                <Label Text="{Binding ProposalTimeRemainingText}"
+                       TextColor="{StaticResource Primary}"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <buttons:BasicGrayButton Grid.Column="0"
+                                         Text="Vote No"
+                                         Command="{Binding RejectProposalCommand}" />
+                <buttons:ElevatedButton Grid.Column="1"
+                                        Text="Vote Yes"
+                                        Command="{Binding ApproveProposalCommand}" />
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+
+    <!-- The live challenge against the sitting letting agent -->
+    <Border Padding="15"
+            IsVisible="{Binding ChallengeIsVisible}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}"
+            Stroke="{StaticResource CardBorderColor}"
+            StrokeThickness="{StaticResource CardBorderThickness}">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+        </Border.StrokeShape>
+
+        <VerticalStackLayout Spacing="8">
+            <Label Text="{Binding ChallengeTitleText}"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            <Label Text="{Binding ChallengeTalliesText}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+
+            <ProgressBar Progress="{Binding ChallengeApproveRatio}"
+                         ProgressColor="{StaticResource Positive}"
+                         BackgroundColor="{StaticResource DangerousRed}"
+                         HeightRequest="8" />
+
+            <HorizontalStackLayout Spacing="4">
+                <Label Text="&#x23F1;"
+                       TextColor="{StaticResource Primary}"
+                       VerticalOptions="Center" />
+                <Label Text="{Binding ChallengeTimeRemainingText}"
+                       TextColor="{StaticResource Primary}"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <buttons:BasicGrayButton Grid.Column="0"
+                                         Text="Vote No"
+                                         Command="{Binding RejectChallengeCommand}" />
+                <buttons:ElevatedButton Grid.Column="1"
+                                        Text="Vote Yes"
+                                        Command="{Binding ApproveChallengeCommand}" />
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+</VerticalStackLayout>
