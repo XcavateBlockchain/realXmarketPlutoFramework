@@ -4,6 +4,9 @@ using PlutoFramework.Components.Buttons;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
+using PlutoFramework.Model.Xcavate;
+using System.Globalization;
+using System.Numerics;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
 
@@ -22,6 +25,23 @@ namespace PlutoFramework.Components.XcavateProperty
         private uint tokensOwned = 0;
 
         public string MaxValue => TokensOwned.ToString();
+
+        /// <summary>
+        /// The property asset id the relist_shares instruction is keyed by, set by the
+        /// detail page from the untruncated Solana record (its fallback is the listing
+        /// details' U32). The marketplace program derives the share mint from it, so the
+        /// truncated Substrate-era fields must never be the source here.
+        /// </summary>
+        public ulong AssetId { get; set; }
+
+        /// <summary>
+        /// The smallest asking price the marketplace program accepts, in human units -
+        /// <see cref="XcavateMarketplaceCallsModel.MinSharePriceQuote"/> at the 9-decimal
+        /// price scale (0.000001) - for the validation message.
+        /// </summary>
+        private static readonly string MinPricePerTokenText =
+            ((decimal)XcavateMarketplaceCallsModel.MinSharePriceQuote / 1_000_000_000m)
+                .ToString(CultureInfo.InvariantCulture);
 
         [ObservableProperty]
         private bool isVisible = false;
@@ -43,14 +63,14 @@ namespace PlutoFramework.Components.XcavateProperty
                 if (!uint.TryParse(Tokens, out var parsedTokens)
                     || parsedTokens <= 0
                     || parsedTokens > TokensOwned
-                    || !uint.TryParse(PricePerToken, out var parsedPrice)
+                    || !TryParsePrice(PricePerToken, out var parsedPrice)
                     || parsedPrice <= 0)
                 {
                     return "-";
                 }
 
-                var usd = parsedTokens * parsedPrice;
-                return ((double)usd).ToCurrencyString();
+                var total = parsedTokens * parsedPrice;
+                return total.ToCurrencyString();
             }
         }
 
@@ -60,9 +80,9 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public ButtonStateEnum ContinueButtonState => ErrorMessage == "" && Tokens != "" && PricePerToken != "" ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled;
 
-        // No asset picker to feed any more: the pallet's relist_shares extrinsic is gone
-        // and the Solana marketplace program has nothing to relist with - see
-        // ContinueAsync.
+        // The payment asset is not picked here: relist_shares prices the shares at the
+        // program's 9-decimal quote scale, and the mint a later purchase settles in is
+        // resolved from the marketplace config when that purchase is built.
         public EndpointEnum EndpointKey { get; set; } = EndpointEnum.None;
 
         public void SetToDefault()
@@ -73,6 +93,7 @@ namespace PlutoFramework.Components.XcavateProperty
             Tokens = "";
             ErrorMessage = "";
             TokensOwned = 0;
+            AssetId = 0;
             Metadata = null;
             ListingDetails = null;
             EndpointKey = EndpointEnum.None;
@@ -82,15 +103,74 @@ namespace PlutoFramework.Components.XcavateProperty
         public void Cancel() => SetToDefault();
 
         [RelayCommand]
-        public Task ContinueAsync()
+        public async Task ContinueAsync()
         {
-            // The pallet's relist_shares extrinsic has no successor in the Solana
-            // marketplace program (idls/devnet/marketplace.json has no share-relisting
-            // instruction), so this popup cannot submit anything yet.
-            ErrorMessage = "Relisting tokens is not available on the Solana marketplace yet.";
+            if (ListingDetails is null)
+            {
+                return;
+            }
 
-            return Task.CompletedTask;
+            // The form's own validation (FormChanged) has already said all of this;
+            // Continue re-checks so a stale button state can never submit a bad relist.
+            if (!uint.TryParse(Tokens, out var parsedTokens) || parsedTokens < 1 || parsedTokens > TokensOwned)
+            {
+                return;
+            }
+
+            if (!TryParsePrice(PricePerToken, out var parsedPrice))
+            {
+                return;
+            }
+
+            ulong quote;
+            try
+            {
+                quote = XcavateMarketplaceCallsModel.QuoteFromDecimal(parsedPrice);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // Non-positive prices and >9-decimal prices land here; both are the same
+                // user-facing mistake - a price the program's scale cannot represent.
+                ErrorMessage = "Price per token must be positive and have at most nine decimal places";
+
+                return;
+            }
+
+            if (quote < XcavateMarketplaceCallsModel.MinSharePriceQuote)
+            {
+                ErrorMessage = $"Price per token must be at least {MinPricePerTokenText}";
+
+                return;
+            }
+
+            // The program multiplies the price by the amount in u64; fail here with a
+            // readable reason rather than in the transaction pipeline with an overflow.
+            if ((BigInteger)quote * parsedTokens > ulong.MaxValue)
+            {
+                ErrorMessage = "That price and token amount together are too large";
+
+                return;
+            }
+
+            // Captured before SetToDefault resets the form.
+            var assetId = AssetId;
+
+            // Closed before submitting, like the buy popup: a Mobile Wallet Adapter key
+            // launches an intent and backgrounds the app, and coming back to a stale
+            // popup over a toast that already says "Submitting" reads as a relist that
+            // did not happen.
+            SetToDefault();
+
+            var description = parsedTokens == 1
+                ? "Relist 1 property token"
+                : $"Relist {parsedTokens} property tokens";
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                description,
+                (address, cluster, token) => XcavateMarketplaceCallsModel.RelistSharesAsync(
+                    address, cluster, assetId, parsedTokens, quote, token));
         }
+
         [RelayCommand]
         public void FormChanged()
         {
@@ -119,22 +199,21 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            if (parsedTokens > ListingDetails?.ListedTokens)
+            if (parsedTokens > TokensOwned)
             {
-                ErrorMessage = $"Tokens must be less than {ListingDetails.ListedTokens}";
+                ErrorMessage = $"Tokens must be less than {TokensOwned}";
 
                 return;
             }
 
-            uint pricePerToken;
-            if (!uint.TryParse(PricePerToken, out pricePerToken))
+            if (!TryParsePrice(PricePerToken, out var parsedPrice))
             {
                 ErrorMessage = "Price per token is not valid number";
 
                 return;
             }
 
-            if (pricePerToken < 1)
+            if (parsedPrice <= 0)
             {
                 ErrorMessage = "Price per token must be greater than 0";
                 return;
@@ -142,5 +221,14 @@ namespace PlutoFramework.Components.XcavateProperty
 
             ErrorMessage = "";
         }
+
+        /// <summary>
+        /// The asking price as a decimal, accepting both the device's own number format
+        /// and the invariant one - a UK price is typed with a point whatever the phone's
+        /// locale says.
+        /// </summary>
+        private static bool TryParsePrice(string text, out decimal price) =>
+            decimal.TryParse(text, NumberStyles.Number, CultureInfo.CurrentCulture, out price)
+            || decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out price);
     }
 }

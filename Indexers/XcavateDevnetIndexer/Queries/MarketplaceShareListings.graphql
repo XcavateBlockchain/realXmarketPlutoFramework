@@ -1,0 +1,53 @@
+# The noticeboard page's secondary-market feed: every active ShareListing, one page
+# at a time.
+#
+# `active: true` keeps only listings whose ShareListing PDA is still open on chain -
+# a fully bought or delisted one has nothing left to offer. The app groups the page
+# by `assetId` and joins each asset's primary listing itself (on-chain
+# asset_id == listing_id), so no asset join is asked of the indexer here.
+#
+# `first` and `offset` deliberately carry no GraphQL default: this indexer rejects a
+# default on a non-null variable outright ("Argument `first` has type `Int!` and is not
+# nullable, so it can't have a default value"). The caller passes both. Ordering is
+# fixed slot DESC server-side, and `first` is capped at 100.
+#
+# Both queries live in ONE file with the fragment they share, the same convention
+# MarketplaceListings.graphql documents: with the operations split across files the
+# StrawberryShake codegen's fragment type names become filesystem-order-dependent and
+# the build breaks non-deterministically. `MarketplaceShareListings` stays first.
+query MarketplaceShareListings($first: Int!, $offset: Int!) {
+  shareListings(active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      ...ShareListingParts
+    }
+  }
+}
+
+# One share listing, refetched fresh by its on-chain id (a separate id space from the
+# primary `listings`). No `active` filter on purpose: the caller learns a listing was
+# delisted or sold out from an empty or `active: false` answer rather than not being
+# told. `shareListingId` filters exactly, so `first: 1` is always the whole answer.
+query MarketplaceShareListing($shareListingId: I64!) {
+  shareListings(shareListingId: $shareListingId, first: 1, offset: 0) {
+    nodes {
+      ...ShareListingParts
+    }
+  }
+}
+
+fragment ShareListingParts on ShareListing {
+  id
+  shareListingId
+  assetId
+  seller
+  sharePrice
+  amount
+  feeBps
+  nextOfferNonce
+  rentPayer
+  active
+  closedAtSlot
+  slot
+  lamports
+}

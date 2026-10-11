@@ -296,6 +296,76 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// One page of the secondary market's active share listings - the noticeboard
+        /// feed's raw rows. The indexer's <c>id</c> is the ShareListing PDA; the I64
+        /// scalars arrive as JSON strings and are parsed invariant-culturally, like
+        /// everywhere else in this model. <paramref name="first"/> is capped at 100
+        /// server-side; ordering is fixed slot DESC.
+        /// </summary>
+        public static async Task<(IReadOnlyList<XcavateShareListingInfo> Items, int TotalCount)> GetMarketplaceShareListingsAsync(
+            SolanaCluster cluster,
+            int first,
+            int offset,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            var result = await client.MarketplaceShareListings
+                .ExecuteAsync(first, offset, token)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            var connection = result.Data?.ShareListings;
+
+            var items = connection?.Nodes
+                .Select(MapShareListing)
+                .ToList() ?? [];
+
+            return (items, connection?.TotalCount ?? 0);
+        }
+
+        /// <summary>
+        /// One share listing by its on-chain id (a separate id space from the primary
+        /// listings), in ANY active state - a delisted or sold-out listing reads as null
+        /// or inactive rather than hiding behind the feed's <c>active: true</c> filter.
+        /// </summary>
+        public static async Task<XcavateShareListingInfo?> GetShareListingAsync(
+            SolanaCluster cluster,
+            long shareListingId,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            var result = await client.MarketplaceShareListing
+                .ExecuteAsync(shareListingId.ToString(CultureInfo.InvariantCulture), token)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            var node = result.Data?.ShareListings.Nodes.FirstOrDefault();
+
+            return node is null ? null : MapShareListing(node);
+        }
+
+        /// <summary>
+        /// Maps one indexer ShareListing row onto the app's record. The fragment shares
+        /// its shape across the feed and single-listing operations, so one mapper serves
+        /// both - the same trick <see cref="MapListing"/> plays with
+        /// <c>IListingParts</c>.
+        /// </summary>
+        private static XcavateShareListingInfo MapShareListing(IShareListingParts node) =>
+            new(
+                Pda: node.Id,
+                ShareListingId: ParseInt64(node.ShareListingId),
+                AssetId: ParseInt64(node.AssetId),
+                Seller: node.Seller,
+                SharePriceQuote: ParseUInt64(node.SharePrice),
+                Amount: ToUInt32(node.Amount),
+                FeeBps: node.FeeBps,
+                RentPayer: node.RentPayer);
+
+        /// <summary>
         /// One listing refetched fresh for its detail page, with the share-owner
         /// dictionaries populated: the caller's open position under
         /// <c>OngoingObjectListingDetails.ShareOwners</c> (when
@@ -673,6 +743,11 @@ namespace PlutoFramework.Model.Xcavate
             return long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
         }
 
+        private static ulong ParseUInt64(string? value)
+        {
+            return ulong.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
+        }
+
         private static uint ToUInt32(string? value)
         {
             var parsed = ParseInt64(value);
@@ -815,4 +890,30 @@ namespace PlutoFramework.Model.Xcavate
             };
         }
     }
+
+    /// <summary>
+    /// One secondary-market share listing as the indexer reports it: a holder's offer of
+    /// <see cref="Amount"/> of their shares of asset <see cref="AssetId"/> at
+    /// <see cref="SharePriceQuote"/> per share (the 9-decimal price scale -
+    /// <see cref="XcavateMarketplaceIndexerModel.SharePriceDecimals"/>). This is the
+    /// indexer-side counterpart of the on-chain <see cref="XcavateShareListing"/> record:
+    /// the same account, read through the indexer for feeds and lookups instead of RPC.
+    /// </summary>
+    /// <param name="Pda">The ShareListing account's address (the indexer row's <c>id</c>).</param>
+    /// <param name="ShareListingId">The on-chain share-listing id - a separate id space from the primary listings.</param>
+    /// <param name="AssetId">The tokenised property's asset id (equal to its primary listing id).</param>
+    /// <param name="Seller">The wallet offering the shares.</param>
+    /// <param name="SharePriceQuote">The asking price per share, at the 9-decimal price scale.</param>
+    /// <param name="Amount">Shares still for sale; partial buys draw it down.</param>
+    /// <param name="FeeBps">The marketplace fee pinned at listing time, taken from the seller's proceeds.</param>
+    /// <param name="RentPayer">The wallet that fronted the account's rent, refunded at delist.</param>
+    public sealed record XcavateShareListingInfo(
+        string Pda,
+        long ShareListingId,
+        long AssetId,
+        string Seller,
+        ulong SharePriceQuote,
+        uint Amount,
+        int FeeBps,
+        string RentPayer);
 }

@@ -9,6 +9,7 @@
                     xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
                     xmlns:kilt="clr-namespace:PlutoFramework.Components.Kilt"
                     xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
+                    xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
                     xmlns:extrinsic="clr-namespace:PlutoFramework.Components.Extrinsic"
                     xmlns:webview="clr-namespace:PlutoFramework.Components.WebView"
                     xmlns:topnavigationbartemplate="clr-namespace:PlutoFramework.Templates.TopNavigationBarTemplate"
@@ -79,6 +80,11 @@
             <xcavate:UserProfileNotCreatedPopupView ZIndex="10" />
 
             <xcavate:NotWhitelistedPopupView ZIndex="10" />
+
+            <!-- Raised by the messenger dashboard's mauiMarketplace bridge: an agreed
+                 offer hands its buy (buyer) or reprice (seller) to native, and the
+                 messenger page that raises it hosts no popups of its own. -->
+            <xcavateproperty:BuyRelistedSharesPopupView ZIndex="10" />
 
             <!-- Above the full-screen loading overlay (ZIndex=20): the user must always be
                  able to enter a password, even while something is loading. -->

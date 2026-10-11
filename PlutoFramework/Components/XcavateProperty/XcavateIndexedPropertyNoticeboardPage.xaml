@@ -3,23 +3,80 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PlutoFramework.Components.XcavateProperty.XcavateIndexedPropertyNoticeboardPage"
              xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
+             xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
              xmlns:extrinsic="clr-namespace:PlutoFramework.Components.Extrinsic"
              xmlns:transfer="clr-namespace:PlutoFramework.Components.TransferView"
              xmlns:txanalyzer="clr-namespace:PlutoFramework.Components.TransactionAnalyzer"
              xmlns:transactionrequest="clr-namespace:PlutoFramework.Components.TransactionRequest"
              xmlns:assetselect="clr-namespace:PlutoFramework.Components.AssetSelect"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
+             xmlns:animations="clr-namespace:PlutoFramework.Components.Animations"
              Shell.PresentationMode="NotAnimated"
              BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}">
+
+    <!--
+        The Marketplace / Notice Board toggle is fixed chrome above the feed, so unlike
+        the marketplace page there is no scrolling header item. The skeleton and the
+        empty-state caption are still list items (NoticeboardFeedTemplateSelector), never
+        CollectionView.Header/Footer: on iOS those are hosted as UICollectionView
+        supplementary views, and self-sizing ones (MeasureAllItems) crash the page.
+        Each property card is the marketplace's own PropertyThumbnailView with a
+        secondary-market badge under it ("N tokens from £X/token"); tapping it opens the
+        ordinary property detail page carrying the cheapest share listing as its context.
+    -->
+    <ContentPage.Resources>
+        <xcavateproperty:NoticeboardFeedTemplateSelector x:Key="NoticeboardFeedTemplateSelector">
+            <xcavateproperty:NoticeboardFeedTemplateSelector.SkeletonTemplate>
+                <DataTemplate>
+                    <loading:SkeletonCardView />
+                </DataTemplate>
+            </xcavateproperty:NoticeboardFeedTemplateSelector.SkeletonTemplate>
+
+            <xcavateproperty:NoticeboardFeedTemplateSelector.EmptyStateTemplate>
+                <DataTemplate>
+                    <StackLayout HeightRequest="200">
+                        <Label Text="{Binding ViewModel.NoItemsMessage}"
+                               TextColor="#A6A6A6"
+                               HorizontalOptions="Center"
+                               Margin="20, 40, 20, 40"
+                               HorizontalTextAlignment="Center"/>
+                    </StackLayout>
+                </DataTemplate>
+            </xcavateproperty:NoticeboardFeedTemplateSelector.EmptyStateTemplate>
+
+            <xcavateproperty:NoticeboardFeedTemplateSelector.PropertyTemplate>
+                <DataTemplate>
+                    <VerticalStackLayout Spacing="0">
+                        <xcavateproperty:PropertyThumbnailView XcavateNftWrapper="{Binding Wrapper}"
+                                                               ShareListingContext="{Binding ShareListingContext}"
+                                                               Padding="20, 5, 20, 0" />
+                        <Border BackgroundColor="#223C4A74"
+                                StrokeThickness="0"
+                                Padding="10,6"
+                                Margin="20, 5, 20, 10"
+                                HorizontalOptions="Start"
+                                StrokeShape="RoundRectangle 8">
+                            <Label Text="{Binding BadgeText}"
+                                   FontSize="13"
+                                   TextColor="{AppThemeBinding Light=#3C4A74, Dark=#B9C4E0}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </xcavateproperty:NoticeboardFeedTemplateSelector.PropertyTemplate>
+        </xcavateproperty:NoticeboardFeedTemplateSelector>
+    </ContentPage.Resources>
+
     <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All">
 
         <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1" AbsoluteLayout.LayoutFlags="All"
               RowDefinitions="Auto,*"
-              Padding="20,20,20,120">
+              Padding="20,20,20,90">
             <Border Grid.Row="0"
                     Stroke="#C9CDD8"
                     StrokeThickness="1"
                     Padding="4"
+                    Margin="0,0,0,5"
                     HorizontalOptions="Center"
                     StrokeShape="RoundRectangle 26">
                 <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4">
@@ -54,13 +111,33 @@
                 </Grid>
             </Border>
 
-            <Label Grid.Row="1"
-                   Text="Not implemented yet."
-                   HorizontalOptions="Center"
-                   VerticalOptions="Center"
-                   FontSize="20"
-                   TextColor="{AppThemeBinding Light=#1F2430, Dark=White}" />
+            <RefreshView Grid.Row="1"
+                Command="{Binding RefreshCommand}"
+                RefreshColor="Transparent"
+                IsRefreshing="{Binding IsRefreshing}">
+
+                <RefreshView.Behaviors>
+                    <animations:PullProgressBehavior x:Name="noticeboardPullProgress" />
+                </RefreshView.Behaviors>
+
+                <CollectionView ItemSizingStrategy="MeasureAllItems"
+                        ItemsSource="{Binding FeedItems}"
+                        ItemTemplate="{StaticResource NoticeboardFeedTemplateSelector}"
+                        RemainingItemsThreshold="0"
+                        RemainingItemsThresholdReachedCommand="{Binding LoadMoreCommand}">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical"
+                                           ItemSpacing="0" />
+                    </CollectionView.ItemsLayout>
+                </CollectionView>
+            </RefreshView>
         </Grid>
+
+        <animations:ParticleStreamView AbsoluteLayout.LayoutBounds="0, 0, 1, 100"
+                                       AbsoluteLayout.LayoutFlags="XProportional,WidthProportional"
+                                       ParticleColor="{StaticResource Primary}"
+                                       Playing="{Binding IsRefreshing}"
+                                       PullProgress="{Binding Source={x:Reference noticeboardPullProgress}, Path=Progress}" />
 
         <extrinsic:ExtrinsicStatusStackLayout />
 

@@ -34,6 +34,9 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] WithdrawCancelledDiscriminator = [211, 39, 47, 234, 73, 113, 193, 59];
         private static readonly byte[] WithdrawLegalProcessExpiredDiscriminator = [64, 222, 8, 241, 156, 43, 91, 129];
         private static readonly byte[] VoteOnSpvLawyerDiscriminator = [245, 181, 143, 227, 83, 159, 141, 147];
+        private static readonly byte[] RelistSharesDiscriminator = [233, 196, 4, 160, 236, 180, 219, 12];
+        private static readonly byte[] DelistSharesDiscriminator = [75, 11, 92, 6, 15, 186, 201, 253];
+        private static readonly byte[] BuyRelistedSharesDiscriminator = [205, 204, 84, 12, 55, 204, 167, 234];
 
         // PDA seed prefixes, from the IDL's constants section.
         private static readonly byte[] ConfigSeed = Encoding.UTF8.GetBytes("config");
@@ -48,6 +51,17 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] ReservationSeed = Encoding.UTF8.GetBytes("reservation");
         private static readonly byte[] LawyerVoteSeed = Encoding.UTF8.GetBytes("lawyer-vote");
         private static readonly byte[] LawyerCandidacySeed = Encoding.UTF8.GetBytes("lawyer-candidate");
+        private static readonly byte[] ShareListingSeed = Encoding.UTF8.GetBytes("share-listing");
+
+        /// <summary>The marketplace program's own CPI signer seed - NOT the property
+        /// program's [b"cpi-auth"] PDA (<see cref="XcavatePropertyProgram.DeriveCpiAuth"/>).
+        /// buy_relisted_shares passes it so the property program's settle_income can verify
+        /// the caller is this program.</summary>
+        private static readonly byte[] CpiAuthSeed = Encoding.UTF8.GetBytes("cpi-auth");
+
+        // Property-program seeds the secondary-market buy crosses into (income settlement).
+        private static readonly byte[] IncomeSeed = Encoding.UTF8.GetBytes("income");
+        private static readonly byte[] CheckpointSeed = Encoding.UTF8.GetBytes("checkpoint");
 
         /// <summary>ROLE_SEED of the whitelist program, whose RoleAccount PDAs gate the calls.</summary>
         private static readonly byte[] RoleSeed = Encoding.UTF8.GetBytes("role");
@@ -120,6 +134,39 @@ namespace PlutoFramework.Model.Xcavate
 
             return SolanaProgramAddress.Derive(new(programs.Whitelist), RoleSeed, user.KeyBytes, [(byte)role]);
         }
+
+        /// <summary>
+        /// A holder's secondary-market offer: [b"share-listing", id LE] under the
+        /// marketplace program. The id is the config's next_share_listing_id at the moment
+        /// of relisting - monotonic, so delisting never frees an id for reuse.
+        /// </summary>
+        public static PublicKey DeriveShareListing(XcavateProgramSet programs, ulong shareListingId) =>
+            SolanaProgramAddress.Derive(new(programs.Marketplace), ShareListingSeed, U64(shareListingId));
+
+        /// <summary>
+        /// The marketplace program's own CPI signer PDA, [b"cpi-auth"] - what
+        /// buy_relisted_shares passes so the property program's settle_income recognizes
+        /// the marketplace as its caller. Not to be confused with the property program's
+        /// same-named PDA (<see cref="XcavatePropertyProgram.DeriveCpiAuth"/>).
+        /// </summary>
+        public static PublicKey DeriveCpiAuth(XcavateProgramSet programs) =>
+            SolanaProgramAddress.Derive(new(programs.Marketplace), CpiAuthSeed);
+
+        /// <summary>
+        /// The property program's per-asset income accumulator: [b"income", asset_id LE]
+        /// under the PROPERTY program. buy_relisted_shares passes the derived address even
+        /// when no income was ever distributed (the account may not exist yet).
+        /// </summary>
+        public static PublicKey DeriveIncome(XcavateProgramSet programs, ulong assetId) =>
+            SolanaProgramAddress.Derive(new(programs.Property), IncomeSeed, U64(assetId));
+
+        /// <summary>
+        /// One holder's income-settlement checkpoint: [b"checkpoint", asset_id LE, owner]
+        /// under the PROPERTY program - the property program settles both sides' unclaimed
+        /// income up to these checkpoints when relisted shares change hands.
+        /// </summary>
+        public static PublicKey DeriveIncomeCheckpoint(XcavateProgramSet programs, ulong assetId, PublicKey owner) =>
+            SolanaProgramAddress.Derive(new(programs.Property), CheckpointSeed, U64(assetId), owner.KeyBytes);
 
         /// <summary>
         /// buy_property_shares(listing_id, amount, max_total_cost): the direct purchase,
@@ -416,6 +463,151 @@ namespace PlutoFramework.Model.Xcavate
             PublicKey investorPaymentAccount,
             PublicKey paymentTokenProgram) =>
             Withdraw(WithdrawLegalProcessExpiredDiscriminator, programs, investor, listingId, rentCollector, paymentMint, investorPaymentAccount, paymentTokenProgram);
+
+        /// <summary>
+        /// relist_shares(asset_id, amount, share_price): the seller lists
+        /// <paramref name="amount"/> of their shares of asset <paramref name="assetId"/> on
+        /// the secondary market. The shares stay on the seller's holding (marked listed);
+        /// the new ShareListing account is initialized at
+        /// [b"share-listing", next_share_listing_id LE], so <paramref name="shareListingId"/>
+        /// must be the config's next_share_listing_id read fresh - a stale one fails the
+        /// program's seed check.
+        /// </summary>
+        /// <param name="payer">
+        /// The wallet fronting the new account's rent, recorded as the listing's
+        /// rent_payer and refunded at delist. The app sends the config's rent collector,
+        /// like on the purchase flow.
+        /// </param>
+        /// <param name="sharePrice">
+        /// The asking price per share at the program's 9-decimal price scale
+        /// (PRICE_DECIMALS); the program rejects anything under 1000.
+        /// </param>
+        public static TransactionInstruction RelistShares(
+            XcavateProgramSet programs,
+            PublicKey seller,
+            PublicKey payer,
+            ulong assetId,
+            uint amount,
+            ulong sharePrice,
+            ulong shareListingId)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(seller, true),
+                    AccountMeta.Writable(payer, true),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, seller, XcavateRole.RealEstateInvestor), false),
+                    AccountMeta.Writable(DeriveListing(programs, assetId), false),
+                    AccountMeta.Writable(DeriveHolding(programs, assetId, seller), false),
+                    AccountMeta.Writable(DeriveShareListing(programs, shareListingId), false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(RelistSharesDiscriminator, U64(assetId), U32(amount), U64(sharePrice)),
+            };
+        }
+
+        /// <summary>
+        /// delist_shares(): the seller takes their secondary-market listing down,
+        /// unmarking the shares on their holding and closing the ShareListing account -
+        /// its rent goes back to <paramref name="rentPayer"/>, the wallet that fronted it,
+        /// which the client reads from the ShareListing account first.
+        /// </summary>
+        public static TransactionInstruction DelistShares(
+            XcavateProgramSet programs,
+            PublicKey seller,
+            PublicKey rentPayer,
+            ulong shareListingId,
+            ulong assetId)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(seller, true),
+                    AccountMeta.Writable(rentPayer, false),
+                    AccountMeta.Writable(DeriveShareListing(programs, shareListingId), false),
+                    AccountMeta.Writable(DeriveHolding(programs, assetId, seller), false),
+                ],
+                Data = Encode(DelistSharesDiscriminator),
+            };
+        }
+
+        /// <summary>
+        /// buy_relisted_shares(asset_id, id, amount, max_total_cost): the secondary-market
+        /// purchase - <paramref name="amount"/> shares off an open ShareListing, paying the
+        /// seller their ask and the treasury the listing's pinned fee out of the seller's
+        /// proceeds (so unlike <see cref="BuyPropertyShares"/> the buyer pays exactly
+        /// share_price x amount, which is all <paramref name="maxTotalCost"/> caps). The
+        /// program settles both sides' property income to their checkpoints as part of the
+        /// transfer, which is what the property-program accounts are for.
+        /// </summary>
+        /// <param name="payer">
+        /// The wallet fronting rent for the buyer's new accounts (their holding is
+        /// init_if_needed). The app sends the config's rent collector, like on the
+        /// primary purchase.
+        /// </param>
+        /// <param name="seller">The listing's seller, read from the ShareListing account.</param>
+        /// <param name="rentPayer">The listing's rent_payer, read from the ShareListing account.</param>
+        /// <param name="treasury">The config's treasury, which receives the fee's token account.</param>
+        public static TransactionInstruction BuyRelistedShares(
+            XcavateProgramSet programs,
+            PublicKey buyer,
+            PublicKey payer,
+            ulong assetId,
+            ulong shareListingId,
+            uint amount,
+            ulong maxTotalCost,
+            PublicKey seller,
+            PublicKey rentPayer,
+            PublicKey paymentMint,
+            PublicKey buyerPaymentAccount,
+            PublicKey treasury,
+            PublicKey paymentTokenProgram)
+        {
+            var shareMint = DeriveShareMint(programs, assetId);
+
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(buyer, true),
+                    AccountMeta.Writable(payer, true),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, buyer, XcavateRole.RealEstateInvestor), false),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(DeriveListing(programs, assetId), false),
+                    AccountMeta.Writable(DeriveProperty(programs, assetId), false),
+                    AccountMeta.Writable(DeriveShareListing(programs, shareListingId), false),
+                    AccountMeta.Writable(seller, false),
+                    AccountMeta.Writable(rentPayer, false),
+                    AccountMeta.Writable(DeriveHolding(programs, assetId, seller), false),
+                    AccountMeta.Writable(DeriveHolding(programs, assetId, buyer), false),
+                    AccountMeta.Writable(paymentMint, false),
+                    AccountMeta.Writable(buyerPaymentAccount, false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(seller, paymentMint, paymentTokenProgram), false),
+                    AccountMeta.Writable(treasury, false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(treasury, paymentMint, paymentTokenProgram), false),
+                    AccountMeta.Writable(shareMint, false),
+                    AccountMeta.Writable(DeriveMintAuth(programs, assetId), false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(seller, shareMint, ShareTokenProgram), false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(buyer, shareMint, ShareTokenProgram), false),
+                    AccountMeta.Writable(DeriveCpiAuth(programs), false),
+                    AccountMeta.Writable(DeriveIncome(programs, assetId), false),
+                    AccountMeta.Writable(DeriveIncomeCheckpoint(programs, assetId, seller), false),
+                    AccountMeta.Writable(DeriveIncomeCheckpoint(programs, assetId, buyer), false),
+                    AccountMeta.Writable(new PublicKey(programs.Property), false),
+                    AccountMeta.Writable(paymentTokenProgram, false),
+                    AccountMeta.Writable(ShareTokenProgram, false),
+                    AccountMeta.Writable(AssociatedTokenAccountProgram.ProgramIdKey, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(BuyRelistedSharesDiscriminator, U64(assetId), U64(shareListingId), U32(amount), U64(maxTotalCost)),
+            };
+        }
 
         /// <summary>
         /// The three withdraw instructions share one account shape; only the

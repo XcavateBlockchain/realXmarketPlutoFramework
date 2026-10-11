@@ -26,6 +26,7 @@ public partial class X25519WebView
     private WalletJavascriptInterface? _javascriptInterface;
     private DownloadJavascriptInterface? _downloadInterface;
     private HeaderJavascriptInterface? _headerInterface;
+    private MarketplaceJavascriptInterface? _marketplaceInterface;
     private NativeDownloadListener? _downloadListener;
     private ScrollChangedListener? _scrollListener;
 
@@ -51,6 +52,10 @@ public partial class X25519WebView
         _headerInterface?.Dispose();
         _headerInterface = new HeaderJavascriptInterface(this);
         platformView.AddJavascriptInterface(_headerInterface, HeaderInterfaceName);
+
+        _marketplaceInterface?.Dispose();
+        _marketplaceInterface = new MarketplaceJavascriptInterface(this);
+        platformView.AddJavascriptInterface(_marketplaceInterface, MarketplaceInterfaceName);
 
         // Fallback for downloads the JS anchor hook can't see (e.g. a full-page
         // navigation to a Content-Disposition: attachment response).
@@ -96,6 +101,7 @@ public partial class X25519WebView
                 _nativeWebView.RemoveJavascriptInterface(ScriptInterfaceName);
                 _nativeWebView.RemoveJavascriptInterface(DownloadInterfaceName);
                 _nativeWebView.RemoveJavascriptInterface(HeaderInterfaceName);
+                _nativeWebView.RemoveJavascriptInterface(MarketplaceInterfaceName);
             }
             catch
             {
@@ -109,6 +115,8 @@ public partial class X25519WebView
         _downloadInterface = null;
         _headerInterface?.Dispose();
         _headerInterface = null;
+        _marketplaceInterface?.Dispose();
+        _marketplaceInterface = null;
         _downloadListener?.Dispose();
         _downloadListener = null;
         _nativeWebView = null;
@@ -530,6 +538,26 @@ public partial class X25519WebView
             if (_owner.TryGetTarget(out var view))
             {
                 view.EnqueueHeaderUpdate(json);
+            }
+        }
+    }
+
+    private sealed class MarketplaceJavascriptInterface : Java.Lang.Object
+    {
+        private readonly WeakReference<X25519WebView> _owner;
+
+        public MarketplaceJavascriptInterface(X25519WebView owner)
+        {
+            _owner = new(owner);
+        }
+
+        [JavascriptInterface]
+        [Export("postMessage")]
+        public void PostMessage(string json)
+        {
+            if (_owner.TryGetTarget(out var view))
+            {
+                view.EnqueueMarketplaceMessage(json);
             }
         }
     }

@@ -301,6 +301,8 @@
 
         <xcavateproperty:RelistPropertyTokensView />
 
+        <xcavateproperty:MakeOfferPopupView />
+
         <assetselect:AssetSelectView />
 
         <card:BottomPillBackgroundView />

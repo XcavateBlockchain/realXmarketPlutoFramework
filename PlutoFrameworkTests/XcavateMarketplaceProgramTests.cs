@@ -34,6 +34,9 @@ namespace PlutoFrameworkTests
         [TestCase("withdraw_cancelled")]
         [TestCase("withdraw_legal_process_expired")]
         [TestCase("vote_on_spv_lawyer")]
+        [TestCase("relist_shares")]
+        [TestCase("delist_shares")]
+        [TestCase("buy_relisted_shares")]
         public void Discriminators_MatchTheAnchorFormula(string instructionName)
         {
             var expected = SHA256.HashData(Encoding.UTF8.GetBytes($"global:{instructionName}"))[..8];
@@ -57,6 +60,14 @@ namespace PlutoFrameworkTests
                     Programs, SyntheticKey(1), 7, SyntheticKey(2), SyntheticKey(3), SyntheticKey(4), new PublicKey(SolanaTokenProgram.Legacy)),
                 "vote_on_spv_lawyer" => XcavateMarketplaceProgram.VoteOnSpvLawyer(
                     Programs, SyntheticKey(1), SyntheticKey(2), 7, 1, SyntheticKey(3), null, 5),
+                "relist_shares" => XcavateMarketplaceProgram.RelistShares(
+                    Programs, SyntheticKey(1), SyntheticKey(2), 7, 5, 10_000, 3),
+                "delist_shares" => XcavateMarketplaceProgram.DelistShares(
+                    Programs, SyntheticKey(1), SyntheticKey(2), 3, 7),
+                "buy_relisted_shares" => XcavateMarketplaceProgram.BuyRelistedShares(
+                    Programs, SyntheticKey(1), SyntheticKey(2), 7, 3, 5, 1_000,
+                    SyntheticKey(5), SyntheticKey(6), SyntheticKey(3), SyntheticKey(4), SyntheticKey(7),
+                    new PublicKey(SolanaTokenProgram.Legacy)),
                 _ => throw new ArgumentOutOfRangeException(nameof(instructionName)),
             };
 
@@ -294,6 +305,242 @@ namespace PlutoFrameworkTests
         public void SharePriceDecimals_IsNine()
         {
             Assert.That(XcavateMarketplaceIndexerModel.SharePriceDecimals, Is.EqualTo(9));
+        }
+
+        [Test]
+        public void SecondaryMarketInstructions_HaveTheIdlAccountShapes()
+        {
+            var seller = SyntheticKey(1);
+            var payer = SyntheticKey(2);
+            var buyer = SyntheticKey(3);
+            var mint = SyntheticKey(4);
+            var buyerPayment = SyntheticKey(5);
+            var rentPayer = SyntheticKey(6);
+            var treasury = SyntheticKey(7);
+            var legacyToken = new PublicKey(SolanaTokenProgram.Legacy);
+            var token2022 = new PublicKey(SolanaTokenProgram.Token2022);
+
+            var relist = XcavateMarketplaceProgram.RelistShares(Programs, seller, payer, 7, 5, 10_000, 3);
+            var delist = XcavateMarketplaceProgram.DelistShares(Programs, seller, rentPayer, 3, 7);
+            var buyRelisted = XcavateMarketplaceProgram.BuyRelistedShares(
+                Programs, buyer, payer, 7, 3, 5, 1_000, seller, rentPayer, mint, buyerPayment, treasury, legacyToken);
+
+            Assert.Multiple(() =>
+            {
+                // relist: seller, payer, config, seller_role, listing, holding,
+                // share_listing, system_program - 8 accounts, in IDL order.
+                Assert.That(relist.Keys, Has.Count.EqualTo(8));
+                Assert.That(relist.Keys[0].PublicKey, Is.EqualTo(seller.Key));
+                Assert.That(relist.Keys[0].IsSigner, Is.True);
+                Assert.That(relist.Keys[1].PublicKey, Is.EqualTo(payer.Key));
+                Assert.That(relist.Keys[1].IsSigner, Is.True);
+                Assert.That(relist.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveConfig(Programs).Key));
+                Assert.That(relist.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveRoleAccount(Programs, seller, XcavateRole.RealEstateInvestor).Key));
+                Assert.That(relist.Keys[4].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveListing(Programs, 7).Key));
+                Assert.That(relist.Keys[5].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveHolding(Programs, 7, seller).Key));
+                Assert.That(relist.Keys[6].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveShareListing(Programs, 3).Key));
+                Assert.That(relist.Keys[7].PublicKey, Is.EqualTo(SystemProgram.ProgramIdKey.Key));
+
+                // delist: seller, rent_payer, share_listing, holding - no args, no payer.
+                Assert.That(delist.Keys, Has.Count.EqualTo(4));
+                Assert.That(delist.Data, Has.Length.EqualTo(8));
+                Assert.That(delist.Keys[0].PublicKey, Is.EqualTo(seller.Key));
+                Assert.That(delist.Keys[0].IsSigner, Is.True);
+                Assert.That(delist.Keys[1].PublicKey, Is.EqualTo(rentPayer.Key));
+                Assert.That(delist.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveShareListing(Programs, 3).Key));
+                Assert.That(delist.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveHolding(Programs, 7, seller).Key));
+
+                // buy_relisted: the IDL's 29 accounts, in order.
+                Assert.That(buyRelisted.Keys, Has.Count.EqualTo(29));
+                Assert.That(buyRelisted.Keys[0].PublicKey, Is.EqualTo(buyer.Key));
+                Assert.That(buyRelisted.Keys[0].IsSigner, Is.True);
+                Assert.That(buyRelisted.Keys[1].PublicKey, Is.EqualTo(payer.Key));
+                Assert.That(buyRelisted.Keys[1].IsSigner, Is.True);
+
+                var shareMint = XcavateMarketplaceProgram.DeriveShareMint(Programs, 7);
+
+                Assert.That(buyRelisted.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveRoleAccount(Programs, buyer, XcavateRole.RealEstateInvestor).Key));
+                Assert.That(buyRelisted.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveConfig(Programs).Key));
+                Assert.That(buyRelisted.Keys[4].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveListing(Programs, 7).Key));
+                Assert.That(buyRelisted.Keys[5].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveProperty(Programs, 7).Key));
+                Assert.That(buyRelisted.Keys[6].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveShareListing(Programs, 3).Key));
+                Assert.That(buyRelisted.Keys[7].PublicKey, Is.EqualTo(seller.Key));
+                Assert.That(buyRelisted.Keys[8].PublicKey, Is.EqualTo(rentPayer.Key));
+                Assert.That(buyRelisted.Keys[9].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveHolding(Programs, 7, seller).Key));
+                Assert.That(buyRelisted.Keys[10].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveHolding(Programs, 7, buyer).Key));
+                Assert.That(buyRelisted.Keys[11].PublicKey, Is.EqualTo(mint.Key));
+                Assert.That(buyRelisted.Keys[12].PublicKey, Is.EqualTo(buyerPayment.Key));
+                Assert.That(buyRelisted.Keys[13].PublicKey, Is.EqualTo(
+                    SolanaAssociatedTokenAccount.Derive(seller, mint, legacyToken).Key));
+                Assert.That(buyRelisted.Keys[14].PublicKey, Is.EqualTo(treasury.Key));
+                Assert.That(buyRelisted.Keys[15].PublicKey, Is.EqualTo(
+                    SolanaAssociatedTokenAccount.Derive(treasury, mint, legacyToken).Key));
+                Assert.That(buyRelisted.Keys[16].PublicKey, Is.EqualTo(shareMint.Key));
+                Assert.That(buyRelisted.Keys[17].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveMintAuth(Programs, 7).Key));
+
+                // The share ATAs derive with the Token-2022 program id, not legacy.
+                Assert.That(buyRelisted.Keys[18].PublicKey, Is.EqualTo(
+                    SolanaAssociatedTokenAccount.Derive(seller, shareMint, token2022).Key));
+                Assert.That(buyRelisted.Keys[19].PublicKey, Is.EqualTo(
+                    SolanaAssociatedTokenAccount.Derive(buyer, shareMint, token2022).Key));
+
+                Assert.That(buyRelisted.Keys[20].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveCpiAuth(Programs).Key));
+                Assert.That(buyRelisted.Keys[21].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveIncome(Programs, 7).Key));
+                Assert.That(buyRelisted.Keys[22].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveIncomeCheckpoint(Programs, 7, seller).Key));
+                Assert.That(buyRelisted.Keys[23].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveIncomeCheckpoint(Programs, 7, buyer).Key));
+                Assert.That(buyRelisted.Keys[24].PublicKey, Is.EqualTo(Programs.Property));
+                Assert.That(buyRelisted.Keys[25].PublicKey, Is.EqualTo(legacyToken.Key));
+                Assert.That(buyRelisted.Keys[26].PublicKey, Is.EqualTo(token2022.Key));
+                Assert.That(buyRelisted.Keys[27].PublicKey, Is.EqualTo(AssociatedTokenAccountProgram.ProgramIdKey.Key));
+                Assert.That(buyRelisted.Keys[28].PublicKey, Is.EqualTo(SystemProgram.ProgramIdKey.Key));
+
+                // Every account in the message is writable: the deployed binary escalates
+                // the whole message (see the program class doc comment).
+                foreach (var instruction in new[] { relist, delist, buyRelisted })
+                {
+                    foreach (var key in instruction.Keys.Where(key => !key.IsSigner))
+                    {
+                        Assert.That(key.IsWritable, Is.True);
+                    }
+                }
+
+                Assert.That(delist.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
+            });
+        }
+
+        [Test]
+        public void RelistShares_EncodesArgsLittleEndian()
+        {
+            var instruction = XcavateMarketplaceProgram.RelistShares(
+                Programs,
+                seller: SyntheticKey(1),
+                payer: SyntheticKey(2),
+                assetId: 0x0102030405060708,
+                amount: 0x0A0B0C0D,
+                sharePrice: 0x1112131415161718,
+                shareListingId: 3);
+
+            // discriminator + u64 asset_id + u32 amount + u64 share_price
+            Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8 + 4 + 8));
+            Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+            Assert.That(instruction.Data[16..20], Is.EqualTo(new byte[] { 0x0D, 0x0C, 0x0B, 0x0A }));
+            Assert.That(instruction.Data[20..28], Is.EqualTo(new byte[] { 0x18, 0x17, 0x16, 0x15, 0x14, 0x13, 0x12, 0x11 }));
+        }
+
+        [Test]
+        public void BuyRelistedShares_EncodesArgsLittleEndian()
+        {
+            var instruction = XcavateMarketplaceProgram.BuyRelistedShares(
+                Programs,
+                buyer: SyntheticKey(1),
+                payer: SyntheticKey(2),
+                assetId: 0x0102030405060708,
+                shareListingId: 0x1112131415161718,
+                amount: 0x0A0B0C0D,
+                maxTotalCost: 0x2122232425262728,
+                seller: SyntheticKey(5),
+                rentPayer: SyntheticKey(6),
+                paymentMint: SyntheticKey(3),
+                buyerPaymentAccount: SyntheticKey(4),
+                treasury: SyntheticKey(7),
+                paymentTokenProgram: new PublicKey(SolanaTokenProgram.Legacy));
+
+            // discriminator + u64 asset_id + u64 id + u32 amount + u64 max_total_cost
+            Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8 + 8 + 4 + 8));
+            Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+            Assert.That(instruction.Data[16..24], Is.EqualTo(new byte[] { 0x18, 0x17, 0x16, 0x15, 0x14, 0x13, 0x12, 0x11 }));
+            Assert.That(instruction.Data[24..28], Is.EqualTo(new byte[] { 0x0D, 0x0C, 0x0B, 0x0A }));
+            Assert.That(instruction.Data[28..36], Is.EqualTo(new byte[] { 0x28, 0x27, 0x26, 0x25, 0x24, 0x23, 0x22, 0x21 }));
+        }
+
+        [Test]
+        public void SecondaryMarketPdas_DeriveUnderTheRightPrograms()
+        {
+            var owner = SyntheticKey(1);
+
+            // The share listing: [b"share-listing", id LE] under the marketplace program.
+            var expectedShareListing = SolanaProgramAddress.Derive(
+                new PublicKey(Programs.Marketplace),
+                Encoding.UTF8.GetBytes("share-listing"),
+                BitConverter.GetBytes(3UL));
+
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveShareListing(Programs, 3).Key,
+                Is.EqualTo(expectedShareListing.Key));
+
+            // The marketplace's own CPI signer, [b"cpi-auth"] under the marketplace
+            // program - NOT the property program's same-named PDA.
+            var expectedCpiAuth = SolanaProgramAddress.Derive(
+                new PublicKey(Programs.Marketplace),
+                Encoding.UTF8.GetBytes("cpi-auth"));
+
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveCpiAuth(Programs).Key,
+                Is.EqualTo(expectedCpiAuth.Key));
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveCpiAuth(Programs).Key,
+                Is.Not.EqualTo(XcavatePropertyProgram.DeriveCpiAuth(Programs).Key));
+
+            // The income accumulator: [b"income", asset_id LE] under the PROPERTY program.
+            var expectedIncome = SolanaProgramAddress.Derive(
+                new PublicKey(Programs.Property),
+                Encoding.UTF8.GetBytes("income"),
+                BitConverter.GetBytes(7UL));
+
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveIncome(Programs, 7).Key,
+                Is.EqualTo(expectedIncome.Key));
+
+            // The income checkpoint: [b"checkpoint", asset_id LE, owner] under the
+            // PROPERTY program.
+            var expectedCheckpoint = SolanaProgramAddress.Derive(
+                new PublicKey(Programs.Property),
+                Encoding.UTF8.GetBytes("checkpoint"),
+                BitConverter.GetBytes(7UL),
+                owner.KeyBytes);
+
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveIncomeCheckpoint(Programs, 7, owner).Key,
+                Is.EqualTo(expectedCheckpoint.Key));
+
+            // Derivation is deterministic, and keyed by every argument.
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveShareListing(Programs, 3).Key,
+                Is.EqualTo(XcavateMarketplaceProgram.DeriveShareListing(Programs, 3).Key));
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveShareListing(Programs, 4).Key,
+                Is.Not.EqualTo(XcavateMarketplaceProgram.DeriveShareListing(Programs, 3).Key));
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveIncomeCheckpoint(Programs, 7, SyntheticKey(2)).Key,
+                Is.Not.EqualTo(XcavateMarketplaceProgram.DeriveIncomeCheckpoint(Programs, 7, owner).Key));
+        }
+
+        [Test]
+        public void ConfigPda_IsTheAddressTheIdlDeploymentUses()
+        {
+            // The devnet Config account the task pins, confirmed live via getAccountInfo.
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveConfig(Programs).Key,
+                Is.EqualTo("FvypPqraGoYskTM9jiUywfsdfTeoqkXg2RdPHuw5S7aK"));
         }
 
         [Test]

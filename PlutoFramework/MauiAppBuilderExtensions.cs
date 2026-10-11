@@ -256,11 +256,17 @@ namespace PlutoFramework
 
             DependencyService.Register<XcavateIndexedPropertyMarketplaceViewModel>();
 
+            DependencyService.Register<XcavateIndexedPropertyNoticeboardViewModel>();
+
             DependencyService.Register<FullPageLoadingViewModel>();
 
             DependencyService.Register<OwnedPropertiesListViewModel>();
 
             DependencyService.Register<RelistPropertyTokensViewModel>();
+
+            DependencyService.Register<MakeOfferPopupViewModel>();
+
+            DependencyService.Register<BuyRelistedSharesPopupViewModel>();
 
             DependencyService.Register<XcavateNavigationBarViewModel>();
 
@@ -271,6 +277,8 @@ namespace PlutoFramework
             DependencyService.Register<UserProfileNotCreatedPopupViewModel>();
 
             DependencyService.Register<XcavateProfileService>();
+
+            DependencyService.Register<RealXmarketOfferClient>();
 
             DependencyService.Register<WebSignRawPopupViewModel>();
 
@@ -320,6 +328,8 @@ namespace PlutoFramework
                 DependencyService.Get<NoDidPopupViewModel>(),
                 DependencyService.Get<NoKYCPopupViewModel>(),
                 DependencyService.Get<RelistPropertyTokensViewModel>(),
+                DependencyService.Get<MakeOfferPopupViewModel>(),
+                DependencyService.Get<BuyRelistedSharesPopupViewModel>(),
                 DependencyService.Get<NotWhitelistedPopupViewModel>(),
                 DependencyService.Get<UserProfileNotCreatedPopupViewModel>(),
                 DependencyService.Get<WebSignRawPopupViewModel>(),

@@ -35,6 +35,7 @@ namespace PlutoFramework.Components.XcavateProperty
         RefundUnclaimed,
         RefundClaimed,
         Relist,
+        MakeOffer,
         Unknown
     }
 
@@ -102,6 +103,17 @@ namespace PlutoFramework.Components.XcavateProperty
             if (ListingDetails?.UnclaimedTokens == 0 && TokensOwned > 0)
             {
                 return MainActionStates.Relist;
+            }
+
+            // Opened from a secondary-market card and this wallet is not the seller: the
+            // primary lifecycle actions above all passed, so negotiating the listed
+            // shares is the action the page exists for. The seller keeps whatever their
+            // own position says (Relist when they still hold tokens) - offering on your
+            // own listing is meaningless.
+            if (HasShareListingContext
+                && !string.Equals(KeysModel.GetSolanaAddress(), ShareListingContext!.Seller, StringComparison.Ordinal))
+            {
+                return MainActionStates.MakeOffer;
             }
 
             if (!NftWrapper.ListingHasExpired && ListingDetails?.ListedTokens == 0 && TokensBought == 0 && TokensOwned == 0)
@@ -181,6 +193,22 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(ShowBuyMoreButtons))]
         [NotifyPropertyChangedFor(nameof(TokensAvailable))]
         private XcavateOngoingObjectListingDetails? listingDetails;
+
+        /// <summary>
+        /// The secondary-market share listing this page was opened from (the noticeboard's
+        /// cheapest active listing for the property); null when the page came from a
+        /// primary-market feed. Stored for the secondary-market actions (make an offer,
+        /// buy the listed shares) to build on - it carries the share-listing id, seller,
+        /// asking price and amount those flows are keyed by.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasShareListingContext))]
+        [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
+        [NotifyPropertyChangedFor(nameof(MainActionText))]
+        private XcavateShareListingContext? shareListingContext;
+
+        /// <summary>True when the page was opened from a secondary-market card.</summary>
+        public bool HasShareListingContext => ShareListingContext is not null;
 
         public double AreaPricesPercentage => PropertyModel.GetAreaPricesPercentage(Metadata?.Financials.PropertyPrice ?? 0);
         public double RentalDemandPercentage => PropertyModel.GetRentalDemand();
@@ -269,6 +297,7 @@ namespace PlutoFramework.Components.XcavateProperty
             MainActionStates.RefundUnclaimed => "Refund",
             MainActionStates.RefundClaimed => "Refund",
             MainActionStates.Relist => "Relist",
+            MainActionStates.MakeOffer => "Make offer",
             MainActionStates.Unknown => "Unknown",
             _ => "Unknown",
         };
@@ -287,6 +316,7 @@ namespace PlutoFramework.Components.XcavateProperty
             MainActionStates.RefundUnclaimed => ButtonStateEnum.Enabled,
             MainActionStates.RefundClaimed => ButtonStateEnum.Enabled,
             MainActionStates.Relist => ButtonStateEnum.Enabled,
+            MainActionStates.MakeOffer => ButtonStateEnum.Enabled,
             MainActionStates.Unknown => ButtonStateEnum.Disabled,
             _ => ButtonStateEnum.Disabled,
         };
@@ -302,6 +332,15 @@ namespace PlutoFramework.Components.XcavateProperty
         private long ListingId => NftWrapper?.NftBase is XcavateSolanaListingNft solanaListing
             ? solanaListing.ListingId
             : ListingDetails?.ItemId.Value ?? 0;
+
+        /// <summary>
+        /// The property asset id the secondary-market calls (relist_shares and its
+        /// siblings) are keyed by. Solana-sourced items carry it untruncated on the NFT
+        /// record; the Substrate-era fallback reads the listing details' U32.
+        /// </summary>
+        private long AssetId => NftWrapper?.NftBase is XcavateSolanaListingNft solanaListing
+            ? solanaListing.AssetId
+            : ListingDetails?.AssetId.Value ?? 0;
 
         /// <summary>
         /// True once this listing's claim window has closed: purchases then go through
@@ -662,7 +701,74 @@ namespace PlutoFramework.Components.XcavateProperty
         /// ones and must be re-read.
         /// </summary>
         private void OnMarketplaceTransactionConfirmed(object? sender, EventArgs e) =>
-            MainThread.BeginInvokeOnMainThread(() => _ = RefreshListingAsync(CancellationToken.None));
+            MainThread.BeginInvokeOnMainThread(() => _ = RefreshListingAndEnsureOffersNamespaceAsync());
+
+        /// <summary>
+        /// The confirmation handler's two follow-ups, ordered so the ownership figure the
+        /// namespace setup gates on is the post-transaction one.
+        /// </summary>
+        private async Task RefreshListingAndEnsureOffersNamespaceAsync()
+        {
+            await RefreshListingAsync(CancellationToken.None);
+            await EnsureOffersNamespaceAsync();
+        }
+
+        /// <summary>
+        /// Whether the offers-namespace setup already ran for this page instance. It is
+        /// attempted at most once per visit - it is signed, so it costs a prompt - and
+        /// the API makes the creation idempotent per (asset, cluster), while the offer
+        /// flow retries it lazily when an offer is actually made.
+        /// </summary>
+        private bool offersNamespaceEnsured;
+
+        /// <summary>
+        /// Makes sure this property has its offers namespace on the profile API (named
+        /// "&lt;property&gt; offers", idempotent per asset and cluster), so a property
+        /// whose shares hit the secondary market has somewhere for buyers' offers to
+        /// land. Runs after a confirmed marketplace transaction - the relist that opens
+        /// the secondary market is one - for a wallet that owns tokens, the only wallet
+        /// that can relist.
+        /// </summary>
+        /// <remarks>
+        /// Strictly best-effort: a declined signing prompt or an API failure is logged
+        /// and swallowed, NEVER surfaced as a failure of the transaction that just
+        /// confirmed - the make-offer flow retries the creation lazily at offer time.
+        /// </remarks>
+        private async Task EnsureOffersNamespaceAsync()
+        {
+            if (offersNamespaceEnsured)
+            {
+                return;
+            }
+
+            // Only Solana-sourced items carry the asset id the API keys the namespace
+            // on; an ownerless or undeployed cluster has nothing to set up either.
+            if (TokensOwned == 0
+                || NftWrapper?.NftBase is not XcavateSolanaListingNft
+                || string.IsNullOrWhiteSpace(Metadata?.PropertyName)
+                || !XcavateDeploymentModel.IsDeployed(SolanaNetworkModel.SelectedCluster))
+            {
+                return;
+            }
+
+            offersNamespaceEnsured = true;
+
+            try
+            {
+                await DependencyService.Get<RealXmarketOfferClient>().CreateOffersNamespaceAsync(
+                    Metadata.PropertyName,
+                    AssetId,
+                    SolanaNetworkModel.SelectedCluster,
+                    CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                // Best-effort by design: the relist itself already succeeded on chain,
+                // and the namespace creation is retried lazily at offer time.
+                Console.WriteLine("Failed to set up the property's offers namespace (retried lazily at offer time): ");
+                Console.WriteLine(ex);
+            }
+        }
 
         /// <summary>
         /// Re-reads this listing from the Xcavate indexer and re-applies it to the page.
@@ -746,6 +852,12 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 case MainActionStates.RefundClaimed:
                     return RefundClaimedAsync();
+
+                case MainActionStates.Relist:
+                    return RelistAsync();
+
+                case MainActionStates.MakeOffer:
+                    return MakeOfferAsync();
 
             }
 
@@ -951,6 +1063,52 @@ namespace PlutoFramework.Components.XcavateProperty
             viewModel.IsVisible = true;
             viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper!.NftBase.Type);
             viewModel.TokensOwned = TokensOwned;
+            viewModel.AssetId = (ulong)AssetId;
+        }
+
+        /// <summary>
+        /// The secondary-market counterpart of <see cref="BuyAsync"/>: the wallet is not
+        /// the seller of the listing this page was opened from, so instead of a purchase
+        /// form it gets the offer form - the price the buyer would pay per token
+        /// (prefilled with the ask) and the amount, which the popup turns into the offer
+        /// bucket the negotiation lives in.
+        /// </summary>
+        [RelayCommand]
+        public async Task MakeOfferAsync()
+        {
+            if (ShareListingContext is null)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            var viewModel = DependencyService.Get<MakeOfferPopupViewModel>();
+
+            viewModel.Metadata = Metadata;
+            viewModel.ShareListingContext = ShareListingContext;
+            viewModel.PricePerToken = XcavateQuoteFormatter
+                .QuoteToPounds(ShareListingContext.SharePriceQuote)
+                .ToString(System.Globalization.CultureInfo.InvariantCulture);
+            viewModel.IsVisible = true;
         }
 
         [ObservableProperty]

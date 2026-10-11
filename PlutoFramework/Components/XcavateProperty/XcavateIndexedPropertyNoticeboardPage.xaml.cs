@@ -4,7 +4,10 @@ namespace PlutoFramework.Components.XcavateProperty;
 
 public partial class XcavateIndexedPropertyNoticeboardPage : ContentPage
 {
+    private readonly XcavateIndexedPropertyNoticeboardViewModel viewModel;
     private readonly PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel navigationBarViewModel;
+    private CancellationTokenSource? initializationCts;
+    private bool isInitialized;
 
     public XcavateIndexedPropertyNoticeboardPage()
     {
@@ -13,7 +16,9 @@ public partial class XcavateIndexedPropertyNoticeboardPage : ContentPage
 
         InitializeComponent();
 
+        viewModel = DependencyService.Get<XcavateIndexedPropertyNoticeboardViewModel>();
         navigationBarViewModel = DependencyService.Get<PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel>();
+        BindingContext = viewModel;
     }
 
     protected override bool OnBackButtonPressed()
@@ -23,13 +28,44 @@ public partial class XcavateIndexedPropertyNoticeboardPage : ContentPage
         return PopupManager.TryCloseTopPopup() || base.OnBackButtonPressed();
     }
 
+    protected override void OnDisappearing()
+    {
+        initializationCts?.Cancel();
+        initializationCts?.Dispose();
+        initializationCts = null;
+
+        viewModel.CancelPendingOperations();
+        base.OnDisappearing();
+    }
+
     protected override async void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
 
-        await Task.Delay(100);
+        if (isInitialized)
+        {
+            return;
+        }
 
-        navigationBarViewModel.Selected = PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel.XcavateNavigationBarSelection.Marketplace;
+        isInitialized = true;
+
+        initializationCts?.Cancel();
+        initializationCts?.Dispose();
+        initializationCts = new CancellationTokenSource();
+        var token = initializationCts.Token;
+
+        try
+        {
+            await Task.Delay(100, token);
+
+            navigationBarViewModel.Selected = PlutoFramework.Components.Xcavate.XcavateNavigationBarViewModel.XcavateNavigationBarSelection.Marketplace;
+
+            await viewModel.InitialLoadAsync(token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Page disappeared while initialization work was running.
+        }
     }
 
     private async void OnMarketplaceTapped(object? sender, TappedEventArgs e)

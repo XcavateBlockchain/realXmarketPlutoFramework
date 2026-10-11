@@ -167,7 +167,7 @@ namespace PlutoFramework.Components.XcavateProperty
             };
         }
 
-        public static async Task NavigateToPropertyDetailPageAsync(XcavateNftWrapper nft, CancellationToken token)
+        public static async Task NavigateToPropertyDetailPageAsync(XcavateNftWrapper nft, CancellationToken token, XcavateShareListingContext? shareListingContext = null)
         {
             // The page pushes instantly with its skeleton showing (IsLoading defaults to
             // true); the details load in the background and the skeleton swaps to the
@@ -181,6 +181,9 @@ namespace PlutoFramework.Components.XcavateProperty
                 TokensBought = nft.TokensBought,
                 TokensOwned = nft.TokensOwned,
                 SpvCreated = nft.SpvCreated,
+                // Secondary-market context when the card came from the noticeboard; null
+                // for the primary-market feeds, where the page is a plain listing view.
+                ShareListingContext = shareListingContext,
             };
 
             await MainThread.InvokeOnMainThreadAsync(async () => await NavigationModel.PushAsync(new PropertyDetailPage(viewModel)));

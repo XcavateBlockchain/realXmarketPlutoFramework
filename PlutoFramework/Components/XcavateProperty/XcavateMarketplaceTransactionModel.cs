@@ -36,7 +36,21 @@ namespace PlutoFramework.Components.XcavateProperty
         /// session-wide singleton list view models (investor main page, marketplace) never
         /// unsubscribe because nothing ever disposes them anyway.
         /// </remarks>
-        public static event EventHandler? TransactionConfirmed;
+        public static event EventHandler<MarketplaceTransactionConfirmedEventArgs>? TransactionConfirmed;
+
+        /// <summary>
+        /// Raised when a submission fails with an exception - including the build
+        /// callback's own rejections (insufficient balance, stale listing), which carry
+        /// user-presentable messages. The status popup remains the global report; this
+        /// lets the flow that started the submission surface the same reason in place.
+        /// </summary>
+        /// <remarks>
+        /// Same static-event lifetime warning as <see cref="TransactionConfirmed"/>. The
+        /// early-return failures (no account, undeployed cluster, too many signers) do
+        /// NOT raise it: they are configuration problems the status popup covers, not
+        /// form-correctable rejections.
+        /// </remarks>
+        public static event EventHandler<MarketplaceSubmissionFailedEventArgs>? SubmissionFailed;
 
         /// <summary>
         /// Builds and submits one marketplace transaction.
@@ -165,10 +179,13 @@ namespace PlutoFramework.Components.XcavateProperty
                 // The per-transaction callback raises the marketplace-scoped event: a
                 // reserve, buy or claim that lands changes every listing figure on screen,
                 // while a plain transfer (which only the tracker's own event reports) must
-                // not cost the property pages a re-query.
+                // not cost the property pages a re-query. The args carry the signature so
+                // follow-up writes (the purchased status message) can name the
+                // transaction they report.
                 _ = SolanaTransactionTracker.TrackAsync(
                     signature, cluster, info, CancellationToken.None,
-                    onConfirmed: _ => TransactionConfirmed?.Invoke(null, EventArgs.Empty));
+                    onConfirmed: _ => TransactionConfirmed?.Invoke(
+                        null, new MarketplaceTransactionConfirmedEventArgs(signature, cluster)));
             }
             catch (Exception ex)
             {
@@ -179,6 +196,11 @@ namespace PlutoFramework.Components.XcavateProperty
                 info.Status = SolanaTransactionStatus.Error;
                 info.ErrorMessage = SolanaSubmissionErrorDescriber.Describe(
                     ex.Message, SolanaProgramErrorCatalogs.Get(cluster), info.InstructionProgramIds);
+
+                // The origin flow hears about it too, with the raw exception: a build
+                // rejection (balance, staleness) is form-correctable, and the form it
+                // came from is where the user can correct it.
+                SubmissionFailed?.Invoke(null, new MarketplaceSubmissionFailedEventArgs(ex));
             }
         }
 
@@ -268,5 +290,30 @@ namespace PlutoFramework.Components.XcavateProperty
             return SolanaTransactionFramer.ApplySignature(
                 parsed, rentCollectorSlot, rentCollectorSignature);
         }
+    }
+
+    /// <summary>
+    /// What a confirmed marketplace transaction is: its submission signature and the
+    /// cluster it landed on. The signature is what the buy flow's purchased-status
+    /// message reports as its <c>tx</c>.
+    /// </summary>
+    public sealed class MarketplaceTransactionConfirmedEventArgs(string signature, SolanaCluster cluster) : EventArgs
+    {
+        /// <summary>The confirmed transaction's base58 signature.</summary>
+        public string Signature { get; } = signature;
+
+        /// <summary>The cluster the transaction confirmed on.</summary>
+        public SolanaCluster Cluster { get; } = cluster;
+    }
+
+    /// <summary>
+    /// A failed marketplace submission: the raw exception, so the origin flow can decide
+    /// which failures its form can correct (the build's <see cref="InvalidOperationException"/>s)
+    /// and which only the status popup should report.
+    /// </summary>
+    public sealed class MarketplaceSubmissionFailedEventArgs(Exception exception) : EventArgs
+    {
+        /// <summary>The exception that failed the build, signing or submission.</summary>
+        public Exception Exception { get; } = exception;
     }
 }

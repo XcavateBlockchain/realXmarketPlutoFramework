@@ -39,6 +39,12 @@ namespace PlutoFramework.Model.Xcavate
     public static class XcavateMarketplaceCallsModel
     {
         /// <summary>
+        /// The smallest asking price relist_shares accepts, at the 9-decimal price scale -
+        /// the program rejects anything below it.
+        /// </summary>
+        public const ulong MinSharePriceQuote = 1_000;
+
+        /// <summary>
         /// reserve_shares for <paramref name="amount"/> shares of listing
         /// <paramref name="listingId"/> - the sale-phase purchase behind the Reserve button.
         /// The deployed program pins the rent-fronting payer to the config's rent
@@ -163,6 +169,289 @@ namespace PlutoFramework.Model.Xcavate
                     previousCandidate: null,
                     amount),
             ];
+        }
+
+        /// <summary>
+        /// relist_shares: the seller lists <paramref name="amount"/> of their shares of
+        /// asset <paramref name="assetId"/> on the secondary market at
+        /// <paramref name="sharePriceQuote"/> per share (9-decimal price scale - build it
+        /// with <see cref="QuoteFromDecimal"/>). The new ShareListing account's id is the
+        /// config's next_share_listing_id, read fresh from the chain so the PDA seed check
+        /// lands. Rent for the new account goes through the config's rent collector, like
+        /// every purchase, so the transaction needs its signature next to the seller's
+        /// (see the class remarks).
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> RelistSharesAsync(
+            string address,
+            SolanaCluster cluster,
+            ulong assetId,
+            uint amount,
+            ulong sharePriceQuote,
+            CancellationToken token = default)
+        {
+            ValidateRelistArgs(amount, sharePriceQuote);
+
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var config = await XcavateMarketplaceConfigModel.GetConfigAsync(cluster, token).ConfigureAwait(false);
+
+            return
+            [
+                XcavateMarketplaceProgram.RelistShares(
+                    programs,
+                    new PublicKey(address),
+                    payer: config.RentCollector,
+                    assetId,
+                    amount,
+                    sharePriceQuote,
+                    config.NextShareListingId),
+            ];
+        }
+
+        /// <summary>
+        /// Reprices an open secondary-market listing: delist_shares + relist_shares as ONE
+        /// instruction list, so the caller frames them in a single transaction and the
+        /// listing never sits unlisted between the two. The ShareListing account is read
+        /// first - delist needs its rent_payer for the rent refund - and the relist takes
+        /// the config's next_share_listing_id (monotonic, so the delisted id cannot
+        /// collide with the new one).
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> DelistAndRelistAsync(
+            string address,
+            SolanaCluster cluster,
+            ulong shareListingId,
+            ulong assetId,
+            ulong newSharePriceQuote,
+            uint newAmount,
+            CancellationToken token = default)
+        {
+            ValidateRelistArgs(newAmount, newSharePriceQuote);
+
+            var programs = XcavateProgramAddresses.Require(cluster);
+
+            var shareListing = await XcavateShareListingModel.GetShareListingAsync(cluster, shareListingId, token)
+                .ConfigureAwait(false);
+
+            if (shareListing.AssetId != assetId)
+            {
+                throw new InvalidOperationException(
+                    $"Share listing {shareListingId} is for asset {shareListing.AssetId}, not {assetId}.");
+            }
+
+            if (shareListing.Seller.Key != address)
+            {
+                throw new InvalidOperationException(
+                    $"Share listing {shareListingId} belongs to a different seller.");
+            }
+
+            var config = await XcavateMarketplaceConfigModel.GetConfigAsync(cluster, token).ConfigureAwait(false);
+
+            var seller = new PublicKey(address);
+
+            return
+            [
+                XcavateMarketplaceProgram.DelistShares(
+                    programs,
+                    seller,
+                    shareListing.RentPayer,
+                    shareListingId,
+                    assetId),
+                XcavateMarketplaceProgram.RelistShares(
+                    programs,
+                    seller,
+                    payer: config.RentCollector,
+                    assetId,
+                    newAmount,
+                    newSharePriceQuote,
+                    config.NextShareListingId),
+            ];
+        }
+
+        /// <summary>
+        /// buy_relisted_shares: buys <paramref name="amount"/> shares off the open
+        /// secondary-market listing <paramref name="shareListingId"/>. Seller, ask price
+        /// and rent payer come from the ShareListing account itself (fresh, so the cap
+        /// reflects the listing as it is now); the payment mint is
+        /// <paramref name="paymentMintPreference"/> when given - and must be one the
+        /// config accepts - else the first whitelisted-and-accepted mint, exactly how the
+        /// primary purchase picks. The buyer pays exactly share_price x amount (the fee
+        /// comes out of the seller's proceeds), scaled to the payment mint's decimals by
+        /// decimal count alone, plus one base unit of headroom for the program's floor
+        /// division.
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> BuyRelistedSharesAsync(
+            string address,
+            SolanaCluster cluster,
+            ulong assetId,
+            ulong shareListingId,
+            uint amount,
+            string? paymentMintPreference = null,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+
+            var shareListing = await XcavateShareListingModel.GetShareListingAsync(cluster, shareListingId, token)
+                .ConfigureAwait(false);
+
+            if (shareListing.AssetId != assetId)
+            {
+                throw new InvalidOperationException(
+                    $"Share listing {shareListingId} is for asset {shareListing.AssetId}, not {assetId}.");
+            }
+
+            if (amount == 0 || amount > shareListing.Amount)
+            {
+                throw new InvalidOperationException(
+                    $"Share listing {shareListingId} has {shareListing.Amount} shares for sale; cannot buy {amount}.");
+            }
+
+            if (shareListing.Seller.Key == address)
+            {
+                throw new InvalidOperationException("A wallet cannot buy its own share listing.");
+            }
+
+            var config = await XcavateMarketplaceConfigModel.GetConfigAsync(cluster, token).ConfigureAwait(false);
+
+            var paymentMint = paymentMintPreference is not null
+                ? new PublicKey(paymentMintPreference)
+                : PickPaymentMint(cluster, [.. config.AcceptedPaymentMints.Select(mint => mint.Key)]);
+
+            if (!config.AcceptedPaymentMints.Any(mint => mint.Key == paymentMint.Key))
+            {
+                throw new InvalidOperationException(
+                    $"The marketplace config does not accept {paymentMint.Key} as a payment mint.");
+            }
+
+            var (paymentTokenProgram, decimals) = await ResolveMintAsync(cluster, paymentMint, token).ConfigureAwait(false);
+
+            var buyer = new PublicKey(address);
+            var buyerPaymentAccount = SolanaAssociatedTokenAccount.Derive(buyer, paymentMint, paymentTokenProgram);
+
+            // Fail here with the real reason rather than on chain with a raw account error.
+            if (await SolanaRpcModel.GetAccountInfoAsync(cluster, buyerPaymentAccount.Key, token).ConfigureAwait(false) is null)
+            {
+                throw new InvalidOperationException(
+                    $"This wallet holds no {DescribeMint(cluster, paymentMint)} to pay with.");
+            }
+
+            var funds = (BigInteger)shareListing.SharePrice * amount;
+
+            if (funds > ulong.MaxValue)
+            {
+                throw new OverflowException("The total cost does not fit the program's u64 argument.");
+            }
+
+            // One extra base unit covers the program's floor division when the price
+            // scale converts down to fewer mint decimals.
+            var maxTotalCost = ScaleQuoteToMint((ulong)funds, decimals) + 1;
+
+            return
+            [
+                XcavateMarketplaceProgram.BuyRelistedShares(
+                    programs,
+                    buyer,
+                    payer: config.RentCollector,
+                    assetId,
+                    shareListingId,
+                    amount,
+                    maxTotalCost,
+                    seller: shareListing.Seller,
+                    rentPayer: shareListing.RentPayer,
+                    paymentMint,
+                    buyerPaymentAccount,
+                    treasury: config.Treasury,
+                    paymentTokenProgram),
+            ];
+        }
+
+        /// <summary>
+        /// The guards every relist path shares: a nonzero amount, an asking price the
+        /// program accepts (>= <see cref="MinSharePriceQuote"/>), and a total that fits
+        /// the program's u64 arithmetic.
+        /// </summary>
+        private static void ValidateRelistArgs(uint amount, ulong sharePriceQuote)
+        {
+            if (amount == 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(amount), amount, "Cannot relist zero shares.");
+            }
+
+            if (sharePriceQuote < MinSharePriceQuote)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sharePriceQuote), sharePriceQuote,
+                    $"The share price must be at least {MinSharePriceQuote} quote units (9-decimal scale).");
+            }
+
+            if ((BigInteger)sharePriceQuote * amount > ulong.MaxValue)
+            {
+                throw new OverflowException("The relist total (share price x amount) does not fit the program's u64.");
+            }
+        }
+
+        /// <summary>
+        /// A human-denominated price per share as the program's 9-decimal quote units.
+        /// Rejects non-positive prices, prices with more than nine decimal places (a
+        /// silent truncation would misquote the listing) and prices that overflow u64.
+        /// </summary>
+        public static ulong QuoteFromDecimal(decimal price)
+        {
+            if (price <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(price), price, "The share price must be positive.");
+            }
+
+            // Guard before multiplying: a decimal this large overflows decimal itself at
+            // the 9-decimal scaling, let alone u64.
+            if (price > ulong.MaxValue / 1_000_000_000m)
+            {
+                throw new ArgumentOutOfRangeException(nameof(price), price,
+                    "The share price does not fit the program's u64 argument.");
+            }
+
+            var quote = price * 1_000_000_000m;
+
+            if (quote != decimal.Floor(quote))
+            {
+                throw new ArgumentOutOfRangeException(nameof(price), price,
+                    "The share price has more than nine decimal places.");
+            }
+
+            return (ulong)quote;
+        }
+
+        /// <summary>
+        /// Rescales a quote from the program's 9-decimal price scale to the payment
+        /// mint's base units by decimal count alone, rounding DOWN (the program's own
+        /// floor semantics) - callers capping a cost add their own headroom. This is the
+        /// relisted-shares counterpart to <see cref="ScaleToMintDecimals"/>, which rounds
+        /// up for the primary purchase's conservative cap.
+        /// </summary>
+        public static ulong ScaleQuoteToMint(ulong quote, int mintDecimals)
+        {
+            if (mintDecimals < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(mintDecimals), mintDecimals,
+                    "A mint cannot have a negative decimal count.");
+            }
+
+            var shift = mintDecimals - XcavateMarketplaceIndexerModel.SharePriceDecimals;
+
+            if (shift == 0)
+            {
+                return quote;
+            }
+
+            if (shift > 0)
+            {
+                var scaled = (BigInteger)quote * BigInteger.Pow(10, shift);
+
+                return scaled <= ulong.MaxValue
+                    ? (ulong)scaled
+                    : throw new OverflowException("The scaled quote does not fit the program's u64 argument.");
+            }
+
+            var divisor = (ulong)BigInteger.Pow(10, -shift);
+
+            return quote / divisor;
         }
 
         /// <summary>
@@ -398,19 +687,24 @@ namespace PlutoFramework.Model.Xcavate
         /// knows (so the user can actually see and hold it), else the first accepted mint.
         /// <paramref name="acceptedPaymentMintsJson"/> is the config's raw JSON list.
         /// </summary>
-        public static PublicKey PickPaymentMint(SolanaCluster cluster, string acceptedPaymentMintsJson)
-        {
-            var accepted = JsonSerializer.Deserialize<List<string>>(acceptedPaymentMintsJson) ?? [];
+        public static PublicKey PickPaymentMint(SolanaCluster cluster, string acceptedPaymentMintsJson) =>
+            PickPaymentMint(cluster, JsonSerializer.Deserialize<List<string>>(acceptedPaymentMintsJson) ?? []);
 
-            if (accepted.Count == 0)
+        /// <summary>
+        /// The same pick over an already-parsed mint list - what the RPC-read config
+        /// (<see cref="XcavateMarketplaceConfigModel"/>) hands the secondary-market calls.
+        /// </summary>
+        public static PublicKey PickPaymentMint(SolanaCluster cluster, IReadOnlyList<string> acceptedPaymentMints)
+        {
+            if (acceptedPaymentMints.Count == 0)
             {
                 throw new InvalidOperationException("The marketplace config accepts no payment mints.");
             }
 
             var known = SolanaTokenWhitelist.ForCluster(cluster);
 
-            var mint = accepted.FirstOrDefault(candidate => known.Any(entry => entry.Mint == candidate))
-                ?? accepted[0];
+            var mint = acceptedPaymentMints.FirstOrDefault(candidate => known.Any(entry => entry.Mint == candidate))
+                ?? acceptedPaymentMints[0];
 
             return new PublicKey(mint);
         }

@@ -19,6 +19,7 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     private const string ScriptInterfaceName = "mauiWallet";
     private const string DownloadInterfaceName = "mauiDownloads";
     private const string HeaderInterfaceName = "mauiHeader";
+    private const string MarketplaceInterfaceName = "mauiMarketplace";
 
     private uint? tabId = null;
 
@@ -215,6 +216,7 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
         _ = InjectX25519KeyAsync();
         _ = InjectDownloadInterceptorAsync();
         _ = InjectHeaderBridgeAsync();
+        _ = InjectMarketplaceBridgeAsync();
         _ = InjectTapHighlightStyleAsync();
     }
 
@@ -277,6 +279,81 @@ public partial class X25519WebView : Microsoft.Maui.Controls.WebView
     /// </summary>
     internal Task InvokeHeaderActionAsync(int index)
         => DispatchScriptSafeAsync($"if (window.__plutoHeaderClick) {{ window.__plutoHeaderClick({index}); }}");
+
+    private Task InjectMarketplaceBridgeAsync()
+        => DispatchScriptSafeAsync(BuildMarketplaceBridgeScript());
+
+    /// <summary>
+    /// Installs the <c>window.mauiMarketplace</c> object the messenger dashboard posts
+    /// realXmarket hand-offs through (an agreed offer's buy, or the seller's reprice).
+    /// The dashboard calls <c>window.mauiMarketplace.postMessage(json)</c>: on Android
+    /// that name IS the native interface, so the script only has to cover iOS, where
+    /// the object is a shim over the WKScriptMessageHandler of the same name. An
+    /// already-present native interface is never clobbered.
+    /// </summary>
+    private static string BuildMarketplaceBridgeScript()
+    {
+        return @"(function () {
+    if (window.mauiMarketplace && typeof window.mauiMarketplace.postMessage === 'function') { return; }
+    window.mauiMarketplace = {
+        postMessage: function (json) {
+            try {
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.mauiMarketplace) {
+                    window.webkit.messageHandlers.mauiMarketplace.postMessage(json);
+                }
+            } catch (err) {
+                console.error('Pluto marketplace bridge post failed', err);
+            }
+        }
+    };
+})();";
+    }
+
+    /// <summary>
+    /// Called from the platform bridge (Android JavascriptInterface / iOS
+    /// WKScriptMessageHandler) when the hosted page posts a realXmarket hand-off.
+    /// Only the messenger dashboard is a trusted sender: a page the user navigated
+    /// away to can post the same JSON but gets ignored, the same way the wallet
+    /// bridges fall back to fully-authenticated signing off the whitelisted hosts.
+    /// </summary>
+    internal void EnqueueMarketplaceMessage(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return;
+        }
+
+        if (!MessengerDashboard.IsHost(GetCurrentUrl()))
+        {
+            Debug.WriteLine("[PlutoMarketplace] Bridge message ignored: the current page is not the messenger dashboard.");
+
+            return;
+        }
+
+        if (!PlutoFrameworkCore.Xcavate.Offers.MauiMarketplaceBridgeMessage.TryParse(json, out var message) || message is null)
+        {
+            // Malformed payloads are dropped quietly: the bridge is a page-to-app
+            // channel, and a payload the app does not understand is the dashboard's
+            // bug to log, never the user's to see.
+            Debug.WriteLine($"[PlutoMarketplace] Ignoring malformed bridge message: {json}");
+
+            return;
+        }
+
+        // The interface callback arrives off the UI thread on Android - the popup it
+        // opens is UI, so it is raised on the main thread.
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            try
+            {
+                DependencyService.Get<XcavateProperty.BuyRelistedSharesPopupViewModel>().Open(message);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[PlutoMarketplace] Failed to open the marketplace popup: {ex.Message}");
+            }
+        });
+    }
 
     private static WebPageHeader? TryParseHeader(string json, out int historyDepth)
     {

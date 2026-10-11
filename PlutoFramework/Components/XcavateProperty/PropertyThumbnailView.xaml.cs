@@ -1,5 +1,6 @@
 using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.SQLite;
+using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Xcavate;
 using UniqueryPlus.Nfts;
 using PropertyModel = PlutoFramework.Model.Xcavate.XcavatePropertyModel;
@@ -122,6 +123,22 @@ public partial class PropertyThumbnailView : ContentView
         set => SetValue(XcavateNftWrapperProperty, value);
     }
 
+    /// <summary>
+    /// The secondary-market share listing this card stands for, set by the noticeboard
+    /// feed; null on the primary-market pages. Handed through to the property detail
+    /// page when the card is tapped, so it opens with its secondary-market context.
+    /// </summary>
+    public static readonly BindableProperty ShareListingContextProperty = BindableProperty.Create(
+        nameof(ShareListingContext), typeof(XcavateShareListingContext), typeof(PropertyThumbnailView),
+        defaultValue: null,
+        defaultBindingMode: BindingMode.OneWay);
+
+    public XcavateShareListingContext? ShareListingContext
+    {
+        get => (XcavateShareListingContext?)GetValue(ShareListingContextProperty);
+        set => SetValue(ShareListingContextProperty, value);
+    }
+
     void OnFavouriteClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)
     {
         XcavateNftWrapper.Favourite = !XcavateNftWrapper.Favourite;
@@ -135,7 +152,7 @@ public partial class PropertyThumbnailView : ContentView
     {
         try
         {
-            await XcavatePropertyModel.NavigateToPropertyDetailPageAsync(XcavateNftWrapper, CancellationToken.None);
+            await XcavatePropertyModel.NavigateToPropertyDetailPageAsync(XcavateNftWrapper, CancellationToken.None, ShareListingContext);
         }
         catch (Exception ex)
         {

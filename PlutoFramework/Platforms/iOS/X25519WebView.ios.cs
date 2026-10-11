@@ -16,6 +16,7 @@ public partial class X25519WebView
     private WalletMessageHandler? _messageHandler;
     private DownloadMessageHandler? _downloadMessageHandler;
     private HeaderMessageHandler? _headerMessageHandler;
+    private MarketplaceMessageHandler? _marketplaceMessageHandler;
     private EventHandler? _scrolledHandler;
 
     partial void InitializePlatformBridge(WebViewHandler handler)
@@ -40,6 +41,10 @@ public partial class X25519WebView
         _headerMessageHandler?.Dispose();
         _headerMessageHandler = new HeaderMessageHandler(this);
         platformView.Configuration.UserContentController.AddScriptMessageHandler(_headerMessageHandler, HeaderInterfaceName);
+
+        _marketplaceMessageHandler?.Dispose();
+        _marketplaceMessageHandler = new MarketplaceMessageHandler(this);
+        platformView.Configuration.UserContentController.AddScriptMessageHandler(_marketplaceMessageHandler, MarketplaceInterfaceName);
     }
 
     partial void DisconnectPlatformBridge()
@@ -70,6 +75,13 @@ public partial class X25519WebView
             _nativeWebView.Configuration.UserContentController.RemoveScriptMessageHandler(HeaderInterfaceName);
             _headerMessageHandler.Dispose();
             _headerMessageHandler = null;
+        }
+
+        if (_marketplaceMessageHandler is not null)
+        {
+            _nativeWebView.Configuration.UserContentController.RemoveScriptMessageHandler(MarketplaceInterfaceName);
+            _marketplaceMessageHandler.Dispose();
+            _marketplaceMessageHandler = null;
         }
 
         _nativeWebView = null;
@@ -329,6 +341,36 @@ public partial class X25519WebView
             if (_owner.TryGetTarget(out var view))
             {
                 view.EnqueueHeaderUpdate(raw);
+            }
+        }
+    }
+
+    private sealed class MarketplaceMessageHandler : NSObject, IWKScriptMessageHandler
+    {
+        private readonly WeakReference<X25519WebView> _owner;
+
+        public MarketplaceMessageHandler(X25519WebView owner)
+        {
+            _owner = new(owner);
+        }
+
+        public void DidReceiveScriptMessage(WKUserContentController userContentController, WKScriptMessage message)
+        {
+            if (!string.Equals(message.Name, MarketplaceInterfaceName, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            var raw = message.Body?.ToString();
+
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return;
+            }
+
+            if (_owner.TryGetTarget(out var view))
+            {
+                view.EnqueueMarketplaceMessage(raw);
             }
         }
     }
