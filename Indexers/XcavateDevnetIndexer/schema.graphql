@@ -28,6 +28,16 @@ enum GovVoteChoice {
   ABSTAIN
 }
 
+"The marketplace feed's user-facing listing states (ADR-39): a derived, query-only partition of the active listings (status + wall clock + availability). FOR_SALE = LISTED, sale window open, shares available; WAITING_FOR_CLAIM = LISTED fully committed, claim window pending or open; SOLD_OUT = SOLD_OUT/LEGAL; EXPIRED = EXPIRED or a lapsed sale/claim deadline; FINALIZED = FINALIZED; CANCELLED_OR_REFUNDING = CANCELLED/REFUNDING. PENDING_ASSETS is unreachable."
+enum ListingFeedState {
+  FOR_SALE
+  WAITING_FOR_CLAIM
+  SOLD_OUT
+  EXPIRED
+  FINALIZED
+  CANCELLED_OR_REFUNDING
+}
+
 "`marketplace_listing.status` (`ListingStatus` on chain; borsh order load-bearing there)."
 enum ListingStatus {
   PENDING_ASSETS
@@ -769,6 +779,7 @@ type QueryRoot {
     developer: String
     status: ListingStatus
     statuses: [ListingStatus!]
+    feedStates: [ListingFeedState!]
     active: Boolean
     first: Int
     offset: Int

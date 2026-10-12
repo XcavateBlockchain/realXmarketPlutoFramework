@@ -22,7 +22,7 @@ namespace PlutoFramework.Model.Xcavate
     /// the enricher has no snapshot for an asset yet (<c>metadata</c> is null), the mapped
     /// record degrades to a minimal <see cref="PropertyMetadata"/> synthesized from chain
     /// data so the existing views still render. The feed's state checkboxes filter
-    /// server-side (<c>statuses</c>, ADR-39 - see <see cref="ToListingStatuses"/>); only
+    /// server-side (<c>feedStates</c>, ADR-39 - see <see cref="ToFeedStates"/>); only
     /// the old town/type/name text filters have no server-side counterpart and are
     /// answered client-side by <see cref="MatchesFilter"/>.
     /// </para>
@@ -271,9 +271,9 @@ namespace PlutoFramework.Model.Xcavate
 
         /// <summary>
         /// The state-filtered marketplace feed, one page at a time. <paramref name="states"/>
-        /// is the filter popup's checkbox selection, mapped to the indexer's statuses by
-        /// <see cref="ToListingStatuses"/> and answered in SQL (ADR-39); an empty selection
-        /// answers nothing without a network call.
+        /// is the filter popup's checkbox selection, mapped to the indexer's derived feed
+        /// states by <see cref="ToFeedStates"/> and answered in SQL - wall-clock overlays
+        /// included (ADR-39); an empty selection answers nothing without a network call.
         /// </summary>
         public static async Task<IReadOnlyList<XcavateSolanaListingNft>> GetMarketplaceListedPropertiesAsync(
             SolanaCluster cluster,
@@ -282,10 +282,10 @@ namespace PlutoFramework.Model.Xcavate
             int offset,
             CancellationToken token = default)
         {
-            var statuses = ToListingStatuses(states);
+            var feedStates = ToFeedStates(states);
 
             // Every state checkbox off: the feed shows nothing, and that needs no query.
-            if (statuses.Count == 0)
+            if (feedStates.Count == 0)
             {
                 return [];
             }
@@ -293,7 +293,7 @@ namespace PlutoFramework.Model.Xcavate
             var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var result = await client.MarketplaceListings
-                .ExecuteAsync(first, offset, statuses, token)
+                .ExecuteAsync(first, offset, feedStates, token)
                 .ConfigureAwait(false);
 
             result.EnsureNoErrors();
@@ -312,43 +312,48 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
-        /// The indexer statuses a state-filter selection maps to (ADR-39): CanBeReserved →
-        /// LISTED, WaitingForClaim → SOLD_OUT + LEGAL, Expired → EXPIRED, Finalized →
-        /// FINALIZED, CancelledOrRefunding → CANCELLED + REFUNDING. PENDING_ASSETS is
+        /// The indexer's derived feed states a checkbox selection maps to (ADR-39), one
+        /// checkbox to one state: CanBeReserved → FOR_SALE, WaitingForClaim →
+        /// WAITING_FOR_CLAIM, SoldOut → SOLD_OUT, Expired → EXPIRED, Finalized →
+        /// FINALIZED, CancelledOrRefunding → CANCELLED_OR_REFUNDING. The wall-clock and
+        /// availability overlays live in the indexer's SQL; PENDING_ASSETS is
         /// unreachable - no checkbox selects it.
         /// </summary>
-        public static IReadOnlyList<ListingStatus> ToListingStatuses(PropertyListingStateFilter states)
+        public static IReadOnlyList<ListingFeedState> ToFeedStates(PropertyListingStateFilter states)
         {
-            var statuses = new List<ListingStatus>(5);
+            var feedStates = new List<ListingFeedState>(6);
 
             if (states.HasFlag(PropertyListingStateFilter.CanBeReserved))
             {
-                statuses.Add(ListingStatus.Listed);
+                feedStates.Add(ListingFeedState.ForSale);
             }
 
             if (states.HasFlag(PropertyListingStateFilter.WaitingForClaim))
             {
-                statuses.Add(ListingStatus.SoldOut);
-                statuses.Add(ListingStatus.Legal);
+                feedStates.Add(ListingFeedState.WaitingForClaim);
+            }
+
+            if (states.HasFlag(PropertyListingStateFilter.SoldOut))
+            {
+                feedStates.Add(ListingFeedState.SoldOut);
             }
 
             if (states.HasFlag(PropertyListingStateFilter.Expired))
             {
-                statuses.Add(ListingStatus.Expired);
+                feedStates.Add(ListingFeedState.Expired);
             }
 
             if (states.HasFlag(PropertyListingStateFilter.Finalized))
             {
-                statuses.Add(ListingStatus.Finalized);
+                feedStates.Add(ListingFeedState.Finalized);
             }
 
             if (states.HasFlag(PropertyListingStateFilter.CancelledOrRefunding))
             {
-                statuses.Add(ListingStatus.Cancelled);
-                statuses.Add(ListingStatus.Refunding);
+                feedStates.Add(ListingFeedState.CancelledOrRefunding);
             }
 
-            return statuses;
+            return feedStates;
         }
 
         /// <summary>

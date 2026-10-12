@@ -138,60 +138,62 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
-        public void ToListingStatuses_DefaultIsListedOnly()
+        public void ToFeedStates_DefaultIsForSaleOnly()
         {
             Assert.That(
-                XcavateMarketplaceIndexerModel.ToListingStatuses(PropertyListingStateFilter.Default),
-                Is.EqualTo(new[] { ListingStatus.Listed }));
+                XcavateMarketplaceIndexerModel.ToFeedStates(PropertyListingStateFilter.Default),
+                Is.EqualTo(new[] { ListingFeedState.ForSale }));
         }
 
         [Test]
-        public void ToListingStatuses_NoneIsEmpty()
+        public void ToFeedStates_NoneIsEmpty()
         {
             Assert.That(
-                XcavateMarketplaceIndexerModel.ToListingStatuses(PropertyListingStateFilter.None),
+                XcavateMarketplaceIndexerModel.ToFeedStates(PropertyListingStateFilter.None),
                 Is.Empty);
         }
 
         [Test]
-        // Every checkbox on: every feed-reachable status comes out, PENDING_ASSETS never
-        // does (no checkbox selects it - pre-sale rows never belonged to the feed).
-        public void ToListingStatuses_EverythingCheckedCoversEveryStatusButPendingAssets()
+        // Every checkbox on: every feed state comes out exactly once. The partition is
+        // complete over the active listings - PENDING_ASSETS stays unreachable.
+        public void ToFeedStates_EverythingCheckedCoversEveryFeedState()
         {
             var all = PropertyListingStateFilter.CanBeReserved
                 | PropertyListingStateFilter.WaitingForClaim
+                | PropertyListingStateFilter.SoldOut
                 | PropertyListingStateFilter.Expired
                 | PropertyListingStateFilter.Finalized
                 | PropertyListingStateFilter.CancelledOrRefunding;
 
-            var statuses = XcavateMarketplaceIndexerModel.ToListingStatuses(all);
-
-            Assert.That(statuses, Is.EquivalentTo(new[]
-            {
-                ListingStatus.Listed,
-                ListingStatus.SoldOut,
-                ListingStatus.Legal,
-                ListingStatus.Expired,
-                ListingStatus.Finalized,
-                ListingStatus.Cancelled,
-                ListingStatus.Refunding,
-            }));
-            Assert.That(statuses, Does.Not.Contain(ListingStatus.PendingAssets));
+            Assert.That(
+                XcavateMarketplaceIndexerModel.ToFeedStates(all),
+                Is.EquivalentTo(new[]
+                {
+                    ListingFeedState.ForSale,
+                    ListingFeedState.WaitingForClaim,
+                    ListingFeedState.SoldOut,
+                    ListingFeedState.Expired,
+                    ListingFeedState.Finalized,
+                    ListingFeedState.CancelledOrRefunding,
+                }));
         }
 
         [Test]
-        // The named checkbox from the filter popup: the post-sell-out legal/claim phase.
-        [TestCase(PropertyListingStateFilter.WaitingForClaim, new[] { ListingStatus.SoldOut, ListingStatus.Legal })]
-        [TestCase(PropertyListingStateFilter.Expired, new[] { ListingStatus.Expired })]
-        [TestCase(PropertyListingStateFilter.Finalized, new[] { ListingStatus.Finalized })]
-        [TestCase(PropertyListingStateFilter.CancelledOrRefunding, new[] { ListingStatus.Cancelled, ListingStatus.Refunding })]
-        public void ToListingStatuses_SingleCheckboxMapsToItsStatuses(
+        // The mapping is one checkbox to one derived feed state; the indexer's SQL owns
+        // the wall-clock and availability overlays behind each.
+        [TestCase(PropertyListingStateFilter.CanBeReserved, ListingFeedState.ForSale)]
+        [TestCase(PropertyListingStateFilter.WaitingForClaim, ListingFeedState.WaitingForClaim)]
+        [TestCase(PropertyListingStateFilter.SoldOut, ListingFeedState.SoldOut)]
+        [TestCase(PropertyListingStateFilter.Expired, ListingFeedState.Expired)]
+        [TestCase(PropertyListingStateFilter.Finalized, ListingFeedState.Finalized)]
+        [TestCase(PropertyListingStateFilter.CancelledOrRefunding, ListingFeedState.CancelledOrRefunding)]
+        public void ToFeedStates_SingleCheckboxMapsToItsFeedState(
             PropertyListingStateFilter state,
-            ListingStatus[] expected)
+            ListingFeedState expected)
         {
             Assert.That(
-                XcavateMarketplaceIndexerModel.ToListingStatuses(state),
-                Is.EqualTo(expected));
+                XcavateMarketplaceIndexerModel.ToFeedStates(state),
+                Is.EqualTo(new[] { expected }));
         }
 
         // The devnet fixture the claim-split tests pin: this investor reserved 72 shares of

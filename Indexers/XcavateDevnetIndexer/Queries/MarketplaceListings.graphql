@@ -3,14 +3,15 @@
 # `active: true` keeps only listings whose PDA is still open on chain - a closed
 # (fully wound-down) listing has nothing left to show or act on.
 #
-# `statuses` (ADR-39) filters the feed server-side to the states checked in the
-# page's filter popup ("Can be reserved" = LISTED, "Waiting for claim" = SOLD_OUT +
-# LEGAL, "Expired" = EXPIRED, "Finalized" = FINALIZED, "Cancelled / Refunding" =
-# CANCELLED + REFUNDING; PENDING_ASSETS is never fed). The app always passes the
-# selection explicitly - including an empty list, which matches nothing, the "all
-# checkboxes off" case. The cards render SOLD_OUT / LEGAL / EXPIRED as status chips
-# rather than hiding them (matching the old SubQuery `marketplaceOngoingObjectListings`
-# feed).
+# `feedStates` (ADR-39) filters the feed server-side to the states checked in the
+# page's filter popup. The filter is DERIVED, not a raw status match (see the
+# `ListingFeedState` enum's doc): FOR_SALE is LISTED with the sale window still open
+# and shares available (a LISTED row past `listing_expiry` is EXPIRED, whether or not
+# anyone cranked `withdraw_expired` yet), WAITING_FOR_CLAIM is a fully committed
+# LISTED row whose claim window is pending or open (claims run under LISTED on
+# chain - SOLD_OUT flips only once every share is sold), and so on. The app always
+# passes the selection explicitly - including an empty list, which matches nothing,
+# the "all checkboxes off" case.
 #
 # `first` and `offset` deliberately carry no GraphQL default: this indexer rejects a
 # default on a non-null variable outright ("Argument `first` has type `Int!` and is not
@@ -33,8 +34,8 @@
 # `IMarketpageListing_...`) and broke the build non-deterministically. In ONE file
 # the order is fixed by parse order, so the names are stable. `MarketplaceListings`
 # stays first - every other operation in this file must come after it.
-query MarketplaceListings($first: Int!, $offset: Int!, $statuses: [ListingStatus!]) {
-  listings(active: true, statuses: $statuses, first: $first, offset: $offset) {
+query MarketplaceListings($first: Int!, $offset: Int!, $feedStates: [ListingFeedState!]) {
+  listings(active: true, feedStates: $feedStates, first: $first, offset: $offset) {
     totalCount
     nodes {
       ...ListingParts

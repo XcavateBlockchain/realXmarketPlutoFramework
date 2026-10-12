@@ -22,14 +22,15 @@ public static class PropertyMarketplaceFilterOptions
     };
 
     /// <summary>
-    /// The State section's checkboxes, in display order. Only "Can be reserved" is
-    /// checked by default; the flags map onto indexer statuses in
-    /// <see cref="XcavateMarketplaceIndexerModel.ToListingStatuses"/>.
+    /// The State section's checkboxes, in lifecycle order. Only "Can be reserved" is
+    /// checked by default; the flags map one-to-one onto the indexer's derived feed
+    /// states in <see cref="XcavateMarketplaceIndexerModel.ToFeedStates"/>.
     /// </summary>
     public static readonly IReadOnlyList<(string Label, PropertyListingStateFilter State, bool SelectedByDefault)> States = new[]
     {
         ("Can be reserved", PropertyListingStateFilter.CanBeReserved, true),
         ("Waiting for claim", PropertyListingStateFilter.WaitingForClaim, false),
+        ("Sold out", PropertyListingStateFilter.SoldOut, false),
         ("Expired", PropertyListingStateFilter.Expired, false),
         ("Finalized", PropertyListingStateFilter.Finalized, false),
         ("Cancelled / Refunding", PropertyListingStateFilter.CancelledOrRefunding, false),
