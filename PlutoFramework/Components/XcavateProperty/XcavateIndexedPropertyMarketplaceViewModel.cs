@@ -42,9 +42,18 @@ namespace PlutoFramework.Components.XcavateProperty
         private string includesTownCity = string.Empty;
         private string includesPropertyType = string.Empty;
         private string includesPropertyName = string.Empty;
+
+        /// <summary>
+        /// The filter popup's state-checkbox selection, answered server-side by the
+        /// indexer's <c>statuses</c> argument (ADR-39). Defaults with the popup: only
+        /// "Can be reserved" checked.
+        /// </summary>
+        private PropertyListingStateFilter selectedStates = PropertyListingStateFilter.Default;
+
         private string lastLoadedSearchText = string.Empty;
         private string lastLoadedTownCity = string.Empty;
         private string lastLoadedPropertyType = string.Empty;
+        private PropertyListingStateFilter lastLoadedStates = PropertyListingStateFilter.Default;
         private bool hasLoadedQuery;
         private readonly object searchDebounceLock = new();
         private readonly object loadingCancellationLock = new();
@@ -59,11 +68,12 @@ namespace PlutoFramework.Components.XcavateProperty
         /// <summary>True while the list is still empty and loading (initial load / refresh).</summary>
         public bool ShowSkeleton => Loading && Items.Count == 0;
 
-        /// <summary>True when a search text or a town/type filter is currently applied.</summary>
+        /// <summary>True when a search text, a town/type filter or a non-default state selection is applied.</summary>
         public bool HasActiveFilter =>
             !string.IsNullOrEmpty(includesPropertyName)
             || !string.IsNullOrEmpty(includesTownCity)
-            || !string.IsNullOrEmpty(includesPropertyType);
+            || !string.IsNullOrEmpty(includesPropertyType)
+            || selectedStates != PropertyListingStateFilter.Default;
 
         /// <summary>
         /// The empty-state caption. A cluster with no marketplace deployment explains itself
@@ -182,7 +192,8 @@ namespace PlutoFramework.Components.XcavateProperty
                 Loading = true;
 
                 // The indexer has no server-side text filters, so the old
-                // town/type/name filters apply here, to each fetched page. A raw page can
+                // town/type/name filters apply here, to each fetched page (the state
+                // checkboxes are answered in SQL by the query itself). A raw page can
                 // filter down to nothing while deeper pages still match, and a scroll that
                 // appends nothing never re-fires the CollectionView's remaining-items
                 // threshold - so this keeps fetching raw pages until something passes or
@@ -193,6 +204,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 {
                     var results = await XcavateMarketplaceIndexerModel.GetMarketplaceListedPropertiesAsync(
                             SolanaNetworkModel.SelectedCluster,
+                            selectedStates,
                             first: (int)LIMIT,
                             offset: offset,
                             token)
@@ -213,18 +225,12 @@ namespace PlutoFramework.Components.XcavateProperty
                         hasMore = false;
                     }
 
-                    // Open listings show; so does a torn-down listing that still holds
-                    // someone's reservation - hiding it would hide the refund path.
-                    // Pre-sale (PENDING_ASSETS) rows and fully settled dead listings stay
-                    // out of the feed.
                     var matchingResults = results
-                        .Where(result => (result.OpenForSale
-                                || (result.OngoingObjectListingDetails?.UnclaimedTokens ?? 0) > 0)
-                            && XcavateMarketplaceIndexerModel.MatchesFilter(
-                                result,
-                                includesTownCity,
-                                includesPropertyType,
-                                includesPropertyName))
+                        .Where(result => XcavateMarketplaceIndexerModel.MatchesFilter(
+                            result,
+                            includesTownCity,
+                            includesPropertyType,
+                            includesPropertyName))
                         .ToList();
 
                     var wrappedResults = await Task.WhenAll(
@@ -287,7 +293,7 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             token = StartNewLoadingOperation(token);
 
-            if (Items.Count > 0 && IsSameLoadedQuery(includesPropertyName, includesTownCity, includesPropertyType))
+            if (Items.Count > 0 && IsSameLoadedQuery(includesPropertyName, includesTownCity, includesPropertyType, selectedStates))
             {
                 return;
             }
@@ -319,6 +325,9 @@ namespace PlutoFramework.Components.XcavateProperty
         [RelayCommand]
         private void OpenFilter()
         {
+            // The popup view model is a shared singleton (the investor page uses it too,
+            // and its query has no state filter), so the section is opted into per page.
+            filterPopupViewModel.IsStateFilterVisible = true;
             filterPopupViewModel.IsVisible = true;
         }
 
@@ -335,8 +344,9 @@ namespace PlutoFramework.Components.XcavateProperty
             includesPropertyType = NormalizeFilterValue(filterPopupViewModel.SelectedPropertyType);
             SearchText = filterPopupViewModel.SearchText?.Trim() ?? string.Empty;
             includesPropertyName = SearchText;
+            selectedStates = filterPopupViewModel.SelectedStates;
 
-            if (!IsSameLoadedQuery(includesPropertyName, includesTownCity, includesPropertyType))
+            if (!IsSameLoadedQuery(includesPropertyName, includesTownCity, includesPropertyType, selectedStates))
             {
                 await RefreshAsync().ConfigureAwait(false);
             }
@@ -369,7 +379,7 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             var normalizedSearchText = currentSearchText?.Trim() ?? string.Empty;
 
-            if (IsSameLoadedQuery(normalizedSearchText, includesTownCity, includesPropertyType))
+            if (IsSameLoadedQuery(normalizedSearchText, includesTownCity, includesPropertyType, selectedStates))
             {
                 return;
             }
@@ -506,12 +516,13 @@ namespace PlutoFramework.Components.XcavateProperty
             return string.Equals(value, "All", StringComparison.OrdinalIgnoreCase) ? string.Empty : value;
         }
 
-        private bool IsSameLoadedQuery(string searchText, string townCity, string propertyType)
+        private bool IsSameLoadedQuery(string searchText, string townCity, string propertyType, PropertyListingStateFilter states)
         {
             return hasLoadedQuery
                 && string.Equals(lastLoadedSearchText, searchText ?? string.Empty, StringComparison.Ordinal)
                 && string.Equals(lastLoadedTownCity, townCity ?? string.Empty, StringComparison.Ordinal)
-                && string.Equals(lastLoadedPropertyType, propertyType ?? string.Empty, StringComparison.Ordinal);
+                && string.Equals(lastLoadedPropertyType, propertyType ?? string.Empty, StringComparison.Ordinal)
+                && lastLoadedStates == states;
         }
 
         private void RememberLoadedQuery()
@@ -519,6 +530,7 @@ namespace PlutoFramework.Components.XcavateProperty
             lastLoadedSearchText = includesPropertyName;
             lastLoadedTownCity = includesTownCity;
             lastLoadedPropertyType = includesPropertyType;
+            lastLoadedStates = selectedStates;
             hasLoadedQuery = true;
         }
 

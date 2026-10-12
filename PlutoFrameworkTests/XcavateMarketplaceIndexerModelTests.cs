@@ -1,6 +1,7 @@
 using PlutoFramework.Model.Xcavate;
 using PlutoFrameworkCore.Solana;
 using UniqueryPlus.Metadata;
+using XcavateDevnetIndexer;
 
 namespace PlutoFrameworkTests
 {
@@ -16,11 +17,19 @@ namespace PlutoFrameworkTests
         {
             var properties = await XcavateMarketplaceIndexerModel.GetMarketplaceListedPropertiesAsync(
                 SolanaCluster.Devnet,
+                PropertyListingStateFilter.Default,
                 first: 20,
                 offset: 0,
                 CancellationToken.None);
 
             Assert.That(properties, Is.Not.Null);
+
+            // The state filter runs in SQL: the default selection ("Can be reserved")
+            // must only ever surface LISTED rows, whatever devnet currently holds.
+            foreach (var property in properties)
+            {
+                Assert.That(property.ListingStatus, Is.EqualTo("Listed"));
+            }
 
             // Whatever is listed on devnet right now must come out renderable: the
             // marketplace views need these to be non-null.
@@ -126,6 +135,63 @@ namespace PlutoFrameworkTests
                 includesPropertyName);
 
             Assert.That(matches, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void ToListingStatuses_DefaultIsListedOnly()
+        {
+            Assert.That(
+                XcavateMarketplaceIndexerModel.ToListingStatuses(PropertyListingStateFilter.Default),
+                Is.EqualTo(new[] { ListingStatus.Listed }));
+        }
+
+        [Test]
+        public void ToListingStatuses_NoneIsEmpty()
+        {
+            Assert.That(
+                XcavateMarketplaceIndexerModel.ToListingStatuses(PropertyListingStateFilter.None),
+                Is.Empty);
+        }
+
+        [Test]
+        // Every checkbox on: every feed-reachable status comes out, PENDING_ASSETS never
+        // does (no checkbox selects it - pre-sale rows never belonged to the feed).
+        public void ToListingStatuses_EverythingCheckedCoversEveryStatusButPendingAssets()
+        {
+            var all = PropertyListingStateFilter.CanBeReserved
+                | PropertyListingStateFilter.WaitingForClaim
+                | PropertyListingStateFilter.Expired
+                | PropertyListingStateFilter.Finalized
+                | PropertyListingStateFilter.CancelledOrRefunding;
+
+            var statuses = XcavateMarketplaceIndexerModel.ToListingStatuses(all);
+
+            Assert.That(statuses, Is.EquivalentTo(new[]
+            {
+                ListingStatus.Listed,
+                ListingStatus.SoldOut,
+                ListingStatus.Legal,
+                ListingStatus.Expired,
+                ListingStatus.Finalized,
+                ListingStatus.Cancelled,
+                ListingStatus.Refunding,
+            }));
+            Assert.That(statuses, Does.Not.Contain(ListingStatus.PendingAssets));
+        }
+
+        [Test]
+        // The named checkbox from the filter popup: the post-sell-out legal/claim phase.
+        [TestCase(PropertyListingStateFilter.WaitingForClaim, new[] { ListingStatus.SoldOut, ListingStatus.Legal })]
+        [TestCase(PropertyListingStateFilter.Expired, new[] { ListingStatus.Expired })]
+        [TestCase(PropertyListingStateFilter.Finalized, new[] { ListingStatus.Finalized })]
+        [TestCase(PropertyListingStateFilter.CancelledOrRefunding, new[] { ListingStatus.Cancelled, ListingStatus.Refunding })]
+        public void ToListingStatuses_SingleCheckboxMapsToItsStatuses(
+            PropertyListingStateFilter state,
+            ListingStatus[] expected)
+        {
+            Assert.That(
+                XcavateMarketplaceIndexerModel.ToListingStatuses(state),
+                Is.EqualTo(expected));
         }
 
         // The devnet fixture the claim-split tests pin: this investor reserved 72 shares of

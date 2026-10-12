@@ -768,6 +768,7 @@ type QueryRoot {
     listingId: I64
     developer: String
     status: ListingStatus
+    statuses: [ListingStatus!]
     active: Boolean
     first: Int
     offset: Int

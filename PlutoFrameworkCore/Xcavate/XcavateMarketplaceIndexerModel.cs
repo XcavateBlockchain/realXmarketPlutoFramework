@@ -21,9 +21,10 @@ namespace PlutoFramework.Model.Xcavate
     /// it from the same query instead of downloading and parsing the JSON itself. When
     /// the enricher has no snapshot for an asset yet (<c>metadata</c> is null), the mapped
     /// record degrades to a minimal <see cref="PropertyMetadata"/> synthesized from chain
-    /// data so the existing views still render. There is no server-side text filtering
-    /// either way - the old town/type/name filters are answered client-side by
-    /// <see cref="MatchesFilter"/>.
+    /// data so the existing views still render. The feed's state checkboxes filter
+    /// server-side (<c>statuses</c>, ADR-39 - see <see cref="ToListingStatuses"/>); only
+    /// the old town/type/name text filters have no server-side counterpart and are
+    /// answered client-side by <see cref="MatchesFilter"/>.
     /// </para>
     /// <para>
     /// The cluster is the caller's - the app's selected Solana network. Callers gate on
@@ -268,16 +269,31 @@ namespace PlutoFramework.Model.Xcavate
                 leading);
         }
 
+        /// <summary>
+        /// The state-filtered marketplace feed, one page at a time. <paramref name="states"/>
+        /// is the filter popup's checkbox selection, mapped to the indexer's statuses by
+        /// <see cref="ToListingStatuses"/> and answered in SQL (ADR-39); an empty selection
+        /// answers nothing without a network call.
+        /// </summary>
         public static async Task<IReadOnlyList<XcavateSolanaListingNft>> GetMarketplaceListedPropertiesAsync(
             SolanaCluster cluster,
+            PropertyListingStateFilter states,
             int first,
             int offset,
             CancellationToken token = default)
         {
+            var statuses = ToListingStatuses(states);
+
+            // Every state checkbox off: the feed shows nothing, and that needs no query.
+            if (statuses.Count == 0)
+            {
+                return [];
+            }
+
             var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var result = await client.MarketplaceListings
-                .ExecuteAsync(first, offset, token)
+                .ExecuteAsync(first, offset, statuses, token)
                 .ConfigureAwait(false);
 
             result.EnsureNoErrors();
@@ -293,6 +309,46 @@ namespace PlutoFramework.Model.Xcavate
             return listings
                 .Select(listing => MapListing(listing, listing.PropertyAsset))
                 .ToList();
+        }
+
+        /// <summary>
+        /// The indexer statuses a state-filter selection maps to (ADR-39): CanBeReserved →
+        /// LISTED, WaitingForClaim → SOLD_OUT + LEGAL, Expired → EXPIRED, Finalized →
+        /// FINALIZED, CancelledOrRefunding → CANCELLED + REFUNDING. PENDING_ASSETS is
+        /// unreachable - no checkbox selects it.
+        /// </summary>
+        public static IReadOnlyList<ListingStatus> ToListingStatuses(PropertyListingStateFilter states)
+        {
+            var statuses = new List<ListingStatus>(5);
+
+            if (states.HasFlag(PropertyListingStateFilter.CanBeReserved))
+            {
+                statuses.Add(ListingStatus.Listed);
+            }
+
+            if (states.HasFlag(PropertyListingStateFilter.WaitingForClaim))
+            {
+                statuses.Add(ListingStatus.SoldOut);
+                statuses.Add(ListingStatus.Legal);
+            }
+
+            if (states.HasFlag(PropertyListingStateFilter.Expired))
+            {
+                statuses.Add(ListingStatus.Expired);
+            }
+
+            if (states.HasFlag(PropertyListingStateFilter.Finalized))
+            {
+                statuses.Add(ListingStatus.Finalized);
+            }
+
+            if (states.HasFlag(PropertyListingStateFilter.CancelledOrRefunding))
+            {
+                statuses.Add(ListingStatus.Cancelled);
+                statuses.Add(ListingStatus.Refunding);
+            }
+
+            return statuses;
         }
 
         /// <summary>
