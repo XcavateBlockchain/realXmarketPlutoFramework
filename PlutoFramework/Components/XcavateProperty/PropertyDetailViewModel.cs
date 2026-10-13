@@ -274,11 +274,13 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(TokensOwnedWorth))]
         [NotifyPropertyChangedFor(nameof(OwnedPropertyTokensViewIsVisible))]
         [NotifyPropertyChangedFor(nameof(RelistPropertyTokensButtonIsVisible))]
+        [NotifyPropertyChangedFor(nameof(SendSharesButtonIsVisible))]
         private uint tokensOwned = 0;
         public string TokensOwnedWorth => ((decimal)(TokensOwned * Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString();
 
         public bool OwnedPropertyTokensViewIsVisible => TokensOwned > 0;
         public bool RelistPropertyTokensButtonIsVisible => TokensOwned > 0;
+        public bool SendSharesButtonIsVisible => TokensOwned > 0;
 
         public bool ShowBuyMoreButtons => !NftWrapper!.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0;
 
@@ -1064,6 +1066,69 @@ namespace PlutoFramework.Components.XcavateProperty
             viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper!.NftBase.Type);
             viewModel.TokensOwned = TokensOwned;
             viewModel.AssetId = (ulong)AssetId;
+        }
+
+        /// <summary>
+        /// The "Send shares" entry: opens the peer-to-peer transfer sheet keyed by a fresh
+        /// governance-state read (the same call <see cref="RefreshVotingAsync"/> makes), so
+        /// the sheet's max sendable amount reflects the live locks and listed-for-sale
+        /// amount, not just the page's TokensOwned. Requirements are checked up front like
+        /// <see cref="RelistAsync"/>; a failed or empty holding read falls back to the
+        /// governance snapshot the page already shows, then to not opening at all.
+        /// </summary>
+        [RelayCommand]
+        public async Task SendSharesAsync()
+        {
+            if (TokensOwned == 0 || NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+
+                return;
+            }
+
+            XcavateMarketplaceIndexerModel.XcavateGovernanceState.HoldingState? holding = null;
+
+            try
+            {
+                var token = CancellationToken.None;
+
+                holding = (await XcavateMarketplaceIndexerModel.GetGovernanceStateAsync(
+                        SolanaNetworkModel.SelectedCluster,
+                        solanaListing.ListingId,
+                        ListingDetails?.AssetId ?? solanaListing.ListingId,
+                        KeysModel.GetSolanaAddress(),
+                        token)
+                    .ConfigureAwait(false))
+                    .Holding;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the holding before opening the send sheet: ");
+                Console.WriteLine(ex);
+            }
+
+            // The chain enforces the true sendable amount regardless; the page's last
+            // indexer read is still better than a button that appears to do nothing.
+            holding ??= Governance?.Holding;
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            if (holding is not { } currentHolding)
+            {
+                return;
+            }
+
+            DependencyService.Get<SendSharesPopupViewModel>()
+                .SetContext(currentHolding.Amount, currentHolding.MaxLock, currentHolding.Listed, (ulong)AssetId);
         }
 
         /// <summary>

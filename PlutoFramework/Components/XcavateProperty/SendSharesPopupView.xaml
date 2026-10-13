@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.XcavateProperty.SendSharesPopupView"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+             xmlns:form="clr-namespace:PlutoFramework.Components.Form"
+             IsVisible="{Binding IsVisible}"
+             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+             AbsoluteLayout.LayoutFlags="All">
+    <card:BottomPopupCard Title="Send shares"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
+            <AbsoluteLayout>
+
+                <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
+                         AbsoluteLayout.LayoutFlags="WidthProportional"
+                         x:Name="verticalStackLayout"
+                         Spacing="20"
+                                     Padding="10, 10, 10, 100">
+
+                    <Label Text="Send your tokens straight to another wallet - no listing, no payment in the middle. The receiver needs a verified investor profile. Pending rent for both wallets settles automatically as part of the transfer, so there is nothing extra to do."
+                           FontSize="12"
+                           Opacity="0.7" />
+
+                    <AbsoluteLayout Margin="10, 0, 10, -10">
+                        <Label Text="Tokens you can send:"
+                                AbsoluteLayout.LayoutBounds="0,0,AutoSize, AutoSize"/>
+                        <Label Text="{Binding MaxValue}"
+                               AbsoluteLayout.LayoutBounds="1,0,AutoSize, AutoSize"
+                               AbsoluteLayout.LayoutFlags="PositionProportional"
+                               HorizontalTextAlignment="End"/>
+                    </AbsoluteLayout>
+
+                    <form:FormInputView Placeholder="Receiver's wallet address"
+                                        Text="{Binding Recipient}"
+                                        CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}"
+                                        />
+                    <form:FormInputView KeyboardType="Numeric"
+                                        Placeholder="Tokens"
+                                        Text="{Binding Amount}"
+                                        MaxValue="{Binding MaxValue}"
+                                        CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}"
+                                        />
+
+                    <Label Text="{Binding ErrorMessage}"
+                           IsVisible="{Binding ErrorIsVisible}"
+                           TextColor="Red" />
+
+                </VerticalStackLayout>
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                    AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                      AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                      ColumnSpacing="15"
+                      Margin="10, 0, 10, 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <buttons:BasicGrayButton Text="Cancel" Grid.Column="0"
+                                                 Command="{Binding CancelCommand}"/>
+
+                        <buttons:PlutoFrameworkElevatedButton Text="Continue"
+                                                               Grid.Column="1"
+                                                               Command="{Binding ContinueCommand}"
+                                                               ButtonState="{Binding ContinueButtonState}"/>
+                    </Grid>
+                </AbsoluteLayout>
+
+            </AbsoluteLayout>
+
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+</ContentView>

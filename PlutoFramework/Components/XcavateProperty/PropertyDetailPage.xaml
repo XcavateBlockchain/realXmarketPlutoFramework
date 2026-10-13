@@ -173,6 +173,10 @@
 
                     <xcavateproperty:OwnedPropertyTokensView IsVisible="{Binding OwnedPropertyTokensViewIsVisible}" />
 
+                    <buttons:ElevatedButton Text="Send shares"
+                                            IsVisible="{Binding SendSharesButtonIsVisible}"
+                                            Command="{Binding SendSharesCommand}" />
+
                     <xcavateproperty:BoughtPropertyTokensView IsVisible="{Binding BoughtPropertyTokensViewIsVisible}" />
 
                     <VerticalStackLayout BackgroundColor="#22888888"
@@ -310,5 +314,7 @@
         <xcavateproperty:CancelReservationPopup />
 
         <xcavateproperty:CastVotePopupView />
+
+        <xcavateproperty:SendSharesPopupView />
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>

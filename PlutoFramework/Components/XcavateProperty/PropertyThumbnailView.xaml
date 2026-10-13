@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PlutoFramework.Components.XcavateProperty.PropertyThumbnailView"
              xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
              xmlns:ffimageloading="clr-namespace:FFImageLoading.Maui;assembly=FFImageLoading.Maui"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              HorizontalOptions="Fill"
@@ -44,6 +45,17 @@
                                TextColor="Gray"
                                FontSize="30"
                                InputTransparent="True" />
+
+                        <!-- Peer-to-peer transfer of owned tokens, straight from the portfolio. -->
+                        <buttons:ElevatedButton x:Name="sendSharesChip"
+                                                Text="Send"
+                                                FontSize="12"
+                                                HeightRequest="30"
+                                                Padding="14,0"
+                                                IsVisible="False"
+                                                AbsoluteLayout.LayoutBounds="0, 0, AutoSize, AutoSize"
+                                                Margin="8, 8, 0, 0"
+                                                Clicked="OnSendSharesClicked" />
 
                         <Image AbsoluteLayout.LayoutBounds="1, 0, 40, 40"
                                AbsoluteLayout.LayoutFlags="PositionProportional"
