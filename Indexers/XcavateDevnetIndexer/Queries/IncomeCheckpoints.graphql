@@ -1,0 +1,19 @@
+# One holder's income claim checkpoint on one property: where their per-stream
+# settlement cursor sits. `entries` arrives as the raw JSON string
+# `[{"per_share": "<decimal string>", "pending": N}, ...]`, entries[i] tracking the
+# income ledger's streams[i] (juniper has no JSON scalar; `per_share` is a u128 carried
+# as a decimal string) - the client settles it against the streams and the holder's
+# share count. A missing row means the holder has never claimed: every cursor is 0.
+#
+# One checkpoint per (asset, owner) pair (the PDA is keyed by both), so `first: 1` is
+# the whole answer. `first`/`offset` are explicit like everywhere else: this indexer
+# rejects defaults on non-null variables.
+query GetIncomeCheckpoints($assetId: I64!, $owner: String!) {
+  incomeCheckpoints(assetId: $assetId, owner: $owner, active: true, first: 1, offset: 0) {
+    nodes {
+      assetId
+      owner
+      entries
+    }
+  }
+}

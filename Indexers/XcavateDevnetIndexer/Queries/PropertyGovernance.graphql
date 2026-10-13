@@ -43,6 +43,7 @@ query PropertyProposals($assetId: I64!, $first: Int!, $offset: Int!) {
       tallyAbstain
       quorumBps
       thresholdBps
+      rentPayer
     }
   }
 }
@@ -61,6 +62,7 @@ query PropertyChallenges($assetId: I64!, $first: Int!, $offset: Int!) {
       tallyNo
       tallyAbstain
       quorumBps
+      rentPayer
     }
   }
 }

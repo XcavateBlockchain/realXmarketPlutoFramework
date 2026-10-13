@@ -1,0 +1,45 @@
+# The agent-election surface for one property in ONE round trip: the letting seat (the
+# sitting agent and the live election's round/expiry/quorum), the election's
+# candidacies with their vote power, and the caller's own votes. The detail page's
+# agent-election section renders from this, and the finalize-election crank reads the
+# leading candidacy off it.
+#
+# The schema has no `round` filter on agentCandidacies/agentVotes, so the rows arrive
+# unfiltered by round and the caller keeps the letting's CURRENT round. Rows come back
+# newest first (slot DESC), so the fixed page covers every election a property
+# realistically runs; `first`/`offset` are explicit like everywhere else because this
+# indexer rejects defaults on non-null variables.
+#
+# `active: true` keeps only rows whose PDA is still open - a finalized election's
+# candidacies and votes close and drop out of the answers.
+query GetAgentElectionState($assetId: I64!, $voter: String!) {
+  propertyLettings(assetId: $assetId, active: true, first: 1, offset: 0) {
+    nodes {
+      assetId
+      agent
+      electionExpiry
+      electionCandidateCount
+      electionRound
+      electionQuorumBps
+    }
+  }
+  agentCandidacies(assetId: $assetId, active: true, first: 50, offset: 0) {
+    totalCount
+    nodes {
+      assetId
+      round
+      agent
+      votePower
+    }
+  }
+  agentVotes(assetId: $assetId, voter: $voter, active: true, first: 50, offset: 0) {
+    totalCount
+    nodes {
+      assetId
+      round
+      voter
+      choice
+      power
+    }
+  }
+}

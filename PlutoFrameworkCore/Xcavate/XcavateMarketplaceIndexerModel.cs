@@ -44,6 +44,13 @@ namespace PlutoFramework.Model.Xcavate
         public const int SharePriceDecimals = 9;
 
         /// <summary>
+        /// The on-chain default pubkey (base58 of all-zero bytes) the property letting
+        /// seat and the listing's SPV-lawyer slot carry while vacant; the indexer keeps
+        /// it verbatim.
+        /// </summary>
+        public const string VacantSeatPubkey = "11111111111111111111111111111111";
+
+        /// <summary>
         /// Share holdings are read per property; one page of this size per request. Holder
         /// counts are unbounded in principle, so the reader pages until short.
         /// </summary>
@@ -268,6 +275,748 @@ namespace PlutoFramework.Model.Xcavate
                 totalPower,
                 leading);
         }
+
+        /// <summary>
+        /// One property's rental-income ledger as the holder sees it: every per-mint
+        /// stream alongside their own settlement checkpoint, so the claimable amount of
+        /// one mint is a pure read:
+        /// <c>claimable = (stream.per_share - entry.per_share) * shares + entry.pending</c>.
+        /// </summary>
+        public sealed record PropertyIncomeState
+        {
+            /// <summary>
+            /// One payment mint's income stream. <see cref="PerShare"/> is the on-chain
+            /// u128 accumulator of mint base units paid per share; <see cref="Dust"/> is
+            /// the base-unit remainder below one full unit per share, carried into the
+            /// next distribution.
+            /// </summary>
+            public sealed record IncomeStream(string Mint, BigInteger PerShare, long Dust);
+
+            /// <summary>
+            /// The divisor of the settlement formula. The program accumulates raw base
+            /// units with no fixed-point scaling - <c>distribute_income</c> adds
+            /// <c>gain = (amount + stream.dust) / supply</c> to <c>per_share</c> and
+            /// carries the remainder in <c>dust</c>
+            /// (realxmarket-solana <c>property/src/instructions/income.rs</c>
+            /// <c>distribute_income_handler</c>), and <c>bank()</c> then accrues
+            /// <c>(per_share delta) * shares</c> with no division - so this is 1, kept as
+            /// a named constant because the claimable formula is written in terms of it.
+            /// </summary>
+            public static readonly BigInteger PerShareScale = BigInteger.One;
+
+            /// <summary>The property's streams, in ledger order (checkpoint entries pair by index).</summary>
+            public required IReadOnlyList<IncomeStream> Streams { get; init; }
+
+            /// <summary>
+            /// The holder's checkpoint; <see cref="IncomeCheckpointState.Empty"/> when no
+            /// checkpoint row exists, which the checkpoints semantics read as "held since
+            /// before every stream opened" - full accrual from each stream's start.
+            /// </summary>
+            public required IncomeCheckpointState Checkpoint { get; init; }
+
+            /// <summary>
+            /// What one mint owes a holder of <paramref name="shares"/> shares right now,
+            /// in BASE UNITS of the mint (the unit every indexer figure on this record is
+            /// in). Mirrors the on-chain settlement exactly: entries pair with streams by
+            /// index, a missing entry reads as a zero cursor (<c>sync_entries</c>), and
+            /// banked <c>pending</c> survives a zero holding (<c>claim_income</c> pays it
+            /// even with the ledger closed). An unclaimed mint returns zero. Convert with
+            /// <see cref="ToDisplayAmount"/> for the UI.
+            /// </summary>
+            public BigInteger GetClaimable(string mint, ulong shares)
+            {
+                var index = -1;
+                for (var i = 0; i < Streams.Count; i++)
+                {
+                    if (Streams[i].Mint == mint)
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+
+                if (index < 0)
+                {
+                    return BigInteger.Zero;
+                }
+
+                var stream = Streams[index];
+                var entry = index < Checkpoint.Entries.Count ? Checkpoint.Entries[index] : null;
+
+                var delta = stream.PerShare - (entry?.PerShare ?? BigInteger.Zero);
+                if (delta.Sign < 0)
+                {
+                    // On-chain unreachable (per_share is monotone); clamp rather than
+                    // report a debt for a row that outran the ledger.
+                    delta = BigInteger.Zero;
+                }
+
+                return delta * shares / PerShareScale + (BigInteger)(entry?.Pending ?? 0m);
+            }
+
+            /// <summary>
+            /// Scales a mint base-unit amount (pennies of USDC, lamport-fractions...) down
+            /// to whole-token display units. On-chain claimables fit a u64, so the decimal
+            /// conversion cannot overflow for real income.
+            /// </summary>
+            public static decimal ToDisplayAmount(BigInteger baseUnits, int mintDecimals)
+            {
+                var scale = BigInteger.Pow(10, Math.Clamp(mintDecimals, 0, 28));
+                return (decimal)baseUnits / (decimal)scale;
+            }
+        }
+
+        /// <summary>
+        /// One holder's income claim checkpoint on one property: where their per-stream
+        /// settlement cursor sits. Never null; <see cref="Empty"/> (no entries) when the
+        /// holder has never claimed.
+        /// </summary>
+        public sealed record IncomeCheckpointState(IReadOnlyList<IncomeCheckpointState.Entry> Entries)
+        {
+            /// <summary>
+            /// The cursor of one stream: the <c>per_share</c> the holder settled up to
+            /// (u128 base units per share) and the <c>pending</c> income banked for them
+            /// in BASE UNITS of the stream's mint (on-chain u64 - <c>claim_income</c>
+            /// transfers it with the mint's own decimals; carried as an exact decimal
+            /// here because u64 fits it and the indexer ships it as a JSON number).
+            /// </summary>
+            public sealed record Entry(BigInteger PerShare, decimal Pending);
+
+            public static IncomeCheckpointState Empty { get; } = new([]);
+        }
+
+        /// <summary>
+        /// One election-round candidacy row as raw indexer input (agent elections and
+        /// SPV-lawyer elections share this shape); filter to the live round with
+        /// <see cref="AgentElectionState.ToCurrentRound"/>.
+        /// </summary>
+        public sealed record ElectionCandidacyRow(long Round, string Candidate, long VotePower);
+
+        /// <summary>
+        /// A property's agent-election surface: the letting seat, the live round, and the
+        /// caller's own vote. Agent elections are plurality votes across candidacies - a
+        /// vote's on-chain <c>choice</c> IS the backed candidacy's agent pubkey (the
+        /// property program's <c>AgentVote.choice</c> is a Pubkey, not Yes/No/Abstain).
+        /// </summary>
+        public sealed record AgentElectionState
+        {
+            /// <summary>One candidacy of the current round with the share-weighted power behind it.</summary>
+            public sealed record Candidacy(string Agent, long VotePower);
+
+            /// <summary>
+            /// The caller's vote in the current round: <see cref="Candidate"/> is the
+            /// vote's on-chain <c>choice</c> - the backed candidacy's agent pubkey - and
+            /// <see cref="Power"/> the shares it locked.
+            /// </summary>
+            public sealed record CastVote(string Candidate, long Power);
+
+            /// <summary>One vote row as raw indexer input, before the current-round filter.</summary>
+            public sealed record VoteRow(long Round, string Candidate, long Power);
+
+            /// <summary>
+            /// The sitting agent, verbatim from the chain - <see cref="VacantSeatPubkey"/>
+            /// while the seat is vacant, null when the property has no letting row yet.
+            /// </summary>
+            public string? Agent { get; init; }
+
+            /// <summary>The live election round; 0 while no election has ever opened.</summary>
+            public long Round { get; init; }
+
+            /// <summary>The current round's close (unix seconds); 0 while no election runs.</summary>
+            public long Expiry { get; init; }
+
+            public int QuorumBps { get; init; }
+
+            /// <summary>The on-chain candidate count of the current round.</summary>
+            public long CandidateCount { get; init; }
+
+            /// <summary>The current round's candidacies, vote power descending.</summary>
+            public IReadOnlyList<Candidacy> Candidacies { get; init; } = [];
+
+            /// <summary>The caller's vote in the current round, when they cast one.</summary>
+            public CastVote? MyVote { get; init; }
+
+            /// <summary>
+            /// The unique vote-power leader of the current round; null on a tie at the
+            /// top (or no candidacies). Mirrors the strict-unique-max rule of
+            /// <c>finalize_agent_election</c>: on a tie the seat reopens for a fresh
+            /// round instead of electing anyone. Note the crank needs more - quorum and
+            /// a non-zero tally are enforced on-chain, so a returned winner can still
+            /// fail assignment and just reopen the round.
+            /// </summary>
+            public string? WinnerOrNull => PickPluralityWinner(Candidacies);
+
+            /// <summary>The raw rows of <paramref name="round"/>, strongest first.</summary>
+            public static IReadOnlyList<Candidacy> ToCurrentRound(long round, IReadOnlyList<ElectionCandidacyRow>? rows)
+            {
+                if (rows is null)
+                {
+                    return [];
+                }
+
+                var current = new List<Candidacy>();
+                foreach (var row in rows)
+                {
+                    if (row.Round == round)
+                    {
+                        current.Add(new Candidacy(row.Candidate, row.VotePower));
+                    }
+                }
+
+                return current.OrderByDescending(c => c.VotePower).ToList();
+            }
+
+            /// <summary>
+            /// The strictly-unique maximum of <paramref name="currentRound"/>: equality
+            /// against the running leader marks a tie, and only a later strictly-higher
+            /// tally clears it (the same fold <c>finalize_agent_election</c> runs over
+            /// the candidacy accounts).
+            /// </summary>
+            public static string? PickPluralityWinner(IReadOnlyList<Candidacy> currentRound)
+            {
+                long best = -1;
+                string? winner = null;
+                var tied = false;
+                foreach (var candidacy in currentRound)
+                {
+                    if (candidacy.VotePower > best)
+                    {
+                        best = candidacy.VotePower;
+                        winner = candidacy.Agent;
+                        tied = false;
+                    }
+                    else if (candidacy.VotePower == best)
+                    {
+                        tied = true;
+                    }
+                }
+
+                return winner is null || tied ? null : winner;
+            }
+
+            /// <summary>
+            /// Assembles the state from raw indexer rows, keeping only the letting's
+            /// current round (the indexer's candidacy/vote answers span every round).
+            /// </summary>
+            public static AgentElectionState Create(
+                string? agent,
+                long round,
+                long expiry,
+                int quorumBps,
+                long candidateCount,
+                IReadOnlyList<ElectionCandidacyRow>? candidacies,
+                IReadOnlyList<VoteRow>? votes)
+            {
+                return new AgentElectionState
+                {
+                    Agent = agent,
+                    Round = round,
+                    Expiry = expiry,
+                    QuorumBps = quorumBps,
+                    CandidateCount = candidateCount,
+                    Candidacies = ToCurrentRound(round, candidacies),
+                    MyVote = votes?
+                        .Where(v => v.Round == round)
+                        .OrderByDescending(v => v.Power)
+                        .Select(v => new CastVote(v.Candidate, v.Power))
+                        .FirstOrDefault(),
+                };
+            }
+        }
+
+        /// <summary>
+        /// Which finalization cranks one listing/property is ready for RIGHT NOW, each
+        /// arrow carrying exactly the inputs the matching call wrapper needs - the UI
+        /// never reasons about timelines itself, it shows a banner per non-null arrow.
+        /// The rules mirror the on-chain handlers: a crank is offered only when the
+        /// program would accept it (proposal/challenge/election votes closed but not yet
+        /// finalized, the silent-verdict final stretch, the executable deal window).
+        /// </summary>
+        public sealed record PendingFinalizations
+        {
+            /// <summary>The letting-seat counters the crank rules read from.</summary>
+            public sealed record LettingSnapshot(
+                long ElectionRound,
+                long ElectionExpiry,
+                long ElectionCandidateCount,
+                long ActiveProposal,
+                long ActiveChallenge);
+
+            /// <summary>The active proposal row (open = unfinalized; the account closes at finalization).</summary>
+            public sealed record ProposalSnapshot(long ProposalId, long Expiry, string RentPayer);
+
+            /// <summary>The active challenge row, carrying the parties its finalization pays out to.</summary>
+            public sealed record ChallengeSnapshot(long ChallengeId, long Expiry, string RentPayer, string Challenger, string StruckAgent);
+
+            /// <summary>The listing's legal-phase fields plus the asset's region.</summary>
+            public sealed record ListingSnapshot(
+                ListingStatus Status,
+                long LegalDeadline,
+                long LegalProcessTime,
+                string Developer,
+                string DeveloperLawyer,
+                DocumentStatus DeveloperLawyerDocStatus,
+                string SpvLawyer,
+                DocumentStatus SpvLawyerDocStatus,
+                long SpvElectionRound,
+                long SpvElectionExpiry,
+                long SpvElectionCandidateCount,
+                int? RegionId,
+                IReadOnlyList<string> CollectedMints);
+
+            /// <summary>The marketplace singleton config (mints and treasury the cranks pay/derive with).</summary>
+            public sealed record ConfigSnapshot(string XcavMint, string Treasury, IReadOnlyList<string> AcceptedPaymentMints);
+
+            /// <summary>An ended, unfinalized spending proposal: its id (account seed) and rent payer.</summary>
+            public sealed record ProposalFinalization(long ProposalId, string RentPayer);
+
+            /// <summary>An ended, unfinalized challenge: its id plus the parties the payout accounts derive from.</summary>
+            public sealed record ChallengeFinalization(long ChallengeId, string RentPayer, string Challenger, string StruckAgent);
+
+            /// <summary>
+            /// An ended, unfinalized election: the plurality winner (null on a tie - the
+            /// seat reopens either way, so the crank still runs with no winner account)
+            /// and the round's candidates, which the finalize instruction walks as its
+            /// remaining accounts.
+            /// </summary>
+            public sealed record ElectionFinalization(string? Winner, IReadOnlyList<string> Candidates);
+
+            /// <summary>
+            /// A deal ready to settle: the listing's parties and region plus the config's
+            /// XCAV mint (deposit release) and the collected payment mints the payout
+            /// loop iterates per mint.
+            /// </summary>
+            public sealed record ExecuteDealFinalization(
+                ushort RegionId,
+                string Developer,
+                string DeveloperLawyer,
+                string SpvLawyer,
+                string XcavMint,
+                IReadOnlyList<string> CollectedMints);
+
+            public ProposalFinalization? Proposal { get; init; }
+            public ChallengeFinalization? Challenge { get; init; }
+            public ElectionFinalization? AgentElection { get; init; }
+            public ElectionFinalization? SpvElection { get; init; }
+
+            /// <summary>
+            /// A silent-verdict crank is due: the SPV side ruled but the developer's
+            /// lawyer let the review window run into its final stretch
+            /// (<c>legal_deadline - legalProcessTime/5 &lt;= now &lt;= legal_deadline</c>,
+            /// status SOLD_OUT - resolve_silent_verdict). Past the deadline the timeout
+            /// refund path owns the vault and this crank no longer applies.
+            /// </summary>
+            public bool SilentVerdictOverdue { get; init; }
+
+            public ExecuteDealFinalization? ExecuteDeal { get; init; }
+
+            /// <summary>The marketplace config the arrows reference; null only pre-deployment.</summary>
+            public ConfigSnapshot? Config { get; init; }
+        }
+
+        /// <summary>
+        /// One holder's income ledger on one property: streams from the indexer, the
+        /// checkpoint lookup skipped for an empty owner (nothing to claim for nobody).
+        /// The caller's share count is NOT read here - it comes from the caller's
+        /// holding (<see cref="XcavateGovernanceState.HoldingState"/> via
+        /// <see cref="GetGovernanceStateAsync"/>) and feeds <see cref="PropertyIncomeState.GetClaimable"/>.
+        /// <paramref name="rpc"/> is the caller's Solana RPC handle, pinned for the
+        /// claim wrappers that compose on top of this read (mint programs/decimals);
+        /// the indexer answers everything the state itself needs.
+        /// </summary>
+        public static async Task<PropertyIncomeState> GetIncomeStateAsync(
+            SolanaCluster cluster,
+            long assetId,
+            string owner,
+            Solnet.Rpc.IRpcClient rpc,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+            var assetIdArg = assetId.ToString(CultureInfo.InvariantCulture);
+
+            var incomesResult = await client.GetPropertyIncomes
+                .ExecuteAsync(assetIdArg, token)
+                .ConfigureAwait(false);
+            incomesResult.EnsureNoErrors();
+
+            var streams = ParseIncomeStreams(incomesResult.Data?.PropertyIncomes.Nodes.FirstOrDefault()?.Streams);
+
+            var checkpoint = IncomeCheckpointState.Empty;
+            if (!string.IsNullOrEmpty(owner))
+            {
+                var checkpointResult = await client.GetIncomeCheckpoints
+                    .ExecuteAsync(assetIdArg, owner, token)
+                    .ConfigureAwait(false);
+                checkpointResult.EnsureNoErrors();
+
+                checkpoint = ParseIncomeCheckpoint(checkpointResult.Data?.IncomeCheckpoints.Nodes.FirstOrDefault()?.Entries);
+            }
+
+            return new PropertyIncomeState { Streams = streams, Checkpoint = checkpoint };
+        }
+
+        /// <summary>
+        /// One property's agent-election state in ONE round trip: the letting seat, the
+        /// candidacies, and the caller's own votes. Candidacy and vote rows arrive
+        /// unfiltered by round (the schema has no such filter); the letting's current
+        /// round keeps the live ones. <paramref name="voter"/> empty reads the election
+        /// without any own-vote section.
+        /// </summary>
+        public static async Task<AgentElectionState> GetAgentElectionStateAsync(
+            SolanaCluster cluster,
+            long assetId,
+            string voter,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+            var assetIdArg = assetId.ToString(CultureInfo.InvariantCulture);
+
+            var result = await client.GetAgentElectionState
+                .ExecuteAsync(assetIdArg, voter, token)
+                .ConfigureAwait(false);
+            result.EnsureNoErrors();
+
+            var letting = result.Data?.PropertyLettings.Nodes.FirstOrDefault();
+
+            var candidacies = result.Data?.AgentCandidacies.Nodes
+                .Select(node => new ElectionCandidacyRow(
+                    ParseInt64(node.Round), node.Agent, ParseInt64(node.VotePower)))
+                .ToList();
+
+            var votes = result.Data?.AgentVotes.Nodes
+                .Select(node => new AgentElectionState.VoteRow(
+                    ParseInt64(node.Round), node.Choice, ParseInt64(node.Power)))
+                .ToList();
+
+            return AgentElectionState.Create(
+                letting?.Agent,
+                ParseInt64(letting?.ElectionRound),
+                ParseInt64(letting?.ElectionExpiry),
+                letting?.ElectionQuorumBps ?? 0,
+                ParseInt64(letting?.ElectionCandidateCount),
+                candidacies,
+                votes);
+        }
+
+        /// <summary>
+        /// Which finalization cranks one listing/property is ready for, evaluated once
+        /// against a single clock reading. Pure: the async reader maps indexer rows onto
+        /// these snapshots so the rules themselves stay testable with frozen time.
+        /// </summary>
+        public static PendingFinalizations EvaluatePendingFinalizations(
+            DateTimeOffset now,
+            PendingFinalizations.LettingSnapshot? letting,
+            PendingFinalizations.ProposalSnapshot? proposal,
+            PendingFinalizations.ChallengeSnapshot? challenge,
+            IReadOnlyList<ElectionCandidacyRow>? agentCandidacies,
+            PendingFinalizations.ListingSnapshot? listing,
+            IReadOnlyList<ElectionCandidacyRow>? spvCandidacies,
+            PendingFinalizations.ConfigSnapshot? config)
+        {
+            var nowUnix = now.ToUnixTimeSeconds();
+
+            PendingFinalizations.ProposalFinalization? proposalFinalization = null;
+            if (letting is not null
+                && letting.ActiveProposal > 0
+                && proposal is not null
+                && proposal.ProposalId == letting.ActiveProposal
+                && nowUnix >= proposal.Expiry)
+            {
+                proposalFinalization = new PendingFinalizations.ProposalFinalization(
+                    proposal.ProposalId, proposal.RentPayer);
+            }
+
+            PendingFinalizations.ChallengeFinalization? challengeFinalization = null;
+            if (letting is not null
+                && letting.ActiveChallenge > 0
+                && challenge is not null
+                && challenge.ChallengeId == letting.ActiveChallenge
+                && nowUnix >= challenge.Expiry)
+            {
+                challengeFinalization = new PendingFinalizations.ChallengeFinalization(
+                    challenge.ChallengeId, challenge.RentPayer, challenge.Challenger, challenge.StruckAgent);
+            }
+
+            PendingFinalizations.ElectionFinalization? agentElectionFinalization = null;
+            if (letting is not null
+                && letting.ElectionExpiry != 0
+                && letting.ElectionCandidateCount > 0
+                && nowUnix >= letting.ElectionExpiry)
+            {
+                var roundCandidacies = AgentElectionState.ToCurrentRound(letting.ElectionRound, agentCandidacies);
+                agentElectionFinalization = new PendingFinalizations.ElectionFinalization(
+                    AgentElectionState.PickPluralityWinner(roundCandidacies),
+                    roundCandidacies.Select(c => c.Agent).ToList());
+            }
+
+            PendingFinalizations.ElectionFinalization? spvElectionFinalization = null;
+            var silentVerdictOverdue = false;
+            PendingFinalizations.ExecuteDealFinalization? executeDeal = null;
+            if (listing is not null)
+            {
+                if (listing.SpvElectionExpiry != 0
+                    && listing.SpvElectionCandidateCount > 0
+                    && nowUnix >= listing.SpvElectionExpiry
+                    && IsVacantSeat(listing.SpvLawyer))
+                {
+                    var roundCandidacies = AgentElectionState.ToCurrentRound(listing.SpvElectionRound, spvCandidacies);
+                    spvElectionFinalization = new PendingFinalizations.ElectionFinalization(
+                        AgentElectionState.PickPluralityWinner(roundCandidacies),
+                        roundCandidacies.Select(c => c.Agent).ToList());
+                }
+
+                // resolve_silent_verdict: only while the sale is still SOLD_OUT, the SPV
+                // side has ruled, the developer's side is silent, and the clock sits in
+                // the review window's final stretch (before the deadline owns the exit).
+                var finalStretch = listing.LegalDeadline - listing.LegalProcessTime / 5;
+                silentVerdictOverdue = listing.Status is ListingStatus.SoldOut
+                    && listing.DeveloperLawyerDocStatus is DocumentStatus.Pending
+                    && listing.SpvLawyerDocStatus is not DocumentStatus.Pending
+                    && nowUnix >= finalStretch
+                    && nowUnix <= listing.LegalDeadline;
+
+                // execute_deal: status LEGAL (both lawyers approved - the status flips
+                // exactly then) and the legal window not yet lapsed.
+                if (listing.Status is ListingStatus.Legal
+                    && nowUnix <= listing.LegalDeadline
+                    && listing.RegionId is { } regionId
+                    && config is not null)
+                {
+                    executeDeal = new PendingFinalizations.ExecuteDealFinalization(
+                        (ushort)Math.Clamp(regionId, 0, ushort.MaxValue),
+                        listing.Developer,
+                        listing.DeveloperLawyer,
+                        listing.SpvLawyer,
+                        config.XcavMint,
+                        listing.CollectedMints);
+                }
+            }
+
+            return new PendingFinalizations
+            {
+                Proposal = proposalFinalization,
+                Challenge = challengeFinalization,
+                AgentElection = agentElectionFinalization,
+                SpvElection = spvElectionFinalization,
+                SilentVerdictOverdue = silentVerdictOverdue,
+                ExecuteDeal = executeDeal,
+                Config = config,
+            };
+        }
+
+        /// <summary>
+        /// Which of the five finalization cranks one listing/property is ready for, one
+        /// round of indexer queries answered against a single wall-clock reading. The
+        /// clock has no seam in this codebase - <see cref="DateTimeOffset.UtcNow"/> is
+        /// read once here and the rules live in the pure
+        /// <see cref="EvaluatePendingFinalizations"/>, which tests freeze directly.
+        /// <paramref name="viewer"/> is pinned for downstream per-viewer banners; the
+        /// cranks themselves are permissionless, so no arrow depends on it.
+        /// </summary>
+        public static async Task<PendingFinalizations> GetPendingFinalizationsAsync(
+            SolanaCluster cluster,
+            long assetId,
+            long listingId,
+            string? viewer,
+            CancellationToken token = default)
+        {
+            var now = DateTimeOffset.UtcNow;
+
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+            var assetIdArg = assetId.ToString(CultureInfo.InvariantCulture);
+            var listingIdArg = listingId.ToString(CultureInfo.InvariantCulture);
+
+            var lettingResult = await client.PropertyLettingGovernance
+                .ExecuteAsync(assetIdArg, token)
+                .ConfigureAwait(false);
+            lettingResult.EnsureNoErrors();
+            var letting = lettingResult.Data?.PropertyLettings.Nodes.FirstOrDefault();
+
+            var lettingSnapshot = letting is null
+                ? null
+                : new PendingFinalizations.LettingSnapshot(
+                    ParseInt64(letting.ElectionRound),
+                    ParseInt64(letting.ElectionExpiry),
+                    ParseInt64(letting.ElectionCandidateCount),
+                    ParseInt64(letting.GovernanceActiveProposal),
+                    ParseInt64(letting.GovernanceActiveChallenge));
+
+            var proposalsResult = await client.PropertyProposals
+                .ExecuteAsync(assetIdArg, first: 1, offset: 0, token)
+                .ConfigureAwait(false);
+            proposalsResult.EnsureNoErrors();
+            var proposalNode = proposalsResult.Data?.Proposals.Nodes.FirstOrDefault();
+            var proposalSnapshot = proposalNode is null
+                ? null
+                : new PendingFinalizations.ProposalSnapshot(
+                    ParseInt64(proposalNode.ProposalId), ParseInt64(proposalNode.Expiry), proposalNode.RentPayer);
+
+            var challengesResult = await client.PropertyChallenges
+                .ExecuteAsync(assetIdArg, first: 1, offset: 0, token)
+                .ConfigureAwait(false);
+            challengesResult.EnsureNoErrors();
+            var challengeNode = challengesResult.Data?.Challenges.Nodes.FirstOrDefault();
+            var challengeSnapshot = challengeNode is null
+                ? null
+                : new PendingFinalizations.ChallengeSnapshot(
+                    ParseInt64(challengeNode.ChallengeId),
+                    ParseInt64(challengeNode.Expiry),
+                    challengeNode.RentPayer,
+                    challengeNode.Challenger,
+                    challengeNode.Agent);
+
+            var candidaciesResult = await client.PropertyAgentCandidacies
+                .ExecuteAsync(assetIdArg, first: 50, offset: 0, token)
+                .ConfigureAwait(false);
+            candidaciesResult.EnsureNoErrors();
+            var agentCandidacies = candidaciesResult.Data?.AgentCandidacies.Nodes
+                .Select(node => new ElectionCandidacyRow(
+                    ParseInt64(node.Round), node.Agent, ParseInt64(node.VotePower)))
+                .ToList();
+
+            var listingResult = await client.MarketplaceListing
+                .ExecuteAsync(listingIdArg, token)
+                .ConfigureAwait(false);
+            listingResult.EnsureNoErrors();
+            var listing = listingResult.Data?.Listings.Nodes.FirstOrDefault();
+
+            var listingSnapshot = listing is null
+                ? null
+                : new PendingFinalizations.ListingSnapshot(
+                    listing.Status,
+                    ParseInt64(listing.LegalDeadline),
+                    ParseInt64(listing.LegalProcessTime),
+                    listing.Developer,
+                    listing.DeveloperLawyer,
+                    listing.DeveloperLawyerDocStatus,
+                    listing.SpvLawyer,
+                    listing.SpvLawyerDocStatus,
+                    ParseInt64(listing.SpvElectionRound),
+                    ParseInt64(listing.SpvElectionExpiry),
+                    ParseInt64(listing.SpvElectionCandidateCount),
+                    listing.PropertyAsset?.RegionId,
+                    ParseCollectedMints(listing.Collected));
+
+            var lawyerCandidaciesResult = await client.MarketplaceLawyerCandidacies
+                .ExecuteAsync(listingIdArg, first: 10, offset: 0, token)
+                .ConfigureAwait(false);
+            lawyerCandidaciesResult.EnsureNoErrors();
+            var spvCandidacies = lawyerCandidaciesResult.Data?.LawyerCandidacies.Nodes
+                .Select(node => new ElectionCandidacyRow(
+                    ParseInt64(node.Round), node.Lawyer, ParseInt64(node.VotePower)))
+                .ToList();
+
+            var configResult = await client.MarketplaceConfigInfo
+                .ExecuteAsync(token)
+                .ConfigureAwait(false);
+            configResult.EnsureNoErrors();
+            var config = configResult.Data?.MarketplaceConfig;
+            var configSnapshot = config is null
+                ? null
+                : new PendingFinalizations.ConfigSnapshot(
+                    config.XcavMint, config.Treasury, ParseStringArray(config.AcceptedPaymentMints));
+
+            return EvaluatePendingFinalizations(
+                now, lettingSnapshot, proposalSnapshot, challengeSnapshot,
+                agentCandidacies, listingSnapshot, spvCandidacies, configSnapshot);
+        }
+
+        private static bool IsVacantSeat(string? pubkey) =>
+            string.IsNullOrEmpty(pubkey) || pubkey == VacantSeatPubkey;
+
+        /// <summary>
+        /// The ledger's raw <c>streams</c> JSON (<c>[{"mint": ..., "per_share": "...", "dust": N}, ...]</c>)
+        /// parsed into typed stream records; u128 values stay in BigInteger all the way.
+        /// Malformed input reads as no streams.
+        /// </summary>
+        public static IReadOnlyList<PropertyIncomeState.IncomeStream> ParseIncomeStreams(string? rawJson)
+        {
+            if (string.IsNullOrWhiteSpace(rawJson))
+            {
+                return [];
+            }
+
+            try
+            {
+                var rows = JsonSerializer.Deserialize<List<ParsedStreamJson>>(rawJson);
+                return rows?
+                    .Where(row => !string.IsNullOrEmpty(row.Mint))
+                    .Select(row => new PropertyIncomeState.IncomeStream(
+                        row.Mint!, ParseBigInteger(row.PerShare), row.Dust))
+                    .ToList() ?? [];
+            }
+            catch (JsonException)
+            {
+                return [];
+            }
+        }
+
+        /// <summary>
+        /// One holder's raw checkpoint <c>entries</c> JSON (<c>[{"per_share": "...", "pending": N}, ...]</c>).
+        /// A missing/malformed row means the holder has never claimed: the empty state,
+        /// every cursor zero.
+        /// </summary>
+        public static IncomeCheckpointState ParseIncomeCheckpoint(string? rawJson)
+        {
+            if (string.IsNullOrWhiteSpace(rawJson))
+            {
+                return IncomeCheckpointState.Empty;
+            }
+
+            try
+            {
+                var rows = JsonSerializer.Deserialize<List<ParsedEntryJson>>(rawJson);
+                var entries = rows?
+                    .Select(row => new IncomeCheckpointState.Entry(
+                        ParseBigInteger(row.PerShare), row.Pending))
+                    .ToList();
+                return entries is null || entries.Count == 0
+                    ? IncomeCheckpointState.Empty
+                    : new IncomeCheckpointState(entries);
+            }
+            catch (JsonException)
+            {
+                return IncomeCheckpointState.Empty;
+            }
+        }
+
+        /// <summary>
+        /// The listing's <c>collected</c> JSON (<c>[{"mint": ..., "funds": N, ...}, ...]</c>),
+        /// reduced to the payment mints settlement pays out. Malformed input reads as none.
+        /// </summary>
+        private static IReadOnlyList<string> ParseCollectedMints(string? rawJson)
+        {
+            if (string.IsNullOrWhiteSpace(rawJson))
+            {
+                return [];
+            }
+
+            try
+            {
+                var rows = JsonSerializer.Deserialize<List<ParsedCollectedJson>>(rawJson);
+                return rows?
+                    .Select(row => row.Mint)
+                    .Where(mint => !string.IsNullOrEmpty(mint))
+                    .Cast<string>()
+                    .ToList() ?? [];
+            }
+            catch (JsonException)
+            {
+                return [];
+            }
+        }
+
+        private sealed record ParsedStreamJson(
+            [property: System.Text.Json.Serialization.JsonPropertyName("mint")] string? Mint,
+            [property: System.Text.Json.Serialization.JsonPropertyName("per_share")] string? PerShare,
+            [property: System.Text.Json.Serialization.JsonPropertyName("dust")] long Dust);
+
+        private sealed record ParsedEntryJson(
+            [property: System.Text.Json.Serialization.JsonPropertyName("per_share")] string? PerShare,
+            [property: System.Text.Json.Serialization.JsonPropertyName("pending")] decimal Pending);
+
+        private sealed record ParsedCollectedJson(
+            [property: System.Text.Json.Serialization.JsonPropertyName("mint")] string? Mint);
 
         /// <summary>
         /// The state-filtered marketplace feed, one page at a time. <paramref name="states"/>
