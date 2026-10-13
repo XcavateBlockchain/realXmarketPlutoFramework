@@ -144,6 +144,22 @@ namespace PlutoFramework.Model.Xcavate
                 : null;
 
         /// <summary>
+        /// The same pick over a voter's full vote rows: the indexer schema exposes no
+        /// round filter, so <paramref name="votes"/> spans every round - but only the
+        /// round BEING VOTED keys the vote record this transaction revises. A stale
+        /// round's row must never leak its candidacy into the account list.
+        /// </summary>
+        public static PublicKey? ResolvePreviousCandidate(
+            long round,
+            IReadOnlyList<XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow> votes,
+            string candidate) =>
+            ResolvePreviousCandidate(
+                votes.Where(vote => vote.Round == round)
+                    .Select(vote => (string?)vote.Candidate)
+                    .FirstOrDefault(),
+                candidate);
+
+        /// <summary>
         /// The pending-finalization arrow a crank wrapper was invoked for, or a
         /// user-presentable rejection when the indexer sees nothing to settle (the window
         /// is still open, or someone else already finalized it).
@@ -190,11 +206,7 @@ namespace PlutoFramework.Model.Xcavate
                     (ulong)listingId,
                     round,
                     new PublicKey(candidate),
-                    ResolvePreviousCandidate(
-                        votes.Where(vote => vote.Round == (long)round)
-                            .Select(vote => (string?)vote.Candidate)
-                            .FirstOrDefault(),
-                        candidate),
+                    ResolvePreviousCandidate((long)round, votes, candidate),
                     amount),
             ];
         }
@@ -772,19 +784,35 @@ namespace PlutoFramework.Model.Xcavate
                 .GetPendingFinalizationsAsync(cluster, listingId, listingId, cranker, token)
                 .ConfigureAwait(false);
 
-            if (!pending.SilentVerdictOverdue)
+            return
+            [
+                BuildResolveSilentVerdict(programs, cranker, listingId, pending.SilentVerdictOverdue),
+            ];
+        }
+
+        /// <summary>
+        /// The resolve_silent_verdict instruction, or a user-presentable rejection when
+        /// the indexer says the crank cannot land: the gate
+        /// (<see cref="XcavateMarketplaceIndexerModel.PendingFinalizations.SilentVerdictOverdue"/>)
+        /// is the whole decision - outside the closing stretch, or the lawyer already
+        /// ruled, the instruction's own window constraints would revert.
+        /// </summary>
+        public static TransactionInstruction BuildResolveSilentVerdict(
+            XcavateProgramSet programs,
+            string cranker,
+            long listingId,
+            bool silentVerdictOverdue)
+        {
+            if (!silentVerdictOverdue)
             {
                 throw new InvalidOperationException(
                     "The developer's lawyer can still rule - or already ruled - so there is no silent verdict to resolve.");
             }
 
-            return
-            [
-                XcavateMarketplaceProgram.ResolveSilentVerdict(
-                    programs,
-                    new PublicKey(cranker),
-                    (ulong)listingId),
-            ];
+            return XcavateMarketplaceProgram.ResolveSilentVerdict(
+                programs,
+                new PublicKey(cranker),
+                (ulong)listingId);
         }
 
         /// <summary>
@@ -819,35 +847,75 @@ namespace PlutoFramework.Model.Xcavate
             var (xcavTokenProgram, _) = await ResolveMintAsync(cluster, new PublicKey(deal.XcavMint), token)
                 .ConfigureAwait(false);
 
-            var collectedMints = new List<XcavateMarketplaceProgram.CollectedMint>();
+            var tokenPrograms = new Dictionary<string, PublicKey>
+            {
+                [deal.XcavMint] = xcavTokenProgram,
+            };
             foreach (var mint in deal.CollectedMints)
             {
                 var (mintTokenProgram, _) = await ResolveMintAsync(cluster, new PublicKey(mint), token)
                     .ConfigureAwait(false);
-                collectedMints.Add(new XcavateMarketplaceProgram.CollectedMint(new PublicKey(mint), mintTokenProgram));
+                tokenPrograms[mint] = mintTokenProgram;
+            }
+
+            return
+            [
+                BuildExecuteDeal(programs, cranker, listingId, deal, regionOwner, config.Treasury, tokenPrograms),
+            ];
+        }
+
+        /// <summary>
+        /// The execute_deal instruction for a deal arrow: the parties, the region payee,
+        /// the treasury and the collected-mint payout loop (one 7-account group per
+        /// collected mint, in arrow order, each redeeming its own token program from
+        /// <paramref name="tokenProgramByMint"/>). The payment-token-program slot is the
+        /// FIRST collected mint's program - the program the handler consults against the
+        /// payout groups; with nothing collected it is the XCAV mint's, an unused
+        /// pass-through (settlement.rs:141 checks remaining == collected.len() * 7).
+        /// </summary>
+        public static TransactionInstruction BuildExecuteDeal(
+            XcavateProgramSet programs,
+            string cranker,
+            long listingId,
+            XcavateMarketplaceIndexerModel.PendingFinalizations.ExecuteDealFinalization finalization,
+            string regionOwner,
+            string treasury,
+            IReadOnlyDictionary<string, PublicKey> tokenProgramByMint)
+        {
+            if (!tokenProgramByMint.TryGetValue(finalization.XcavMint, out var xcavTokenProgram))
+            {
+                throw new InvalidOperationException($"No token program resolved for the deal mint {finalization.XcavMint}.");
+            }
+
+            var collectedMints = new List<XcavateMarketplaceProgram.CollectedMint>();
+            foreach (var mint in finalization.CollectedMints)
+            {
+                if (!tokenProgramByMint.TryGetValue(mint, out var tokenProgram))
+                {
+                    throw new InvalidOperationException($"No token program resolved for the deal mint {mint}.");
+                }
+
+                collectedMints.Add(new XcavateMarketplaceProgram.CollectedMint(new PublicKey(mint), tokenProgram));
             }
 
             // The payment-token-program account is only consulted against the collected
             // mints' own programs; with nothing collected it is an unused pass-through.
             var paymentTokenProgram = collectedMints.Count > 0 ? collectedMints[0].TokenProgram : xcavTokenProgram;
 
-            return
-            [
-                XcavateMarketplaceProgram.ExecuteDeal(
-                    programs,
-                    new PublicKey(cranker),
-                    (ulong)listingId,
-                    deal.RegionId,
-                    new PublicKey(deal.DeveloperLawyer),
-                    new PublicKey(deal.SpvLawyer),
-                    new PublicKey(deal.XcavMint),
-                    new PublicKey(deal.Developer),
-                    xcavTokenProgram,
-                    paymentTokenProgram,
-                    new PublicKey(regionOwner),
-                    new PublicKey(config.Treasury),
-                    collectedMints),
-            ];
+            return XcavateMarketplaceProgram.ExecuteDeal(
+                programs,
+                new PublicKey(cranker),
+                (ulong)listingId,
+                finalization.RegionId,
+                new PublicKey(finalization.DeveloperLawyer),
+                new PublicKey(finalization.SpvLawyer),
+                new PublicKey(finalization.XcavMint),
+                new PublicKey(finalization.Developer),
+                xcavTokenProgram,
+                paymentTokenProgram,
+                new PublicKey(regionOwner),
+                new PublicKey(treasury),
+                collectedMints);
         }
 
         /// <summary>

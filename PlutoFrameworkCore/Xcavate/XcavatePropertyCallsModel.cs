@@ -119,7 +119,11 @@ namespace PlutoFramework.Model.Xcavate
                     round,
                     new PublicKey(agent),
                     XcavateMarketplaceCallsModel.ResolvePreviousCandidate(
-                        election.Round == (long)round ? election.MyVote?.Candidate : null,
+                        (long)round,
+                        election.MyVote is { } vote
+                            ? [new XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow(
+                                election.Round, vote.Candidate, vote.Power)]
+                            : [],
                         agent),
                     amount),
             ];
