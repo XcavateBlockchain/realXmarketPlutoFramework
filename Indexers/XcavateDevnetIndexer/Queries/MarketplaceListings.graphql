@@ -81,6 +81,9 @@ fragment ListingParts on Listing {
   legalProcessTime
   lawyerVotingTime
   minVotingQuorumBps
+  # The listing's snapshotted ownership cap (bps of share_amount); send_property_shares
+  # pins the receiver's post-transfer holding below it.
+  maxOwnershipBps
   developerLawyer
   developerLawyerCosts
   developerLawyerDocStatus

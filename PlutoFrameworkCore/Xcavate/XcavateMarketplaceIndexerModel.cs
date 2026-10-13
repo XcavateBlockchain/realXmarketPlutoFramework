@@ -575,11 +575,11 @@ namespace PlutoFramework.Model.Xcavate
 
             /// <summary>
             /// An ended, unfinalized election: the plurality winner (null on a tie - the
-            /// seat reopens either way, so the crank still runs with no winner account)
-            /// and the round's candidates, which the finalize instruction walks as its
-            /// remaining accounts.
+            /// seat reopens either way, so the crank still runs with no winner account),
+            /// the settled round (the candidacy PDAs the finalize instruction walks are
+            /// seeded with it), and the round's candidates.
             /// </summary>
-            public sealed record ElectionFinalization(string? Winner, IReadOnlyList<string> Candidates);
+            public sealed record ElectionFinalization(string? Winner, long Round, IReadOnlyList<string> Candidates);
 
             /// <summary>
             /// A deal ready to settle: the listing's parties and region plus the config's
@@ -746,6 +746,7 @@ namespace PlutoFramework.Model.Xcavate
                 var roundCandidacies = AgentElectionState.ToCurrentRound(letting.ElectionRound, agentCandidacies);
                 agentElectionFinalization = new PendingFinalizations.ElectionFinalization(
                     AgentElectionState.PickPluralityWinner(roundCandidacies),
+                    letting.ElectionRound,
                     roundCandidacies.Select(c => c.Agent).ToList());
             }
 
@@ -762,6 +763,7 @@ namespace PlutoFramework.Model.Xcavate
                     var roundCandidacies = AgentElectionState.ToCurrentRound(listing.SpvElectionRound, spvCandidacies);
                     spvElectionFinalization = new PendingFinalizations.ElectionFinalization(
                         AgentElectionState.PickPluralityWinner(roundCandidacies),
+                        listing.SpvElectionRound,
                         roundCandidacies.Select(c => c.Agent).ToList());
                 }
 

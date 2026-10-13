@@ -740,6 +740,13 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// finalize_spv_election(listing_id): settles a listing's SPV-lawyer election once
         /// its window closed. Permissionless; the single signer is whoever cranks it.
+        /// Every candidacy of the round rides along as a trailing remaining account - the
+        /// on-chain handler pins their count to the election's candidate_count and walks
+        /// them to find the plurality (the same requirement as the property program's
+        /// finalize_agent_election) - so <paramref name="candidates"/> lists every lawyer
+        /// who ran in <paramref name="round"/>, read from the indexer's pending
+        /// finalizations. The round feeds only the candidacy PDA derivations; the
+        /// instruction's sole argument is the listing id.
         /// </summary>
         /// <param name="winner">
         /// The lawyer whose candidacy leads the closing round, read from the indexer -
@@ -752,20 +759,27 @@ namespace PlutoFramework.Model.Xcavate
             XcavateProgramSet programs,
             PublicKey cranker,
             ulong listingId,
-            PublicKey? winner)
+            ulong round,
+            PublicKey? winner,
+            IReadOnlyList<PublicKey> candidates)
         {
+            var keys = new List<AccountMeta>
+            {
+                AccountMeta.Writable(cranker, true),
+                AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                AccountMeta.Writable(DeriveProperty(programs, listingId), false),
+                AccountMeta.Writable(winner is not null
+                    ? DeriveLawyer(programs, winner)
+                    : new PublicKey(programs.Marketplace), false),
+            };
+
+            keys.AddRange(candidates.Select(candidate =>
+                AccountMeta.Writable(DeriveLawyerCandidacy(programs, listingId, round, candidate), false)));
+
             return new TransactionInstruction
             {
                 ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
-                Keys =
-                [
-                    AccountMeta.Writable(cranker, true),
-                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
-                    AccountMeta.Writable(DeriveProperty(programs, listingId), false),
-                    AccountMeta.Writable(winner is not null
-                        ? DeriveLawyer(programs, winner)
-                        : new PublicKey(programs.Marketplace), false),
-                ],
+                Keys = keys,
                 Data = Encode(FinalizeSpvElectionDiscriminator, U64(listingId)),
             };
         }
@@ -792,6 +806,11 @@ namespace PlutoFramework.Model.Xcavate
             };
         }
 
+        /// <summary>One collected payment mint with its token program, for <see cref="ExecuteDeal"/>.</summary>
+        /// <param name="Mint">A mint the listing collected funds in, in the listing's collected order.</param>
+        /// <param name="TokenProgram">The mint's owner program (legacy SPL or Token-2022) - the per-mint ATAs derive under it.</param>
+        public sealed record CollectedMint(PublicKey Mint, PublicKey TokenProgram);
+
         /// <summary>
         /// execute_deal(listing_id): completes settlement once both lawyers approved and
         /// the legal window passed - releases the deposits, pays the lawyers, splits the
@@ -809,6 +828,17 @@ namespace PlutoFramework.Model.Xcavate
         /// <param name="developer">The listing's developer; their XCAV associated account receives the deposit back.</param>
         /// <param name="xcavTokenProgram">The XCAV mint's token program.</param>
         /// <param name="paymentTokenProgram">The payment mints' token program - a second program id when it differs from the XCAV mint's.</param>
+        /// <param name="regionOwner">The region account's operator, whose token account collects half the leftover fees.</param>
+        /// <param name="treasury">The config's treasury; the last payee of every collected mint group.</param>
+        /// <param name="collectedMints">
+        /// Every mint the listing collected, in the listing's collected order (from the
+        /// indexer's pending finalizations). The handler requires one trailing
+        /// (mint, vault account, developer, developer's lawyer, SPV lawyer, region owner,
+        /// treasury) group of accounts per collected mint - 7 entries each - and verifies
+        /// the ATAs for the vault and rejects payee accounts that do not hold the mint.
+        /// The builder derives every one as the standard associated token account under
+        /// the mint's own token program, which the program accepts by construction.
+        /// </param>
         public static TransactionInstruction ExecuteDeal(
             XcavateProgramSet programs,
             PublicKey cranker,
@@ -819,27 +849,51 @@ namespace PlutoFramework.Model.Xcavate
             PublicKey xcavMint,
             PublicKey developer,
             PublicKey xcavTokenProgram,
-            PublicKey paymentTokenProgram)
+            PublicKey paymentTokenProgram,
+            PublicKey regionOwner,
+            PublicKey treasury,
+            IReadOnlyList<CollectedMint> collectedMints)
         {
+            var listingVault = DeriveListingVault(programs, listingId);
+
+            var keys = new List<AccountMeta>
+            {
+                AccountMeta.Writable(cranker, true),
+                AccountMeta.Writable(DeriveConfig(programs), false),
+                AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                AccountMeta.Writable(DeriveProperty(programs, listingId), false),
+                AccountMeta.Writable(DeriveRegion(programs, regionId), false),
+                AccountMeta.Writable(DeriveLawyer(programs, developerLawyer), false),
+                AccountMeta.Writable(DeriveLawyer(programs, spvLawyer), false),
+                AccountMeta.Writable(listingVault, false),
+                AccountMeta.Writable(xcavMint, false),
+                AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(developer, xcavMint, xcavTokenProgram), false),
+                AccountMeta.Writable(DeriveVault(programs), false),
+                AccountMeta.Writable(xcavTokenProgram, false),
+                AccountMeta.Writable(paymentTokenProgram, false),
+            };
+
+            foreach (var (mint, tokenProgram) in collectedMints)
+            {
+                keys.Add(AccountMeta.Writable(mint, false));
+                keys.Add(AccountMeta.Writable(
+                    SolanaAssociatedTokenAccount.Derive(listingVault, mint, tokenProgram), false));
+                keys.Add(AccountMeta.Writable(
+                    SolanaAssociatedTokenAccount.Derive(developer, mint, tokenProgram), false));
+                keys.Add(AccountMeta.Writable(
+                    SolanaAssociatedTokenAccount.Derive(developerLawyer, mint, tokenProgram), false));
+                keys.Add(AccountMeta.Writable(
+                    SolanaAssociatedTokenAccount.Derive(spvLawyer, mint, tokenProgram), false));
+                keys.Add(AccountMeta.Writable(
+                    SolanaAssociatedTokenAccount.Derive(regionOwner, mint, tokenProgram), false));
+                keys.Add(AccountMeta.Writable(
+                    SolanaAssociatedTokenAccount.Derive(treasury, mint, tokenProgram), false));
+            }
+
             return new TransactionInstruction
             {
                 ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
-                Keys =
-                [
-                    AccountMeta.Writable(cranker, true),
-                    AccountMeta.Writable(DeriveConfig(programs), false),
-                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
-                    AccountMeta.Writable(DeriveProperty(programs, listingId), false),
-                    AccountMeta.Writable(DeriveRegion(programs, regionId), false),
-                    AccountMeta.Writable(DeriveLawyer(programs, developerLawyer), false),
-                    AccountMeta.Writable(DeriveLawyer(programs, spvLawyer), false),
-                    AccountMeta.Writable(DeriveListingVault(programs, listingId), false),
-                    AccountMeta.Writable(xcavMint, false),
-                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(developer, xcavMint, xcavTokenProgram), false),
-                    AccountMeta.Writable(DeriveVault(programs), false),
-                    AccountMeta.Writable(xcavTokenProgram, false),
-                    AccountMeta.Writable(paymentTokenProgram, false),
-                ],
+                Keys = keys,
                 Data = Encode(ExecuteDealDiscriminator, U64(listingId)),
             };
         }

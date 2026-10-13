@@ -486,6 +486,22 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public void FinalizeProposal_PassesTheMarketplacePropertyPda()
+        {
+            var instruction = XcavatePropertyProgram.FinalizeProposal(
+                Programs, SyntheticKey(1), SyntheticKey(2), 7, 3);
+
+            // governance.rs (finalize_proposal) pins the property account with
+            // seeds::program = marketplace::ID - the MARKETPLACE program's
+            // [b"property", asset_id] PDA supplies the share supply the quorum is
+            // measured against, same as finalize_challenge's account [4].
+            Assert.That(instruction.Keys[3].PublicKey, Is.EqualTo(
+                XcavateMarketplaceProgram.DeriveProperty(Programs, 7).Key));
+            Assert.That(instruction.Keys[3].PublicKey, Is.Not.EqualTo(
+                XcavatePropertyProgram.DeriveProperty(Programs, 7).Key));
+        }
+
+        [Test]
         public void IncomeAndConfigPdas_MatchTheIdlSeedLayouts()
         {
             var holder = SyntheticKey(1);

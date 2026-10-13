@@ -78,12 +78,13 @@ namespace PlutoFrameworkTests
                 "close_share_holding" => XcavateMarketplaceProgram.CloseShareHolding(
                     Programs, SyntheticKey(1), SyntheticKey(2), 7, SyntheticKey(3)),
                 "finalize_spv_election" => XcavateMarketplaceProgram.FinalizeSpvElection(
-                    Programs, SyntheticKey(1), 7, null),
+                    Programs, SyntheticKey(1), 7, 1, null, []),
                 "resolve_silent_verdict" => XcavateMarketplaceProgram.ResolveSilentVerdict(
                     Programs, SyntheticKey(1), 7),
                 "execute_deal" => XcavateMarketplaceProgram.ExecuteDeal(
                     Programs, SyntheticKey(1), 7, 3, SyntheticKey(2), SyntheticKey(3), SyntheticKey(4), SyntheticKey(5),
-                    new PublicKey(SolanaTokenProgram.Token2022), new PublicKey(SolanaTokenProgram.Legacy)),
+                    new PublicKey(SolanaTokenProgram.Token2022), new PublicKey(SolanaTokenProgram.Legacy),
+                    SyntheticKey(6), SyntheticKey(7), []),
                 _ => throw new ArgumentOutOfRangeException(nameof(instructionName)),
             };
 
@@ -671,10 +672,11 @@ namespace PlutoFrameworkTests
             var paymentToken = new PublicKey(SolanaTokenProgram.Legacy);
 
             var close = XcavateMarketplaceProgram.CloseShareHolding(Programs, cranker, rentCollector, 7, owner);
-            var finalize = XcavateMarketplaceProgram.FinalizeSpvElection(Programs, cranker, 7, null);
+            var finalize = XcavateMarketplaceProgram.FinalizeSpvElection(Programs, cranker, 7, 2, null, []);
             var resolve = XcavateMarketplaceProgram.ResolveSilentVerdict(Programs, cranker, 7);
             var execute = XcavateMarketplaceProgram.ExecuteDeal(
-                Programs, cranker, 7, 3, developerLawyer, spvLawyer, xcavMint, developer, xcavToken, paymentToken);
+                Programs, cranker, 7, 3, developerLawyer, spvLawyer, xcavMint, developer, xcavToken, paymentToken,
+                developer, SyntheticKey(8), []);
 
             Assert.Multiple(() =>
             {
@@ -692,7 +694,9 @@ namespace PlutoFrameworkTests
                 Assert.That(close.Keys[4].PublicKey, Is.EqualTo(
                     XcavateMarketplaceProgram.DeriveHolding(Programs, 7, owner).Key));
 
-                // finalize_spv_election: cranker, listing, property, winner_registry.
+                // finalize_spv_election: cranker, listing, property, winner_registry -
+                // with the round's candidacy PDAs trailing as remaining accounts
+                // (empty here, asserted separately below).
                 Assert.That(finalize.Keys, Has.Count.EqualTo(4));
                 Assert.That(finalize.Keys[0].PublicKey, Is.EqualTo(cranker.Key));
                 Assert.That(finalize.Keys[0].IsSigner, Is.True);
@@ -706,7 +710,7 @@ namespace PlutoFrameworkTests
                 Assert.That(finalize.Keys[3].PublicKey, Is.EqualTo(new PublicKey(Programs.Marketplace).Key));
 
                 var winner = SyntheticKey(8);
-                var finalizeWithWinner = XcavateMarketplaceProgram.FinalizeSpvElection(Programs, cranker, 7, winner);
+                var finalizeWithWinner = XcavateMarketplaceProgram.FinalizeSpvElection(Programs, cranker, 7, 2, winner, [winner]);
                 Assert.That(finalizeWithWinner.Keys[3].PublicKey, Is.EqualTo(
                     XcavateMarketplaceProgram.DeriveLawyer(Programs, winner).Key));
 
@@ -767,11 +771,66 @@ namespace PlutoFrameworkTests
                 Programs,
                 cranker: SyntheticKey(1),
                 listingId: 0x0102030405060708,
-                winner: null);
+                round: 2,
+                winner: null,
+                candidates: []);
 
-            // discriminator + u64 listing_id
+            // discriminator + u64 listing_id (the election round feeds the candidacy
+            // remaining-account derivations only - it is not an instruction argument)
             Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8));
             Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+        }
+
+        /// <summary>
+        /// marketplace/src/instructions/election.rs finalize_spv_election_handler requires
+        /// every (unique) candidacy of the round as a trailing remaining account
+        /// ("remaining_accounts.len() == election.candidate_count"), each checked against
+        /// its (listing_id, round) seeds; the property program's finalize_agent_election
+        /// takes the same shape.
+        /// </summary>
+        [Test]
+        public void FinalizeSpvElection_AppendsTheRoundsCandidaciesAsRemainingAccounts()
+        {
+            var cranker = SyntheticKey(1);
+            var winner = SyntheticKey(2);
+            var runnerUp = SyntheticKey(3);
+
+            var finalize = XcavateMarketplaceProgram.FinalizeSpvElection(
+                Programs, cranker, 7, 2, winner, [winner, runnerUp]);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(finalize.Keys, Has.Count.EqualTo(4 + 2));
+
+                Assert.That(finalize.Keys[0].PublicKey, Is.EqualTo(cranker.Key));
+                Assert.That(finalize.Keys[0].IsSigner, Is.True);
+                Assert.That(finalize.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
+                Assert.That(finalize.Keys[1].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveListing(Programs, 7).Key));
+                Assert.That(finalize.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveProperty(Programs, 7).Key));
+                Assert.That(finalize.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyer(Programs, winner).Key));
+
+                // Remaining accounts: the candidacy PDAs in the order the caller listed
+                // the lawyers, keyed by [b"lawyer-candidate", listing_id, round, lawyer].
+                Assert.That(finalize.Keys[4].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyerCandidacy(Programs, 7, 2, winner).Key));
+                Assert.That(finalize.Keys[5].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyerCandidacy(Programs, 7, 2, runnerUp).Key));
+
+                foreach (var key in finalize.Keys)
+                {
+                    Assert.That(key.IsWritable, Is.True);
+                }
+
+                // A no-winner finalization (tie at the top) still carries the candidacies;
+                // the registry slot encodes Anchor's None as the program's own id.
+                var tied = XcavateMarketplaceProgram.FinalizeSpvElection(
+                    Programs, cranker, 7, 2, null, [winner, runnerUp]);
+                Assert.That(tied.Keys, Has.Count.EqualTo(4 + 2));
+                Assert.That(tied.Keys[3].PublicKey, Is.EqualTo(new PublicKey(Programs.Marketplace).Key));
+            });
         }
 
         [Test]
@@ -800,11 +859,85 @@ namespace PlutoFrameworkTests
                 xcavMint: SyntheticKey(4),
                 developer: SyntheticKey(5),
                 xcavTokenProgram: new PublicKey(SolanaTokenProgram.Token2022),
-                paymentTokenProgram: new PublicKey(SolanaTokenProgram.Legacy));
+                paymentTokenProgram: new PublicKey(SolanaTokenProgram.Legacy),
+                regionOwner: SyntheticKey(6),
+                treasury: SyntheticKey(7),
+                collectedMints: []);
 
             // discriminator + u64 listing_id
             Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8));
             Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+        }
+
+        /// <summary>
+        /// marketplace/src/instructions/settlement.rs execute_deal_handler requires
+        /// "remaining_accounts.len() == listing.collected.len() * 7": one
+        /// (mint, vault account, developer, developer's lawyer, SPV lawyer, region owner,
+        /// treasury) token-account group per collected payment mint, in the listing's
+        /// collected order. The payee accounts only have to match (owner, mint) - the
+        /// associated account is the fall-through default, derived here with the mint's
+        /// own token program (each mint must sit on token_program or
+        /// payment_token_program).
+        /// </summary>
+        [Test]
+        public void ExecuteDeal_AppendsOneTokenGroupPerCollectedMintInCollectedOrder()
+        {
+            var cranker = SyntheticKey(1);
+            var developerLawyer = SyntheticKey(2);
+            var spvLawyer = SyntheticKey(3);
+            var xcavMint = SyntheticKey(4);
+            var developer = SyntheticKey(5);
+            var regionOwner = SyntheticKey(6);
+            var treasury = SyntheticKey(7);
+            var usdc = SyntheticKey(8);
+            var xcavSharesMint = SyntheticKey(9);
+            var legacy = new PublicKey(SolanaTokenProgram.Legacy);
+            var token2022 = new PublicKey(SolanaTokenProgram.Token2022);
+
+            // Two collected mints on different token programs, the second the mint's own
+            // Token-2022 program - the per-mint ATA derivations follow the mint's owner.
+            var execute = XcavateMarketplaceProgram.ExecuteDeal(
+                Programs, cranker, 7, 3, developerLawyer, spvLawyer, xcavMint, developer,
+                token2022, legacy, regionOwner, treasury,
+                [
+                    new XcavateMarketplaceProgram.CollectedMint(usdc, legacy),
+                    new XcavateMarketplaceProgram.CollectedMint(xcavSharesMint, token2022),
+                ]);
+
+            var listingVault = XcavateMarketplaceProgram.DeriveListingVault(Programs, 7);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(execute.Keys, Has.Count.EqualTo(13 + 7 + 7));
+
+                foreach (var (index, mint, program) in new[]
+                {
+                    (0, usdc, legacy),
+                    (1, xcavSharesMint, token2022),
+                })
+                {
+                    var offset = 13 + index * 7;
+                    Assert.That(execute.Keys[offset].PublicKey, Is.EqualTo(mint.Key));
+                    Assert.That(execute.Keys[offset + 1].PublicKey, Is.EqualTo(
+                        SolanaAssociatedTokenAccount.Derive(listingVault, mint, program).Key));
+                    Assert.That(execute.Keys[offset + 2].PublicKey, Is.EqualTo(
+                        SolanaAssociatedTokenAccount.Derive(developer, mint, program).Key));
+                    Assert.That(execute.Keys[offset + 3].PublicKey, Is.EqualTo(
+                        SolanaAssociatedTokenAccount.Derive(developerLawyer, mint, program).Key));
+                    Assert.That(execute.Keys[offset + 4].PublicKey, Is.EqualTo(
+                        SolanaAssociatedTokenAccount.Derive(spvLawyer, mint, program).Key));
+                    Assert.That(execute.Keys[offset + 5].PublicKey, Is.EqualTo(
+                        SolanaAssociatedTokenAccount.Derive(regionOwner, mint, program).Key));
+                    Assert.That(execute.Keys[offset + 6].PublicKey, Is.EqualTo(
+                        SolanaAssociatedTokenAccount.Derive(treasury, mint, program).Key));
+                }
+
+                Assert.That(execute.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
+                foreach (var key in execute.Keys.Where(key => !key.IsSigner))
+                {
+                    Assert.That(key.IsWritable, Is.True);
+                }
+            });
         }
 
         [Test]

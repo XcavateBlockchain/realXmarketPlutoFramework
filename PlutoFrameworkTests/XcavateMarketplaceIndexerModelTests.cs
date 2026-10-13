@@ -564,6 +564,7 @@ namespace PlutoFrameworkTests
                 now, letting, null, null, candidacies, null, null, null);
             Assert.That(ended.AgentElection, Is.Not.Null);
             Assert.That(ended.AgentElection!.Winner, Is.EqualTo(AgentA));
+            Assert.That(ended.AgentElection.Round, Is.EqualTo(4));
             Assert.That(ended.AgentElection.Candidates, Is.EqualTo(new[] { AgentA, AgentB }));
 
             // Already finalized (window cleared) or still open: nothing to crank.
@@ -603,6 +604,7 @@ namespace PlutoFrameworkTests
                 now, null, null, null, null, listing, candidacies, null);
             Assert.That(ended.SpvElection, Is.Not.Null);
             Assert.That(ended.SpvElection!.Winner, Is.EqualTo(LawyerA));
+            Assert.That(ended.SpvElection.Round, Is.EqualTo(1));
 
             // A lawyer already seated means the crank ran: no banner.
             var seated = XcavateMarketplaceIndexerModel.EvaluatePendingFinalizations(

@@ -287,7 +287,11 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// finalize_proposal(asset_id): settles the seat's active proposal once its window
         /// closed. Permissionless; the proposal account closes and its rent returns to
-        /// <paramref name="rentPayer"/> (the recorded rent payer).
+        /// <paramref name="rentPayer"/> (the recorded rent payer). Account [3] is the
+        /// MARKETPLACE program's property PDA (<c>seeds::program = marketplace::ID</c> in
+        /// the Rust handler, which reads its share supply for the quorum check) - the same
+        /// cross-program account <see cref="FinalizeChallenge"/> and
+        /// <see cref="FinalizeAgentElection"/> pass.
         /// </summary>
         public static TransactionInstruction FinalizeProposal(
             XcavateProgramSet programs,
@@ -304,7 +308,7 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(cranker, true),
                     AccountMeta.Writable(rentPayer, false),
                     AccountMeta.Writable(DeriveLetting(programs, assetId), false),
-                    AccountMeta.Writable(DeriveProperty(programs, assetId), false),
+                    AccountMeta.Writable(XcavateMarketplaceProgram.DeriveProperty(programs, assetId), false),
                     AccountMeta.Writable(DeriveProposal(programs, assetId, proposalId), false),
                 ],
                 Data = Encode(FinalizeProposalDiscriminator, U64(assetId)),

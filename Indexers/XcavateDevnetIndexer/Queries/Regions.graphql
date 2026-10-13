@@ -1,0 +1,15 @@
+# One region's operator wallet - the payee of execute_deal's region share of the
+# leftover fees. The regions program owns the Region accounts; the indexer mirrors
+# them with their current owner.
+#
+# `first`/`offset` are explicit like everywhere else: this indexer rejects defaults
+# on non-null variables.
+query Regions($regionId: Int!, $first: Int!, $offset: Int!) {
+  regions(regionId: $regionId, active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      regionId
+      owner
+    }
+  }
+}
