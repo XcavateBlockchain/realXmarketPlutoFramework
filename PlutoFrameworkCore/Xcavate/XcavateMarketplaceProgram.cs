@@ -70,9 +70,8 @@ namespace PlutoFramework.Model.Xcavate
         /// the caller is this program.</summary>
         private static readonly byte[] CpiAuthSeed = Encoding.UTF8.GetBytes("cpi-auth");
 
-        // Property-program seeds the secondary-market buy crosses into (income settlement).
-        private static readonly byte[] IncomeSeed = Encoding.UTF8.GetBytes("income");
-        private static readonly byte[] CheckpointSeed = Encoding.UTF8.GetBytes("checkpoint");
+        // The property program's income/checkpoint seeds are single-sourced on
+        // XcavatePropertyProgram; DeriveIncome/DeriveIncomeCheckpoint below delegate.
 
         /// <summary>ROLE_SEED of the whitelist program, whose RoleAccount PDAs gate the calls.</summary>
         private static readonly byte[] RoleSeed = Encoding.UTF8.GetBytes("role");
@@ -190,18 +189,21 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// The property program's per-asset income accumulator: [b"income", asset_id LE]
         /// under the PROPERTY program. buy_relisted_shares passes the derived address even
-        /// when no income was ever distributed (the account may not exist yet).
+        /// when no income was ever distributed (the account may not exist yet). The
+        /// derivation lives on <see cref="XcavatePropertyProgram"/> - this delegates so
+        /// the seed literal exists once.
         /// </summary>
         public static PublicKey DeriveIncome(XcavateProgramSet programs, ulong assetId) =>
-            SolanaProgramAddress.Derive(new(programs.Property), IncomeSeed, U64(assetId));
+            XcavatePropertyProgram.DeriveIncome(programs, assetId);
 
         /// <summary>
         /// One holder's income-settlement checkpoint: [b"checkpoint", asset_id LE, owner]
         /// under the PROPERTY program - the property program settles both sides' unclaimed
-        /// income up to these checkpoints when relisted shares change hands.
+        /// income up to these checkpoints when relisted shares change hands. Delegates to
+        /// <see cref="XcavatePropertyProgram.DeriveIncomeCheckpoint"/>.
         /// </summary>
         public static PublicKey DeriveIncomeCheckpoint(XcavateProgramSet programs, ulong assetId, PublicKey owner) =>
-            SolanaProgramAddress.Derive(new(programs.Property), CheckpointSeed, U64(assetId), owner.KeyBytes);
+            XcavatePropertyProgram.DeriveIncomeCheckpoint(programs, assetId, owner);
 
         /// <summary>
         /// buy_property_shares(listing_id, amount, max_total_cost): the direct purchase,

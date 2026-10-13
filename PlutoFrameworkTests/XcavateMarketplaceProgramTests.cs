@@ -551,6 +551,25 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public void IncomePdas_DelegateToThePropertyProgram()
+        {
+            // The income/checkpoint seeds belong to the property program's own
+            // instructions; the marketplace's settle-CPI builders reuse the property
+            // class's derivations so the seed literals live in exactly one place.
+            var owner = SyntheticKey(1);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    XcavateMarketplaceProgram.DeriveIncome(Programs, 7).Key,
+                    Is.EqualTo(XcavatePropertyProgram.DeriveIncome(Programs, 7).Key));
+                Assert.That(
+                    XcavateMarketplaceProgram.DeriveIncomeCheckpoint(Programs, 7, owner).Key,
+                    Is.EqualTo(XcavatePropertyProgram.DeriveIncomeCheckpoint(Programs, 7, owner).Key));
+            });
+        }
+
+        [Test]
         public void SendPropertyShares_HasTheIdlAccountShape()
         {
             var sender = SyntheticKey(1);
