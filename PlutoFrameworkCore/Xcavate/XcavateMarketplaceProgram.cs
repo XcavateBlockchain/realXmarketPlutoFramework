@@ -37,6 +37,11 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] RelistSharesDiscriminator = [233, 196, 4, 160, 236, 180, 219, 12];
         private static readonly byte[] DelistSharesDiscriminator = [75, 11, 92, 6, 15, 186, 201, 253];
         private static readonly byte[] BuyRelistedSharesDiscriminator = [205, 204, 84, 12, 55, 204, 167, 234];
+        private static readonly byte[] SendPropertySharesDiscriminator = [214, 10, 132, 137, 120, 190, 89, 240];
+        private static readonly byte[] CloseShareHoldingDiscriminator = [184, 83, 50, 153, 169, 129, 37, 176];
+        private static readonly byte[] FinalizeSpvElectionDiscriminator = [2, 249, 39, 73, 224, 169, 145, 100];
+        private static readonly byte[] ResolveSilentVerdictDiscriminator = [229, 121, 58, 51, 193, 189, 164, 60];
+        private static readonly byte[] ExecuteDealDiscriminator = [107, 92, 176, 235, 53, 80, 14, 94];
 
         // PDA seed prefixes, from the IDL's constants section.
         private static readonly byte[] ConfigSeed = Encoding.UTF8.GetBytes("config");
@@ -52,6 +57,12 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] LawyerVoteSeed = Encoding.UTF8.GetBytes("lawyer-vote");
         private static readonly byte[] LawyerCandidacySeed = Encoding.UTF8.GetBytes("lawyer-candidate");
         private static readonly byte[] ShareListingSeed = Encoding.UTF8.GetBytes("share-listing");
+        private static readonly byte[] LawyerSeed = Encoding.UTF8.GetBytes("lawyer");
+        private static readonly byte[] VaultSeed = Encoding.UTF8.GetBytes("vault");
+
+        /// <summary>The regions program's Region PDA prefix - the one account the
+        /// marketplace instructions pass that lives under a third program.</summary>
+        private static readonly byte[] RegionSeed = Encoding.UTF8.GetBytes("region");
 
         /// <summary>The marketplace program's own CPI signer seed - NOT the property
         /// program's [b"cpi-auth"] PDA (<see cref="XcavatePropertyProgram.DeriveCpiAuth"/>).
@@ -142,6 +153,30 @@ namespace PlutoFramework.Model.Xcavate
         /// </summary>
         public static PublicKey DeriveShareListing(XcavateProgramSet programs, ulong shareListingId) =>
             SolanaProgramAddress.Derive(new(programs.Marketplace), ShareListingSeed, U64(shareListingId));
+
+        /// <summary>
+        /// A lawyer's registry entry: [b"lawyer", lawyer] under the marketplace program -
+        /// where an elected lawyer's open cases live. execute_deal closes both lawyers'
+        /// entries and finalize_spv_election inspects the winner's.
+        /// </summary>
+        public static PublicKey DeriveLawyer(XcavateProgramSet programs, PublicKey lawyer) =>
+            SolanaProgramAddress.Derive(new(programs.Marketplace), LawyerSeed, lawyer.KeyBytes);
+
+        /// <summary>
+        /// The protocol's XCAV vault: [b"vault"] under the marketplace program - what a
+        /// completed deal's leftover deposits and fees settle into.
+        /// </summary>
+        public static PublicKey DeriveVault(XcavateProgramSet programs) =>
+            SolanaProgramAddress.Derive(new(programs.Marketplace), VaultSeed);
+
+        /// <summary>
+        /// A region account: [b"region", region_id LE (u16)] under the REGIONS program -
+        /// the only PDA here owned by a program other than the marketplace/property pair.
+        /// execute_deal passes it so the region's operator collects its share of the
+        /// leftover fees.
+        /// </summary>
+        public static PublicKey DeriveRegion(XcavateProgramSet programs, ushort regionId) =>
+            SolanaProgramAddress.Derive(new(programs.Regions), RegionSeed, U16(regionId));
 
         /// <summary>
         /// The marketplace program's own CPI signer PDA, [b"cpi-auth"] - what
@@ -606,6 +641,204 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
                 ],
                 Data = Encode(BuyRelistedSharesDiscriminator, U64(assetId), U64(shareListingId), U32(amount), U64(maxTotalCost)),
+            };
+        }
+
+        /// <summary>
+        /// send_property_shares(asset_id, amount): a direct investor-to-investor transfer
+        /// of <paramref name="amount"/> shares of asset <paramref name="assetId"/> - no
+        /// money moves, so unlike <see cref="BuyRelistedShares"/> there are no payment
+        /// mint, treasury or share-listing accounts. The tail is the same settle_income
+        /// CPI the secondary buy runs: the property program settles BOTH sides' unclaimed
+        /// income to their checkpoints as part of the transfer, so neither wallet's
+        /// pending rent follows the shares.
+        /// </summary>
+        /// <param name="payer">
+        /// Whoever fronts rent for accounts created along the way (the receiver's holding
+        /// is init_if_needed, their share account is created idempotently). The program
+        /// accepts any willing wallet; the app sends the config's rent collector, like on
+        /// the purchase flow.
+        /// </param>
+        /// <param name="receiver">
+        /// The investor receiving the shares. Both parties' whitelist role PDAs gate the
+        /// transfer: the program rejects a receiver without a compliant RealEstateInvestor
+        /// role on <c>receiver_role</c>.
+        /// </param>
+        public static TransactionInstruction SendPropertyShares(
+            XcavateProgramSet programs,
+            PublicKey sender,
+            PublicKey payer,
+            ulong assetId,
+            PublicKey receiver,
+            uint amount)
+        {
+            var shareMint = DeriveShareMint(programs, assetId);
+
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(sender, true),
+                    AccountMeta.Writable(payer, true),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, sender, XcavateRole.RealEstateInvestor), false),
+                    AccountMeta.Writable(receiver, false),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, receiver, XcavateRole.RealEstateInvestor), false),
+                    AccountMeta.Writable(DeriveListing(programs, assetId), false),
+                    AccountMeta.Writable(DeriveProperty(programs, assetId), false),
+                    AccountMeta.Writable(DeriveHolding(programs, assetId, sender), false),
+                    AccountMeta.Writable(DeriveHolding(programs, assetId, receiver), false),
+                    AccountMeta.Writable(shareMint, false),
+                    AccountMeta.Writable(DeriveMintAuth(programs, assetId), false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(sender, shareMint, ShareTokenProgram), false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(receiver, shareMint, ShareTokenProgram), false),
+                    AccountMeta.Writable(DeriveCpiAuth(programs), false),
+                    AccountMeta.Writable(DeriveIncome(programs, assetId), false),
+                    AccountMeta.Writable(DeriveIncomeCheckpoint(programs, assetId, sender), false),
+                    AccountMeta.Writable(DeriveIncomeCheckpoint(programs, assetId, receiver), false),
+                    AccountMeta.Writable(new PublicKey(programs.Property), false),
+                    AccountMeta.Writable(ShareTokenProgram, false),
+                    AccountMeta.Writable(AssociatedTokenAccountProgram.ProgramIdKey, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(SendPropertySharesDiscriminator, U64(assetId), U32(amount)),
+            };
+        }
+
+        /// <summary>
+        /// close_share_holding(): closes an emptied ShareHolding (amount zero - after a
+        /// full sale or send) and refunds its rent to <paramref name="rentCollector"/>.
+        /// Carries no instruction args; the property and holding PDAs are seeded from the
+        /// holding's own recorded asset_id and owner, which the caller supplies from the
+        /// holding it read. Permissionless - anyone can crank anyone's empty holding, so
+        /// the app signs with the owner themselves.
+        /// </summary>
+        public static TransactionInstruction CloseShareHolding(
+            XcavateProgramSet programs,
+            PublicKey cranker,
+            PublicKey rentCollector,
+            ulong assetId,
+            PublicKey owner)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(cranker, true),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(rentCollector, false),
+                    AccountMeta.Writable(DeriveProperty(programs, assetId), false),
+                    AccountMeta.Writable(DeriveHolding(programs, assetId, owner), false),
+                ],
+                Data = Encode(CloseShareHoldingDiscriminator),
+            };
+        }
+
+        /// <summary>
+        /// finalize_spv_election(listing_id): settles a listing's SPV-lawyer election once
+        /// its window closed. Permissionless; the single signer is whoever cranks it.
+        /// </summary>
+        /// <param name="winner">
+        /// The lawyer whose candidacy leads the closing round, read from the indexer -
+        /// the program inspects the winner's registry entry directly, so a wrong or
+        /// vanished registry fails the election rather than mis-settling it. Null when no
+        /// winner is determined (the encoder then passes the marketplace program's own id,
+        /// Anchor's sentinel for a None optional account).
+        /// </param>
+        public static TransactionInstruction FinalizeSpvElection(
+            XcavateProgramSet programs,
+            PublicKey cranker,
+            ulong listingId,
+            PublicKey? winner)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(cranker, true),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.Writable(DeriveProperty(programs, listingId), false),
+                    AccountMeta.Writable(winner is not null
+                        ? DeriveLawyer(programs, winner)
+                        : new PublicKey(programs.Marketplace), false),
+                ],
+                Data = Encode(FinalizeSpvElectionDiscriminator, U64(listingId)),
+            };
+        }
+
+        /// <summary>
+        /// resolve_silent_verdict(listing_id): rules on a lawyer who let their review
+        /// window lapse without a verdict. Permissionless; the single signer is whoever
+        /// cranks it.
+        /// </summary>
+        public static TransactionInstruction ResolveSilentVerdict(
+            XcavateProgramSet programs,
+            PublicKey cranker,
+            ulong listingId)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(cranker, true),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                ],
+                Data = Encode(ResolveSilentVerdictDiscriminator, U64(listingId)),
+            };
+        }
+
+        /// <summary>
+        /// execute_deal(listing_id): completes settlement once both lawyers approved and
+        /// the legal window passed - releases the deposits, pays the lawyers, splits the
+        /// leftover fees between the treasury's vault and the region's operator, and
+        /// returns the developer's XCAV deposit. Permissionless; the single signer is
+        /// whoever cranks it.
+        /// </summary>
+        /// <param name="regionId">
+        /// The property's region, from the marketplace's PropertyAsset account - it seeds
+        /// the regions program's Region PDA the fee share goes to.
+        /// </param>
+        /// <param name="developerLawyer">The listing's recorded developer lawyer (their registry entry closes here).</param>
+        /// <param name="spvLawyer">The listing's recorded SPV lawyer.</param>
+        /// <param name="xcavMint">The config's XCAV mint, which the deposit release is denominated in.</param>
+        /// <param name="developer">The listing's developer; their XCAV associated account receives the deposit back.</param>
+        /// <param name="xcavTokenProgram">The XCAV mint's token program.</param>
+        /// <param name="paymentTokenProgram">The payment mints' token program - a second program id when it differs from the XCAV mint's.</param>
+        public static TransactionInstruction ExecuteDeal(
+            XcavateProgramSet programs,
+            PublicKey cranker,
+            ulong listingId,
+            ushort regionId,
+            PublicKey developerLawyer,
+            PublicKey spvLawyer,
+            PublicKey xcavMint,
+            PublicKey developer,
+            PublicKey xcavTokenProgram,
+            PublicKey paymentTokenProgram)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(cranker, true),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.Writable(DeriveProperty(programs, listingId), false),
+                    AccountMeta.Writable(DeriveRegion(programs, regionId), false),
+                    AccountMeta.Writable(DeriveLawyer(programs, developerLawyer), false),
+                    AccountMeta.Writable(DeriveLawyer(programs, spvLawyer), false),
+                    AccountMeta.Writable(DeriveListingVault(programs, listingId), false),
+                    AccountMeta.Writable(xcavMint, false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(developer, xcavMint, xcavTokenProgram), false),
+                    AccountMeta.Writable(DeriveVault(programs), false),
+                    AccountMeta.Writable(xcavTokenProgram, false),
+                    AccountMeta.Writable(paymentTokenProgram, false),
+                ],
+                Data = Encode(ExecuteDealDiscriminator, U64(listingId)),
             };
         }
 
