@@ -140,7 +140,7 @@
                                                  AutomationId="solanaTransactionClose"
                                                  Command="{Binding CloseCommand}" />
 
-                        <buttons:ElevatedButton Text="View in Solana Explorer"
+                        <buttons:ElevatedButton Text="View details"
                                                 Grid.Column="1"
                                                 AutomationId="solanaTransactionExplorer"
                                                 ButtonState="Enabled"
