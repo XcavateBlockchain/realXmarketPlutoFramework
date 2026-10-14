@@ -437,6 +437,16 @@ namespace PlutoFramework.Model.Xcavate
             public CastVote? MyVote { get; init; }
 
             /// <summary>
+            /// The newest round with an open (still locking) vote record of the caller's
+            /// that is NOT the current round: a vote from an already-settled election
+            /// whose locked shares <c>unlock_agent_votes</c> can still release. Null when
+            /// no such record exists. A vote in the current round is not carried here -
+            /// it becomes unlockable once that round's expiry passes, which the caller
+            /// reads off <see cref="MyVote"/> and <see cref="Expiry"/> directly.
+            /// </summary>
+            public long? MyLockedRound { get; init; }
+
+            /// <summary>
             /// The unique vote-power leader of the current round; null on a tie at the
             /// top (or no candidacies). Mirrors the strict-unique-max rule of
             /// <c>finalize_agent_election</c>: on a tie the seat reopens for a fresh
@@ -520,6 +530,10 @@ namespace PlutoFramework.Model.Xcavate
                         .OrderByDescending(v => v.Power)
                         .Select(v => new CastVote(v.Candidate, v.Power))
                         .FirstOrDefault(),
+                    MyLockedRound = votes?
+                        .Where(v => v.Round != round)
+                        .Select(v => (long?)v.Round)
+                        .Max(),
                 };
             }
         }
@@ -923,7 +937,8 @@ namespace PlutoFramework.Model.Xcavate
                 agentCandidacies, listingSnapshot, spvCandidacies, configSnapshot);
         }
 
-        private static bool IsVacantSeat(string? pubkey) =>
+        /// <summary>True while the seat pubkey is empty or the all-zero default - the chain's "no one seated".</summary>
+        public static bool IsVacantSeat(string? pubkey) =>
             string.IsNullOrEmpty(pubkey) || pubkey == VacantSeatPubkey;
 
         /// <summary>

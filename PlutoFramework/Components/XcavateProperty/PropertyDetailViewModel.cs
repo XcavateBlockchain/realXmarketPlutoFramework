@@ -417,6 +417,8 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(ChallengeApproveRatio))]
         [NotifyPropertyChangedFor(nameof(ChallengeTimeRemainingText))]
         [NotifyPropertyChangedFor(nameof(VotingPowerText))]
+        [NotifyPropertyChangedFor(nameof(AgentCanVote))]
+        [NotifyPropertyChangedFor(nameof(AgentVotePowerText))]
         private XcavateMarketplaceIndexerModel.XcavateGovernanceState? governance;
 
         /// <summary>The unix expiry of whichever vote the section shows, minus now.</summary>
@@ -695,6 +697,274 @@ namespace PlutoFramework.Components.XcavateProperty
                 (voter, cluster, ct) => XcavatePropertyCallsModel.VoteOnChallengeAsync(
                     cluster, voter, ListingDetails!.AssetId, challenge.ChallengeId,
                     approve ? XcavateVoteChoice.Yes : XcavateVoteChoice.No, amount, ct));
+        }
+
+        // ── Agent election (the letting seat's plurality vote) ──
+
+        /// <summary>
+        /// The letting seat's election surface: the sitting agent, the live round with
+        /// its candidacies, the connected wallet's own vote and any still-locked vote
+        /// from a settled round. Null until the first successful indexer read - the
+        /// section stays hidden until then (no empty-card flicker).
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(AgentElectionSectionIsVisible))]
+        [NotifyPropertyChangedFor(nameof(SittingAgentText))]
+        [NotifyPropertyChangedFor(nameof(ElectionBlockIsVisible))]
+        [NotifyPropertyChangedFor(nameof(AgentElectionTitleText))]
+        [NotifyPropertyChangedFor(nameof(AgentElectionTimeRemainingText))]
+        [NotifyPropertyChangedFor(nameof(AgentElectionIsLive))]
+        [NotifyPropertyChangedFor(nameof(AgentCanVote))]
+        [NotifyPropertyChangedFor(nameof(LockedAgentVoteRound))]
+        [NotifyPropertyChangedFor(nameof(AgentUnlockIsVisible))]
+        [NotifyPropertyChangedFor(nameof(FinalizeAgentElectionIsVisible))]
+        private XcavateMarketplaceIndexerModel.AgentElectionState? agentElection;
+
+        /// <summary>The current round's candidacy rows, rebuilt on every election refresh.</summary>
+        public ObservableCollection<AgentCandidacyRowModel> AgentCandidacyRows { get; } = [];
+
+        public bool AgentElectionSectionIsVisible => AgentElection is not null;
+
+        /// <summary>The sitting agent's truncated pubkey, or the vacant-seat copy.</summary>
+        public string SittingAgentText => XcavateMarketplaceIndexerModel.IsVacantSeat(AgentElection?.Agent)
+            ? "No agent appointed"
+            : TruncateAddress(AgentElection!.Agent!);
+
+        /// <summary>The election block shows while the current round has candidacies.</summary>
+        public bool ElectionBlockIsVisible => AgentElection is { CandidateCount: > 0 };
+
+        public string AgentElectionTitleText => $"Agent election — round {AgentElection?.Round}";
+
+        public string AgentElectionTimeRemainingText => TimeRemainingText(AgentElection?.Expiry ?? 0);
+
+        public bool AgentElectionIsLive => AgentElection is { } election
+            && election.Expiry > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        /// <summary>
+        /// The wallet may back a candidacy while the round runs and the governance read
+        /// shows free (owned, unlisted, unlocked) shares - the full votable amount is
+        /// what the vote locks, same as the proposal/challenge executors.
+        /// </summary>
+        public bool AgentCanVote => AgentElectionIsLive && (Governance?.Holding?.Votable ?? 0) > 0;
+
+        public string AgentVotePowerText => Governance?.Holding is { } holding
+            ? $"Your voting power: {holding.Votable} tokens"
+            : "No voting power";
+
+        /// <summary>
+        /// The ended election round the wallet's shares are still locked by, when one
+        /// exists: a past round's open vote record (<see cref="XcavateMarketplaceIndexerModel.AgentElectionState.MyLockedRound"/>),
+        /// or the current round's own vote once its expiry has passed.
+        /// </summary>
+        public long? LockedAgentVoteRound
+        {
+            get
+            {
+                if (AgentElection is not { } election)
+                {
+                    return null;
+                }
+
+                if (election.MyLockedRound is { } lockedRound)
+                {
+                    return lockedRound;
+                }
+
+                return election.MyVote is not null
+                    && election.Expiry > 0
+                    && election.Expiry <= DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                        ? election.Round
+                        : null;
+            }
+        }
+
+        public bool AgentUnlockIsVisible => LockedAgentVoteRound is not null;
+
+        /// <summary>The ended, unfinalized round is crankable by anyone.</summary>
+        public bool FinalizeAgentElectionIsVisible => AgentElection is { CandidateCount: > 0 } election
+            && election.Expiry > 0
+            && election.Expiry <= DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        /// <summary>The app's pubkey truncation idiom (SolanaTokenDetailPageViewModel): first6…last4.</summary>
+        private static string TruncateAddress(string address) =>
+            address.Length > 10 ? $"{address[..6]}…{address[^4..]}" : address;
+
+        /// <summary>
+        /// Re-reads the letting seat's election state from the indexer and rebuilds the
+        /// section's candidacy rows. Runs on the same trigger as
+        /// <see cref="RefreshVotingAsync"/> and additionally from the page's
+        /// <c>OnAppearing</c>. Tolerant like the listing refresh - a failure keeps
+        /// whatever the page already shows.
+        /// </summary>
+        public async Task RefreshAgentElectionAsync(CancellationToken token)
+        {
+            if (NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                return;
+            }
+
+            try
+            {
+                var electionState = await XcavateMarketplaceIndexerModel.GetAgentElectionStateAsync(
+                        SolanaNetworkModel.SelectedCluster,
+                        solanaListing.AssetId,
+                        // Empty voter reads the election without the own-vote section.
+                        KeysModel.GetSolanaAddress() ?? "",
+                        token)
+                    .ConfigureAwait(false);
+
+                token.ThrowIfCancellationRequested();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    AgentElection = electionState;
+
+                    AgentCandidacyRows.Clear();
+                    foreach (var candidacy in electionState.Candidacies)
+                    {
+                        var agent = candidacy.Agent;
+
+                        AgentCandidacyRows.Add(new AgentCandidacyRowModel(
+                            agent,
+                            TruncateAddress(agent),
+                            $"{candidacy.VotePower} votes",
+                            electionState.MyVote?.Candidate == agent,
+                            AgentCanVote ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled,
+                            new RelayCommand(() => VoteForAgent(agent))));
+                    }
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // The page went away mid-query.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the agent election state: ");
+                Console.WriteLine(ex);
+            }
+        }
+
+        /// <summary>
+        /// Backing a candidacy (or moving the vote to another one) opens the
+        /// confirmation sheet with the candidate's identity and the voter's power; the
+        /// submit rides the popup's ContinueRequested back to
+        /// <see cref="ExecuteVoteOnAgentAsync"/>. A revote's previous-candidacy
+        /// resolution happens inside the call wrapper, not here.
+        /// </summary>
+        private void VoteForAgent(string agent)
+        {
+            var popupViewModel = DependencyService.Get<CastVotePopupViewModel>();
+            popupViewModel.VoteKind = "agent";
+            popupViewModel.CandidateIdentity = TruncateAddress(agent);
+            popupViewModel.VotePower = Governance?.Holding?.Votable ?? 0;
+            popupViewModel.ContinueRequested = () => ExecuteVoteOnAgentAsync(agent);
+            popupViewModel.IsVisible = true;
+        }
+
+        private async Task ExecuteVoteOnAgentAsync(string agent)
+        {
+            var election = AgentElection;
+            if (election is null)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            var amount = Governance?.Holding?.Votable ?? 0;
+            if (amount < 1)
+            {
+                return;
+            }
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Vote for letting agent",
+                (voter, cluster, ct) => XcavatePropertyCallsModel.VoteOnAgentAsync(
+                    cluster, voter, AssetId, (ulong)election.Round, agent, amount, ct));
+        }
+
+        /// <summary>
+        /// One-tap release of the shares a vote in an ENDED election round still locks;
+        /// they return to the wallet's transferable balance. Single signer - the voter.
+        /// </summary>
+        [RelayCommand]
+        public async Task UnlockAgentVotesAsync()
+        {
+            if (LockedAgentVoteRound is not { } lockedRound)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Unlock election votes",
+                (voter, cluster, ct) => XcavatePropertyCallsModel.UnlockAgentVotesAsync(
+                    cluster, voter, AssetId, (ulong)lockedRound, ct));
+        }
+
+        /// <summary>
+        /// The permissionless crank seating the ended round's plurality winner. Anyone
+        /// can send it, so the investor-role gate the vote executors apply does NOT
+        /// apply here - only the wallet requirements.
+        /// </summary>
+        [RelayCommand]
+        public async Task FinalizeAgentElectionAsync()
+        {
+            if (!FinalizeAgentElectionIsVisible)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Finalize agent election",
+                (cranker, cluster, ct) => XcavatePropertyCallsModel.FinalizeAgentElectionAsync(
+                    cluster, cranker, AssetId, ct));
         }
 
         // ── Rent income (claim_income) ──
@@ -1023,6 +1293,10 @@ namespace PlutoFramework.Components.XcavateProperty
                 // The vote sections ride the same refresh: the listing figures and the
                 // governance tallies always come from the same moment.
                 await RefreshVotingAsync(token).ConfigureAwait(false);
+
+                // The agent election comes after the governance read so the candidacy
+                // rows' vote buttons are gated on the fresh votable figure.
+                await RefreshAgentElectionAsync(token).ConfigureAwait(false);
 
                 // So does the income section: a confirmed claim (or a rent distribution)
                 // changes exactly these figures.

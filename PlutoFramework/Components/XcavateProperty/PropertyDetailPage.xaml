@@ -97,6 +97,9 @@
 
                     <xcavateproperty:GovernanceVotingSectionView Margin="0,10,0,0" />
 
+                    <!-- Letting agent: the seat holder and its election (post-settlement) -->
+                    <xcavateproperty:AgentElectionSectionView Margin="0,10,0,0" />
+
                     <!-- Rent income: claimable amounts, the claim action, and the
                          lifetime per-token distribution totals. -->
                     <xcavateproperty:IncomeSectionView Margin="0,10,0,0" />

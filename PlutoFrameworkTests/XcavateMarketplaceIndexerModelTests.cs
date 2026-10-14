@@ -495,6 +495,31 @@ namespace PlutoFrameworkTests
             Assert.That(state.MyVote, Is.Not.Null);
             Assert.That(state.MyVote!.Candidate, Is.EqualTo(AgentB));
             Assert.That(state.MyVote.Power, Is.EqualTo(30));
+
+            // The round-1 record is a past round's still-open vote: its tokens stay
+            // locked until unlock_agent_votes runs against THAT round.
+            Assert.That(state.MyLockedRound, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void AgentElection_Create_NoLockedRoundWhenOnlyCurrentRoundVote()
+        {
+            var state = XcavateMarketplaceIndexerModel.AgentElectionState.Create(
+                agent: null,
+                round: 2,
+                expiry: 1_800_000_000,
+                quorumBps: 1500,
+                candidateCount: 2,
+                candidacies: [],
+                votes: [new XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow(2, AgentB, 30)]);
+
+            Assert.That(state.MyVote, Is.Not.Null);
+            Assert.That(state.MyLockedRound, Is.Null);
+
+            var noVotes = XcavateMarketplaceIndexerModel.AgentElectionState.Create(
+                agent: null, round: 2, expiry: 1_800_000_000, quorumBps: 1500,
+                candidateCount: 0, candidacies: [], votes: []);
+            Assert.That(noVotes.MyLockedRound, Is.Null);
         }
 
         [Test]

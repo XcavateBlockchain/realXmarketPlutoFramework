@@ -36,10 +36,11 @@ public partial class PropertyDetailPage : PageTemplate
         // not be kept alive by the static event.
         viewModel.SubscribeToMarketplaceTransactions();
 
-        // The income section's first read (later ones ride the transaction-confirmed
-        // refresh like the voting sections). Fire-and-forget: the refresh swallows and
-        // logs its own failures.
+        // The income and agent-election sections' first reads (later ones ride the
+        // transaction-confirmed refresh like the voting sections). Fire-and-forget:
+        // the refreshes swallow and log their own failures.
         _ = viewModel.RefreshIncomeAsync(CancellationToken.None);
+        _ = viewModel.RefreshAgentElectionAsync(CancellationToken.None);
     }
 
     protected override void OnDisappearing()

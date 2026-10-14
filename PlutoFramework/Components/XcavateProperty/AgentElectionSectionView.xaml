@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<VerticalStackLayout xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                     x:Class="PlutoFramework.Components.XcavateProperty.AgentElectionSectionView"
+                     Spacing="12"
+                     IsVisible="{Binding AgentElectionSectionIsVisible}">
+
+    <!-- The letting seat: who manages the property, and the election that can replace them -->
+    <Border Padding="15"
+            BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}"
+            Stroke="{StaticResource CardBorderColor}"
+            StrokeThickness="{StaticResource CardBorderThickness}">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+        </Border.StrokeShape>
+
+        <VerticalStackLayout Spacing="8">
+            <Label Text="Letting agent"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+
+            <Grid ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0"
+                       Text="Sitting agent"
+                       FontSize="12"
+                       TextColor="{StaticResource Gray500}"
+                       VerticalOptions="Center" />
+                <Label Grid.Column="1"
+                       Text="{Binding SittingAgentText}"
+                       FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                       VerticalOptions="Center" />
+            </Grid>
+
+            <!-- Live round: candidacies with their vote power and the vote actions -->
+            <VerticalStackLayout Spacing="8"
+                                 IsVisible="{Binding ElectionBlockIsVisible}">
+                <Grid ColumnSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Column="0"
+                           Text="{Binding AgentElectionTitleText}"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
+                           VerticalOptions="Center" />
+                    <HorizontalStackLayout Grid.Column="1"
+                                           Spacing="4"
+                                           VerticalOptions="Center">
+                        <Label Text="&#x23F1;"
+                               TextColor="{StaticResource Primary}"
+                               VerticalOptions="Center" />
+                        <Label Text="{Binding AgentElectionTimeRemainingText}"
+                               TextColor="{StaticResource Primary}"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding AgentCandidacyRows}"
+                                     Spacing="6">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <VerticalStackLayout Grid.Column="0"
+                                                     Spacing="2"
+                                                     VerticalOptions="Center">
+                                    <Label Text="{Binding Identity}"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                                    <Label Text="{Binding VotePowerText}"
+                                           FontSize="12"
+                                           TextColor="{StaticResource Gray500}" />
+                                    <Label Text="Your current vote"
+                                           FontSize="12"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource Primary}"
+                                           IsVisible="{Binding IsMyVote}" />
+                                </VerticalStackLayout>
+
+                                <buttons:BasicGrayButton Grid.Column="1"
+                                                         Text="{Binding VoteButtonText}"
+                                                         Command="{Binding VoteCommand}"
+                                                         ButtonState="{Binding VoteButtonState}"
+                                                         VerticalOptions="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="{Binding AgentVotePowerText}"
+                       FontSize="12"
+                       TextColor="{StaticResource Primary}"
+                       IsVisible="{Binding AgentElectionIsLive}" />
+
+                <buttons:ElevatedButton Text="Finalize election"
+                                        Command="{Binding FinalizeAgentElectionCommand}"
+                                        IsVisible="{Binding FinalizeAgentElectionIsVisible}" />
+                <Label Text="Voting has ended — finalize to appoint the winner (anyone can send this)."
+                       FontSize="12"
+                       TextColor="{StaticResource Gray500}"
+                       IsVisible="{Binding FinalizeAgentElectionIsVisible}" />
+            </VerticalStackLayout>
+
+            <!-- Shares still locked by a vote in an ended round -->
+            <VerticalStackLayout Spacing="4"
+                                 IsVisible="{Binding AgentUnlockIsVisible}">
+                <buttons:BasicGrayButton Text="Unlock tokens"
+                                         Command="{Binding UnlockAgentVotesCommand}" />
+                <Label Text="Your tokens from a finished election round are still locked. Unlocking returns them to your transferable balance."
+                       FontSize="12"
+                       TextColor="{StaticResource Gray500}" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</VerticalStackLayout>

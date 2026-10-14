@@ -8,9 +8,11 @@ namespace PlutoFramework.Components.XcavateProperty;
 /// <summary>
 /// The confirmation sheet behind every governance vote on the property detail page:
 /// the Figma "Approve terms" / "Reject terms" bottom sheet, generalized to the letting
-/// seat's Yes/No votes. The opening view model sets <see cref="VoteKind"/> ("terms",
-/// "proposal" or "challenge") and <see cref="IsApprove"/> first; the title, the
-/// confirmation sentence and the outcome ride those two.
+/// seat's Yes/No votes and the agent-election candidacy vote. The opening view model
+/// sets <see cref="VoteKind"/> ("terms", "proposal", "challenge" or "agent") first -
+/// plus <see cref="IsApprove"/> for the Yes/No kinds, <see cref="CandidateIdentity"/>
+/// and <see cref="VotePower"/> for "agent"; the title, the confirmation sentence and
+/// the outcome ride those.
 /// </summary>
 public partial class CastVotePopupViewModel : ObservableObject, IPopup, ISetToDefault
 {
@@ -24,7 +26,7 @@ public partial class CastVotePopupViewModel : ObservableObject, IPopup, ISetToDe
 
     private string _voteKind = "terms";
 
-    /// <summary>"terms" (the SPV-terms ratification) | "proposal" | "challenge".</summary>
+    /// <summary>"terms" (the SPV-terms ratification) | "proposal" | "challenge" | "agent" (agent-election candidacy vote).</summary>
     public string VoteKind
     {
         get => _voteKind;
@@ -33,6 +35,36 @@ public partial class CastVotePopupViewModel : ObservableObject, IPopup, ISetToDe
             if (SetProperty(ref _voteKind, value))
             {
                 OnPropertyChanged(nameof(Title));
+                OnPropertyChanged(nameof(Message));
+            }
+        }
+    }
+
+    private string _candidateIdentity = "";
+
+    /// <summary>The candidacy's display identity the "agent" vote backs (already truncated for display).</summary>
+    public string CandidateIdentity
+    {
+        get => _candidateIdentity;
+        set
+        {
+            if (SetProperty(ref _candidateIdentity, value))
+            {
+                OnPropertyChanged(nameof(Message));
+            }
+        }
+    }
+
+    private uint _votePower;
+
+    /// <summary>The shares the "agent" vote will lock - the voter's full free voting power.</summary>
+    public uint VotePower
+    {
+        get => _votePower;
+        set
+        {
+            if (SetProperty(ref _votePower, value))
+            {
                 OnPropertyChanged(nameof(Message));
             }
         }
@@ -58,6 +90,7 @@ public partial class CastVotePopupViewModel : ObservableObject, IPopup, ISetToDe
     {
         "terms" => IsApprove ? "Approve terms" : "Reject terms",
         "proposal" => IsApprove ? "Vote Yes — spending proposal" : "Vote No — spending proposal",
+        "agent" => "Vote for letting agent",
         _ => IsApprove ? "Vote Yes — challenge" : "Vote No — challenge",
     };
 
@@ -70,6 +103,7 @@ public partial class CastVotePopupViewModel : ObservableObject, IPopup, ISetToDe
         "proposal" => IsApprove
             ? "I vote Yes on this spending proposal."
             : "I vote No on this spending proposal.",
+        "agent" => $"Vote for {CandidateIdentity} as the letting agent? Your vote power: {VotePower} tokens.",
         _ => IsApprove
             ? "I vote Yes to back this challenge against the letting agent."
             : "I vote No to back the letting agent.",
@@ -92,6 +126,8 @@ public partial class CastVotePopupViewModel : ObservableObject, IPopup, ISetToDe
         IsVisible = false;
         VoteKind = "terms";
         IsApprove = true;
+        CandidateIdentity = "";
+        VotePower = 0;
         ContinueRequested = () => Task.FromResult(0);
     }
 
