@@ -869,19 +869,24 @@ namespace PlutoFramework.Components.XcavateProperty
 
             fullPageLoadingViewModel.IsVisible = true;
 
-            if (!await RequirementsModel.CheckRequirementsAsync())
+            try
             {
-                fullPageLoadingViewModel.IsVisible = false;
-                return;
-            }
+                if (!await RequirementsModel.CheckRequirementsAsync())
+                {
+                    return;
+                }
 
-            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+                if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+                {
+                    return;
+                }
+            }
+            finally
             {
+                // Cleared on every exit path - a throwing requirements check (network or
+                // indexer failure) must not wedge the page behind the overlay.
                 fullPageLoadingViewModel.IsVisible = false;
-                return;
             }
-
-            fullPageLoadingViewModel.IsVisible = false;
 
             IncomeClaimRunning = true;
 
