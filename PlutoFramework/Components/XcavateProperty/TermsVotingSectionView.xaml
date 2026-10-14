@@ -2,6 +2,7 @@
 <VerticalStackLayout xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                      xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                      xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                     xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
                      x:Class="PlutoFramework.Components.XcavateProperty.TermsVotingSectionView"
                      Spacing="12"
                      IsVisible="{Binding SpvElectionSectionIsVisible}">
@@ -94,4 +95,12 @@
     <Label IsVisible="{Binding SpvElectionClosedIsVisible}"
            Text="The SPV lawyer election has closed."
            TextColor="{StaticResource DangerousRed}" />
+
+    <!-- The closed round is settled by the permissionless finalize crank -->
+    <xcavateproperty:FinalizationBannerView Title="SPV election has ended"
+                                            Description="Tap to finalize and seat the elected lawyer — anyone can send this; it moves the sale forward for everyone. You'll sign one transaction."
+                                            ButtonText="Finalize SPV election"
+                                            ButtonCommand="{Binding FinalizeSpvElectionCommand}"
+                                            ButtonState="{Binding CrankButtonState}"
+                                            IsVisible="{Binding FinalizeSpvElectionIsVisible}" />
 </VerticalStackLayout>

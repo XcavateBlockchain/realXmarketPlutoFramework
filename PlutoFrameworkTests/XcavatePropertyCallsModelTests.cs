@@ -370,5 +370,118 @@ namespace PlutoFrameworkTests
                 XcavatePropertyCallsModel.BuildFinalizeAgentElection(
                     Programs, SyntheticKey(1).Key, assetId: 7, finalization: null));
         }
+
+        private static XcavateMarketplaceIndexerModel.XcavateGovernanceState.HoldingState Holding(
+            uint amount, uint listed = 0, uint maxLock = 0) =>
+            new(amount, listed, maxLock);
+
+        [Test]
+        public void BuildCloseEmptyPosition_RejectsAMissingOrNonEmptyHolding()
+        {
+            var income = Income([(SyntheticKey(201).Key, 10)], [(10, 0m)]);
+
+            Assert.Multiple(() =>
+            {
+                // No row: nothing to close.
+                Assert.Throws<InvalidOperationException>(() =>
+                    XcavatePropertyCallsModel.BuildCloseEmptyPosition(
+                        Programs, SyntheticKey(1).Key, SyntheticKey(2), assetId: 7,
+                        income, holding: null, new Dictionary<string, PublicKey>()));
+
+                // Shares left, shares listed, and a vote lock each keep the close out -
+                // the program's HoldingNotEmpty would reject them on chain.
+                Assert.Throws<InvalidOperationException>(() =>
+                    XcavatePropertyCallsModel.BuildCloseEmptyPosition(
+                        Programs, SyntheticKey(1).Key, SyntheticKey(2), assetId: 7,
+                        income, Holding(amount: 3), new Dictionary<string, PublicKey>()));
+                Assert.Throws<InvalidOperationException>(() =>
+                    XcavatePropertyCallsModel.BuildCloseEmptyPosition(
+                        Programs, SyntheticKey(1).Key, SyntheticKey(2), assetId: 7,
+                        income, Holding(amount: 0, listed: 1), new Dictionary<string, PublicKey>()));
+                Assert.Throws<InvalidOperationException>(() =>
+                    XcavatePropertyCallsModel.BuildCloseEmptyPosition(
+                        Programs, SyntheticKey(1).Key, SyntheticKey(2), assetId: 7,
+                        income, Holding(amount: 0, maxLock: 1), new Dictionary<string, PublicKey>()));
+            });
+        }
+
+        [Test]
+        public void BuildCloseEmptyPosition_ClosesOnlyWhenNothingIsBanked()
+        {
+            var owner = SyntheticKey(1);
+            var payer = SyntheticKey(2);
+
+            // The single stream sits at the ledger head with nothing banked: no claim,
+            // no checkpoint close - just the holding close.
+            var income = Income([(SyntheticKey(201).Key, 10)], [(10, 0m)]);
+
+            var instructions = XcavatePropertyCallsModel.BuildCloseEmptyPosition(
+                Programs, owner.Key, payer, assetId: 7,
+                income, Holding(amount: 0), new Dictionary<string, PublicKey>());
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(1));
+                Assert.That(instructions[0].Data[..8], Is.EqualTo(Discriminator("close_share_holding")));
+                Assert.That(instructions[0].Keys[0].PublicKey, Is.EqualTo(owner.Key));
+                Assert.That(instructions[0].Keys[0].IsSigner, Is.True);
+                Assert.That(instructions[0].Keys[2].PublicKey, Is.EqualTo(payer.Key));
+                Assert.That(
+                    instructions[0].Keys[4].PublicKey,
+                    Is.EqualTo(XcavateMarketplaceProgram.DeriveHolding(Programs, 7, owner).Key));
+            });
+        }
+
+        [Test]
+        public void BuildCloseEmptyPosition_BundlesTheFinalClaimAndBothClosesInOrder()
+        {
+            var owner = SyntheticKey(1);
+            var payer = SyntheticKey(2);
+            var mintA = SyntheticKey(201);
+            var tokenA = SyntheticKey(211);
+
+            // Banked pending 200 is still claimable at zero shares; claiming it drains
+            // the checkpoint, so its close rides inside before the holding close - the
+            // checkpoint's close pins the still-existing holding account.
+            var income = Income([(mintA.Key, 10)], [(10, 200m)]);
+
+            var instructions = XcavatePropertyCallsModel.BuildCloseEmptyPosition(
+                Programs, owner.Key, payer, assetId: 7,
+                income, Holding(amount: 0),
+                new Dictionary<string, PublicKey> { [mintA.Key] = tokenA });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(3));
+                Assert.That(instructions[0].Data[..8], Is.EqualTo(Discriminator("claim_income")));
+                Assert.That(instructions[1].Data[..8], Is.EqualTo(Discriminator("close_income_checkpoint")));
+                Assert.That(instructions[2].Data[..8], Is.EqualTo(Discriminator("close_share_holding")));
+            });
+        }
+
+        [Test]
+        public void BuildCloseEmptyPosition_KeepsTheCheckpointCloseOutForAStaleStream()
+        {
+            var owner = SyntheticKey(1);
+            var mintA = SyntheticKey(201);
+
+            // A: banked pending claimable; B: its cursor trails the ledger, so claiming
+            // A would bank B - the checkpoint stays open, the holding still closes.
+            var income = Income(
+                [(mintA.Key, 10), (SyntheticKey(202).Key, 7)],
+                [(10, 200m), (3, 0m)]);
+
+            var instructions = XcavatePropertyCallsModel.BuildCloseEmptyPosition(
+                Programs, owner.Key, SyntheticKey(2), assetId: 7,
+                income, Holding(amount: 0),
+                new Dictionary<string, PublicKey> { [mintA.Key] = SyntheticKey(211) });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(2));
+                Assert.That(instructions[0].Data[..8], Is.EqualTo(Discriminator("claim_income")));
+                Assert.That(instructions[1].Data[..8], Is.EqualTo(Discriminator("close_share_holding")));
+            });
+        }
     }
 }

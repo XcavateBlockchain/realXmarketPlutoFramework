@@ -252,6 +252,92 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// The emptied position's teardown on asset <paramref name="assetId"/>: ONE
+        /// transaction bundling the holder's final claim_income set (with
+        /// close_income_checkpoint riding inside when the checkpoint drains, exactly
+        /// like <see cref="ClaimIncomeAsync"/>) and close_share_holding, which reclaims
+        /// the emptied holding's rent. Rejects while the holding is anything but empty
+        /// (the program's HoldingNotEmpty would revert anyway -
+        /// secondary.rs close_share_holding_handler). At most two signers - the holder
+        /// plus the rent collector on the claim path (close_share_holding itself is the
+        /// holder alone); the transaction model's two-signer flow covers both.
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> CloseEmptyPositionAsync(
+            SolanaCluster cluster,
+            string owner,
+            long assetId,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var config = await XcavateMarketplaceCallsModel.GetMarketplaceConfigAsync(cluster, token)
+                .ConfigureAwait(false);
+
+            var income = await XcavateMarketplaceIndexerModel
+                .GetIncomeStateAsync(cluster, assetId, owner, SolanaRpcModel.GetClient(cluster), token)
+                .ConfigureAwait(false);
+
+            var governance = await XcavateMarketplaceIndexerModel
+                .GetGovernanceStateAsync(cluster, assetId, assetId, owner, token)
+                .ConfigureAwait(false);
+
+            var payer = new PublicKey(config.RentCollector);
+
+            var tokenPrograms = new Dictionary<string, PublicKey>();
+            foreach (var mint in SelectClaimableMints(income, shares: 0))
+            {
+                var (tokenProgram, _) = await XcavateMarketplaceCallsModel
+                    .ResolveMintAsync(cluster, new PublicKey(mint), token)
+                    .ConfigureAwait(false);
+                tokenPrograms[mint] = tokenProgram;
+            }
+
+            return BuildCloseEmptyPosition(
+                programs, owner, payer, assetId, income, governance.Holding, tokenPrograms);
+        }
+
+        /// <summary>
+        /// The empty-position teardown instruction list: the final claims (one per mint
+        /// with rent still banked - at zero shares only banked <c>pending</c> is
+        /// claimable), close_income_checkpoint appended by
+        /// <see cref="ComposeIncomeClaims"/> when the drained checkpoint can close, then
+        /// close_share_holding LAST - the checkpoint's close pins the still-existing
+        /// holding account, so the holding cannot close first. Throws a user-presentable
+        /// rejection when the holding is missing or not empty: there is either nothing
+        /// to close or the position is not empty yet.
+        /// </summary>
+        public static List<TransactionInstruction> BuildCloseEmptyPosition(
+            XcavateProgramSet programs,
+            string owner,
+            PublicKey payer,
+            long assetId,
+            XcavateMarketplaceIndexerModel.PropertyIncomeState income,
+            XcavateMarketplaceIndexerModel.XcavateGovernanceState.HoldingState? holding,
+            IReadOnlyDictionary<string, PublicKey> tokenProgramByMint)
+        {
+            if (holding is null)
+            {
+                throw new InvalidOperationException("This wallet has no position to close on this property.");
+            }
+
+            if (holding is not { Amount: 0, Listed: 0, MaxLock: 0 })
+            {
+                throw new InvalidOperationException(
+                    "This position still holds, lists or locks tokens, so it cannot be closed yet.");
+            }
+
+            var ownerKey = new PublicKey(owner);
+
+            var instructions = SelectClaimableMints(income, shares: 0).Count > 0
+                ? ComposeIncomeClaims(programs, owner, payer, assetId, income, shares: 0, tokenProgramByMint)
+                : new List<TransactionInstruction>();
+
+            instructions.Add(XcavateMarketplaceProgram.CloseShareHolding(
+                programs, ownerKey, payer, (ulong)assetId, ownerKey));
+
+            return instructions;
+        }
+
+        /// <summary>
         /// finalize_proposal for the property's ended spending proposal - the
         /// permissionless crank the proposals page offers once voting closed. The
         /// indexer answers the proposal id and its rent payer as one

@@ -419,6 +419,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(VotingPowerText))]
         [NotifyPropertyChangedFor(nameof(AgentCanVote))]
         [NotifyPropertyChangedFor(nameof(AgentVotePowerText))]
+        [NotifyPropertyChangedFor(nameof(CloseEmptyPositionIsVisible))]
         private XcavateMarketplaceIndexerModel.XcavateGovernanceState? governance;
 
         /// <summary>The unix expiry of whichever vote the section shows, minus now.</summary>
@@ -967,6 +968,188 @@ namespace PlutoFramework.Components.XcavateProperty
                     cluster, cranker, AssetId, ct));
         }
 
+        // ── Pending finalizations (the permissionless cranks) ──
+
+        /// <summary>
+        /// Which finalization cranks this listing/property is ready for right now, from
+        /// ONE indexer read per refresh (<see cref="RefreshPendingFinalizationsAsync"/>);
+        /// null until the first successful read, so every banner stays hidden until
+        /// loaded. The agent-election arrow is deliberately NOT surfaced here - the
+        /// letting-agent section hosts that finalize button off its own election read.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(FinalizeProposalIsVisible))]
+        [NotifyPropertyChangedFor(nameof(FinalizeChallengeIsVisible))]
+        [NotifyPropertyChangedFor(nameof(FinalizeSpvElectionIsVisible))]
+        [NotifyPropertyChangedFor(nameof(ResolveSilentVerdictIsVisible))]
+        [NotifyPropertyChangedFor(nameof(ExecuteDealIsVisible))]
+        private XcavateMarketplaceIndexerModel.PendingFinalizations? pendingFinalizations;
+
+        /// <summary>True while any crank submission is being built, signed or submitted.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CrankButtonState))]
+        private bool crankRunning;
+
+        public bool FinalizeProposalIsVisible => PendingFinalizations?.Proposal is not null;
+        public bool FinalizeChallengeIsVisible => PendingFinalizations?.Challenge is not null;
+        public bool FinalizeSpvElectionIsVisible => PendingFinalizations?.SpvElection is not null;
+        public bool ResolveSilentVerdictIsVisible => PendingFinalizations?.SilentVerdictOverdue == true;
+        public bool ExecuteDealIsVisible => PendingFinalizations?.ExecuteDeal is not null;
+
+        /// <summary>Enabled while no crank is in flight - one submission at a time.</summary>
+        public ButtonStateEnum CrankButtonState =>
+            CrankRunning ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
+
+        /// <summary>
+        /// Re-reads which finalization cranks are due from the indexer (one
+        /// GetPendingFinalizationsAsync per refresh). Runs on the same trigger as
+        /// <see cref="RefreshVotingAsync"/> and additionally from the page's
+        /// <c>OnAppearing</c>. Tolerant like the listing refresh - a failure keeps
+        /// whatever the page already shows.
+        /// </summary>
+        public async Task RefreshPendingFinalizationsAsync(CancellationToken token)
+        {
+            if (NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                return;
+            }
+
+            try
+            {
+                var pending = await XcavateMarketplaceIndexerModel.GetPendingFinalizationsAsync(
+                        SolanaNetworkModel.SelectedCluster,
+                        solanaListing.AssetId,
+                        solanaListing.ListingId,
+                        KeysModel.GetSolanaAddress(),
+                        token)
+                    .ConfigureAwait(false);
+
+                token.ThrowIfCancellationRequested();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    PendingFinalizations = pending;
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // The page went away mid-query.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the pending finalizations: ");
+                Console.WriteLine(ex);
+            }
+        }
+
+        /// <summary>
+        /// The shared crank executor: the wallet-requirements gate behind the loading
+        /// overlay (cleared on every exit path), then the submission through the
+        /// marketplace pipeline's status popup. The cranks are permissionless, so the
+        /// investor-role check the vote executors apply does NOT apply here - the same
+        /// shape as <see cref="FinalizeAgentElectionAsync"/>. <see cref="CrankRunning"/>
+        /// keeps every banner's button disabled until the submission is in.
+        /// </summary>
+        private async Task RunCrankAsync(
+            string description,
+            Func<string, SolanaCluster, CancellationToken, Task<List<Solnet.Rpc.Models.TransactionInstruction>>> buildInstructionsAsync)
+        {
+            if (CrankRunning)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            try
+            {
+                if (!await RequirementsModel.CheckRequirementsAsync())
+                {
+                    return;
+                }
+            }
+            finally
+            {
+                // Cleared on every exit path - a throwing requirements check (network or
+                // indexer failure) must not wedge the page behind the overlay.
+                fullPageLoadingViewModel.IsVisible = false;
+            }
+
+            CrankRunning = true;
+
+            try
+            {
+                await XcavateMarketplaceTransactionModel.SubmitAsync(description, buildInstructionsAsync);
+            }
+            finally
+            {
+                CrankRunning = false;
+            }
+        }
+
+        /// <summary>The property name the crank descriptions report with.</summary>
+        private string CrankPropertyName => Metadata?.PropertyName ?? "this property";
+
+        /// <summary>finalize_proposal: settles the letting seat's ended spending proposal.</summary>
+        [RelayCommand]
+        public Task FinalizeProposalAsync() => RunCrankAsync(
+            $"Finalize proposal on {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavatePropertyCallsModel.FinalizeProposalAsync(
+                cluster, cranker, AssetId, ct));
+
+        /// <summary>finalize_challenge: settles the ended challenge's slash/versus payouts.</summary>
+        [RelayCommand]
+        public Task FinalizeChallengeAsync() => RunCrankAsync(
+            $"Finalize challenge on {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavatePropertyCallsModel.FinalizeChallengeAsync(
+                cluster, cranker, AssetId, ct));
+
+        /// <summary>finalize_spv_election: seats the ended SPV-lawyer election's winner.</summary>
+        [RelayCommand]
+        public Task FinalizeSpvElectionAsync() => RunCrankAsync(
+            $"Finalize SPV election on {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavateMarketplaceCallsModel.FinalizeSpvElectionAsync(
+                cluster, cranker, ListingId, ct));
+
+        /// <summary>resolve_silent_verdict: rules on the developer's lawyer who let the review window run out.</summary>
+        [RelayCommand]
+        public Task ResolveSilentVerdictAsync() => RunCrankAsync(
+            $"Resolve silent verdict on {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavateMarketplaceCallsModel.ResolveSilentVerdictAsync(
+                cluster, cranker, ListingId, ct));
+
+        /// <summary>execute_deal: settles the sale for every investor once both lawyers approved.</summary>
+        [RelayCommand]
+        public Task ExecuteDealAsync() => RunCrankAsync(
+            $"Complete settlement for {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavateMarketplaceCallsModel.ExecuteDealAsync(
+                cluster, cranker, ListingId, ct));
+
+        /// <summary>
+        /// True only when the indexer still shows this wallet's ShareHolding row with
+        /// nothing in it - the row goes inactive when the account closes (the schema's
+        /// <c>active</c>/<c>closedAtSlot</c> pair), so an active zero-amount row means
+        /// the emptied account genuinely still exists on chain: exactly what
+        /// close_share_holding reclaims. A wallet that never held (null row) sees nothing.
+        /// </summary>
+        public bool CloseEmptyPositionIsVisible =>
+            Governance?.Holding is { Amount: 0, Listed: 0, MaxLock: 0 };
+
+        /// <summary>
+        /// One tap closing the emptied position: any final banked rent claims first
+        /// (claim_income, with close_income_checkpoint riding inside when the checkpoint
+        /// drains), then close_share_holding reclaims the holding account itself - one
+        /// transaction, at most two signatures (the rent collector joins only the claim
+        /// path, exactly like <see cref="ClaimRentAsync"/>).
+        /// </summary>
+        [RelayCommand]
+        public Task CloseEmptyPositionAsync() => RunCrankAsync(
+            $"Close empty position on {CrankPropertyName}",
+            (owner, cluster, ct) => XcavatePropertyCallsModel.CloseEmptyPositionAsync(
+                cluster, owner, AssetId, ct));
+
         // ── Rent income (claim_income) ──
 
         /// <summary>Mint decimals by (cluster, mint), resolved once per page visit.</summary>
@@ -1297,6 +1480,11 @@ namespace PlutoFramework.Components.XcavateProperty
                 // The agent election comes after the governance read so the candidacy
                 // rows' vote buttons are gated on the fresh votable figure.
                 await RefreshAgentElectionAsync(token).ConfigureAwait(false);
+
+                // The finalization-crank banners ride the same refresh: a confirmed
+                // crank (or a vote closing) is exactly what makes an arrow appear or
+                // disappear.
+                await RefreshPendingFinalizationsAsync(token).ConfigureAwait(false);
 
                 // So does the income section: a confirmed claim (or a rent distribution)
                 // changes exactly these figures.

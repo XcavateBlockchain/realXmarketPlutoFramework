@@ -2,6 +2,7 @@
 <VerticalStackLayout xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                      xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                      xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                     xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
                      x:Class="PlutoFramework.Components.XcavateProperty.GovernanceVotingSectionView"
                      Spacing="12"
                      IsVisible="{Binding GovernanceVoteIsVisible}">
@@ -52,6 +53,14 @@
                                         Text="Vote Yes"
                                         Command="{Binding ApproveProposalCommand}" />
             </Grid>
+
+            <!-- The proposal's voting window closed but nobody settled it yet -->
+            <xcavateproperty:FinalizationBannerView Title="Voting has ended"
+                                                    Description="Tap to finalize — anyone can send this; it moves the process forward for everyone. You'll sign one transaction."
+                                                    ButtonText="Finalize proposal"
+                                                    ButtonCommand="{Binding FinalizeProposalCommand}"
+                                                    ButtonState="{Binding CrankButtonState}"
+                                                    IsVisible="{Binding FinalizeProposalIsVisible}" />
         </VerticalStackLayout>
     </Border>
 
@@ -101,6 +110,14 @@
                                         Text="Vote Yes"
                                         Command="{Binding ApproveChallengeCommand}" />
             </Grid>
+
+            <!-- The challenge's voting window closed but nobody settled it yet -->
+            <xcavateproperty:FinalizationBannerView Title="Challenge voting has ended"
+                                                    Description="Tap to finalize and settle the outcome — anyone can send this; you'll sign one transaction."
+                                                    ButtonText="Finalize challenge"
+                                                    ButtonCommand="{Binding FinalizeChallengeCommand}"
+                                                    ButtonState="{Binding CrankButtonState}"
+                                                    IsVisible="{Binding FinalizeChallengeIsVisible}" />
         </VerticalStackLayout>
     </Border>
 </VerticalStackLayout>
