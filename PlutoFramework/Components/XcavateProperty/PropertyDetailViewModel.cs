@@ -14,6 +14,7 @@ using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Solana;
 using PlutoFrameworkCore.Xcavate;
+using System.Collections.ObjectModel;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
 using PropertyModel = PlutoFramework.Model.Xcavate.XcavatePropertyModel;
@@ -696,6 +697,205 @@ namespace PlutoFramework.Components.XcavateProperty
                     approve ? XcavateVoteChoice.Yes : XcavateVoteChoice.No, amount, ct));
         }
 
+        // ── Rent income (claim_income) ──
+
+        /// <summary>Mint decimals by (cluster, mint), resolved once per page visit.</summary>
+        private readonly Dictionary<(SolanaCluster, string), int> incomeMintDecimals = [];
+
+        /// <summary>The wallet's share count at the moment <see cref="IncomeState"/> was read.</summary>
+        private ulong incomeShares;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IncomeSectionIsVisible))]
+        private XcavateMarketplaceIndexerModel.PropertyIncomeState? incomeState;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ClaimRentButtonState))]
+        private bool incomeClaimRunning;
+
+        /// <summary>Per-mint claimable amounts, display units with the payment token's symbol.</summary>
+        public ObservableCollection<string> ClaimableRentLines { get; } = [];
+
+        /// <summary>Per-mint lifetime totals distributed per token (the streams' accumulators).</summary>
+        public ObservableCollection<string> LifetimeRentLines { get; } = [];
+
+        /// <summary>
+        /// The income section exists for holders only: a Solana listing with income
+        /// streams AND a wallet that holds shares or still has rent banked to pull.
+        /// </summary>
+        public bool IncomeSectionIsVisible =>
+            IncomeState is { Streams.Count: > 0 } && (incomeShares > 0 || ClaimableRentLines.Count > 0);
+
+        public bool ClaimableRentIsVisible => ClaimableRentLines.Count > 0;
+
+        /// <summary>Enabled iff there is rent to claim and no claim is in flight.</summary>
+        public ButtonStateEnum ClaimRentButtonState =>
+            !IncomeClaimRunning && ClaimableRentLines.Count > 0
+                ? ButtonStateEnum.Enabled
+                : ButtonStateEnum.Disabled;
+
+        /// <summary>
+        /// Re-reads this property's income ledger (streams plus the wallet's checkpoint)
+        /// and rebuilds the income section's figures. Runs on the same trigger as
+        /// <see cref="RefreshVotingAsync"/> and additionally from the page's
+        /// <c>OnAppearing</c>. Tolerant like the listing refresh - a failure keeps
+        /// whatever the page already shows.
+        /// </summary>
+        public async Task RefreshIncomeAsync(CancellationToken token)
+        {
+            if (NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                return;
+            }
+
+            try
+            {
+                var cluster = SolanaNetworkModel.SelectedCluster;
+                var owner = KeysModel.GetSolanaAddress();
+
+                if (string.IsNullOrEmpty(owner) || !XcavateDeploymentModel.IsDeployed(cluster))
+                {
+                    return;
+                }
+
+                var income = await XcavateMarketplaceIndexerModel.GetIncomeStateAsync(
+                        cluster, solanaListing.AssetId, owner, SolanaRpcModel.GetClient(cluster), token)
+                    .ConfigureAwait(false);
+
+                // The share count the claimable formula settles against: the holding from
+                // the governance read this page already makes, falling back to the
+                // listing figure. claim_income re-reads it at build time either way.
+                var shares = Governance?.Holding?.Amount ?? TokensOwned;
+
+                var claimableLines = new List<string>();
+                var lifetimeLines = new List<string>();
+
+                foreach (var stream in income.Streams)
+                {
+                    var decimals = await ResolveIncomeMintDecimalsAsync(cluster, stream.Mint, token)
+                        .ConfigureAwait(false);
+                    var symbol = IncomeMintSymbol(cluster, stream.Mint);
+
+                    var claimable = income.GetClaimable(stream.Mint, shares);
+                    if (claimable.Sign > 0)
+                    {
+                        claimableLines.Add($"{XcavateReserveBalanceModel.Format(XcavateMarketplaceIndexerModel.PropertyIncomeState.ToDisplayAmount(claimable, decimals))} {symbol}");
+                    }
+
+                    lifetimeLines.Add($"{XcavateReserveBalanceModel.Format(XcavateMarketplaceIndexerModel.PropertyIncomeState.ToDisplayAmount(stream.PerShare, decimals))} {symbol} per token");
+                }
+
+                token.ThrowIfCancellationRequested();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    IncomeState = income;
+                    incomeShares = shares;
+
+                    ClaimableRentLines.Clear();
+                    foreach (var line in claimableLines)
+                    {
+                        ClaimableRentLines.Add(line);
+                    }
+
+                    LifetimeRentLines.Clear();
+                    foreach (var line in lifetimeLines)
+                    {
+                        LifetimeRentLines.Add(line);
+                    }
+
+                    OnPropertyChanged(nameof(IncomeSectionIsVisible));
+                    OnPropertyChanged(nameof(ClaimableRentIsVisible));
+                    OnPropertyChanged(nameof(ClaimRentButtonState));
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // The page went away mid-query.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the income state: ");
+                Console.WriteLine(ex);
+            }
+        }
+
+        /// <summary>
+        /// The mint's decimals for the claimable display: the whitelist entry when the
+        /// app knows the mint, else the mint account on chain - the same resolution
+        /// <see cref="XcavateMarketplaceCallsModel"/> applies to payment mints.
+        /// </summary>
+        private async Task<int> ResolveIncomeMintDecimalsAsync(SolanaCluster cluster, string mint, CancellationToken token)
+        {
+            if (incomeMintDecimals.TryGetValue((cluster, mint), out var decimals))
+            {
+                return decimals;
+            }
+
+            var (_, resolved) = await XcavateMarketplaceCallsModel.ResolveMintAsync(
+                cluster, new Solnet.Wallet.PublicKey(mint), token).ConfigureAwait(false);
+
+            incomeMintDecimals[(cluster, mint)] = resolved;
+
+            return resolved;
+        }
+
+        /// <summary>
+        /// The whitelist symbol the buy flow prints payment amounts with; an income mint
+        /// the app does not know displays as plain "tokens" rather than a base58 address.
+        /// </summary>
+        private static string IncomeMintSymbol(SolanaCluster cluster, string mint) =>
+            SolanaTokenWhitelist.ForCluster(cluster)
+                .FirstOrDefault(entry => entry.Mint == mint)?.Symbol ?? "tokens";
+
+        /// <summary>
+        /// Claims every mint the wallet can pull from this property's income ledger (one
+        /// claim_income per mint; close_income_checkpoint rides inside when the
+        /// checkpoint drains - never a separate action). Same requirement gates as the
+        /// page's other investor actions; the pipeline's confirmation event refreshes
+        /// the section.
+        /// </summary>
+        [RelayCommand]
+        public async Task ClaimRentAsync()
+        {
+            if (IncomeClaimRunning
+                || ClaimableRentLines.Count == 0
+                || NftWrapper?.NftBase is not XcavateSolanaListingNft)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            IncomeClaimRunning = true;
+
+            try
+            {
+                await ClaimRentModel.ClaimAsync(
+                    [new ClaimRentModel.ClaimTarget(AssetId, Metadata?.PropertyName ?? "this property")]);
+            }
+            finally
+            {
+                IncomeClaimRunning = false;
+            }
+        }
+
         /// <summary>
         /// A confirmed marketplace transaction (a reserve, buy or claim) changed this
         /// listing's on-chain state, so the figures on screen - tokens still available,
@@ -818,6 +1018,10 @@ namespace PlutoFramework.Components.XcavateProperty
                 // The vote sections ride the same refresh: the listing figures and the
                 // governance tallies always come from the same moment.
                 await RefreshVotingAsync(token).ConfigureAwait(false);
+
+                // So does the income section: a confirmed claim (or a rent distribution)
+                // changes exactly these figures.
+                await RefreshIncomeAsync(token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

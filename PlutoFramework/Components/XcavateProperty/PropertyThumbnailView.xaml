@@ -57,6 +57,19 @@
                                                 Margin="8, 8, 0, 0"
                                                 Clicked="OnSendSharesClicked" />
 
+                        <!-- Rent the wallet can pull from this property, straight from the
+                             portfolio; stacked under the Send chip and only visible while
+                             the portfolio's income scan shows a claimable balance. -->
+                        <buttons:ElevatedButton x:Name="claimRentChip"
+                                                Text="Claim rent"
+                                                FontSize="12"
+                                                HeightRequest="30"
+                                                Padding="14,0"
+                                                IsVisible="False"
+                                                AbsoluteLayout.LayoutBounds="0, 0, AutoSize, AutoSize"
+                                                Margin="8, 44, 0, 0"
+                                                Clicked="OnClaimRentClicked" />
+
                         <Image AbsoluteLayout.LayoutBounds="1, 0, 40, 40"
                                AbsoluteLayout.LayoutFlags="PositionProportional"
                                Margin="10"

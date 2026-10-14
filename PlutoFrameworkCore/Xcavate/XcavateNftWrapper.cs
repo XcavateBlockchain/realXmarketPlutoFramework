@@ -14,6 +14,27 @@ namespace PlutoFrameworkCore.Xcavate
         public required bool SpvCreated { get; set; }
         public required bool ClaimHasExpired { get; set; }
         public TimeSpan? TimeLeftToClaim { get; set; } = null;
+
+        private bool hasClaimableRent = false;
+
+        /// <summary>
+        /// Whether the connected wallet currently has claimable rent on this property.
+        /// Computed by the portfolio page's income scan (indexer income state x the
+        /// holding's share count) and bound to the thumbnail's "Claim rent" chip;
+        /// false until the scan says otherwise.
+        /// </summary>
+        public bool HasClaimableRent
+        {
+            get => hasClaimableRent;
+            set
+            {
+                if (hasClaimableRent != value)
+                {
+                    hasClaimableRent = value;
+                    OnPropertyChanged(nameof(HasClaimableRent));
+                }
+            }
+        }
         public string? Status
         {
             get

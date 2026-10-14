@@ -35,6 +35,11 @@ public partial class PropertyDetailPage : PageTemplate
         // must re-read the listing once it confirms, but a popped page's view model must
         // not be kept alive by the static event.
         viewModel.SubscribeToMarketplaceTransactions();
+
+        // The income section's first read (later ones ride the transaction-confirmed
+        // refresh like the voting sections). Fire-and-forget: the refresh swallows and
+        // logs its own failures.
+        _ = viewModel.RefreshIncomeAsync(CancellationToken.None);
     }
 
     protected override void OnDisappearing()

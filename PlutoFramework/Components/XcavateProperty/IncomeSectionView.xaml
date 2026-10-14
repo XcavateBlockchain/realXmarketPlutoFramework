@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<VerticalStackLayout xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                     x:Class="PlutoFramework.Components.XcavateProperty.IncomeSectionView"
+                     Spacing="12"
+                     IsVisible="{Binding IncomeSectionIsVisible}">
+
+    <!-- The holder's on-chain rent position on this property. Distinct from the
+         "Rental income pcm" figure further down the page, which is the listing's
+         metadata estimate; everything here is read from the income ledger. -->
+    <Border Padding="15"
+            BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}"
+            Stroke="{StaticResource CardBorderColor}"
+            StrokeThickness="{StaticResource CardBorderThickness}">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+        </Border.StrokeShape>
+
+        <VerticalStackLayout Spacing="8">
+            <Label Text="Rent income"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+
+            <VerticalStackLayout Spacing="2"
+                                 IsVisible="{Binding ClaimableRentIsVisible}">
+                <Label Text="Claimable now"
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray500}}" />
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding ClaimableRentLines}"
+                                     Spacing="2">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Label Text="{Binding .}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <buttons:ElevatedButton Text="Claim rent"
+                                    Command="{Binding ClaimRentCommand}"
+                                    ButtonState="{Binding ClaimRentButtonState}" />
+
+            <!-- The indexer keeps no distribution-events table, so this is the honest
+                 figure: each payment mint's lifetime per-token total, straight off the
+                 income ledger's accumulator. -->
+            <Label Text="Total rent distributed per token (lifetime)"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray500}}" />
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding LifetimeRentLines}"
+                                 Spacing="2">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate>
+                        <Label Text="{Binding .}"
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Border>
+</VerticalStackLayout>
