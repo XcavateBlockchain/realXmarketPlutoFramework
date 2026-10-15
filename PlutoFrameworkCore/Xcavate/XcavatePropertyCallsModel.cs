@@ -14,9 +14,12 @@ namespace PlutoFramework.Model.Xcavate
     /// from live state: the rent collector (pinned as the rent-fronting payer exactly
     /// the way <see cref="XcavateMarketplaceCallsModel.VoteOnTermsAsync"/> does, so the
     /// transaction model's two-signer flow covers the votes and the first income claim
-    /// unchanged), the pending-finalization arrows the indexer reads out of the letting
-    /// state, and the mint token programs and struck-agent registration only the chain
-    /// answers.
+    /// unchanged), each vote record's RECORDED rent payer for the vote unlocks (resolved
+    /// fresh from the indexer row - a vote cast outside the app, e.g. through the
+    /// AssetDidCommDashboard, is fronted by the voter's own wallet, and the program
+    /// rejects any other rent_payer account), the pending-finalization arrows the
+    /// indexer reads out of the letting state, and the mint token programs and
+    /// struck-agent registration only the chain answers.
     /// </summary>
     public static class XcavatePropertyCallsModel
     {
@@ -484,9 +487,15 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// unlock_proposal_votes: releases the shares the voter's proposal vote locked
         /// inside the marketplace holding - and reclaims the vote record's rent - once
-        /// the proposal finalized. The rent returns to the config's rent collector, the
-        /// wallet that fronted it at vote time (the vote's recorded rent payer, no
-        /// signature). Single signer - the voter.
+        /// the proposal finalized. The rent returns to the record's RECORDED rent payer,
+        /// resolved fresh from the indexer: the program pins the passed account to it
+        /// (<c>address = vote_record.rent_payer</c>, reverting WrongRentPayer otherwise -
+        /// governance.rs UnlockProposalVotes), and a vote cast outside the app can name
+        /// any fronting wallet, so the payer is never guessed. When the indexer shows no
+        /// row, the config's rent collector stands in: every app-cast vote's record is
+        /// fronted by it (<see cref="VoteOnProposalAsync"/>), so the fallback is exact
+        /// for app-originated rows, while a record fronted by any other wallet reverts
+        /// on-chain rather than paying the wrong account. Single signer - the voter.
         /// </summary>
         public static async Task<List<TransactionInstruction>> UnlockProposalVotesAsync(
             SolanaCluster cluster,
@@ -498,16 +507,41 @@ namespace PlutoFramework.Model.Xcavate
             var programs = XcavateProgramAddresses.Require(cluster);
             var config = await XcavateMarketplaceCallsModel.GetMarketplaceConfigAsync(cluster, token)
                 .ConfigureAwait(false);
+            var votes = await XcavateMarketplaceIndexerModel
+                .GetGovVotesAsync(cluster, assetId, voter, token)
+                .ConfigureAwait(false);
 
             return
             [
-                XcavatePropertyProgram.UnlockProposalVotes(
-                    programs,
-                    new PublicKey(voter),
-                    new PublicKey(config.RentCollector),
-                    (ulong)assetId,
-                    (ulong)proposalId),
+                BuildUnlockProposalVotes(programs, voter, assetId, proposalId, votes, config.RentCollector),
             ];
+        }
+
+        /// <summary>
+        /// The unlock_proposal_votes instruction for the voter's record on proposal
+        /// <paramref name="proposalId"/>: the recorded rent payer when
+        /// <paramref name="votes"/> holds the row - matched by its record PDA, since the
+        /// one account type behind proposals and challenges makes the bare vote id
+        /// ambiguous - and <paramref name="fallbackRentPayer"/> (the config's rent
+        /// collector) when no row is indexed.
+        /// </summary>
+        public static TransactionInstruction BuildUnlockProposalVotes(
+            XcavateProgramSet programs,
+            string voter,
+            long assetId,
+            long proposalId,
+            IReadOnlyList<XcavateMarketplaceIndexerModel.GovVoteRow> votes,
+            string fallbackRentPayer)
+        {
+            var voterKey = new PublicKey(voter);
+            var recordAddress = XcavatePropertyProgram
+                .DeriveProposalVoteRecord(programs, (ulong)assetId, (ulong)proposalId, voterKey)
+                .Key;
+            var rentPayer = votes.FirstOrDefault(row => row.RecordAddress == recordAddress)?.RentPayer
+                ?? fallbackRentPayer;
+
+            return XcavatePropertyProgram.UnlockProposalVotes(
+                programs, voterKey, new PublicKey(rentPayer), (ulong)assetId, (ulong)proposalId);
         }
 
         /// <summary>The challenge counterpart of <see cref="UnlockProposalVotesAsync"/>.</summary>
@@ -521,22 +555,44 @@ namespace PlutoFramework.Model.Xcavate
             var programs = XcavateProgramAddresses.Require(cluster);
             var config = await XcavateMarketplaceCallsModel.GetMarketplaceConfigAsync(cluster, token)
                 .ConfigureAwait(false);
+            var votes = await XcavateMarketplaceIndexerModel
+                .GetGovVotesAsync(cluster, assetId, voter, token)
+                .ConfigureAwait(false);
 
             return
             [
-                XcavatePropertyProgram.UnlockChallengeVotes(
-                    programs,
-                    new PublicKey(voter),
-                    new PublicKey(config.RentCollector),
-                    (ulong)assetId,
-                    (ulong)challengeId),
+                BuildUnlockChallengeVotes(programs, voter, assetId, challengeId, votes, config.RentCollector),
             ];
+        }
+
+        /// <summary>The challenge counterpart of <see cref="BuildUnlockProposalVotes"/>.</summary>
+        public static TransactionInstruction BuildUnlockChallengeVotes(
+            XcavateProgramSet programs,
+            string voter,
+            long assetId,
+            long challengeId,
+            IReadOnlyList<XcavateMarketplaceIndexerModel.GovVoteRow> votes,
+            string fallbackRentPayer)
+        {
+            var voterKey = new PublicKey(voter);
+            var recordAddress = XcavatePropertyProgram
+                .DeriveChallengeVoteRecord(programs, (ulong)assetId, (ulong)challengeId, voterKey)
+                .Key;
+            var rentPayer = votes.FirstOrDefault(row => row.RecordAddress == recordAddress)?.RentPayer
+                ?? fallbackRentPayer;
+
+            return XcavatePropertyProgram.UnlockChallengeVotes(
+                programs, voterKey, new PublicKey(rentPayer), (ulong)assetId, (ulong)challengeId);
         }
 
         /// <summary>
         /// unlock_agent_votes: releases the shares the voter backed a candidacy with
         /// once election <paramref name="round"/> is over, and reclaims the vote
-        /// record's rent the same way <see cref="UnlockProposalVotesAsync"/> does.
+        /// record's rent the same way <see cref="UnlockProposalVotesAsync"/> does - but
+        /// with NO fallback payer: the AssetDidCommDashboard casts agent votes with the
+        /// VOTER's own wallet fronting the record's rent, so a missing indexer row
+        /// (already unlocked, or the indexer still catching up) rejects here instead of
+        /// building an instruction the program would revert (WrongRentPayer).
         /// Single signer - the voter.
         /// </summary>
         public static async Task<List<TransactionInstruction>> UnlockAgentVotesAsync(
@@ -547,18 +603,33 @@ namespace PlutoFramework.Model.Xcavate
             CancellationToken token = default)
         {
             var programs = XcavateProgramAddresses.Require(cluster);
-            var config = await XcavateMarketplaceCallsModel.GetMarketplaceConfigAsync(cluster, token)
+            var election = await XcavateMarketplaceIndexerModel
+                .GetAgentElectionStateAsync(cluster, assetId, voter, token)
                 .ConfigureAwait(false);
 
-            return
-            [
-                XcavatePropertyProgram.UnlockAgentVotes(
-                    programs,
-                    new PublicKey(voter),
-                    new PublicKey(config.RentCollector),
-                    (ulong)assetId,
-                    round),
-            ];
+            return [ BuildUnlockAgentVotes(programs, voter, assetId, round, election.Votes) ];
+        }
+
+        /// <summary>
+        /// The unlock_agent_votes instruction for the voter's record in election
+        /// <paramref name="round"/>, paying the rent back to the row's recorded rent
+        /// payer - or a user-presentable rejection when <paramref name="votes"/> holds
+        /// no row for that round (the record is gone or not indexed yet, and the payer
+        /// cannot be guessed: a dashboard-cast record is fronted by the voter).
+        /// </summary>
+        public static TransactionInstruction BuildUnlockAgentVotes(
+            XcavateProgramSet programs,
+            string voter,
+            long assetId,
+            ulong round,
+            IReadOnlyList<XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow> votes)
+        {
+            var rentPayer = votes.FirstOrDefault(vote => vote.Round == (long)round)?.RentPayer
+                ?? throw new InvalidOperationException(
+                    $"No vote record of this wallet for election round {round} is visible on this property - it was either unlocked already or the indexer is still catching up. Try again in a moment.");
+
+            return XcavatePropertyProgram.UnlockAgentVotes(
+                programs, new PublicKey(voter), new PublicKey(rentPayer), (ulong)assetId, round);
         }
     }
 }

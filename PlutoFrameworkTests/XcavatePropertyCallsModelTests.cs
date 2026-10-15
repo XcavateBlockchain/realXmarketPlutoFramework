@@ -371,6 +371,145 @@ namespace PlutoFrameworkTests
                     Programs, SyntheticKey(1).Key, assetId: 7, finalization: null));
         }
 
+        [Test]
+        public void BuildUnlockProposalVotes_PaysTheRecordsRentBackToItsRecordedPayer()
+        {
+            var voter = SyntheticKey(1);
+            var recordedPayer = SyntheticKey(30);
+            var fallback = SyntheticKey(2);
+
+            var votes = new[]
+            {
+                // A decoy: the same voter's record on ANOTHER governance id. Proposal and
+                // challenge ids are separate counters, so the match key is the vote-record
+                // PDA (the row's id), not the bare vote id.
+                new XcavateMarketplaceIndexerModel.GovVoteRow(3, SyntheticKey(9).Key, SyntheticKey(31).Key),
+                new XcavateMarketplaceIndexerModel.GovVoteRow(
+                    3,
+                    XcavatePropertyProgram.DeriveProposalVoteRecord(Programs, 7, 3, voter).Key,
+                    recordedPayer.Key),
+            };
+
+            var instruction = XcavatePropertyCallsModel.BuildUnlockProposalVotes(
+                Programs, voter.Key, assetId: 7, proposalId: 3, votes, fallback.Key);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instruction.Data[..8], Is.EqualTo(Discriminator("unlock_proposal_votes")));
+                Assert.That(instruction.Keys[0].PublicKey, Is.EqualTo(voter.Key));
+                Assert.That(instruction.Keys[0].IsSigner, Is.True);
+                // Keys[1] is the rent_payer account - the recorded payer, NOT the
+                // fallback; governance.rs pins it: address = vote_record.rent_payer.
+                Assert.That(instruction.Keys[1].PublicKey, Is.EqualTo(recordedPayer.Key));
+            });
+        }
+
+        [Test]
+        public void BuildUnlockProposalVotes_FallsBackToTheRentCollectorWithoutAnIndexedRow()
+        {
+            var voter = SyntheticKey(1);
+            var fallback = SyntheticKey(2);
+
+            // No row for this record: an app-cast vote's record is fronted by the rent
+            // collector (VoteOnProposalAsync), so the fallback is exact for every
+            // app-originated row; a foreign-fronted record would revert WrongRentPayer
+            // on-chain instead of paying the wrong account.
+            var instruction = XcavatePropertyCallsModel.BuildUnlockProposalVotes(
+                Programs, voter.Key, assetId: 7, proposalId: 3, [], fallback.Key);
+
+            Assert.That(instruction.Keys[1].PublicKey, Is.EqualTo(fallback.Key));
+        }
+
+        [Test]
+        public void BuildUnlockChallengeVotes_PaysTheRecordsRentBackToItsRecordedPayer()
+        {
+            var voter = SyntheticKey(1);
+            var recordedPayer = SyntheticKey(30);
+            var fallback = SyntheticKey(2);
+
+            var votes = new[]
+            {
+                new XcavateMarketplaceIndexerModel.GovVoteRow(
+                    3,
+                    XcavatePropertyProgram.DeriveChallengeVoteRecord(Programs, 7, 3, voter).Key,
+                    recordedPayer.Key),
+            };
+
+            var instruction = XcavatePropertyCallsModel.BuildUnlockChallengeVotes(
+                Programs, voter.Key, assetId: 7, challengeId: 3, votes, fallback.Key);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instruction.Data[..8], Is.EqualTo(Discriminator("unlock_challenge_votes")));
+                Assert.That(instruction.Keys[0].PublicKey, Is.EqualTo(voter.Key));
+                Assert.That(instruction.Keys[1].PublicKey, Is.EqualTo(recordedPayer.Key));
+            });
+        }
+
+        [Test]
+        public void BuildUnlockChallengeVotes_FallsBackToTheRentCollectorWithoutAnIndexedRow()
+        {
+            var instruction = XcavatePropertyCallsModel.BuildUnlockChallengeVotes(
+                Programs, SyntheticKey(1).Key, assetId: 7, challengeId: 3, [], SyntheticKey(2).Key);
+
+            Assert.That(instruction.Keys[1].PublicKey, Is.EqualTo(SyntheticKey(2).Key));
+        }
+
+        [Test]
+        public void BuildUnlockAgentVotes_PaysEachRoundsRentBackToItsOwnRecordedPayer()
+        {
+            var voter = SyntheticKey(1);
+            var collector = SyntheticKey(2);
+
+            // Round 1 was cast through the dashboard (the VOTER fronted the record's
+            // rent); round 2 was cast in the app (the rent collector fronted it).
+            var votes = new[]
+            {
+                new XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow(
+                    1, SyntheticKey(4).Key, 30, voter.Key),
+                new XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow(
+                    2, SyntheticKey(5).Key, 7, collector.Key),
+            };
+
+            var roundOne = XcavatePropertyCallsModel.BuildUnlockAgentVotes(
+                Programs, voter.Key, assetId: 7, round: 1, votes);
+            var roundTwo = XcavatePropertyCallsModel.BuildUnlockAgentVotes(
+                Programs, voter.Key, assetId: 7, round: 2, votes);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(roundOne.Data[..8], Is.EqualTo(Discriminator("unlock_agent_votes")));
+                Assert.That(roundOne.Keys[0].PublicKey, Is.EqualTo(voter.Key));
+                Assert.That(roundOne.Keys[0].IsSigner, Is.True);
+                Assert.That(roundOne.Keys[1].PublicKey, Is.EqualTo(voter.Key));
+                Assert.That(roundTwo.Keys[1].PublicKey, Is.EqualTo(collector.Key));
+            });
+        }
+
+        [Test]
+        public void BuildUnlockAgentVotes_RejectsWhenNoRecordIsIndexed()
+        {
+            var votes = new[]
+            {
+                new XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow(
+                    1, SyntheticKey(4).Key, 30, SyntheticKey(2).Key),
+            };
+
+            Assert.Multiple(() =>
+            {
+                // No fallback here: a dashboard-cast record is fronted by the voter, so
+                // guessing the rent collector would just revert WrongRentPayer on-chain.
+                var ex = Assert.Throws<InvalidOperationException>(() =>
+                    XcavatePropertyCallsModel.BuildUnlockAgentVotes(
+                        Programs, SyntheticKey(1).Key, assetId: 7, round: 2, votes));
+                Assert.That(ex!.Message, Does.Contain("round 2"));
+
+                Assert.Throws<InvalidOperationException>(() =>
+                    XcavatePropertyCallsModel.BuildUnlockAgentVotes(
+                        Programs, SyntheticKey(1).Key, assetId: 7, round: 1, []));
+            });
+        }
+
         private static XcavateMarketplaceIndexerModel.XcavateGovernanceState.HoldingState Holding(
             uint amount, uint listed = 0, uint maxLock = 0) =>
             new(amount, listed, maxLock);

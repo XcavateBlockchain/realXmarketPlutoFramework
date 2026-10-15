@@ -410,8 +410,15 @@ namespace PlutoFramework.Model.Xcavate
             /// </summary>
             public sealed record CastVote(string Candidate, long Power);
 
-            /// <summary>One vote row as raw indexer input, before the current-round filter.</summary>
-            public sealed record VoteRow(long Round, string Candidate, long Power);
+            /// <summary>
+            /// One vote row as raw indexer input, before the current-round filter.
+            /// <see cref="RentPayer"/> is the wallet the vote record refunds at
+            /// unlock_agent_votes, recorded at vote time (the voter's own wallet for a
+            /// dashboard-cast vote, the rent collector for an app-cast one); it is null
+            /// only on rows synthesized client-side (the revote path's
+            /// previous-candidacy shim), which never feed the unlock resolution.
+            /// </summary>
+            public sealed record VoteRow(long Round, string Candidate, long Power, string? RentPayer = null);
 
             /// <summary>
             /// The sitting agent, verbatim from the chain - <see cref="VacantSeatPubkey"/>
@@ -435,6 +442,14 @@ namespace PlutoFramework.Model.Xcavate
 
             /// <summary>The caller's vote in the current round, when they cast one.</summary>
             public CastVote? MyVote { get; init; }
+
+            /// <summary>
+            /// The caller's vote rows across EVERY round, as indexed (the unfiltered
+            /// input of <see cref="Create"/>). The unlock wrapper re-reads this fresh at
+            /// submit time and resolves the round's recorded <see cref="VoteRow.RentPayer"/>
+            /// from it - the only rent_payer account unlock_agent_votes accepts.
+            /// </summary>
+            public IReadOnlyList<VoteRow> Votes { get; init; } = [];
 
             /// <summary>
             /// The newest round with an open (still locking) vote record of the caller's
@@ -530,6 +545,7 @@ namespace PlutoFramework.Model.Xcavate
                         .OrderByDescending(v => v.Power)
                         .Select(v => new CastVote(v.Candidate, v.Power))
                         .FirstOrDefault(),
+                    Votes = votes ?? [],
                     MyLockedRound = votes?
                         .Where(v => v.Round != round)
                         .Select(v => (long?)v.Round)
@@ -699,7 +715,7 @@ namespace PlutoFramework.Model.Xcavate
 
             var votes = result.Data?.AgentVotes.Nodes
                 .Select(node => new AgentElectionState.VoteRow(
-                    ParseInt64(node.Round), node.Choice, ParseInt64(node.Power)))
+                    ParseInt64(node.Round), node.Choice, ParseInt64(node.Power), node.RentPayer))
                 .ToList();
 
             return AgentElectionState.Create(
@@ -710,6 +726,45 @@ namespace PlutoFramework.Model.Xcavate
                 ParseInt64(letting?.ElectionCandidateCount),
                 candidacies,
                 votes);
+        }
+
+        /// <summary>
+        /// One proposal/challenge vote record of a voter's, keyed by its record PDA:
+        /// one account type sits behind both vote kinds and a proposal id and a
+        /// challenge id can coincide (separate counters), so <see cref="VoteId"/> alone
+        /// does not key a row - <see cref="RecordAddress"/> (the row's <c>id</c>, the
+        /// account's PDA) is the exact join the unlock wrappers match their derived
+        /// vote-record address against. <see cref="RentPayer"/> is the recorded wallet
+        /// the unlock refunds.
+        /// </summary>
+        public sealed record GovVoteRow(long VoteId, string RecordAddress, string RentPayer);
+
+        /// <summary>
+        /// The caller's open proposal/challenge vote records on one asset, read by the
+        /// unlock wrappers to resolve each record's stored rent payer (the program pins
+        /// the passed rent_payer account to it). Closed records - an already-unlocked
+        /// vote - drop out of the answer (<c>active: true</c>), which the wrappers read
+        /// as "no row".
+        /// </summary>
+        public static async Task<IReadOnlyList<GovVoteRow>> GetGovVotesAsync(
+            SolanaCluster cluster,
+            long assetId,
+            string voter,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+            var assetIdArg = assetId.ToString(CultureInfo.InvariantCulture);
+
+            var result = await client.PropertyGovVotes
+                .ExecuteAsync(assetIdArg, voter, first: 50, offset: 0, token)
+                .ConfigureAwait(false);
+            result.EnsureNoErrors();
+
+            var nodes = result.Data?.GovVotes.Nodes;
+            return nodes is null
+                ? []
+                : [.. nodes.Select(node => new GovVoteRow(
+                    ParseInt64(node.VoteId), node.Id, node.RentPayer))];
         }
 
         /// <summary>

@@ -67,17 +67,22 @@ query PropertyChallenges($assetId: I64!, $first: Int!, $offset: Int!) {
   }
 }
 
-# The caller's own proposal/challenge votes. One account type sits behind both;
-# join `voteId` against the proposals/challenges answers to tell them apart.
+# The caller's own proposal/challenge votes. One account type sits behind both, and a
+# proposal id and a challenge id can coincide (separate counters), so `voteId` alone
+# does not key a row: the row's `id` IS the vote-record PDA, which the unlock wrappers
+# match against their derived record address. `rentPayer` is the recorded wallet the
+# unlock refunds - the program rejects any other rent_payer account.
 query PropertyGovVotes($assetId: I64!, $voter: String!, $first: Int!, $offset: Int!) {
   govVotes(assetId: $assetId, voter: $voter, active: true, first: $first, offset: $offset) {
     totalCount
     nodes {
+      id
       assetId
       voteId
       voter
       choice
       power
+      rentPayer
     }
   }
 }

@@ -12,6 +12,11 @@
 #
 # `active: true` keeps only rows whose PDA is still open - a finalized election's
 # candidacies and votes close and drop out of the answers.
+#
+# The vote rows' `rentPayer` is what unlock_agent_votes refunds: the program pins the
+# passed rent_payer account to the record's stored one, so the unlock wrapper resolves
+# it from these rows rather than guessing (a dashboard-cast vote's record is fronted by
+# the voter's own wallet, an app-cast one by the rent collector).
 query GetAgentElectionState($assetId: I64!, $voter: String!) {
   propertyLettings(assetId: $assetId, active: true, first: 1, offset: 0) {
     nodes {
@@ -40,6 +45,7 @@ query GetAgentElectionState($assetId: I64!, $voter: String!) {
       voter
       choice
       power
+      rentPayer
     }
   }
 }
