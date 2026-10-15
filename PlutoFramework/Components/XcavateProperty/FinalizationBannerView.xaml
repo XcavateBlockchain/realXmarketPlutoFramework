@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<VerticalStackLayout xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                     x:Class="PlutoFramework.Components.XcavateProperty.FinalizationBannerView">
+
+    <!-- A compact inline card for a permissionless finalization crank: what happened,
+         what the tap does, and the one action. Sits inside whichever section the crank
+         belongs to; the parent's IsVisible binding keeps it hidden until the indexer
+         read says the crank is due. -->
+    <Border Padding="15"
+            BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}"
+            Stroke="{StaticResource CardBorderColor}"
+            StrokeThickness="{StaticResource CardBorderThickness}">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+        </Border.StrokeShape>
+
+        <VerticalStackLayout Spacing="8">
+            <Label x:Name="titleLabel"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+
+            <Label x:Name="descriptionLabel"
+                   FontSize="12"
+                   TextColor="{StaticResource Gray500}" />
+
+            <buttons:ElevatedButton x:Name="actionButton" />
+        </VerticalStackLayout>
+    </Border>
+</VerticalStackLayout>

@@ -14,6 +14,7 @@ using PlutoFramework.Model.Xcavate.Profile;
 using PlutoFrameworkCore.AssetDidComm;
 using PlutoFrameworkCore.Solana;
 using PlutoFrameworkCore.Xcavate;
+using System.Collections.ObjectModel;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
 using PropertyModel = PlutoFramework.Model.Xcavate.XcavatePropertyModel;
@@ -274,11 +275,13 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(TokensOwnedWorth))]
         [NotifyPropertyChangedFor(nameof(OwnedPropertyTokensViewIsVisible))]
         [NotifyPropertyChangedFor(nameof(RelistPropertyTokensButtonIsVisible))]
+        [NotifyPropertyChangedFor(nameof(SendSharesButtonIsVisible))]
         private uint tokensOwned = 0;
         public string TokensOwnedWorth => ((decimal)(TokensOwned * Metadata?.Financials.PricePerToken ?? 0)).ToCurrencyString();
 
         public bool OwnedPropertyTokensViewIsVisible => TokensOwned > 0;
         public bool RelistPropertyTokensButtonIsVisible => TokensOwned > 0;
+        public bool SendSharesButtonIsVisible => TokensOwned > 0;
 
         public bool ShowBuyMoreButtons => !NftWrapper!.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0;
 
@@ -414,6 +417,9 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(ChallengeApproveRatio))]
         [NotifyPropertyChangedFor(nameof(ChallengeTimeRemainingText))]
         [NotifyPropertyChangedFor(nameof(VotingPowerText))]
+        [NotifyPropertyChangedFor(nameof(AgentCanVote))]
+        [NotifyPropertyChangedFor(nameof(AgentVotePowerText))]
+        [NotifyPropertyChangedFor(nameof(CloseEmptyPositionIsVisible))]
         private XcavateMarketplaceIndexerModel.XcavateGovernanceState? governance;
 
         /// <summary>The unix expiry of whichever vote the section shows, minus now.</summary>
@@ -694,6 +700,660 @@ namespace PlutoFramework.Components.XcavateProperty
                     approve ? XcavateVoteChoice.Yes : XcavateVoteChoice.No, amount, ct));
         }
 
+        // ── Agent election (the letting seat's plurality vote) ──
+
+        /// <summary>
+        /// The letting seat's election surface: the sitting agent, the live round with
+        /// its candidacies, the connected wallet's own vote and any still-locked vote
+        /// from a settled round. Null until the first successful indexer read - the
+        /// section stays hidden until then (no empty-card flicker).
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(AgentElectionSectionIsVisible))]
+        [NotifyPropertyChangedFor(nameof(SittingAgentText))]
+        [NotifyPropertyChangedFor(nameof(ElectionBlockIsVisible))]
+        [NotifyPropertyChangedFor(nameof(AgentElectionTitleText))]
+        [NotifyPropertyChangedFor(nameof(AgentElectionTimeRemainingText))]
+        [NotifyPropertyChangedFor(nameof(AgentElectionIsLive))]
+        [NotifyPropertyChangedFor(nameof(AgentCanVote))]
+        [NotifyPropertyChangedFor(nameof(LockedAgentVoteRound))]
+        [NotifyPropertyChangedFor(nameof(AgentUnlockIsVisible))]
+        [NotifyPropertyChangedFor(nameof(FinalizeAgentElectionIsVisible))]
+        private XcavateMarketplaceIndexerModel.AgentElectionState? agentElection;
+
+        /// <summary>The current round's candidacy rows, rebuilt on every election refresh.</summary>
+        public ObservableCollection<AgentCandidacyRowModel> AgentCandidacyRows { get; } = [];
+
+        public bool AgentElectionSectionIsVisible => AgentElection is not null;
+
+        /// <summary>The sitting agent's truncated pubkey, or the vacant-seat copy.</summary>
+        public string SittingAgentText => XcavateMarketplaceIndexerModel.IsVacantSeat(AgentElection?.Agent)
+            ? "No agent appointed"
+            : TruncateAddress(AgentElection!.Agent!);
+
+        /// <summary>The election block shows while the current round has candidacies.</summary>
+        public bool ElectionBlockIsVisible => AgentElection is { CandidateCount: > 0 };
+
+        public string AgentElectionTitleText => $"Agent election — round {AgentElection?.Round}";
+
+        public string AgentElectionTimeRemainingText => TimeRemainingText(AgentElection?.Expiry ?? 0);
+
+        public bool AgentElectionIsLive => AgentElection is { } election
+            && election.Expiry > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        /// <summary>
+        /// The wallet may back a candidacy while the round runs and the governance read
+        /// shows free (owned, unlisted, unlocked) shares - the full votable amount is
+        /// what the vote locks, same as the proposal/challenge executors.
+        /// </summary>
+        public bool AgentCanVote => AgentElectionIsLive && (Governance?.Holding?.Votable ?? 0) > 0;
+
+        public string AgentVotePowerText => Governance?.Holding is { } holding
+            ? $"Your voting power: {holding.Votable} tokens"
+            : "No voting power";
+
+        /// <summary>
+        /// The ended election round the wallet's shares are still locked by, when one
+        /// exists: a past round's open vote record (<see cref="XcavateMarketplaceIndexerModel.AgentElectionState.MyLockedRound"/>),
+        /// or the current round's own vote once its expiry has passed.
+        /// </summary>
+        public long? LockedAgentVoteRound
+        {
+            get
+            {
+                if (AgentElection is not { } election)
+                {
+                    return null;
+                }
+
+                if (election.MyLockedRound is { } lockedRound)
+                {
+                    return lockedRound;
+                }
+
+                return election.MyVote is not null
+                    && election.Expiry > 0
+                    && election.Expiry <= DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                        ? election.Round
+                        : null;
+            }
+        }
+
+        public bool AgentUnlockIsVisible => LockedAgentVoteRound is not null;
+
+        /// <summary>The ended, unfinalized round is crankable by anyone.</summary>
+        public bool FinalizeAgentElectionIsVisible => AgentElection is { CandidateCount: > 0 } election
+            && election.Expiry > 0
+            && election.Expiry <= DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        /// <summary>The app's pubkey truncation idiom (SolanaTokenDetailPageViewModel): first6…last4.</summary>
+        private static string TruncateAddress(string address) =>
+            address.Length > 10 ? $"{address[..6]}…{address[^4..]}" : address;
+
+        /// <summary>
+        /// Re-reads the letting seat's election state from the indexer and rebuilds the
+        /// section's candidacy rows. Runs on the same trigger as
+        /// <see cref="RefreshVotingAsync"/> and additionally from the page's
+        /// <c>OnAppearing</c>. Tolerant like the listing refresh - a failure keeps
+        /// whatever the page already shows.
+        /// </summary>
+        public async Task RefreshAgentElectionAsync(CancellationToken token)
+        {
+            if (NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                return;
+            }
+
+            try
+            {
+                var electionState = await XcavateMarketplaceIndexerModel.GetAgentElectionStateAsync(
+                        SolanaNetworkModel.SelectedCluster,
+                        solanaListing.AssetId,
+                        // Empty voter reads the election without the own-vote section.
+                        KeysModel.GetSolanaAddress() ?? "",
+                        token)
+                    .ConfigureAwait(false);
+
+                token.ThrowIfCancellationRequested();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    AgentElection = electionState;
+
+                    AgentCandidacyRows.Clear();
+                    foreach (var candidacy in electionState.Candidacies)
+                    {
+                        var agent = candidacy.Agent;
+
+                        AgentCandidacyRows.Add(new AgentCandidacyRowModel(
+                            agent,
+                            TruncateAddress(agent),
+                            $"{candidacy.VotePower} votes",
+                            electionState.MyVote?.Candidate == agent,
+                            AgentCanVote ? ButtonStateEnum.Enabled : ButtonStateEnum.Disabled,
+                            new RelayCommand(() => VoteForAgent(agent))));
+                    }
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // The page went away mid-query.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the agent election state: ");
+                Console.WriteLine(ex);
+            }
+        }
+
+        /// <summary>
+        /// Backing a candidacy (or moving the vote to another one) opens the
+        /// confirmation sheet with the candidate's identity and the voter's power; the
+        /// submit rides the popup's ContinueRequested back to
+        /// <see cref="ExecuteVoteOnAgentAsync"/>. A revote's previous-candidacy
+        /// resolution happens inside the call wrapper, not here.
+        /// </summary>
+        private void VoteForAgent(string agent)
+        {
+            var popupViewModel = DependencyService.Get<CastVotePopupViewModel>();
+            popupViewModel.VoteKind = "agent";
+            popupViewModel.CandidateIdentity = TruncateAddress(agent);
+            popupViewModel.VotePower = Governance?.Holding?.Votable ?? 0;
+            popupViewModel.ContinueRequested = () => ExecuteVoteOnAgentAsync(agent);
+            popupViewModel.IsVisible = true;
+        }
+
+        private async Task ExecuteVoteOnAgentAsync(string agent)
+        {
+            var election = AgentElection;
+            if (election is null)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            var amount = Governance?.Holding?.Votable ?? 0;
+            if (amount < 1)
+            {
+                return;
+            }
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Vote for letting agent",
+                (voter, cluster, ct) => XcavatePropertyCallsModel.VoteOnAgentAsync(
+                    cluster, voter, AssetId, (ulong)election.Round, agent, amount, ct));
+        }
+
+        /// <summary>
+        /// One-tap release of the shares a vote in an ENDED election round still locks;
+        /// they return to the wallet's transferable balance. Single signer - the voter.
+        /// </summary>
+        [RelayCommand]
+        public async Task UnlockAgentVotesAsync()
+        {
+            if (LockedAgentVoteRound is not { } lockedRound)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Unlock election votes",
+                (voter, cluster, ct) => XcavatePropertyCallsModel.UnlockAgentVotesAsync(
+                    cluster, voter, AssetId, (ulong)lockedRound, ct));
+        }
+
+        /// <summary>
+        /// The permissionless crank seating the ended round's plurality winner. Anyone
+        /// can send it, so the investor-role gate the vote executors apply does NOT
+        /// apply here - only the wallet requirements.
+        /// </summary>
+        [RelayCommand]
+        public async Task FinalizeAgentElectionAsync()
+        {
+            if (!FinalizeAgentElectionIsVisible)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+                return;
+            }
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Finalize agent election",
+                (cranker, cluster, ct) => XcavatePropertyCallsModel.FinalizeAgentElectionAsync(
+                    cluster, cranker, AssetId, ct));
+        }
+
+        // ── Pending finalizations (the permissionless cranks) ──
+
+        /// <summary>
+        /// Which finalization cranks this listing/property is ready for right now, from
+        /// ONE indexer read per refresh (<see cref="RefreshPendingFinalizationsAsync"/>);
+        /// null until the first successful read, so every banner stays hidden until
+        /// loaded. The agent-election arrow is deliberately NOT surfaced here - the
+        /// letting-agent section hosts that finalize button off its own election read.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(FinalizeProposalIsVisible))]
+        [NotifyPropertyChangedFor(nameof(FinalizeChallengeIsVisible))]
+        [NotifyPropertyChangedFor(nameof(FinalizeSpvElectionIsVisible))]
+        [NotifyPropertyChangedFor(nameof(ResolveSilentVerdictIsVisible))]
+        [NotifyPropertyChangedFor(nameof(ExecuteDealIsVisible))]
+        private XcavateMarketplaceIndexerModel.PendingFinalizations? pendingFinalizations;
+
+        /// <summary>True while any crank submission is being built, signed or submitted.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CrankButtonState))]
+        private bool crankRunning;
+
+        public bool FinalizeProposalIsVisible => PendingFinalizations?.Proposal is not null;
+        public bool FinalizeChallengeIsVisible => PendingFinalizations?.Challenge is not null;
+        public bool FinalizeSpvElectionIsVisible => PendingFinalizations?.SpvElection is not null;
+        public bool ResolveSilentVerdictIsVisible => PendingFinalizations?.SilentVerdictOverdue == true;
+        public bool ExecuteDealIsVisible => PendingFinalizations?.ExecuteDeal is not null;
+
+        /// <summary>Enabled while no crank is in flight - one submission at a time.</summary>
+        public ButtonStateEnum CrankButtonState =>
+            CrankRunning ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
+
+        /// <summary>
+        /// Re-reads which finalization cranks are due from the indexer (one
+        /// GetPendingFinalizationsAsync per refresh). Runs on the same trigger as
+        /// <see cref="RefreshVotingAsync"/> and additionally from the page's
+        /// <c>OnAppearing</c>. Tolerant like the listing refresh - a failure keeps
+        /// whatever the page already shows.
+        /// </summary>
+        public async Task RefreshPendingFinalizationsAsync(CancellationToken token)
+        {
+            if (NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                return;
+            }
+
+            try
+            {
+                var pending = await XcavateMarketplaceIndexerModel.GetPendingFinalizationsAsync(
+                        SolanaNetworkModel.SelectedCluster,
+                        solanaListing.AssetId,
+                        solanaListing.ListingId,
+                        KeysModel.GetSolanaAddress(),
+                        token)
+                    .ConfigureAwait(false);
+
+                token.ThrowIfCancellationRequested();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    PendingFinalizations = pending;
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // The page went away mid-query.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the pending finalizations: ");
+                Console.WriteLine(ex);
+            }
+        }
+
+        /// <summary>
+        /// The shared crank executor: the wallet-requirements gate behind the loading
+        /// overlay (cleared on every exit path), then the submission through the
+        /// marketplace pipeline's status popup. The cranks are permissionless, so the
+        /// investor-role check the vote executors apply does NOT apply here - the same
+        /// shape as <see cref="FinalizeAgentElectionAsync"/>. <see cref="CrankRunning"/>
+        /// keeps every banner's button disabled until the submission is in.
+        /// </summary>
+        private async Task RunCrankAsync(
+            string description,
+            Func<string, SolanaCluster, CancellationToken, Task<List<Solnet.Rpc.Models.TransactionInstruction>>> buildInstructionsAsync)
+        {
+            if (CrankRunning)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            try
+            {
+                if (!await RequirementsModel.CheckRequirementsAsync())
+                {
+                    return;
+                }
+            }
+            finally
+            {
+                // Cleared on every exit path - a throwing requirements check (network or
+                // indexer failure) must not wedge the page behind the overlay.
+                fullPageLoadingViewModel.IsVisible = false;
+            }
+
+            CrankRunning = true;
+
+            try
+            {
+                await XcavateMarketplaceTransactionModel.SubmitAsync(description, buildInstructionsAsync);
+            }
+            finally
+            {
+                CrankRunning = false;
+            }
+        }
+
+        /// <summary>The property name the crank descriptions report with.</summary>
+        private string CrankPropertyName => Metadata?.PropertyName ?? "this property";
+
+        /// <summary>finalize_proposal: settles the letting seat's ended spending proposal.</summary>
+        [RelayCommand]
+        public Task FinalizeProposalAsync() => RunCrankAsync(
+            $"Finalize proposal on {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavatePropertyCallsModel.FinalizeProposalAsync(
+                cluster, cranker, AssetId, ct));
+
+        /// <summary>finalize_challenge: settles the ended challenge's slash/versus payouts.</summary>
+        [RelayCommand]
+        public Task FinalizeChallengeAsync() => RunCrankAsync(
+            $"Finalize challenge on {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavatePropertyCallsModel.FinalizeChallengeAsync(
+                cluster, cranker, AssetId, ct));
+
+        /// <summary>finalize_spv_election: seats the ended SPV-lawyer election's winner.</summary>
+        [RelayCommand]
+        public Task FinalizeSpvElectionAsync() => RunCrankAsync(
+            $"Finalize SPV election on {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavateMarketplaceCallsModel.FinalizeSpvElectionAsync(
+                cluster, cranker, ListingId, ct));
+
+        /// <summary>resolve_silent_verdict: rules on the developer's lawyer who let the review window run out.</summary>
+        [RelayCommand]
+        public Task ResolveSilentVerdictAsync() => RunCrankAsync(
+            $"Resolve silent verdict on {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavateMarketplaceCallsModel.ResolveSilentVerdictAsync(
+                cluster, cranker, ListingId, ct));
+
+        /// <summary>execute_deal: settles the sale for every investor once both lawyers approved.</summary>
+        [RelayCommand]
+        public Task ExecuteDealAsync() => RunCrankAsync(
+            $"Complete settlement for {CrankPropertyName}",
+            (cranker, cluster, ct) => XcavateMarketplaceCallsModel.ExecuteDealAsync(
+                cluster, cranker, ListingId, ct));
+
+        /// <summary>
+        /// True only when the indexer still shows this wallet's ShareHolding row with
+        /// nothing in it - the row goes inactive when the account closes (the schema's
+        /// <c>active</c>/<c>closedAtSlot</c> pair), so an active zero-amount row means
+        /// the emptied account genuinely still exists on chain: exactly what
+        /// close_share_holding reclaims. A wallet that never held (null row) sees nothing.
+        /// </summary>
+        public bool CloseEmptyPositionIsVisible =>
+            Governance?.Holding is { Amount: 0, Listed: 0, MaxLock: 0 };
+
+        /// <summary>
+        /// One tap closing the emptied position: any final banked rent claims first
+        /// (claim_income, with close_income_checkpoint riding inside when the checkpoint
+        /// drains), then close_share_holding reclaims the holding account itself - one
+        /// transaction, at most two signatures (the rent collector joins only the claim
+        /// path, exactly like <see cref="ClaimRentAsync"/>).
+        /// </summary>
+        [RelayCommand]
+        public Task CloseEmptyPositionAsync() => RunCrankAsync(
+            $"Close empty position on {CrankPropertyName}",
+            (owner, cluster, ct) => XcavatePropertyCallsModel.CloseEmptyPositionAsync(
+                cluster, owner, AssetId, ct));
+
+        // ── Rent income (claim_income) ──
+
+        /// <summary>Mint decimals by (cluster, mint), resolved once per page visit.</summary>
+        private readonly Dictionary<(SolanaCluster, string), int> incomeMintDecimals = [];
+
+        /// <summary>The wallet's share count at the moment <see cref="IncomeState"/> was read.</summary>
+        private ulong incomeShares;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IncomeSectionIsVisible))]
+        private XcavateMarketplaceIndexerModel.PropertyIncomeState? incomeState;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ClaimRentButtonState))]
+        private bool incomeClaimRunning;
+
+        /// <summary>Per-mint claimable amounts, display units with the payment token's symbol.</summary>
+        public ObservableCollection<string> ClaimableRentLines { get; } = [];
+
+        /// <summary>Per-mint lifetime totals distributed per token (the streams' accumulators).</summary>
+        public ObservableCollection<string> LifetimeRentLines { get; } = [];
+
+        /// <summary>
+        /// The income section exists for holders only: a Solana listing with income
+        /// streams AND a wallet that holds shares or still has rent banked to pull.
+        /// </summary>
+        public bool IncomeSectionIsVisible =>
+            IncomeState is { Streams.Count: > 0 } && (incomeShares > 0 || ClaimableRentLines.Count > 0);
+
+        public bool ClaimableRentIsVisible => ClaimableRentLines.Count > 0;
+
+        /// <summary>Enabled iff there is rent to claim and no claim is in flight.</summary>
+        public ButtonStateEnum ClaimRentButtonState =>
+            !IncomeClaimRunning && ClaimableRentLines.Count > 0
+                ? ButtonStateEnum.Enabled
+                : ButtonStateEnum.Disabled;
+
+        /// <summary>
+        /// Re-reads this property's income ledger (streams plus the wallet's checkpoint)
+        /// and rebuilds the income section's figures. Runs on the same trigger as
+        /// <see cref="RefreshVotingAsync"/> and additionally from the page's
+        /// <c>OnAppearing</c>. Tolerant like the listing refresh - a failure keeps
+        /// whatever the page already shows.
+        /// </summary>
+        public async Task RefreshIncomeAsync(CancellationToken token)
+        {
+            if (NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                return;
+            }
+
+            try
+            {
+                var cluster = SolanaNetworkModel.SelectedCluster;
+                var owner = KeysModel.GetSolanaAddress();
+
+                if (string.IsNullOrEmpty(owner) || !XcavateDeploymentModel.IsDeployed(cluster))
+                {
+                    return;
+                }
+
+                var income = await XcavateMarketplaceIndexerModel.GetIncomeStateAsync(
+                        cluster, solanaListing.AssetId, owner, SolanaRpcModel.GetClient(cluster), token)
+                    .ConfigureAwait(false);
+
+                // The share count the claimable formula settles against: the holding from
+                // the governance read this page already makes, falling back to the
+                // listing figure. claim_income re-reads it at build time either way.
+                var shares = Governance?.Holding?.Amount ?? TokensOwned;
+
+                var claimableLines = new List<string>();
+                var lifetimeLines = new List<string>();
+
+                foreach (var stream in income.Streams)
+                {
+                    var decimals = await ResolveIncomeMintDecimalsAsync(cluster, stream.Mint, token)
+                        .ConfigureAwait(false);
+                    var symbol = IncomeMintSymbol(cluster, stream.Mint);
+
+                    var claimable = income.GetClaimable(stream.Mint, shares);
+                    if (claimable.Sign > 0)
+                    {
+                        claimableLines.Add($"{XcavateReserveBalanceModel.Format(XcavateMarketplaceIndexerModel.PropertyIncomeState.ToDisplayAmount(claimable, decimals))} {symbol}");
+                    }
+
+                    lifetimeLines.Add($"{XcavateReserveBalanceModel.Format(XcavateMarketplaceIndexerModel.PropertyIncomeState.ToDisplayAmount(stream.PerShare, decimals))} {symbol} per token");
+                }
+
+                token.ThrowIfCancellationRequested();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    IncomeState = income;
+                    incomeShares = shares;
+
+                    ClaimableRentLines.Clear();
+                    foreach (var line in claimableLines)
+                    {
+                        ClaimableRentLines.Add(line);
+                    }
+
+                    LifetimeRentLines.Clear();
+                    foreach (var line in lifetimeLines)
+                    {
+                        LifetimeRentLines.Add(line);
+                    }
+
+                    OnPropertyChanged(nameof(IncomeSectionIsVisible));
+                    OnPropertyChanged(nameof(ClaimableRentIsVisible));
+                    OnPropertyChanged(nameof(ClaimRentButtonState));
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // The page went away mid-query.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the income state: ");
+                Console.WriteLine(ex);
+            }
+        }
+
+        /// <summary>
+        /// The mint's decimals for the claimable display: the whitelist entry when the
+        /// app knows the mint, else the mint account on chain - the same resolution
+        /// <see cref="XcavateMarketplaceCallsModel"/> applies to payment mints.
+        /// </summary>
+        private async Task<int> ResolveIncomeMintDecimalsAsync(SolanaCluster cluster, string mint, CancellationToken token)
+        {
+            if (incomeMintDecimals.TryGetValue((cluster, mint), out var decimals))
+            {
+                return decimals;
+            }
+
+            var (_, resolved) = await XcavateMarketplaceCallsModel.ResolveMintAsync(
+                cluster, new Solnet.Wallet.PublicKey(mint), token).ConfigureAwait(false);
+
+            incomeMintDecimals[(cluster, mint)] = resolved;
+
+            return resolved;
+        }
+
+        /// <summary>
+        /// The whitelist symbol the buy flow prints payment amounts with; an income mint
+        /// the app does not know displays as plain "tokens" rather than a base58 address.
+        /// </summary>
+        private static string IncomeMintSymbol(SolanaCluster cluster, string mint) =>
+            SolanaTokenWhitelist.ForCluster(cluster)
+                .FirstOrDefault(entry => entry.Mint == mint)?.Symbol ?? "tokens";
+
+        /// <summary>
+        /// Claims every mint the wallet can pull from this property's income ledger (one
+        /// claim_income per mint; close_income_checkpoint rides inside when the
+        /// checkpoint drains - never a separate action). Same requirement gates as the
+        /// page's other investor actions; the pipeline's confirmation event refreshes
+        /// the section.
+        /// </summary>
+        [RelayCommand]
+        public async Task ClaimRentAsync()
+        {
+            if (IncomeClaimRunning
+                || ClaimableRentLines.Count == 0
+                || NftWrapper?.NftBase is not XcavateSolanaListingNft)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            try
+            {
+                if (!await RequirementsModel.CheckRequirementsAsync())
+                {
+                    return;
+                }
+
+                if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateInvestor, CancellationToken.None))
+                {
+                    return;
+                }
+            }
+            finally
+            {
+                // Cleared on every exit path - a throwing requirements check (network or
+                // indexer failure) must not wedge the page behind the overlay.
+                fullPageLoadingViewModel.IsVisible = false;
+            }
+
+            IncomeClaimRunning = true;
+
+            try
+            {
+                await ClaimRentModel.ClaimAsync(
+                    [new ClaimRentModel.ClaimTarget(AssetId, Metadata?.PropertyName ?? "this property")]);
+            }
+            finally
+            {
+                IncomeClaimRunning = false;
+            }
+        }
+
         /// <summary>
         /// A confirmed marketplace transaction (a reserve, buy or claim) changed this
         /// listing's on-chain state, so the figures on screen - tokens still available,
@@ -816,6 +1476,19 @@ namespace PlutoFramework.Components.XcavateProperty
                 // The vote sections ride the same refresh: the listing figures and the
                 // governance tallies always come from the same moment.
                 await RefreshVotingAsync(token).ConfigureAwait(false);
+
+                // The agent election comes after the governance read so the candidacy
+                // rows' vote buttons are gated on the fresh votable figure.
+                await RefreshAgentElectionAsync(token).ConfigureAwait(false);
+
+                // The finalization-crank banners ride the same refresh: a confirmed
+                // crank (or a vote closing) is exactly what makes an arrow appear or
+                // disappear.
+                await RefreshPendingFinalizationsAsync(token).ConfigureAwait(false);
+
+                // So does the income section: a confirmed claim (or a rent distribution)
+                // changes exactly these figures.
+                await RefreshIncomeAsync(token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -1064,6 +1737,69 @@ namespace PlutoFramework.Components.XcavateProperty
             viewModel.EndpointKey = PlutoFrameworkCore.NftModel.GetEndpointKey(NftWrapper!.NftBase.Type);
             viewModel.TokensOwned = TokensOwned;
             viewModel.AssetId = (ulong)AssetId;
+        }
+
+        /// <summary>
+        /// The "Send shares" entry: opens the peer-to-peer transfer sheet keyed by a fresh
+        /// governance-state read (the same call <see cref="RefreshVotingAsync"/> makes), so
+        /// the sheet's max sendable amount reflects the live locks and listed-for-sale
+        /// amount, not just the page's TokensOwned. Requirements are checked up front like
+        /// <see cref="RelistAsync"/>; a failed or empty holding read falls back to the
+        /// governance snapshot the page already shows, then to not opening at all.
+        /// </summary>
+        [RelayCommand]
+        public async Task SendSharesAsync()
+        {
+            if (TokensOwned == 0 || NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            if (!await RequirementsModel.CheckRequirementsAsync())
+            {
+                fullPageLoadingViewModel.IsVisible = false;
+
+                return;
+            }
+
+            XcavateMarketplaceIndexerModel.XcavateGovernanceState.HoldingState? holding = null;
+
+            try
+            {
+                var token = CancellationToken.None;
+
+                holding = (await XcavateMarketplaceIndexerModel.GetGovernanceStateAsync(
+                        SolanaNetworkModel.SelectedCluster,
+                        solanaListing.ListingId,
+                        ListingDetails?.AssetId ?? solanaListing.ListingId,
+                        KeysModel.GetSolanaAddress(),
+                        token)
+                    .ConfigureAwait(false))
+                    .Holding;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the holding before opening the send sheet: ");
+                Console.WriteLine(ex);
+            }
+
+            // The chain enforces the true sendable amount regardless; the page's last
+            // indexer read is still better than a button that appears to do nothing.
+            holding ??= Governance?.Holding;
+
+            fullPageLoadingViewModel.IsVisible = false;
+
+            if (holding is not { } currentHolding)
+            {
+                return;
+            }
+
+            DependencyService.Get<SendSharesPopupViewModel>()
+                .SetContext(currentHolding.Amount, currentHolding.MaxLock, currentHolding.Listed, (ulong)AssetId);
         }
 
         /// <summary>

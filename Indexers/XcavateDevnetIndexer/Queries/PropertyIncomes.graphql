@@ -1,0 +1,17 @@
+# One property's rental income ledger: the per-mint `per_share` accumulators every
+# holder's claimable amount is computed from. `streams` arrives as the raw JSON string
+# `[{"mint": "<base58>", "per_share": "<decimal string>", "dust": N}, ...]` (juniper has
+# no JSON scalar; `per_share` is a u128 carried as a decimal string) - the client parses
+# it and settles against the holder's checkpoint entries.
+#
+# One ledger per asset (the PDA is keyed by asset id), so `first: 1` is the whole
+# answer. `first`/`offset` are explicit like everywhere else: this indexer rejects
+# defaults on non-null variables.
+query GetPropertyIncomes($assetId: I64!) {
+  propertyIncomes(assetId: $assetId, active: true, first: 1, offset: 0) {
+    nodes {
+      assetId
+      streams
+    }
+  }
+}

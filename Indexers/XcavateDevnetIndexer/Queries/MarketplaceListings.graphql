@@ -78,8 +78,12 @@ fragment ListingParts on Listing {
   # legal deadline the terms vote's window is capped by. The detail page's
   # voting section reads these; they are plain scalars on the listing row.
   legalDeadline
+  legalProcessTime
   lawyerVotingTime
   minVotingQuorumBps
+  # The listing's snapshotted ownership cap (bps of share_amount); send_property_shares
+  # pins the receiver's post-transfer holding below it.
+  maxOwnershipBps
   developerLawyer
   developerLawyerCosts
   developerLawyerDocStatus
@@ -92,6 +96,10 @@ fragment ListingParts on Listing {
   developerEngaged
   spvCostsDue
   spvCostsPayee
+  # What each payment mint collected across the sale, as raw JSON
+  # (`[{"mint": "<base58>", "funds": N, "fee": N, "tax": N}, ...]`) - execute_deal's
+  # payout loop iterates one account group per mint.
+  collected
   spvElectionExpiry
   spvElectionCandidateCount
   spvElectionRound

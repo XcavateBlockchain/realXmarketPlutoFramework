@@ -1,6 +1,9 @@
+using PlutoFramework.Components.Loading;
+using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
+using PlutoFrameworkCore.Solana;
 using PlutoFrameworkCore.Xcavate;
 using UniqueryPlus.Nfts;
 using PropertyModel = PlutoFramework.Model.Xcavate.XcavatePropertyModel;
@@ -67,6 +70,9 @@ public partial class PropertyThumbnailView : ContentView
 
             // Favourite
             control.filledFavouriteIcon.IsVisible = nftWrapper.Favourite;
+
+            // Send shares chip - a holding is the only thing there is to send
+            control.sendSharesChip.IsVisible = nftWrapper.TokensOwned > 0;
 
             // Tokens owned
             if (nftWrapper.TokensOwned > 0)
@@ -139,6 +145,29 @@ public partial class PropertyThumbnailView : ContentView
         set => SetValue(ShareListingContextProperty, value);
     }
 
+    /// <summary>
+    /// Drives the "Claim rent" chip's visibility. Bound by the portfolio page to the
+    /// item's <see cref="XcavateNftWrapper.HasClaimableRent"/>; defaults to hidden on
+    /// every other feed the thumbnail renders in.
+    /// </summary>
+    public static readonly BindableProperty ClaimRentIsVisibleProperty = BindableProperty.Create(
+        nameof(ClaimRentIsVisible), typeof(bool), typeof(PropertyThumbnailView),
+        defaultValue: false,
+        defaultBindingMode: BindingMode.OneWay,
+        propertyChanged: (bindable, oldValue, newValue) =>
+        {
+            ((PropertyThumbnailView)bindable).claimRentChip.IsVisible = (bool)newValue;
+        });
+
+    public bool ClaimRentIsVisible
+    {
+        get => (bool)GetValue(ClaimRentIsVisibleProperty);
+        set => SetValue(ClaimRentIsVisibleProperty, value);
+    }
+
+    /// <summary>True while this chip's own claim is in flight (double-tap guard).</summary>
+    private bool claimRentRunning;
+
     void OnFavouriteClicked(System.Object sender, Microsoft.Maui.Controls.TappedEventArgs e)
     {
         XcavateNftWrapper.Favourite = !XcavateNftWrapper.Favourite;
@@ -157,6 +186,86 @@ public partial class PropertyThumbnailView : ContentView
         catch (Exception ex)
         {
             Console.WriteLine("Error navigating to property detail page: " + ex);
+        }
+    }
+
+    /// <summary>
+    /// The "Send" chip on an owned holding: opens the send-shares sheet straight from the
+    /// thumbnail, resolving the sheet's context from an on-the-spot governance-state read
+    /// (holding minus live locks and listed-for-sale amount), the same resolution
+    /// <see cref="PropertyDetailViewModel.SendSharesAsync"/> makes. No cached fallback here:
+    /// the thumbnail holds no governance state, so a failed read just logs and stays put.
+    /// </summary>
+    private async void OnSendSharesClicked(object sender, EventArgs e)
+    {
+        if (XcavateNftWrapper.TokensOwned == 0
+            || XcavateNftWrapper.NftBase is not XcavateSolanaListingNft solanaListing)
+        {
+            return;
+        }
+
+        var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+        fullPageLoadingViewModel.IsVisible = true;
+
+        try
+        {
+            var holding = (await XcavateMarketplaceIndexerModel.GetGovernanceStateAsync(
+                    SolanaNetworkModel.SelectedCluster,
+                    solanaListing.ListingId,
+                    solanaListing.AssetId,
+                    KeysModel.GetSolanaAddress(),
+                    CancellationToken.None))
+                .Holding;
+
+            if (holding is null)
+            {
+                return;
+            }
+
+            DependencyService.Get<SendSharesPopupViewModel>()
+                .SetContext(holding.Amount, holding.MaxLock, holding.Listed, (ulong)solanaListing.AssetId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Failed to resolve the holding for the send sheet: ");
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            fullPageLoadingViewModel.IsVisible = false;
+        }
+    }
+
+    /// <summary>
+    /// The "Claim rent" chip: claims this property's claimable rent straight from the
+    /// portfolio, through <see cref="ClaimRentModel"/> so the claim queues behind any
+    /// claim-all already running instead of racing it. The status popup reports the
+    /// outcome; the portfolio's income figures refresh off the pipeline's confirmation
+    /// event, so nothing here patches them. A confirmed claim also drops the chip: the
+    /// re-scan flips <see cref="XcavateNftWrapper.HasClaimableRent"/> off.
+    /// </summary>
+    private async void OnClaimRentClicked(object sender, EventArgs e)
+    {
+        if (claimRentRunning
+            || XcavateNftWrapper.NftBase is not XcavateSolanaListingNft solanaListing)
+        {
+            return;
+        }
+
+        claimRentRunning = true;
+        claimRentChip.ButtonState = Components.Buttons.ButtonStateEnum.Disabled;
+
+        try
+        {
+            var propertyName = solanaListing.XcavateMetadata?.PropertyName ?? "this property";
+
+            await ClaimRentModel.ClaimAsync([new ClaimRentModel.ClaimTarget(solanaListing.AssetId, propertyName)]);
+        }
+        finally
+        {
+            claimRentRunning = false;
+            claimRentChip.ButtonState = Components.Buttons.ButtonStateEnum.Enabled;
         }
     }
 }

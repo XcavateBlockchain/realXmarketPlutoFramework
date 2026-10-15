@@ -132,6 +132,43 @@ namespace PlutoFramework.Model.Xcavate
             int Decimals);
 
         /// <summary>
+        /// The candidacy a revote moves power away from: the voter's recorded choice when
+        /// it differs from <paramref name="candidate"/>, else null. On-chain,
+        /// previous_candidacy must be Some exactly when the vote record backs a DIFFERENT
+        /// candidacy (needs_previous == record.power &gt; 0 &amp;&amp; record.choice !=
+        /// choice) - a same-target revote passing the account fails CandidacyMismatch.
+        /// </summary>
+        public static PublicKey? ResolvePreviousCandidate(string? currentVoteChoice, string candidate) =>
+            currentVoteChoice is not null && currentVoteChoice != candidate
+                ? new PublicKey(currentVoteChoice)
+                : null;
+
+        /// <summary>
+        /// The same pick over a voter's full vote rows: the indexer schema exposes no
+        /// round filter, so <paramref name="votes"/> spans every round - but only the
+        /// round BEING VOTED keys the vote record this transaction revises. A stale
+        /// round's row must never leak its candidacy into the account list.
+        /// </summary>
+        public static PublicKey? ResolvePreviousCandidate(
+            long round,
+            IReadOnlyList<XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow> votes,
+            string candidate) =>
+            ResolvePreviousCandidate(
+                votes.Where(vote => vote.Round == round)
+                    .Select(vote => (string?)vote.Candidate)
+                    .FirstOrDefault(),
+                candidate);
+
+        /// <summary>
+        /// The pending-finalization arrow a crank wrapper was invoked for, or a
+        /// user-presentable rejection when the indexer sees nothing to settle (the window
+        /// is still open, or someone else already finalized it).
+        /// </summary>
+        public static T RequireFinalization<T>(T? finalization, string what) where T : class =>
+            finalization ?? throw new InvalidOperationException(
+                $"There is no {what} to finalize: its window is still open or it was already settled.");
+
+        /// <summary>
         /// vote_on_spv_lawyer for <paramref name="amount"/> shares: the investor's
         /// share-weighted vote backing one candidacy in the listing's SPV-lawyer election -
         /// the pre-settlement vote the property page surfaces as the "terms" approval. The
@@ -140,8 +177,9 @@ namespace PlutoFramework.Model.Xcavate
         /// transaction model already runs for purchases covers this unchanged);
         /// <paramref name="round"/> is the election's current round, read from the
         /// indexer's listing row first — a stale round fails the record PDA's seed check.
-        /// First votes only: switching an existing vote to a different candidacy needs the
-        /// previous candidacy account, which the property page does not offer.
+        /// Revotes resolve the previous candidacy from the indexer's lawyer votes of that
+        /// same round: a switch to a different candidacy carries it along, a same-target
+        /// revote or a first vote passes None.
         /// </summary>
         public static async Task<List<TransactionInstruction>> VoteOnSpvLawyerAsync(
             SolanaCluster cluster,
@@ -157,6 +195,8 @@ namespace PlutoFramework.Model.Xcavate
 
             var config = await GetConfigAsync(cluster, client, token).ConfigureAwait(false);
 
+            var votes = await GetLawyerVotesAsync(client, listingId, voter, token).ConfigureAwait(false);
+
             return
             [
                 XcavateMarketplaceProgram.VoteOnSpvLawyer(
@@ -166,7 +206,7 @@ namespace PlutoFramework.Model.Xcavate
                     (ulong)listingId,
                     round,
                     new PublicKey(candidate),
-                    previousCandidate: null,
+                    ResolvePreviousCandidate((long)round, votes, candidate),
                     amount),
             ];
         }
@@ -560,6 +600,325 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// The transfer the send flow must clear: <paramref name="amount"/> fits the
+        /// sender's transferable holding (amount minus listed minus the largest vote
+        /// lock) and lands the receiver below the listing's ownership cap - both
+        /// re-read fresh from the indexer at build time, so a holding that changed
+        /// since the sheet opened rejects here with a user-presentable reason instead
+        /// of failing on chain.
+        /// </summary>
+        public static void ValidateShareSend(uint amount, ulong senderTransferable, ulong receiverOwned, ulong maxShares)
+        {
+            if (amount == 0 || amount > senderTransferable)
+            {
+                throw new InvalidOperationException(
+                    $"This wallet's transferable holding is {senderTransferable} shares; cannot send {amount}.");
+            }
+
+            // The program requires owned_after < max_shares - an exact hit rejects too.
+            if (receiverOwned + amount >= maxShares)
+            {
+                throw new InvalidOperationException(
+                    "The receiver already holds too much of this property; this send would take them over its ownership cap.");
+            }
+        }
+
+        /// <summary>Shares free to sell or send, mirroring the on-chain transferable(): amount - max(vote locks) - listed, saturating.</summary>
+        public static ulong TransferableShares(IMarketplaceShareHoldingOf_ShareHoldings_Nodes? holding)
+        {
+            if (holding is null)
+            {
+                return 0;
+            }
+
+            var amount = ParseUInt64(holding.Amount);
+            var listed = ParseUInt64(holding.Listed);
+            var locked = Math.Max(
+                Math.Max(ParseUInt64(holding.LockLawyerElection), ParseUInt64(holding.LockAgentElection)),
+                Math.Max(ParseUInt64(holding.LockProposal), ParseUInt64(holding.LockChallenge)));
+
+            var free = amount > locked ? amount - locked : 0UL;
+            return free > listed ? free - listed : 0UL;
+        }
+
+        /// <summary>
+        /// send_property_shares for <paramref name="amount"/> shares of asset
+        /// <paramref name="assetId"/>: a direct investor-to-investor transfer behind the
+        /// send sheet - no money moves, so nothing has to be priced; the program settles
+        /// both sides' property income to their checkpoints as part of the transfer.
+        /// Rent for accounts created along the way (the receiver's holding is
+        /// init_if_needed) is pinned to the config's rent collector exactly like on the
+        /// purchase flow, so this rides the same two-signer path. The send is re-validated
+        /// against fresh state (the sender's transferable holding, the receiver's
+        /// ownership-cap headroom) so a stale sheet rejects here, where the popup can
+        /// re-open the form, rather than on chain.
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> SendPropertySharesAsync(
+            SolanaCluster cluster,
+            string sender,
+            long assetId,
+            string receiver,
+            uint amount,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            var assetIdArg = assetId.ToString(CultureInfo.InvariantCulture);
+
+            var listing = await GetListingAsync(client, assetId, token).ConfigureAwait(false)
+                ?? throw new InvalidOperationException($"Listing {assetId} does not exist or is closed.");
+
+            var senderHolding = await GetShareHoldingAsync(client, assetIdArg, sender, token).ConfigureAwait(false);
+            var receiverHolding = await GetShareHoldingAsync(client, assetIdArg, receiver, token).ConfigureAwait(false);
+
+            ValidateShareSend(
+                amount,
+                TransferableShares(senderHolding),
+                ParseUInt64(receiverHolding?.Amount),
+                (ulong)listing.MaxOwnershipBps * ParseUInt64(listing.PropertyAsset?.ShareAmount) / 10_000);
+
+            var config = await GetConfigAsync(cluster, client, token).ConfigureAwait(false);
+
+            return
+            [
+                XcavateMarketplaceProgram.SendPropertyShares(
+                    programs,
+                    new PublicKey(sender),
+                    new PublicKey(config.RentCollector),
+                    (ulong)assetId,
+                    new PublicKey(receiver),
+                    amount),
+            ];
+        }
+
+        /// <summary>
+        /// close_share_holding for asset <paramref name="assetId"/>: reclaims the emptied
+        /// holding's rent (the program rejects HoldingNotEmpty - call only once nothing
+        /// remains). Permissionless; the app signs with the owner themselves - the sole
+        /// signer. The refund target is pinned on-chain to the config's rent collector
+        /// (read fresh), the wallet that fronted the holding's rent.
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> CloseShareHoldingAsync(
+            SolanaCluster cluster,
+            string owner,
+            long assetId,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var config = await GetMarketplaceConfigAsync(cluster, token).ConfigureAwait(false);
+
+            var ownerKey = new PublicKey(owner);
+
+            return
+            [
+                XcavateMarketplaceProgram.CloseShareHolding(
+                    programs,
+                    ownerKey,
+                    new PublicKey(config.RentCollector),
+                    (ulong)assetId,
+                    ownerKey),
+            ];
+        }
+
+        /// <summary>
+        /// finalize_spv_election for listing <paramref name="listingId"/>: the
+        /// permissionless crank settling the SPV-lawyer election once its window closed.
+        /// The indexer answers the round, the plurality winner and the round's candidacy
+        /// lawyers as one pending-finalization arrow; the candidacy accounts trail the
+        /// instruction (the handler pins their count), so a listing whose election is
+        /// still open or already settled rejects here. Single signer - the cranker; the
+        /// listing id doubles as the property space's asset id on this deployment (the
+        /// property-side arrows are unused here).
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> FinalizeSpvElectionAsync(
+            SolanaCluster cluster,
+            string cranker,
+            long listingId,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+
+            var pending = await XcavateMarketplaceIndexerModel
+                .GetPendingFinalizationsAsync(cluster, listingId, listingId, cranker, token)
+                .ConfigureAwait(false);
+
+            return [ BuildFinalizeSpvElection(programs, cranker, listingId, pending.SpvElection) ];
+        }
+
+        /// <summary>The finalize_spv_election instruction for a pending election arrow, or a user-presentable rejection when the arrow is absent.</summary>
+        public static TransactionInstruction BuildFinalizeSpvElection(
+            XcavateProgramSet programs,
+            string cranker,
+            long listingId,
+            XcavateMarketplaceIndexerModel.PendingFinalizations.ElectionFinalization? finalization)
+        {
+            var arrow = RequireFinalization(finalization, "SPV-lawyer election finalization");
+
+            return XcavateMarketplaceProgram.FinalizeSpvElection(
+                programs,
+                new PublicKey(cranker),
+                (ulong)listingId,
+                (ulong)arrow.Round,
+                arrow.Winner is null ? null : new PublicKey(arrow.Winner),
+                [.. arrow.Candidates.Select(candidate => new PublicKey(candidate))]);
+        }
+
+        /// <summary>
+        /// resolve_silent_verdict for listing <paramref name="listingId"/>: the
+        /// permissionless crank ruling on the developer's lawyer who let the review
+        /// window run into its final stretch without a verdict. The indexer's pending
+        /// finalizations say whether the on-chain windows line up (SPV ruled, developer
+        /// silent, inside the final stretch) - outside them the crank would revert, so a
+        /// miss rejects here. Single signer - the cranker.
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> ResolveSilentVerdictAsync(
+            SolanaCluster cluster,
+            string cranker,
+            long listingId,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+
+            var pending = await XcavateMarketplaceIndexerModel
+                .GetPendingFinalizationsAsync(cluster, listingId, listingId, cranker, token)
+                .ConfigureAwait(false);
+
+            return
+            [
+                BuildResolveSilentVerdict(programs, cranker, listingId, pending.SilentVerdictOverdue),
+            ];
+        }
+
+        /// <summary>
+        /// The resolve_silent_verdict instruction, or a user-presentable rejection when
+        /// the indexer says the crank cannot land: the gate
+        /// (<see cref="XcavateMarketplaceIndexerModel.PendingFinalizations.SilentVerdictOverdue"/>)
+        /// is the whole decision - outside the closing stretch, or the lawyer already
+        /// ruled, the instruction's own window constraints would revert.
+        /// </summary>
+        public static TransactionInstruction BuildResolveSilentVerdict(
+            XcavateProgramSet programs,
+            string cranker,
+            long listingId,
+            bool silentVerdictOverdue)
+        {
+            if (!silentVerdictOverdue)
+            {
+                throw new InvalidOperationException(
+                    "The developer's lawyer can still rule - or already ruled - so there is no silent verdict to resolve.");
+            }
+
+            return XcavateMarketplaceProgram.ResolveSilentVerdict(
+                programs,
+                new PublicKey(cranker),
+                (ulong)listingId);
+        }
+
+        /// <summary>
+        /// execute_deal for listing <paramref name="listingId"/>: the permissionless
+        /// settlement crank once both lawyers approved and the legal window is still
+        /// open. The indexer answers the parties, the region and the collected payment
+        /// mints (the handler walks one payout account group per mint, so nothing can be
+        /// invented client-side); mint token programs come from the chain, the region's
+        /// operator from the indexer. Single signer - the cranker.
+        /// </summary>
+        public static async Task<List<TransactionInstruction>> ExecuteDealAsync(
+            SolanaCluster cluster,
+            string cranker,
+            long listingId,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            var pending = await XcavateMarketplaceIndexerModel
+                .GetPendingFinalizationsAsync(cluster, listingId, listingId, cranker, token)
+                .ConfigureAwait(false);
+
+            var deal = RequireFinalization(pending.ExecuteDeal, "deal to settle");
+            var config = pending.Config
+                ?? throw new InvalidOperationException(
+                    $"The marketplace is not initialized on {cluster.GetName()}.");
+
+            var regionOwner = await GetRegionOwnerAsync(client, deal.RegionId, token).ConfigureAwait(false)
+                ?? throw new InvalidOperationException($"Region {deal.RegionId} was not found in the indexer.");
+
+            var (xcavTokenProgram, _) = await ResolveMintAsync(cluster, new PublicKey(deal.XcavMint), token)
+                .ConfigureAwait(false);
+
+            var tokenPrograms = new Dictionary<string, PublicKey>
+            {
+                [deal.XcavMint] = xcavTokenProgram,
+            };
+            foreach (var mint in deal.CollectedMints)
+            {
+                var (mintTokenProgram, _) = await ResolveMintAsync(cluster, new PublicKey(mint), token)
+                    .ConfigureAwait(false);
+                tokenPrograms[mint] = mintTokenProgram;
+            }
+
+            return
+            [
+                BuildExecuteDeal(programs, cranker, listingId, deal, regionOwner, config.Treasury, tokenPrograms),
+            ];
+        }
+
+        /// <summary>
+        /// The execute_deal instruction for a deal arrow: the parties, the region payee,
+        /// the treasury and the collected-mint payout loop (one 7-account group per
+        /// collected mint, in arrow order, each redeeming its own token program from
+        /// <paramref name="tokenProgramByMint"/>). The payment-token-program slot is the
+        /// FIRST collected mint's program - the program the handler consults against the
+        /// payout groups; with nothing collected it is the XCAV mint's, an unused
+        /// pass-through (settlement.rs:141 checks remaining == collected.len() * 7).
+        /// </summary>
+        public static TransactionInstruction BuildExecuteDeal(
+            XcavateProgramSet programs,
+            string cranker,
+            long listingId,
+            XcavateMarketplaceIndexerModel.PendingFinalizations.ExecuteDealFinalization finalization,
+            string regionOwner,
+            string treasury,
+            IReadOnlyDictionary<string, PublicKey> tokenProgramByMint)
+        {
+            if (!tokenProgramByMint.TryGetValue(finalization.XcavMint, out var xcavTokenProgram))
+            {
+                throw new InvalidOperationException($"No token program resolved for the deal mint {finalization.XcavMint}.");
+            }
+
+            var collectedMints = new List<XcavateMarketplaceProgram.CollectedMint>();
+            foreach (var mint in finalization.CollectedMints)
+            {
+                if (!tokenProgramByMint.TryGetValue(mint, out var tokenProgram))
+                {
+                    throw new InvalidOperationException($"No token program resolved for the deal mint {mint}.");
+                }
+
+                collectedMints.Add(new XcavateMarketplaceProgram.CollectedMint(new PublicKey(mint), tokenProgram));
+            }
+
+            // The payment-token-program account is only consulted against the collected
+            // mints' own programs; with nothing collected it is an unused pass-through.
+            var paymentTokenProgram = collectedMints.Count > 0 ? collectedMints[0].TokenProgram : xcavTokenProgram;
+
+            return XcavateMarketplaceProgram.ExecuteDeal(
+                programs,
+                new PublicKey(cranker),
+                (ulong)listingId,
+                finalization.RegionId,
+                new PublicKey(finalization.DeveloperLawyer),
+                new PublicKey(finalization.SpvLawyer),
+                new PublicKey(finalization.XcavMint),
+                new PublicKey(finalization.Developer),
+                xcavTokenProgram,
+                paymentTokenProgram,
+                new PublicKey(regionOwner),
+                new PublicKey(treasury),
+                collectedMints);
+        }
+
+        /// <summary>
         /// unreserve_shares for listing <paramref name="listingId"/> - cancels the
         /// investor's reservation, the successor to the pallet's cancel_property_purchase.
         /// </summary>
@@ -713,9 +1072,10 @@ namespace PlutoFramework.Model.Xcavate
         /// The token program owning <paramref name="mint"/> (classic or Token-2022) and
         /// its decimals - from the app's token whitelist when the mint is configured
         /// there, else from the mint account on chain (its owner, and the decimals byte
-        /// at offset 44 of the mint layout).
+        /// at offset 44 of the mint layout). Shared by every wrapper that addresses a
+        /// payment mint's program: buys, claims, share settlements, income claims.
         /// </summary>
-        private static async Task<(PublicKey TokenProgram, int Decimals)> ResolveMintAsync(
+        public static async Task<(PublicKey TokenProgram, int Decimals)> ResolveMintAsync(
             SolanaCluster cluster,
             PublicKey mint, CancellationToken token)
         {
@@ -785,6 +1145,53 @@ namespace PlutoFramework.Model.Xcavate
             result.EnsureNoErrors();
 
             return result.Data?.Listings.Nodes.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// One voter's SPV-lawyer votes on a listing, every round the indexer still sees
+        /// open: the vote_on_spv_lawyer revote keeps the vote of the round it votes in
+        /// (same shape as the agent election's rows - the schema exposes no round filter).
+        /// One page covers every round a voter realistically leaves open.
+        /// </summary>
+        private static async Task<IReadOnlyList<XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow>> GetLawyerVotesAsync(
+            IXcavateDevnetIndexerClient client, long listingId, string voter, CancellationToken token)
+        {
+            var result = await client.MarketplaceLawyerVotes
+                .ExecuteAsync(listingId.ToString(CultureInfo.InvariantCulture), voter, first: 50, offset: 0, token)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            return result.Data?.LawyerVotes.Nodes
+                .Select(node => new XcavateMarketplaceIndexerModel.AgentElectionState.VoteRow(
+                    (long)ParseUInt64(node.Round), node.Choice, (long)ParseUInt64(node.Power)))
+                .ToList() ?? [];
+        }
+
+        /// <summary>One region's current operator wallet - execute_deal's region-share payee - or null when the indexer does not know the region.</summary>
+        private static async Task<string?> GetRegionOwnerAsync(
+            IXcavateDevnetIndexerClient client, ushort regionId, CancellationToken token)
+        {
+            var result = await client.Regions
+                .ExecuteAsync(regionId, first: 1, offset: 0, token)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            return result.Data?.Regions.Nodes.FirstOrDefault()?.Owner;
+        }
+
+        /// <summary>One wallet's share holding in one asset, or null when the wallet holds none.</summary>
+        private static async Task<IMarketplaceShareHoldingOf_ShareHoldings_Nodes?> GetShareHoldingAsync(
+            IXcavateDevnetIndexerClient client, string assetIdArg, string owner, CancellationToken token)
+        {
+            var result = await client.MarketplaceShareHoldingOf
+                .ExecuteAsync(assetIdArg, owner, token)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            return result.Data?.ShareHoldings.Nodes.FirstOrDefault();
         }
 
         private static async Task<IMarketplaceInvestorPositions_InvestorPositions_Nodes?> FindPositionAsync(

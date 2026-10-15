@@ -25,8 +25,10 @@ namespace PlutoFramework.Model.Xcavate
     /// <see cref="XcavateMarketplaceProgram"/> transcribes the marketplace IDL. Covered:
     /// the post-settlement votes an investor casts from the property pages - spending
     /// proposals, challenges against the sitting letting agent, and letting-agent
-    /// elections - plus the cheap finalize/unlock cranks. The token-moving instructions
-    /// (propose, challenge_agent, finalize_challenge, income) are out of scope for the
+    /// elections - plus the cheap finalize/unlock cranks, the investor's income claims
+    /// (claim_income, close_income_checkpoint), and the permissionless finalizers
+    /// (finalize_challenge, finalize_agent_election). The token-moving instructions
+    /// (propose, challenge_agent, distribute/settle income) are out of scope for the
     /// app today.
     /// <para>
     /// Two cross-program accounts recur: <c>holding</c> is the MARKETPLACE program's
@@ -52,6 +54,10 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] UnlockProposalVotesDiscriminator = [102, 99, 64, 235, 192, 142, 63, 49];
         private static readonly byte[] UnlockChallengeVotesDiscriminator = [141, 196, 219, 149, 47, 78, 103, 248];
         private static readonly byte[] UnlockAgentVotesDiscriminator = [181, 212, 17, 222, 41, 184, 97, 159];
+        private static readonly byte[] ClaimIncomeDiscriminator = [6, 24, 199, 191, 118, 141, 95, 123];
+        private static readonly byte[] CloseIncomeCheckpointDiscriminator = [178, 97, 236, 81, 222, 159, 104, 227];
+        private static readonly byte[] FinalizeChallengeDiscriminator = [184, 38, 132, 51, 103, 143, 203, 9];
+        private static readonly byte[] FinalizeAgentElectionDiscriminator = [48, 143, 199, 27, 97, 168, 117, 123];
 
         // PDA seed prefixes, from the IDL's constants section.
         private static readonly byte[] LettingSeed = Encoding.UTF8.GetBytes("letting");
@@ -64,6 +70,11 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] AgentVoteSeed = Encoding.UTF8.GetBytes("agent-vote");
         private static readonly byte[] AgentSeed = Encoding.UTF8.GetBytes("agent");
         private static readonly byte[] CpiAuthSeed = Encoding.UTF8.GetBytes("cpi-auth");
+        private static readonly byte[] ConfigSeed = Encoding.UTF8.GetBytes("config");
+        private static readonly byte[] VaultSeed = Encoding.UTF8.GetBytes("vault");
+        private static readonly byte[] IncomeSeed = Encoding.UTF8.GetBytes("income");
+        private static readonly byte[] IncomeVaultSeed = Encoding.UTF8.GetBytes("income-vault");
+        private static readonly byte[] CheckpointSeed = Encoding.UTF8.GetBytes("checkpoint");
 
         /// <summary>A property's letting seat and current election: [b"letting", asset_id].</summary>
         public static PublicKey DeriveLetting(XcavateProgramSet programs, ulong assetId) =>
@@ -113,6 +124,48 @@ namespace PlutoFramework.Model.Xcavate
         /// </summary>
         public static PublicKey DeriveCpiAuth(XcavateProgramSet programs) =>
             SolanaProgramAddress.Derive(new(programs.Property), CpiAuthSeed);
+
+        /// <summary>
+        /// The property program's own governance config: [b"config"] under the property
+        /// program - the xcav_mint/treasury/slash amounts finalize_challenge settles
+        /// against. Same seed as the marketplace's config, different program, different
+        /// account (<see cref="XcavateMarketplaceProgram.DeriveConfig"/>).
+        /// </summary>
+        public static PublicKey DeriveConfig(XcavateProgramSet programs) =>
+            SolanaProgramAddress.Derive(new(programs.Property), ConfigSeed);
+
+        /// <summary>
+        /// The property program's own XCAV vault token account: [b"vault"] under the
+        /// property program, owned by its config - what finalize_challenge pays stakes
+        /// and slashes out of. Not the marketplace's same-seeded vault.
+        /// </summary>
+        public static PublicKey DeriveVault(XcavateProgramSet programs) =>
+            SolanaProgramAddress.Derive(new(programs.Property), VaultSeed);
+
+        /// <summary>
+        /// The per-asset income accumulator: [b"income", asset_id LE] under the property
+        /// program. The single source of this derivation - the marketplace's
+        /// settle-CPI builders reach it through
+        /// <see cref="XcavateMarketplaceProgram.DeriveIncome"/>'s delegation.
+        /// </summary>
+        public static PublicKey DeriveIncome(XcavateProgramSet programs, ulong assetId) =>
+            SolanaProgramAddress.Derive(new(programs.Property), IncomeSeed, U64(assetId));
+
+        /// <summary>
+        /// The income vault authority: [b"income-vault", asset_id LE] under the property
+        /// program - a bare PDA owning the token accounts distributed income sits in
+        /// until claimed.
+        /// </summary>
+        public static PublicKey DeriveIncomeVault(XcavateProgramSet programs, ulong assetId) =>
+            SolanaProgramAddress.Derive(new(programs.Property), IncomeVaultSeed, U64(assetId));
+
+        /// <summary>
+        /// One holder's income claim state: [b"checkpoint", asset_id LE, holder] under
+        /// the property program - the first claim creates it, and income moves up to it
+        /// on every settle before shares change hands.
+        /// </summary>
+        public static PublicKey DeriveIncomeCheckpoint(XcavateProgramSet programs, ulong assetId, PublicKey holder) =>
+            SolanaProgramAddress.Derive(new(programs.Property), CheckpointSeed, U64(assetId), holder.KeyBytes);
 
         /// <summary>
         /// vote_on_proposal(asset_id, choice, amount): a holder's share-weighted vote on
@@ -234,7 +287,11 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// finalize_proposal(asset_id): settles the seat's active proposal once its window
         /// closed. Permissionless; the proposal account closes and its rent returns to
-        /// <paramref name="rentPayer"/> (the recorded rent payer).
+        /// <paramref name="rentPayer"/> (the recorded rent payer). Account [3] is the
+        /// MARKETPLACE program's property PDA (<c>seeds::program = marketplace::ID</c> in
+        /// the Rust handler, which reads its share supply for the quorum check) - the same
+        /// cross-program account <see cref="FinalizeChallenge"/> and
+        /// <see cref="FinalizeAgentElection"/> pass.
         /// </summary>
         public static TransactionInstruction FinalizeProposal(
             XcavateProgramSet programs,
@@ -251,7 +308,7 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(cranker, true),
                     AccountMeta.Writable(rentPayer, false),
                     AccountMeta.Writable(DeriveLetting(programs, assetId), false),
-                    AccountMeta.Writable(DeriveProperty(programs, assetId), false),
+                    AccountMeta.Writable(XcavateMarketplaceProgram.DeriveProperty(programs, assetId), false),
                     AccountMeta.Writable(DeriveProposal(programs, assetId, proposalId), false),
                 ],
                 Data = Encode(FinalizeProposalDiscriminator, U64(assetId)),
@@ -342,6 +399,168 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(new PublicKey(programs.Marketplace), false),
                 ],
                 Data = Encode(UnlockAgentVotesDiscriminator, U64(assetId), U64(round)),
+            };
+        }
+
+        /// <summary>
+        /// claim_income(asset_id): the holder pulls what one income stream owes them -
+        /// income banked by earlier settles plus everything accrued since their last
+        /// checkpoint. The first claim creates the checkpoint, its rent fronted by
+        /// <paramref name="payer"/> (the record remembers who to refund). One call
+        /// claims one stream: <paramref name="paymentMint"/> picks it, and the caller
+        /// composes one instruction per mint of the income ledger.
+        /// </summary>
+        public static TransactionInstruction ClaimIncome(
+            XcavateProgramSet programs,
+            PublicKey holder,
+            PublicKey payer,
+            ulong assetId,
+            PublicKey paymentMint,
+            PublicKey paymentTokenProgram)
+        {
+            var incomeVault = DeriveIncomeVault(programs, assetId);
+
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Property).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(holder, true),
+                    AccountMeta.Writable(payer, true),
+                    AccountMeta.Writable(DeriveIncome(programs, assetId), false),
+                    AccountMeta.Writable(DeriveIncomeCheckpoint(programs, assetId, holder), false),
+                    AccountMeta.Writable(XcavateMarketplaceProgram.DeriveHolding(programs, assetId, holder), false),
+                    AccountMeta.Writable(paymentMint, false),
+                    AccountMeta.Writable(incomeVault, false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(incomeVault, paymentMint, paymentTokenProgram), false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(holder, paymentMint, paymentTokenProgram), false),
+                    AccountMeta.Writable(paymentTokenProgram, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(ClaimIncomeDiscriminator, U64(assetId)),
+            };
+        }
+
+        /// <summary>
+        /// close_income_checkpoint(asset_id): reclaims a checkpoint's rent once it can
+        /// owe nothing more - no banked income and no shares left to accrue any. The
+        /// rent returns to <paramref name="rentPayer"/> (the recorded rent payer, no
+        /// signature needed). Single-signer-safe.
+        /// </summary>
+        public static TransactionInstruction CloseIncomeCheckpoint(
+            XcavateProgramSet programs,
+            PublicKey holder,
+            PublicKey rentPayer,
+            ulong assetId)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Property).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(holder, true),
+                    AccountMeta.Writable(rentPayer, false),
+                    AccountMeta.Writable(DeriveIncomeCheckpoint(programs, assetId, holder), false),
+                    AccountMeta.Writable(XcavateMarketplaceProgram.DeriveHolding(programs, assetId, holder), false),
+                ],
+                Data = Encode(CloseIncomeCheckpointDiscriminator, U64(assetId)),
+            };
+        }
+
+        /// <summary>
+        /// finalize_challenge(asset_id): settles the letting seat's active challenge
+        /// once voting closes. Permissionless; the challenge closes and its rent
+        /// returns to <paramref name="rentPayer"/> (the recorded rent payer). A passed
+        /// challenge slashes the struck agent's location deposit into the treasury ATA
+        /// and refunds <paramref name="challenger"/>'s stake; a failed one forfeits the
+        /// stake to the treasury. <paramref name="struckAgent"/> is the challenged
+        /// agent - the builder passes their registry entry when given, or the property
+        /// program's own id (Anchor's None encoding) when the agent already left the
+        /// seat. The payout ATAs are created along the way if missing (the cranker
+        /// fronts their rent).
+        /// </summary>
+        public static TransactionInstruction FinalizeChallenge(
+            XcavateProgramSet programs,
+            PublicKey cranker,
+            PublicKey rentPayer,
+            ulong assetId,
+            ulong challengeId,
+            PublicKey? struckAgent,
+            PublicKey challenger,
+            PublicKey xcavMint,
+            PublicKey treasury,
+            PublicKey tokenProgram)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Property).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(cranker, true),
+                    AccountMeta.Writable(rentPayer, false),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(DeriveLetting(programs, assetId), false),
+                    AccountMeta.Writable(XcavateMarketplaceProgram.DeriveProperty(programs, assetId), false),
+                    AccountMeta.Writable(DeriveChallenge(programs, assetId, challengeId), false),
+                    AccountMeta.Writable(
+                        struckAgent is null
+                            ? new PublicKey(programs.Property)
+                            : DeriveAgentEntry(programs, struckAgent),
+                        false),
+                    AccountMeta.Writable(xcavMint, false),
+                    AccountMeta.Writable(DeriveVault(programs), false),
+                    AccountMeta.Writable(treasury, false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(treasury, xcavMint, tokenProgram), false),
+                    AccountMeta.Writable(challenger, false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(challenger, xcavMint, tokenProgram), false),
+                    AccountMeta.Writable(tokenProgram, false),
+                    AccountMeta.Writable(AssociatedTokenAccountProgram.ProgramIdKey, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(FinalizeChallengeDiscriminator, U64(assetId)),
+            };
+        }
+
+        /// <summary>
+        /// finalize_agent_election(asset_id): settles the seat's election once voting
+        /// closes. Permissionless. Every candidacy of the round rides along as a
+        /// remaining account - the on-chain handler pins their count to the election's
+        /// candidate_count and walks them to find the plurality - so
+        /// <paramref name="candidates"/> lists every agent who ran in
+        /// <paramref name="round"/> (the round feeds only the candidacy PDA
+        /// derivations; it is not an instruction argument). <paramref name="winner"/>
+        /// is the unique vote-power leader when there is one; the builder passes their
+        /// registry entry, or the property program's own id (Anchor's None encoding)
+        /// when the round elects no one.
+        /// </summary>
+        public static TransactionInstruction FinalizeAgentElection(
+            XcavateProgramSet programs,
+            PublicKey cranker,
+            ulong assetId,
+            ulong round,
+            PublicKey? winner,
+            IReadOnlyList<PublicKey> candidates)
+        {
+            var keys = new List<AccountMeta>
+            {
+                AccountMeta.Writable(cranker, true),
+                AccountMeta.Writable(DeriveLetting(programs, assetId), false),
+                AccountMeta.Writable(XcavateMarketplaceProgram.DeriveProperty(programs, assetId), false),
+                AccountMeta.Writable(
+                    winner is null
+                        ? new PublicKey(programs.Property)
+                        : DeriveAgentEntry(programs, winner),
+                    false),
+            };
+
+            keys.AddRange(candidates.Select(candidate =>
+                AccountMeta.Writable(DeriveAgentCandidacy(programs, assetId, round, candidate), false)));
+
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Property).KeyBytes,
+                Keys = keys,
+                Data = Encode(FinalizeAgentElectionDiscriminator, U64(assetId)),
             };
         }
 

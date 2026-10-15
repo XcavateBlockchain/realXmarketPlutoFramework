@@ -97,6 +97,30 @@
 
                     <xcavateproperty:GovernanceVotingSectionView Margin="0,10,0,0" />
 
+                    <!-- Legal/settlement cranks: the silent-verdict resolution while one
+                         lawyer stalls, and the deal settlement once both approved. These
+                         finalize the sale for every investor - not a personal payout. -->
+                    <xcavateproperty:FinalizationBannerView Title="Lawyer unresponsive"
+                                                            Description="The developer's lawyer has not ruled and the review window is nearly over. Tap to resolve it — anyone can send this; you'll sign one transaction."
+                                                            ButtonText="Resolve now"
+                                                            ButtonCommand="{Binding ResolveSilentVerdictCommand}"
+                                                            ButtonState="{Binding CrankButtonState}"
+                                                            IsVisible="{Binding ResolveSilentVerdictIsVisible}" />
+
+                    <xcavateproperty:FinalizationBannerView Title="Ready to settle"
+                                                            Description="Both lawyers have approved. Tap to complete the settlement — it finalizes the sale for all investors; it does not pay out to you. Anyone can send this; you'll sign one transaction."
+                                                            ButtonText="Complete settlement"
+                                                            ButtonCommand="{Binding ExecuteDealCommand}"
+                                                            ButtonState="{Binding CrankButtonState}"
+                                                            IsVisible="{Binding ExecuteDealIsVisible}" />
+
+                    <!-- Letting agent: the seat holder and its election (post-settlement) -->
+                    <xcavateproperty:AgentElectionSectionView Margin="0,10,0,0" />
+
+                    <!-- Rent income: claimable amounts, the claim action, and the
+                         lifetime per-token distribution totals. -->
+                    <xcavateproperty:IncomeSectionView Margin="0,10,0,0" />
+
                     <Label Text="Developer"
                            Margin="0,10,0,0"
                            HorizontalTextAlignment="Start" />
@@ -172,6 +196,21 @@
                                             InfoCommand="{Binding NavigateToFeesCommand}" />
 
                     <xcavateproperty:OwnedPropertyTokensView IsVisible="{Binding OwnedPropertyTokensViewIsVisible}" />
+
+                    <buttons:ElevatedButton Text="Send shares"
+                                            IsVisible="{Binding SendSharesButtonIsVisible}"
+                                            Command="{Binding SendSharesCommand}" />
+
+                    <!-- The wallet sold or sent every token but its ShareHolding account
+                         still exists on chain: closing it claims any final banked rent
+                         and reclaims the account (its SOL deposit returns to the
+                         platform wallet that fronted it). -->
+                    <xcavateproperty:FinalizationBannerView Title="Empty position"
+                                                            Description="You no longer hold tokens here. Tap to claim any final rent owed to you and close your position — its SOL deposit returns to the platform wallet that fronted it. You'll sign one transaction."
+                                                            ButtonText="Close position"
+                                                            ButtonCommand="{Binding CloseEmptyPositionCommand}"
+                                                            ButtonState="{Binding CrankButtonState}"
+                                                            IsVisible="{Binding CloseEmptyPositionIsVisible}" />
 
                     <xcavateproperty:BoughtPropertyTokensView IsVisible="{Binding BoughtPropertyTokensViewIsVisible}" />
 
@@ -310,5 +349,7 @@
         <xcavateproperty:CancelReservationPopup />
 
         <xcavateproperty:CastVotePopupView />
+
+        <xcavateproperty:SendSharesPopupView />
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>

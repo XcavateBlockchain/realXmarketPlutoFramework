@@ -1,0 +1,23 @@
+# One voter's SPV-lawyer-election votes for a listing, across every round (the schema
+# has no round filter - the caller keeps the listing's CURRENT round, exactly like
+# GetAgentElectionState does for the agent election). The vote_on_spv_lawyer wrapper
+# resolves the revote's previous candidacy from these rows: a revote that moves power
+# off a different candidate must pass that candidacy's account.
+#
+# `active: true` keeps only rows whose vote-record PDA is still open - an unlocked or
+# cleaned-up vote drops out of the answers. `first`/`offset` are explicit like
+# everywhere else: this indexer rejects defaults on non-null variables. Vote records
+# are unique per (listing, round, voter), so one page covers every round a voter
+# realistically leaves open.
+query MarketplaceLawyerVotes($listingId: I64!, $voter: String!, $first: Int!, $offset: Int!) {
+  lawyerVotes(listingId: $listingId, voter: $voter, active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      listingId
+      round
+      voter
+      choice
+      power
+    }
+  }
+}
