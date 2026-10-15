@@ -29,6 +29,7 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] ReserveSharesDiscriminator = [137, 47, 218, 50, 106, 149, 133, 110];
         private static readonly byte[] ClaimSharesDiscriminator = [130, 131, 29, 237, 134, 20, 110, 245];
         private static readonly byte[] UnreserveSharesDiscriminator = [142, 74, 199, 174, 245, 11, 172, 40];
+        private static readonly byte[] ReleaseReservationDiscriminator = [57, 15, 101, 135, 113, 21, 168, 247];
         private static readonly byte[] CreateSpvDiscriminator = [155, 147, 106, 185, 120, 239, 157, 204];
         private static readonly byte[] WithdrawExpiredDiscriminator = [58, 40, 206, 163, 80, 59, 31, 1];
         private static readonly byte[] WithdrawCancelledDiscriminator = [211, 39, 47, 234, 73, 113, 193, 59];
@@ -383,6 +384,43 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(DeriveReservation(programs, recordedPaymentAccount), false),
                 ],
                 Data = Encode(UnreserveSharesDiscriminator, U64(listingId)),
+            };
+        }
+
+        /// <summary>
+        /// release_reservation(listing_id, investor): sweeps a reservation whose claim can
+        /// no longer happen - the window closed, the listing expired, or the sale left
+        /// Listed. The reserved payment never left the investor's wallet, so nothing is
+        /// refunded; the position closes and its rent returns to the rent collector.
+        /// Permissionless (the app signs with the investor themselves), the exit a
+        /// reservation-only position takes where a paid one takes a withdraw instruction -
+        /// the withdraws deserialize the share holding, which a never-claimed reservation
+        /// never had created, and refuse it with AccountNotInitialized.
+        /// </summary>
+        /// <param name="cranker">The signer running the sweep; anyone may, exits are never gated.</param>
+        /// <param name="investor">The position's owner, an instruction arg as well as a seed.</param>
+        /// <param name="recordedPaymentAccount">The payment account the reservation binds - its PDA seed.</param>
+        public static TransactionInstruction ReleaseReservation(
+            XcavateProgramSet programs,
+            PublicKey cranker,
+            ulong listingId,
+            PublicKey rentCollector,
+            PublicKey investor,
+            PublicKey recordedPaymentAccount)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(cranker, true),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(rentCollector, false),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.Writable(DerivePosition(programs, listingId, investor), false),
+                    AccountMeta.Writable(DeriveReservation(programs, recordedPaymentAccount), false),
+                ],
+                Data = Encode(ReleaseReservationDiscriminator, U64(listingId), investor.KeyBytes),
             };
         }
 

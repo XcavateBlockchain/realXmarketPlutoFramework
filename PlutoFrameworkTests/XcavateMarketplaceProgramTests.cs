@@ -29,6 +29,7 @@ namespace PlutoFrameworkTests
         [TestCase("reserve_shares")]
         [TestCase("claim_shares")]
         [TestCase("unreserve_shares")]
+        [TestCase("release_reservation")]
         [TestCase("create_spv")]
         [TestCase("withdraw_expired")]
         [TestCase("withdraw_cancelled")]
@@ -56,6 +57,8 @@ namespace PlutoFrameworkTests
                     Programs, SyntheticKey(1), SyntheticKey(2), 7, SyntheticKey(3), SyntheticKey(4), new PublicKey(SolanaTokenProgram.Legacy)),
                 "unreserve_shares" => XcavateMarketplaceProgram.UnreserveShares(
                     Programs, SyntheticKey(1), 7, SyntheticKey(4)),
+                "release_reservation" => XcavateMarketplaceProgram.ReleaseReservation(
+                    Programs, SyntheticKey(1), 7, SyntheticKey(2), SyntheticKey(1), SyntheticKey(4)),
                 "create_spv" => XcavateMarketplaceProgram.CreateSpv(Programs, SyntheticKey(1), 7),
                 "withdraw_expired" => XcavateMarketplaceProgram.WithdrawExpired(
                     Programs, SyntheticKey(1), 7, SyntheticKey(2), SyntheticKey(3), SyntheticKey(4), new PublicKey(SolanaTokenProgram.Legacy)),
@@ -113,6 +116,24 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public void ReleaseReservation_EncodesArgsLittleEndian()
+        {
+            var investor = SyntheticKey(9);
+            var instruction = XcavateMarketplaceProgram.ReleaseReservation(
+                Programs,
+                cranker: SyntheticKey(1),
+                listingId: 0x0102030405060708,
+                rentCollector: SyntheticKey(2),
+                investor: investor,
+                recordedPaymentAccount: SyntheticKey(4));
+
+            // discriminator + u64 listing_id + pubkey investor
+            Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8 + 32));
+            Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+            Assert.That(instruction.Data[16..48], Is.EqualTo(investor.KeyBytes));
+        }
+
+        [Test]
         public void Instructions_HaveTheIdlAccountShapes()
         {
             var investor = SyntheticKey(1);
@@ -126,6 +147,7 @@ namespace PlutoFrameworkTests
             var claim = XcavateMarketplaceProgram.ClaimShares(Programs, investor, payer, 7, mint, paymentAccount, legacyToken);
             var withdraw = XcavateMarketplaceProgram.WithdrawExpired(Programs, investor, 7, payer, mint, paymentAccount, legacyToken);
             var unreserve = XcavateMarketplaceProgram.UnreserveShares(Programs, investor, 7, paymentAccount);
+            var release = XcavateMarketplaceProgram.ReleaseReservation(Programs, investor, 7, payer, investor, paymentAccount);
             var createSpv = XcavateMarketplaceProgram.CreateSpv(Programs, investor, 7);
 
             Assert.Multiple(() =>
@@ -135,13 +157,14 @@ namespace PlutoFrameworkTests
                 Assert.That(claim.Keys, Has.Count.EqualTo(22));
                 Assert.That(withdraw.Keys, Has.Count.EqualTo(18));
                 Assert.That(unreserve.Keys, Has.Count.EqualTo(4));
+                Assert.That(release.Keys, Has.Count.EqualTo(6));
                 Assert.That(createSpv.Keys, Has.Count.EqualTo(4));
 
                 // The investor/confirmer leads every instruction and is its signer,
                 // and every account in the message is writable: the deployed binary
                 // escalates the whole message, so a readonly non-signer dies with
                 // PrivilegeEscalation in simulation.
-                foreach (var instruction in new[] { buy, reserve, claim, withdraw, unreserve, createSpv })
+                foreach (var instruction in new[] { buy, reserve, claim, withdraw, unreserve, release, createSpv })
                 {
                     Assert.That(instruction.Keys[0].PublicKey, Is.EqualTo(investor.Key));
                     Assert.That(instruction.Keys[0].IsSigner, Is.True);
@@ -163,6 +186,7 @@ namespace PlutoFrameworkTests
 
                 Assert.That(withdraw.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
                 Assert.That(unreserve.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
+                Assert.That(release.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
                 Assert.That(createSpv.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
             });
         }

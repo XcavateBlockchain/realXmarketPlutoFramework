@@ -943,17 +943,27 @@ namespace PlutoFramework.Model.Xcavate
             ];
         }
 
-        /// <summary>withdraw_expired - refund after the listing expired unsold.</summary>
+        /// <summary>
+        /// withdraw_expired - refund after the listing expired unsold. A position that only
+        /// ever reserved (nothing paid in, nothing to refund) takes the release_reservation
+        /// sweep instead - see <see cref="WithdrawAsync"/>.
+        /// </summary>
         public static Task<List<TransactionInstruction>> WithdrawExpiredAsync(
             SolanaCluster cluster, string investor, long listingId, CancellationToken token = default) =>
             WithdrawAsync(XcavateMarketplaceProgram.WithdrawExpired, cluster, investor, listingId, token);
 
-        /// <summary>withdraw_cancelled - refund from a cancelled listing (the only status it accepts).</summary>
+        /// <summary>
+        /// withdraw_cancelled - refund from a cancelled listing (the only status it accepts).
+        /// Routes a reservation-only position to release_reservation, like the other withdraws.
+        /// </summary>
         public static Task<List<TransactionInstruction>> WithdrawCancelledAsync(
             SolanaCluster cluster, string investor, long listingId, CancellationToken token = default) =>
             WithdrawAsync(XcavateMarketplaceProgram.WithdrawCancelled, cluster, investor, listingId, token);
 
-        /// <summary>withdraw_legal_process_expired - refund after the legal phase blew its deadline.</summary>
+        /// <summary>
+        /// withdraw_legal_process_expired - refund after the legal phase blew its deadline.
+        /// Routes a reservation-only position to release_reservation, like the other withdraws.
+        /// </summary>
         public static Task<List<TransactionInstruction>> WithdrawLegalProcessExpiredAsync(
             SolanaCluster cluster, string investor, long listingId, CancellationToken token = default) =>
             WithdrawAsync(XcavateMarketplaceProgram.WithdrawLegalProcessExpired, cluster, investor, listingId, token);
@@ -971,9 +981,30 @@ namespace PlutoFramework.Model.Xcavate
             var position = await GetPositionAsync(client, listingId, investor, token).ConfigureAwait(false);
             var config = await GetConfigAsync(cluster, client, token).ConfigureAwait(false);
 
+            var investorKey = new PublicKey(investor);
+
+            // A position that only ever reserved has nothing to refund: the payment never
+            // left the wallet, and the share holding the withdraw instructions deserialize
+            // is created only when shares are delivered (claim or direct buy), so the
+            // program refuses them with AccountNotInitialized (3012). The dead
+            // reservation's exit is the release crank - permissionless once claiming is
+            // impossible - which the investor signs here themselves.
+            if (ParseUInt64(position.ShareAmount) == 0)
+            {
+                return
+                [
+                    XcavateMarketplaceProgram.ReleaseReservation(
+                        programs,
+                        investorKey,
+                        (ulong)listingId,
+                        new PublicKey(config.RentCollector),
+                        investorKey,
+                        new PublicKey(position.PaymentAccount)),
+                ];
+            }
+
             var paymentMint = new PublicKey(position.PaymentMint);
             var (paymentTokenProgram, _) = await ResolveMintAsync(cluster, paymentMint, token).ConfigureAwait(false);
-            var investorKey = new PublicKey(investor);
 
             // The refund handlers deliberately do not pin the destination to the recorded
             // payment account (it may be closed by now); the investor's associated
