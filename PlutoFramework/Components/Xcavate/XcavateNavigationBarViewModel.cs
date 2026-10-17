@@ -1,7 +1,6 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using PlutoFramework.Model;
 using PlutoFramework.Model.Xcavate;
 
 namespace PlutoFramework.Components.Xcavate
@@ -38,12 +37,7 @@ namespace PlutoFramework.Components.Xcavate
 
             Selected = XcavateNavigationBarSelection.Account;
 
-            // Lawyers land on their own main page; the cached role model keeps a tap from
-            // re-querying the indexer.
-            var route = await LawyerRoleModel.IsLawyerAsync(
-                SolanaNetworkModel.SelectedCluster, CancellationToken.None)
-                ? "//LawyerAccount"
-                : "//Account";
+            var route = await MainPageRoleModel.GetRouteAsync();
 
             await Shell.Current.GoToAsync(route, animate: false);
         }

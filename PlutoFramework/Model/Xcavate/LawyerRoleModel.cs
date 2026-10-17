@@ -4,17 +4,14 @@ using PlutoFrameworkCore.Solana;
 namespace PlutoFramework.Model.Xcavate
 {
     /// <summary>
-    /// Whether the connected wallet holds the on-chain lawyer role - the answer that
-    /// routes the app between the investor main page (<c>//Account</c>) and the lawyer
-    /// main page (<c>//LawyerAccount</c>).
+    /// Whether the connected wallet holds the on-chain lawyer role.
     /// </summary>
     /// <remarks>
     /// Read through the whitelist program's indexer (<see cref="WhitelistModel.HasRoleAsync"/>),
-    /// cached per (address, cluster) so the bottom navigation bar does not re-query on
-    /// every tap; a cluster switch invalidates the cache. When the query itself fails -
+    /// cached per (address, cluster) so repeated role checks do not re-query on every tap;
+    /// a cluster switch invalidates the cache. When the query itself fails -
     /// offline, indexer down - the persisted profile's <see cref="UserRoleEnum.Lawyer"/>
-    /// answers instead, so a lawyer who opened the app before still lands on their page;
-    /// the failure answer is never cached, so the next ask retries the indexer.
+    /// answers instead; the failure answer is never cached, so the next ask retries the indexer.
     /// </remarks>
     public static class LawyerRoleModel
     {

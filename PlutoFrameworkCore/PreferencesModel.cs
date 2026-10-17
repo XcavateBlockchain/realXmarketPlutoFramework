@@ -1,4 +1,4 @@
-﻿namespace PlutoFramework.Model
+namespace PlutoFramework.Model
 {
     public class PreferencesModel
     {
@@ -31,5 +31,7 @@
         public const string SOLANA_PUBLIC_KEY = "solanaPublicKey";
 
         public const string SETTINGS_MAIN_KEY_CHAIN = "settingsMainKeyChain";
+
+        public const string SETTINGS_MAIN_PAGE_ROLE = "settingsMainPageRole";
     }
 }
