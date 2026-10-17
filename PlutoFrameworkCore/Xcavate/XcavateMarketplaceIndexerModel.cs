@@ -1453,6 +1453,66 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// The listings a lawyer can still be engaged on, one page at a time - the lawyer
+        /// page's "Newly listed" filter. Server-side that is SOLD_OUT listings whose legal
+        /// window is still open with at least one vacant lawyer slot and the asking wallet
+        /// in neither slot, ordered by sold-out recency (<c>assignableTo</c> on the shared
+        /// <c>listings</c> query).
+        /// </summary>
+        public static Task<(int TotalCount, IReadOnlyList<XcavateSolanaListingNft> Items)> GetLawyerAssignablePropertiesAsync(
+            SolanaCluster cluster,
+            string lawyer,
+            int first,
+            int offset,
+            CancellationToken token = default) =>
+            GetLawyerPropertiesAsync(cluster, assignedLawyer: null, assignableTo: lawyer, first, offset, token);
+
+        /// <summary>
+        /// The listings where the lawyer's wallet already sits in a lawyer slot (developer
+        /// or SPV side), one page at a time - the lawyer page's "Under Instruction" filter
+        /// and, through <c>TotalCount</c> at <c>first: 1</c>, its "Manage properties"
+        /// count.
+        /// </summary>
+        public static Task<(int TotalCount, IReadOnlyList<XcavateSolanaListingNft> Items)> GetLawyerAssignedPropertiesAsync(
+            SolanaCluster cluster,
+            string lawyer,
+            int first,
+            int offset,
+            CancellationToken token = default) =>
+            GetLawyerPropertiesAsync(cluster, assignedLawyer: lawyer, assignableTo: null, first, offset, token);
+
+        /// <summary>
+        /// The shared <c>LawyerProperties</c> execution behind both lawyer filters: exactly
+        /// one of the two lawyer arguments is set, the other stays null (absent = filter
+        /// off). Nodes map through the same <see cref="MapListing"/> the investor path
+        /// wraps with <c>ToXcavateNftWrapperAsync</c>.
+        /// </summary>
+        private static async Task<(int TotalCount, IReadOnlyList<XcavateSolanaListingNft> Items)> GetLawyerPropertiesAsync(
+            SolanaCluster cluster,
+            string? assignedLawyer,
+            string? assignableTo,
+            int first,
+            int offset,
+            CancellationToken token)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            var result = await client.LawyerProperties
+                .ExecuteAsync(assignedLawyer, assignableTo, first, offset, token)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            var connection = result.Data?.Listings;
+
+            var items = connection?.Nodes is { } nodes
+                ? nodes.Select(node => MapListing(node, node.PropertyAsset)).ToList()
+                : [];
+
+            return (connection?.TotalCount ?? 0, items);
+        }
+
+        /// <summary>
         /// The client-side stand-in for the old SubQuery <c>includesInsensitive</c> filters:
         /// an empty filter matches everything, a non-empty one is a case-insensitive
         /// substring match. The search text additionally matches the postcode, which is the
