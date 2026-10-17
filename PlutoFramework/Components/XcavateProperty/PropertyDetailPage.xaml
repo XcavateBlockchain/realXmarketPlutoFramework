@@ -5,7 +5,6 @@
                        xmlns:nft="clr-namespace:PlutoFramework.Components.Nft"
                        xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
                        xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
-                       xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
                        xmlns:account="clr-namespace:PlutoFramework.Components.Account"
                        xmlns:kilt="clr-namespace:PlutoFramework.Components.Kilt"
                        xmlns:extrinsic="clr-namespace:PlutoFramework.Components.Extrinsic"
@@ -196,10 +195,6 @@
                                             InfoCommand="{Binding NavigateToFeesCommand}" />
 
                     <xcavateproperty:OwnedPropertyTokensView IsVisible="{Binding OwnedPropertyTokensViewIsVisible}" />
-
-                    <buttons:ElevatedButton Text="Send shares"
-                                            IsVisible="{Binding SendSharesButtonIsVisible}"
-                                            Command="{Binding SendSharesCommand}" />
 
                     <!-- The wallet sold or sent every token but its ShareHolding account
                          still exists on chain: closing it claims any final banked rent
