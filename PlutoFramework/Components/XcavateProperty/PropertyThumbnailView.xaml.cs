@@ -1,9 +1,6 @@
-using PlutoFramework.Components.Loading;
-using PlutoFramework.Model;
 using PlutoFramework.Model.Currency;
 using PlutoFramework.Model.SQLite;
 using PlutoFramework.Model.Xcavate;
-using PlutoFrameworkCore.Solana;
 using PlutoFrameworkCore.Xcavate;
 using UniqueryPlus.Nfts;
 using PropertyModel = PlutoFramework.Model.Xcavate.XcavatePropertyModel;
@@ -70,9 +67,6 @@ public partial class PropertyThumbnailView : ContentView
 
             // Favourite
             control.filledFavouriteIcon.IsVisible = nftWrapper.Favourite;
-
-            // Send shares chip - a holding is the only thing there is to send
-            control.sendSharesChip.IsVisible = nftWrapper.TokensOwned > 0;
 
             // Tokens owned
             if (nftWrapper.TokensOwned > 0)
@@ -186,54 +180,6 @@ public partial class PropertyThumbnailView : ContentView
         catch (Exception ex)
         {
             Console.WriteLine("Error navigating to property detail page: " + ex);
-        }
-    }
-
-    /// <summary>
-    /// The "Send" chip on an owned holding: opens the send-shares sheet straight from the
-    /// thumbnail, resolving the sheet's context from an on-the-spot governance-state read
-    /// (holding minus live locks and listed-for-sale amount), the same resolution
-    /// <see cref="PropertyDetailViewModel.SendSharesAsync"/> makes. No cached fallback here:
-    /// the thumbnail holds no governance state, so a failed read just logs and stays put.
-    /// </summary>
-    private async void OnSendSharesClicked(object sender, EventArgs e)
-    {
-        if (XcavateNftWrapper.TokensOwned == 0
-            || XcavateNftWrapper.NftBase is not XcavateSolanaListingNft solanaListing)
-        {
-            return;
-        }
-
-        var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
-
-        fullPageLoadingViewModel.IsVisible = true;
-
-        try
-        {
-            var holding = (await XcavateMarketplaceIndexerModel.GetGovernanceStateAsync(
-                    SolanaNetworkModel.SelectedCluster,
-                    solanaListing.ListingId,
-                    solanaListing.AssetId,
-                    KeysModel.GetSolanaAddress(),
-                    CancellationToken.None))
-                .Holding;
-
-            if (holding is null)
-            {
-                return;
-            }
-
-            DependencyService.Get<SendSharesPopupViewModel>()
-                .SetContext(holding.Amount, holding.MaxLock, holding.Listed, (ulong)solanaListing.AssetId);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Failed to resolve the holding for the send sheet: ");
-            Console.WriteLine(ex);
-        }
-        finally
-        {
-            fullPageLoadingViewModel.IsVisible = false;
         }
     }
 

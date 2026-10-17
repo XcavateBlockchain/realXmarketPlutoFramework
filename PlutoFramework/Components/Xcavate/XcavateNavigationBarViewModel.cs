@@ -1,6 +1,7 @@
-﻿
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PlutoFramework.Model.Xcavate;
 
 namespace PlutoFramework.Components.Xcavate
 {
@@ -36,7 +37,9 @@ namespace PlutoFramework.Components.Xcavate
 
             Selected = XcavateNavigationBarSelection.Account;
 
-            await Shell.Current.GoToAsync("//Account", animate: false);
+            var route = await MainPageRoleModel.GetRouteAsync();
+
+            await Shell.Current.GoToAsync(route, animate: false);
         }
 
         [RelayCommand]

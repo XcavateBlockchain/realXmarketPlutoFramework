@@ -215,3 +215,22 @@ query InvestorProperties(
     }
   }
 }
+
+# The lawyer page's property list. ONE query serves both of its filters: the
+# `assignedLawyer` arg keeps listings where the wallet already sits in a lawyer slot
+# (the "Under Instruction" filter), `assignableTo` keeps SOLD_OUT listings whose legal
+# window is still open with a vacant lawyer slot the wallet could claim, ordered by
+# sold-out recency (the "Newly listed" filter). The caller sets exactly one of the two;
+# both absent would be the unfiltered feed, which the page never asks for.
+#
+# `first`/`offset` carry no GraphQL default for the same reason as the operations
+# above, and `totalCount` answers the "Manage properties" stat cell with a
+# `first: 1` call - no full page fetch just to count.
+query LawyerProperties($assignedLawyer: String, $assignableTo: String, $first: Int!, $offset: Int!) {
+  listings(assignedLawyer: $assignedLawyer, assignableTo: $assignableTo, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      ...ListingParts
+    }
+  }
+}

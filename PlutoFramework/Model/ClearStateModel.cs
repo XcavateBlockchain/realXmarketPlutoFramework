@@ -19,6 +19,7 @@ namespace PlutoFramework.Model
             // Other
             SecureStorage.Default.Remove(PreferencesModel.PASSWORD);
             Preferences.Remove(PreferencesModel.BIOMETRICS_ENABLED);
+            MainPageRoleModel.ClearOverride();
             OnboardingModel.Clear();
 
             // Models
