@@ -1359,12 +1359,12 @@ namespace PlutoFramework.Components.XcavateProperty
         /// listing's on-chain state, so the figures on screen - tokens still available,
         /// this wallet's reserved tokens, the action button - are the pre-transaction
         /// ones and must be re-read. The offers namespace is now created automatically by
-        /// the backend when the indexer sees a claim or relist (ADR-42), so the mobile app
-        /// no longer prompts for a second signature here.
+        /// the backend when the indexer sees a claim or relist (backend-driven offers namespace
+        /// creation, see Indexer ADR-42), so the mobile app no longer prompts for a second
+        /// signature here.
         /// </summary>
         private void OnMarketplaceTransactionConfirmed(object? sender, EventArgs e) =>
             MainThread.BeginInvokeOnMainThread(() => _ = RefreshListingAsync(CancellationToken.None));
-
 
         /// <summary>
         /// Re-reads this listing from the Xcavate indexer and re-applies it to the page.
