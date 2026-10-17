@@ -1358,77 +1358,13 @@ namespace PlutoFramework.Components.XcavateProperty
         /// A confirmed marketplace transaction (a reserve, buy or claim) changed this
         /// listing's on-chain state, so the figures on screen - tokens still available,
         /// this wallet's reserved tokens, the action button - are the pre-transaction
-        /// ones and must be re-read.
+        /// ones and must be re-read. The offers namespace is now created automatically by
+        /// the backend when the indexer sees a claim or relist (ADR-42), so the mobile app
+        /// no longer prompts for a second signature here.
         /// </summary>
         private void OnMarketplaceTransactionConfirmed(object? sender, EventArgs e) =>
-            MainThread.BeginInvokeOnMainThread(() => _ = RefreshListingAndEnsureOffersNamespaceAsync());
+            MainThread.BeginInvokeOnMainThread(() => _ = RefreshListingAsync(CancellationToken.None));
 
-        /// <summary>
-        /// The confirmation handler's two follow-ups, ordered so the ownership figure the
-        /// namespace setup gates on is the post-transaction one.
-        /// </summary>
-        private async Task RefreshListingAndEnsureOffersNamespaceAsync()
-        {
-            await RefreshListingAsync(CancellationToken.None);
-            await EnsureOffersNamespaceAsync();
-        }
-
-        /// <summary>
-        /// Whether the offers-namespace setup already ran for this page instance. It is
-        /// attempted at most once per visit - it is signed, so it costs a prompt - and
-        /// the API makes the creation idempotent per (asset, cluster), while the offer
-        /// flow retries it lazily when an offer is actually made.
-        /// </summary>
-        private bool offersNamespaceEnsured;
-
-        /// <summary>
-        /// Makes sure this property has its offers namespace on the profile API (named
-        /// "&lt;property&gt; offers", idempotent per asset and cluster), so a property
-        /// whose shares hit the secondary market has somewhere for buyers' offers to
-        /// land. Runs after a confirmed marketplace transaction - the relist that opens
-        /// the secondary market is one - for a wallet that owns tokens, the only wallet
-        /// that can relist.
-        /// </summary>
-        /// <remarks>
-        /// Strictly best-effort: a declined signing prompt or an API failure is logged
-        /// and swallowed, NEVER surfaced as a failure of the transaction that just
-        /// confirmed - the make-offer flow retries the creation lazily at offer time.
-        /// </remarks>
-        private async Task EnsureOffersNamespaceAsync()
-        {
-            if (offersNamespaceEnsured)
-            {
-                return;
-            }
-
-            // Only Solana-sourced items carry the asset id the API keys the namespace
-            // on; an ownerless or undeployed cluster has nothing to set up either.
-            if (TokensOwned == 0
-                || NftWrapper?.NftBase is not XcavateSolanaListingNft
-                || string.IsNullOrWhiteSpace(Metadata?.PropertyName)
-                || !XcavateDeploymentModel.IsDeployed(SolanaNetworkModel.SelectedCluster))
-            {
-                return;
-            }
-
-            offersNamespaceEnsured = true;
-
-            try
-            {
-                await DependencyService.Get<RealXmarketOfferClient>().CreateOffersNamespaceAsync(
-                    Metadata.PropertyName,
-                    AssetId,
-                    SolanaNetworkModel.SelectedCluster,
-                    CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                // Best-effort by design: the relist itself already succeeded on chain,
-                // and the namespace creation is retried lazily at offer time.
-                Console.WriteLine("Failed to set up the property's offers namespace (retried lazily at offer time): ");
-                Console.WriteLine(ex);
-            }
-        }
 
         /// <summary>
         /// Re-reads this listing from the Xcavate indexer and re-applies it to the page.
