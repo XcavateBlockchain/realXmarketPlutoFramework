@@ -10,7 +10,7 @@ namespace PlutoFramework.Model.Xcavate.Profile
 {
     /// <summary>
     /// Talks to the profile API's terms-document surface: one terms PDF per lawyer wallet,
-    /// pinned to IPFS server-side and readable publicly by counterparties.
+    /// stored in the API's object storage and readable publicly by counterparties.
     /// </summary>
     /// <remarks>
     /// Hand-rolled like <see cref="RentCollectorSignatureClient"/>: the pinned
@@ -62,8 +62,8 @@ namespace PlutoFramework.Model.Xcavate.Profile
         /// Uploads (or replaces - last write wins) the wallet's terms PDF and returns the
         /// stored record. Signing costs a wallet prompt via
         /// <see cref="MainKeyModel.GetSignerAsync"/>; a declined prompt, a rejection
-        /// (wrong type, not the owner) and a server-side IPFS failure all throw with the
-        /// server's body quoted for the caller to surface.
+        /// (wrong type, not the owner) and a server-side storage failure all throw with
+        /// the server's body quoted for the caller to surface.
         /// </summary>
         public static async Task<TermsDocumentInfo> UploadAsync(
             string address,

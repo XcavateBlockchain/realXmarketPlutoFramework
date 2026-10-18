@@ -4,18 +4,17 @@ namespace PlutoFrameworkCore.Xcavate
 {
     /// <summary>
     /// The terms document a lawyer has published through the Xcavate Profile API
-    /// (<c>GET /api/profiles/{address}/terms-document</c>): the IPFS CID the PDF was
-    /// pinned as, its public gateway URL, the uploaded file's name and when it was last
-    /// replaced.
+    /// (<c>GET /api/profiles/{address}/terms-document</c>): its public URL, the uploaded
+    /// file's name and when it was last replaced.
     /// </summary>
     /// <remarks>
     /// One document per wallet, last write wins; a 404 from the endpoint means none and
     /// is the client's "no document" state, not an error.
     /// </remarks>
-    public record TermsDocumentInfo(string Cid, string Url, string FileName, DateTimeOffset UpdatedAt)
+    public record TermsDocumentInfo(string Url, string FileName, DateTimeOffset UpdatedAt)
     {
         /// <summary>
-        /// Reads the endpoint's response body (<c>{"cid","url","fileName","updatedAt"}</c>,
+        /// Reads the endpoint's response body (<c>{"url","fileName","updatedAt"}</c>,
         /// camelCase with an ISO-8601 <c>updatedAt</c>). A body that does not match the
         /// contract throws rather than degrading to a half-empty record - the caller
         /// would surface a wrong file name or an unreadable date as if they were real.
@@ -31,7 +30,6 @@ namespace PlutoFrameworkCore.Xcavate
             }
 
             return new TermsDocumentInfo(
-                RequiredString(root, "cid"),
                 RequiredString(root, "url"),
                 RequiredString(root, "fileName"),
                 RequiredDateTimeOffset(root, "updatedAt"));
