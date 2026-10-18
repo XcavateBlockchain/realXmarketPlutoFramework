@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<VerticalStackLayout xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                     x:Class="PlutoFramework.Components.XcavateProperty.LawyerStatusSectionView"
+                     Spacing="12"
+                     IsVisible="{Binding LawyersSectionIsVisible}">
+
+    <!-- The legal phase's two document reviewers, read from the indexer's listing row:
+         each side shows its lawyer (truncated wallet) and the status of their document
+         verdict - or the vacant-seat copy while nobody is engaged on that side. -->
+    <Border Padding="15"
+            BackgroundColor="{AppThemeBinding Light={StaticResource CardBackgroundColorLight}, Dark={StaticResource CardBackgroundColorDark}}"
+            Stroke="{StaticResource CardBorderColor}"
+            StrokeThickness="{StaticResource CardBorderThickness}">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+        </Border.StrokeShape>
+
+        <VerticalStackLayout Spacing="8">
+            <Label Text="Lawyers"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+
+            <Grid ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <VerticalStackLayout Grid.Column="0"
+                                     Spacing="2"
+                                     VerticalOptions="Center">
+                    <Label Text="Developer lawyer"
+                           FontSize="12"
+                           TextColor="{StaticResource Gray500}" />
+                    <Label Text="{Binding DeveloperLawyerText}"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                </VerticalStackLayout>
+
+                <Border Grid.Column="1"
+                        BackgroundColor="#22888888"
+                        StrokeThickness="0"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding DeveloperLawyerStatusIsVisible}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="5" />
+                    </Border.StrokeShape>
+
+                    <Label Text="{Binding DeveloperLawyerStatusText}"
+                           Margin="5,0,5,0"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="{Binding DeveloperLawyerStatusColor}"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center" />
+                </Border>
+            </Grid>
+
+            <Grid ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <VerticalStackLayout Grid.Column="0"
+                                     Spacing="2"
+                                     VerticalOptions="Center">
+                    <Label Text="SPV lawyer"
+                           FontSize="12"
+                           TextColor="{StaticResource Gray500}" />
+                    <Label Text="{Binding SpvLawyerText}"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+                </VerticalStackLayout>
+
+                <Border Grid.Column="1"
+                        BackgroundColor="#22888888"
+                        StrokeThickness="0"
+                        VerticalOptions="Center"
+                        IsVisible="{Binding SpvLawyerStatusIsVisible}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="5" />
+                    </Border.StrokeShape>
+
+                    <Label Text="{Binding SpvLawyerStatusText}"
+                           Margin="5,0,5,0"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="{Binding SpvLawyerStatusColor}"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center" />
+                </Border>
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+</VerticalStackLayout>

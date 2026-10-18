@@ -17,6 +17,7 @@ using PlutoFrameworkCore.Xcavate;
 using System.Collections.ObjectModel;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
+using XcavateDevnetIndexer;
 using PropertyModel = PlutoFramework.Model.Xcavate.XcavatePropertyModel;
 
 namespace PlutoFramework.Components.XcavateProperty
@@ -146,6 +147,15 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
         [NotifyPropertyChangedFor(nameof(ShowBuyMoreButtons))]
+        [NotifyPropertyChangedFor(nameof(LawyersSectionIsVisible))]
+        [NotifyPropertyChangedFor(nameof(DeveloperLawyerText))]
+        [NotifyPropertyChangedFor(nameof(DeveloperLawyerStatusIsVisible))]
+        [NotifyPropertyChangedFor(nameof(DeveloperLawyerStatusText))]
+        [NotifyPropertyChangedFor(nameof(DeveloperLawyerStatusColor))]
+        [NotifyPropertyChangedFor(nameof(SpvLawyerText))]
+        [NotifyPropertyChangedFor(nameof(SpvLawyerStatusIsVisible))]
+        [NotifyPropertyChangedFor(nameof(SpvLawyerStatusText))]
+        [NotifyPropertyChangedFor(nameof(SpvLawyerStatusColor))]
         private XcavateNftWrapper? nftWrapper;
 
         [ObservableProperty]
@@ -967,6 +977,72 @@ namespace PlutoFramework.Components.XcavateProperty
                 (cranker, cluster, ct) => XcavatePropertyCallsModel.FinalizeAgentElectionAsync(
                     cluster, cranker, AssetId, ct));
         }
+
+        // ── Lawyers (the legal-phase document reviewers) ──
+
+        /// <summary>The listing colors' literal forms, mirroring the DefaultStyles.xaml
+        /// resource keys of the same names (the view model cannot reach StaticResources).</summary>
+        private static readonly Color PrimaryColor = Color.FromArgb("#1d70a2");
+        private static readonly Color PositiveColor = Color.FromArgb("#FF008000");
+        private static readonly Color DangerousRedColor = Color.FromArgb("#eb4747");
+        private static readonly Color Gray500Color = Color.FromArgb("#6E6E6E");
+
+        /// <summary>The Solana listing the lawyers section reads, null for Substrate-sourced items.</summary>
+        private XcavateSolanaListingNft? SolanaListing => NftWrapper?.NftBase as XcavateSolanaListingNft;
+
+        /// <summary>
+        /// The lawyers carry the legal phase - there is nothing to show before the sale
+        /// sells out (the program only engages them from SOLD_OUT on) and no reason to
+        /// hide them after: the verdicts stay readable through the settled and
+        /// wound-down states.
+        /// </summary>
+        public bool LawyersSectionIsVisible => SolanaListing is { } listing && listing.InLegalPhase;
+
+        /// <summary>The developer lawyer's truncated pubkey, or the vacant-seat copy.</summary>
+        public string DeveloperLawyerText =>
+            XcavateMarketplaceIndexerModel.IsVacantSeat(SolanaListing?.DeveloperLawyer)
+                ? "No lawyer engaged"
+                : TruncateAddress(SolanaListing!.DeveloperLawyer);
+
+        /// <summary>The engaged developer lawyer's document verdict as a status pill.</summary>
+        public bool DeveloperLawyerStatusIsVisible =>
+            !XcavateMarketplaceIndexerModel.IsVacantSeat(SolanaListing?.DeveloperLawyer);
+
+        public string DeveloperLawyerStatusText =>
+            LawyerStatusText(SolanaListing?.DeveloperLawyerDocStatus ?? DocumentStatus.Pending);
+
+        public Color DeveloperLawyerStatusColor =>
+            LawyerStatusColor(SolanaListing?.DeveloperLawyerDocStatus ?? DocumentStatus.Pending);
+
+        /// <summary>The SPV lawyer's truncated pubkey, or the vacant-seat copy.</summary>
+        public string SpvLawyerText =>
+            XcavateMarketplaceIndexerModel.IsVacantSeat(SolanaListing?.SpvLawyer)
+                ? "No lawyer engaged"
+                : TruncateAddress(SolanaListing!.SpvLawyer);
+
+        /// <summary>The engaged SPV lawyer's document verdict as a status pill.</summary>
+        public bool SpvLawyerStatusIsVisible =>
+            !XcavateMarketplaceIndexerModel.IsVacantSeat(SolanaListing?.SpvLawyer);
+
+        public string SpvLawyerStatusText =>
+            LawyerStatusText(SolanaListing?.SpvLawyerDocStatus ?? DocumentStatus.Pending);
+
+        public Color SpvLawyerStatusColor =>
+            LawyerStatusColor(SolanaListing?.SpvLawyerDocStatus ?? DocumentStatus.Pending);
+
+        private static string LawyerStatusText(DocumentStatus status) => status switch
+        {
+            DocumentStatus.Approved => "Documents approved",
+            DocumentStatus.Rejected => "Documents rejected",
+            _ => "Reviewing documents",
+        };
+
+        private static Color LawyerStatusColor(DocumentStatus status) => status switch
+        {
+            DocumentStatus.Approved => PositiveColor,
+            DocumentStatus.Rejected => DangerousRedColor,
+            _ => PrimaryColor,
+        };
 
         // ── Pending finalizations (the permissionless cranks) ──
 

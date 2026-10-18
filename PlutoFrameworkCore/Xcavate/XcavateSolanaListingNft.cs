@@ -3,6 +3,7 @@ using UniqueryPlus;
 using UniqueryPlus.Collections;
 using UniqueryPlus.Metadata;
 using UniqueryPlus.Nfts;
+using XcavateDevnetIndexer;
 
 namespace PlutoFramework.Model.Xcavate
 {
@@ -72,6 +73,35 @@ namespace PlutoFramework.Model.Xcavate
         /// rejected with ListingNotActive.
         /// </summary>
         public bool IsCancelled => ListingStatus == "Cancelled";
+
+        /// <summary>
+        /// The lawyer engaged on the developer side of the legal phase, as its base58
+        /// wallet; the all-zero pubkey (see
+        /// <see cref="XcavateMarketplaceIndexerModel.IsVacantSeat"/>) while the seat is
+        /// vacant. Read from the indexer's listing row, never from an RPC call.
+        /// </summary>
+        public string DeveloperLawyer { get; set; } = string.Empty;
+
+        /// <summary>The developer lawyer's document verdict; meaningless while the seat is vacant.</summary>
+        public DocumentStatus DeveloperLawyerDocStatus { get; set; }
+
+        /// <summary>
+        /// The lawyer engaged on the SPV side of the legal phase, as its base58 wallet;
+        /// the all-zero pubkey while the seat is vacant (elected or claimed via the
+        /// SPV-lawyer election).
+        /// </summary>
+        public string SpvLawyer { get; set; } = string.Empty;
+
+        /// <summary>The SPV lawyer's document verdict; meaningless while the seat is vacant.</summary>
+        public DocumentStatus SpvLawyerDocStatus { get; set; }
+
+        /// <summary>
+        /// True once the listing enters the legal phase - the window in which the two
+        /// lawyers review and rule on the sale documents - and through the settled and
+        /// wound-down states that keep their verdicts readable. Before this (PENDING_ASSETS,
+        /// LISTED, EXPIRED) there are no lawyers to show.
+        /// </summary>
+        public bool InLegalPhase => ListingStatus is "SoldOut" or "Legal" or "Finalized" or "Cancelled" or "Refunding";
 
         public MetadataBase? Metadata { get; set; }
         public PropertyMetadata? XcavateMetadata { get; set; }

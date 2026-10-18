@@ -1631,6 +1631,13 @@ namespace PlutoFramework.Model.Xcavate
                 ListingStatus = listing.Status.ToString(),
                 OpenForSale = listing.Status is not (ListingStatus.PendingAssets or ListingStatus.Cancelled or ListingStatus.Refunding),
                 IsTornDown = listing.Status is ListingStatus.Cancelled or ListingStatus.Refunding,
+                // The legal-phase lawyer seats ride the same listing row (the indexer
+                // flattens both LawyerAssignments onto it); the detail page's lawyers
+                // section reads them from here instead of querying the chain.
+                DeveloperLawyer = listing.DeveloperLawyer,
+                DeveloperLawyerDocStatus = listing.DeveloperLawyerDocStatus,
+                SpvLawyer = listing.SpvLawyer,
+                SpvLawyerDocStatus = listing.SpvLawyerDocStatus,
                 Metadata = metadata,
                 XcavateMetadata = propertyMetadata,
                 OngoingObjectListingDetails = new XcavateOngoingObjectListingDetails
