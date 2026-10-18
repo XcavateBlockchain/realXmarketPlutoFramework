@@ -116,6 +116,45 @@ namespace PlutoFramework.Model.Xcavate.Profile
         }
 
         /// <summary>
+        /// Deletes the wallet's terms document from the API and its object storage. Requires a
+        /// signed request from the owner. A 404 response is treated as success (already gone).
+        /// </summary>
+        public static async Task DeleteAsync(string address, CancellationToken ct)
+        {
+            var signer = await MainKeyModel.GetSignerAsync("To delete your terms document.", ct).ConfigureAwait(false)
+                ?? throw new InvalidOperationException(
+                    "No key to sign the profile API request with, or the signing prompt was declined.");
+
+            using var request = new HttpRequestMessage(HttpMethod.Delete, ApiBaseUrl + PathFor(address));
+
+            var timestamp = DateTime.UtcNow;
+            var payload = CryptoHelper.ConstructPayload(
+                "DELETE", "/" + PathFor(address), EmptyPayloadBody.Instance, timestamp);
+            var signature = await signer.SignAsync(payload).ConfigureAwait(false);
+
+            request.Headers.Add(SignedRequestHeaders.Address, signer.Address);
+            request.Headers.Add(SignedRequestHeaders.Signature, signer.EncodeSignature(signature));
+            request.Headers.Add(SignedRequestHeaders.Timestamp, timestamp.ToString("o"));
+
+            using var httpClient = new HttpClient();
+
+            using var response = await httpClient.SendAsync(request, ct).ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return;
+            }
+
+            var serverBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception(
+                    $"The profile API rejected the terms document deletion ({response.StatusCode}): {serverBody}");
+            }
+        }
+
+        /// <summary>
         /// Parses the endpoint's response JSON; the pure implementation lives on
         /// <see cref="TermsDocumentInfo.Parse"/> so the test project (which cannot
         /// reference this MAUI assembly) covers it.
