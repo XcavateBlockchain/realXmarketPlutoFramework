@@ -1,31 +1,24 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              x:Class="PlutoFramework.Components.MessagePopup.MessagePopupView"
+             IsVisible="{Binding IsVisible}"
              AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
-             AbsoluteLayout.LayoutFlags="All"
-             Padding="20"
-             BackgroundColor="#66000000"
-             IsVisible="{Binding IsVisible}">
+             AbsoluteLayout.LayoutFlags="All">
 
-    <card:Card IsPopup="True">
-        <card:Card.View>
+    <card:BottomPopupCard Title="{Binding Title}"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
             <AbsoluteLayout>
 
                 <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
                                      AbsoluteLayout.LayoutFlags="WidthProportional"
-                                     Spacing="10"
-                                     Padding="0, 0, 0, 90">
-                     <Label
-                        FontAttributes="Bold"
-                        Text="{Binding Title}"
-                        x:Name="title"
-                        HorizontalOptions="Center" />
+                                     Spacing="20"
+                                     Padding="10, 10, 10, 10">
 
-                    <Label
-                        x:Name="text"
-                        Text="{Binding Text}"
-                        HorizontalOptions="CenterAndExpand" />
+                    <Label Text="{Binding Text}"
+                           HorizontalOptions="Center" />
                 </VerticalStackLayout>
 
                 <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
@@ -44,19 +37,9 @@
                     </Grid>
                 </AbsoluteLayout>
 
-                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0, 0, 40, 40">
-                    <Image AbsoluteLayout.LayoutBounds="0, 0, 20, 20"
-                       Source="{AppThemeBinding Light=arrowbackblack.png, Dark=backwhite.png }" />
-
-                    <AbsoluteLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnBackClicked" />
-
-                    </AbsoluteLayout.GestureRecognizers>
-
-                </AbsoluteLayout>
             </AbsoluteLayout>
-        </card:Card.View>
-    </card:Card>
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
 
 </ContentView>
 
