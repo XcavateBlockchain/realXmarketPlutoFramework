@@ -16,10 +16,10 @@
     <PackageReference Include="jose-jwt" Version="5.2.0" />
     <PackageReference Include="NSec.Cryptography" Version="26.4.0" />
     <!--
-      0.9.24 final, not the rc6 the generated projects pin. XcavateProfileApiClient 1.0.61
-      requires >= 0.9.24, and NuGet ranks a prerelease below the release it precedes, so rc6
-      here is a downgrade (NU1605). Raising this one direct reference lifts the whole graph:
-      the generated projects' rc6 is transitive from here and unifies upward.
+      0.9.24 final, not the rc6 the generated projects pin. Several project references and
+      packages require >= 0.9.24, and NuGet ranks a prerelease below the release it precedes,
+      so rc6 here is a downgrade (NU1605). Raising this one direct reference lifts the whole
+      graph: the generated projects' rc6 is transitive from here and unifies upward.
     -->
     <PackageReference Include="Substrate.NET.API" Version="0.9.24" />
     <!--
@@ -48,12 +48,13 @@
     <PackageReference Include="Plutonication" Version="2.6.0" />
     <PackageReference Include="AzeroIdResolver" Version="1.0.2" />
     <!--
-      Signs profile writes with sr25519 or Solana ed25519. Do not also reference
-      XcavateProfileApiSolanaClient: it defines the same types in the same namespaces, and its
-      only advantage - dropping Substrate.NET.API - buys nothing here, since the Polkadot side
-      needs that package anyway.
+      Signs profile writes with sr25519 or Solana ed25519. The Solana-specific client is used
+      here because it drops the Substrate.NET.API transitive dependency that the general client
+      would otherwise pull in; Substrate.NET.API is still referenced directly above for the
+      Polkadot side. Do not reference XcavateProfileApiClient as well: both packages define
+      the same types in the same namespaces.
     -->
-    <PackageReference Include="XcavateProfileApiClient" Version="1.0.68" />
+    <PackageReference Include="XcavateProfileApiSolanaClient" Version="1.0.86" />
   </ItemGroup>
 
   <ItemGroup>
