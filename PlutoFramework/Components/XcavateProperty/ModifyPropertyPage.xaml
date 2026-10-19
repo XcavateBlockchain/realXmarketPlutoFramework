@@ -2,7 +2,7 @@
 <template:PageTemplate xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                        xmlns:template="clr-namespace:PlutoFramework.Templates.PageTemplate"
-                       xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                       xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
                        xmlns:form="clr-namespace:PlutoFramework.Components.Form"
                        xmlns:nft="clr-namespace:PlutoFramework.Components.Nft"
                        xmlns:navigationbar="clr-namespace:PlutoFramework.Components.NavigationBar"
@@ -24,27 +24,11 @@
     </template:PageTemplate.MainContent>
 
     <template:PageTemplate.PopupContent>
-        <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
-                        AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
-            <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
-                  AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
-                  ColumnSpacing="15"
-                  Margin="20, 0, 20, 10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <buttons:BasicGrayButton Text="Cancel"
-                                         Command="{Binding CancelCommand}"
-                                         Grid.Column="0" />
-
-                <buttons:ElevatedButton Text="Submit"
-                                        Grid.Column="1"
-                                        Command="{Binding SubmitCommand}"
-                                        ButtonState="{Binding SubmitButtonState}"/>
-            </Grid>
-        </AbsoluteLayout>
+        <xcavate:PageBottomBarTwoButtonsView LeftCommand="{Binding CancelCommand}"
+                                             LeftText="Cancel"
+                                             RightCommand="{Binding SubmitCommand}"
+                                             RightButtonState="{Binding SubmitButtonState}"
+                                             RightText="Submit" />
 
         <!--
         <navigationbar:TopNavigationBar Title=""

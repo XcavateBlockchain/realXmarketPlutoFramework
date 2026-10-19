@@ -75,6 +75,9 @@
 
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="3.7.412.1" />
+    <!-- Newest 3.7.x, so it shares AWSSDK.Core with the S3 reference above rather than
+         pulling the v4 line alongside it. -->
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.409.10" />
     <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
     <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.1.11" />
     <PackageReference Include="Plugin.Fingerprint" Version="3.0.0-beta.1" />

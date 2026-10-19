@@ -12,6 +12,7 @@
                           x:Name="labelText"
                           TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray400}}"  />
                 </FormattedString>
+            </Label.FormattedText>
         </Label>
 
         <Border Margin="0, 12, 0, 0"

@@ -9,7 +9,8 @@ namespace PlutoFramework.Components.Solana.Status
 {
     /// <summary>
     /// Drives the Solana transaction status popup: one bottom card that follows a submitted
-    /// transaction from submission to finality, and stays open until the user dismisses it.
+    /// transaction from submission to finality, and stays open until the user dismisses it
+    /// or opens the transaction in the explorer.
     /// </summary>
     /// <remarks>
     /// The replacement for the toast stack (<c>SolanaTransactionStatusStackViewModel</c>).
@@ -23,8 +24,9 @@ namespace PlutoFramework.Components.Solana.Status
     /// holds its own reference and its confirmation events still fire — it just stops
     /// being shown.
     ///
-    /// Never auto-dismisses, on success any more than on failure: the outcome is where the
-    /// explorer button lives, and a popup that removes itself is easy to miss.
+    /// Never auto-dismisses on its own, on success any more than on failure: the outcome
+    /// is where the explorer button lives, and a popup that removes itself is easy to
+    /// miss.
     /// </remarks>
     public partial class SolanaTransactionPopupViewModel : ObservableObject, IPopup, ISetToDefault
     {
@@ -133,9 +135,11 @@ namespace PlutoFramework.Components.Solana.Status
         private void Close() => SetToDefault();
 
         /// <summary>
-        /// Opens the transaction in Solana Explorer. The popup stays open underneath:
-        /// the pushed page covers the whole screen, and the status is where the user
-        /// returns to.
+        /// Opens the transaction in Solana Explorer, dismissing the popup first. The popup
+        /// is hosted in the shared page template, so every page — the explorer's
+        /// <see cref="WebViewPage"/> among them — draws it from this singleton: a popup
+        /// left open would sit on top of the pushed page and cover the transaction.
+        /// Dismissing never cancels tracking; the tracker still polls to finality.
         /// </summary>
         [RelayCommand]
         private async Task OpenExplorerAsync()
@@ -145,14 +149,20 @@ namespace PlutoFramework.Components.Solana.Status
                 return;
             }
 
-            await Shell.Current.Navigation.PushAsync(new WebViewPage(CurrentInfo.ExplorerUrl));
+            // Captured before the close: SetToDefault nulls CurrentInfo.
+            var explorerUrl = CurrentInfo.ExplorerUrl;
+
+            SetToDefault();
+
+            await Shell.Current.Navigation.PushAsync(new WebViewPage(explorerUrl));
         }
 
         /// <summary>
-        /// Also called by <c>BottomPopupCard</c> when the user swipes the popup away, which
-        /// is why the cleanup lives here rather than in the Close handler. Dismissing never
-        /// cancels tracking — the tracker keeps polling and its confirmation events keep
-        /// firing; only the screen loses sight of the transaction.
+        /// Also called by <c>BottomPopupCard</c> when the user swipes the popup away, and
+        /// when the user opens the explorer, which is why the cleanup lives here rather
+        /// than in the Close handler. Dismissing never cancels tracking — the tracker
+        /// keeps polling and its confirmation events keep firing; only the screen loses
+        /// sight of the transaction.
         /// </summary>
         public void SetToDefault()
         {

@@ -12,7 +12,7 @@ public partial class FormImageUploadView : ContentView
         propertyChanged: (bindable, oldValue, newValue) =>
         {
             var control = (FormImageUploadView)bindable;
-            control.titleLabel.Text = (string)newValue;
+            control.labelText.Text = (string)newValue;
         });
     public FormImageUploadView()
 	{

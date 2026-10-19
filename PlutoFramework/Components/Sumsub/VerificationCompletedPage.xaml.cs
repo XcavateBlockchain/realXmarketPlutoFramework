@@ -8,10 +8,5 @@ namespace PlutoFramework.Components.Sumsub
         {
             InitializeComponent();
         }
-        private async void ContinueToMainPageClicked(System.Object sender, System.EventArgs e)
-        {
-            // unused
-            //await Navigation.PushAsync(new SetupPasswordPage());
-        }
     }
 }
