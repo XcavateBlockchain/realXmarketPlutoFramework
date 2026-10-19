@@ -38,6 +38,7 @@
                                         Text="{Binding Tokens}"
                                         MaxValue="{Binding MaxValue}"
                                         UpdateCommand="{Binding FormChangedCommand}"
+                                        CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}"
                                         />
                     <form:FormAssetInputView KeyboardType="Numeric"
                                         Placeholder="Price per token"
