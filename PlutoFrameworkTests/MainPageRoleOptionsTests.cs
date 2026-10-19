@@ -43,11 +43,11 @@ namespace PlutoFrameworkTests
                 Is.EqualTo(MainPageRole.Investor));
         }
 
-        [TestCase(MainPageRole.Developer, "//Account")]
+        [TestCase(MainPageRole.Developer, "//DeveloperAccount")]
         [TestCase(MainPageRole.Investor, "//Account")]
         [TestCase(MainPageRole.Lawyer, "//LawyerAccount")]
         [TestCase(MainPageRole.LettingAgent, "//Account")]
-        public void ResolveRoute_UnimplementedRolesUseInvestorPage(MainPageRole role, string expectedRoute)
+        public void ResolveRoute_RoleLandingPage(MainPageRole role, string expectedRoute)
         {
             Assert.That(MainPageRoleOptions.ResolveRoute(role), Is.EqualTo(expectedRoute));
         }

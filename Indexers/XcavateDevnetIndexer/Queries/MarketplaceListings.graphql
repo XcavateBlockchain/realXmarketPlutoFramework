@@ -234,3 +234,34 @@ query LawyerProperties($assignedLawyer: String, $assignableTo: String, $first: I
     }
   }
 }
+
+# The developer page's property list: every listing the wallet CREATED, identified by the
+# listing's own `developer` field (the creator's base58 Solana wallet) rather than by a
+# lawyer slot or a share position - the same attribute the web app resolves through
+# company indirection, read straight off the listing here.
+#
+# `statuses` carries the page's ONE active lifecycle filter (see
+# `XcavateMarketplaceIndexerModel.GetDeveloperPropertiesAsync`): a single-element list
+# narrows the page to that state, null answers with the developer's whole book. It is a
+# list rather than the singular `status` argument because "Properties sold" spans three
+# on-chain states (SOLD_OUT, LEGAL, FINALIZED) and the merge has to happen server-side,
+# inside the same `totalCount` the stat cell reads - the same reason `MarketplaceListings`
+# filters by `feedStates` rather than by status.
+#
+# The web page's five tabs (drafts / submitted / verified / listed / rejected) are the
+# off-chain listing-review workflow, which lives in the web app's own database: none of
+# those states exists on chain or in this indexer, so this page filters by the lifecycle a
+# developer's listing actually occupies instead. See `DeveloperPropertyFilter` in
+# `XcavateMarketplaceIndexerModel.cs` for the mapping and what each web tab became.
+#
+# `first`/`offset` carry no GraphQL default (the indexer rejects defaults on non-null
+# variables), and `totalCount` answers the stat cells with a `first: 1` call - no full page
+# fetch just to count.
+query DeveloperProperties($developer: String, $statuses: [ListingStatus!], $first: Int!, $offset: Int!) {
+  listings(developer: $developer, statuses: $statuses, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      ...ListingParts
+    }
+  }
+}

@@ -1513,6 +1513,110 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// One lifecycle filter of the developer page's property list. Each option is the
+        /// set of on-chain <see cref="ListingStatus"/> values that answer it, so the merge
+        /// happens inside the indexer's <c>totalCount</c> rather than over a fetched page.
+        /// </summary>
+        /// <remarks>
+        /// These are the on-chain lifecycle states, deliberately NOT the web page's five
+        /// tabs. The web's drafts / submitted / verified / rejected belong to the
+        /// off-chain listing-review workflow stored in the web app's own database: no
+        /// equivalent exists on chain or in this indexer, so they are omitted rather than
+        /// invented. <see cref="Pending"/> is the closest honest stand-in for the web's
+        /// draft/submitted pair (a listing whose asset PDA does not exist yet is created
+        /// but not yet live), and <see cref="ForSale"/> is the web's "listed" tab.
+        /// </remarks>
+        public enum DeveloperPropertyFilter
+        {
+            /// <summary>No status filter: everything the developer created.</summary>
+            All,
+
+            /// <summary>Created but not live yet (the asset PDA does not exist).</summary>
+            Pending,
+
+            /// <summary>On the market with the sale window open.</summary>
+            ForSale,
+
+            /// <summary>
+            /// Fully committed and through completion - the three states the
+            /// "Properties sold" figure spans.
+            /// </summary>
+            Sold,
+
+            /// <summary>Ended without completing: expired, cancelled or refunding.</summary>
+            Ended,
+        }
+
+        /// <summary>
+        /// The <see cref="ListingStatus"/> values answering one developer-page filter, or
+        /// null for <see cref="DeveloperPropertyFilter.All"/> - absent argument, filter off.
+        /// </summary>
+        public static IReadOnlyList<ListingStatus>? ToDeveloperStatuses(DeveloperPropertyFilter filter) => filter switch
+        {
+            DeveloperPropertyFilter.Pending => [ListingStatus.PendingAssets],
+            DeveloperPropertyFilter.ForSale => [ListingStatus.Listed],
+            DeveloperPropertyFilter.Sold => [ListingStatus.SoldOut, ListingStatus.Legal, ListingStatus.Finalized],
+            DeveloperPropertyFilter.Ended => [ListingStatus.Expired, ListingStatus.Cancelled, ListingStatus.Refunding],
+            _ => null,
+        };
+
+        /// <summary>
+        /// The listings created by one developer wallet, one page at a time - the developer
+        /// page's property list. <paramref name="filter"/> narrows it to one lifecycle
+        /// state; <see cref="DeveloperPropertyFilter.All"/> answers with everything.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="developer"/> is matched against the listing's own
+        /// <c>developer</c> column (the creator's base58 Solana wallet), not against a
+        /// lawyer slot or a share position - unlike the lawyer and investor paths, the
+        /// developer needs no join: the property is theirs because they created it.
+        /// <c>TotalCount</c> reflects the filter, so the stat cells read it with
+        /// <c>first: 1</c> instead of fetching a page to count.
+        /// </remarks>
+        public static async Task<(int TotalCount, IReadOnlyList<XcavateSolanaListingNft> Items)> GetDeveloperPropertiesAsync(
+            SolanaCluster cluster,
+            string developer,
+            DeveloperPropertyFilter filter,
+            int first,
+            int offset,
+            CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            var result = await client.DeveloperProperties
+                .ExecuteAsync(developer, ToDeveloperStatuses(filter), first, offset, token)
+                .ConfigureAwait(false);
+
+            result.EnsureNoErrors();
+
+            var connection = result.Data?.Listings;
+
+            var items = connection?.Nodes is { } nodes
+                ? nodes.Select(node => MapListing(node, node.PropertyAsset)).ToList()
+                : [];
+
+            return (connection?.TotalCount ?? 0, items);
+        }
+
+        /// <summary>
+        /// The "Properties sold" figure: the developer's listings across the three
+        /// completing states, counted by <c>totalCount</c> at <c>first: 1</c> so no page is
+        /// fetched just to count. It is its own call because the figure is shown whichever
+        /// tab is active, while the list below it answers to the active tab's filter.
+        /// </summary>
+        public static async Task<int> GetDeveloperSoldCountAsync(
+            SolanaCluster cluster,
+            string developer,
+            CancellationToken token = default)
+        {
+            var (totalCount, _) = await GetDeveloperPropertiesAsync(
+                    cluster, developer, DeveloperPropertyFilter.Sold, first: 1, offset: 0, token)
+                .ConfigureAwait(false);
+
+            return totalCount;
+        }
+
+        /// <summary>
         /// The client-side stand-in for the old SubQuery <c>includesInsensitive</c> filters:
         /// an empty filter matches everything, a non-empty one is a case-insensitive
         /// substring match. The search text additionally matches the postcode, which is the

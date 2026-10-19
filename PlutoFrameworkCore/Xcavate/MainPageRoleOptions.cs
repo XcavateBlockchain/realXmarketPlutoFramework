@@ -12,6 +12,7 @@ namespace PlutoFrameworkCore.Xcavate
     {
         private const string InvestorRoute = "//Account";
         private const string LawyerRoute = "//LawyerAccount";
+        private const string DeveloperRoute = "//DeveloperAccount";
 
         public static IReadOnlyList<MainPageRole> Selectable { get; } = new[]
         {
@@ -26,10 +27,17 @@ namespace PlutoFrameworkCore.Xcavate
             return overrideRole ?? profileRole ?? MainPageRole.Investor;
         }
 
-        public static string ResolveRoute(MainPageRole role)
+        /// <summary>
+        /// The landing page behind a role. <see cref="MainPageRole.LettingAgent"/> still has
+        /// no page of its own and falls back to the investor one, as every unimplemented role
+        /// has always done.
+        /// </summary>
+        public static string ResolveRoute(MainPageRole role) => role switch
         {
-            return role == MainPageRole.Lawyer ? LawyerRoute : InvestorRoute;
-        }
+            MainPageRole.Lawyer => LawyerRoute,
+            MainPageRole.Developer => DeveloperRoute,
+            _ => InvestorRoute,
+        };
 
         public static bool TryParse(string? value, out MainPageRole role)
         {
