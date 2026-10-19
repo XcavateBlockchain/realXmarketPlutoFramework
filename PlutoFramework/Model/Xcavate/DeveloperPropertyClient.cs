@@ -42,12 +42,25 @@ namespace PlutoFramework.Model.Xcavate
 
         public string? TownCity { get; init; }
 
+        public string? Region { get; init; }
+
+        /// <summary>The free-form location line the form asks for, used when the parts are missing.</summary>
+        public string? Location { get; init; }
+
+        public string? Street { get; init; }
+
         public string? ImageUrl { get; init; }
 
         public string? CompanyName { get; init; }
 
-        /// <summary>Share price in pounds, straight off the declared finances.</summary>
-        public decimal? SharePrice { get; init; }
+        /// <summary>The declared property price in pounds - what the web page shows as "Price".</summary>
+        public decimal? PropertyPrice { get; init; }
+
+        /// <summary>How many shares the property is split into - the web page's "Shares" figure.</summary>
+        public decimal? NumberOfShares { get; init; }
+
+        /// <summary>Declared monthly rent, the other half of the gross-yield estimate.</summary>
+        public decimal? EstimatedRentalIncome { get; init; }
 
         /// <summary>The on-chain listing this became, when it got that far.</summary>
         public string? ListingId { get; init; }
@@ -56,11 +69,34 @@ namespace PlutoFramework.Model.Xcavate
 
         public DateTimeOffset? UpdatedAt { get; init; }
 
-        /// <summary>Two-line address used for the card: the postcode, or the town without one.</summary>
-        public string LocationText =>
-            !string.IsNullOrWhiteSpace(PostCode)
-                ? PostCode
-                : TownCity ?? string.Empty;
+        /// <summary>
+        /// The card's location line, built the way the web item builds it: town, region and
+        /// postcode joined up, with the free-form location (then the street) as the fallback.
+        /// </summary>
+        public string LocationText
+        {
+            get
+            {
+                var parts = new[] { TownCity, Region, PostCode }
+                    .Where(part => !string.IsNullOrWhiteSpace(part))
+                    .ToArray();
+
+                if (parts.Length > 0)
+                {
+                    return string.Join(", ", parts);
+                }
+
+                return Location ?? Street ?? string.Empty;
+            }
+        }
+
+        /// <summary>The card's name line; a half-filled draft has none yet.</summary>
+        public string NameText =>
+            string.IsNullOrWhiteSpace(Name) ? "Untitled property" : Name!;
+
+        /// <summary>The card's type badge; the web item falls back the same way.</summary>
+        public string TypeText =>
+            string.IsNullOrWhiteSpace(PropertyType) ? "Property" : PropertyType!;
 
         /// <summary>
         /// Whether there is a photo to show. Most drafts have none - the image is uploaded at
@@ -70,12 +106,74 @@ namespace PlutoFramework.Model.Xcavate
         public bool HasImage => !string.IsNullOrWhiteSpace(ImageUrl);
 
         /// <summary>
-        /// The declared share price. A draft mid-form has no finances section at all yet, so
-        /// the row stays empty rather than showing zero, which would look like a decision.
+        /// The declared property price, shortened the way the web item shortens it
+        /// (£415k, £2.5m). A draft mid-form has no finances section at all yet, so the row
+        /// stays empty rather than showing zero, which would look like a decision.
         /// </summary>
-        public string PriceText => SharePrice is null
+        public string PriceText
+        {
+            get
+            {
+                if (PropertyPrice is null)
+                {
+                    return string.Empty;
+                }
+
+                var value = PropertyPrice.Value;
+
+                if (value >= 1_000_000m)
+                {
+                    var millions = value / 1_000_000m;
+                    var rounded = millions % 1m == 0m
+                        ? millions.ToString("0", CultureInfo.InvariantCulture)
+                        : millions.ToString("0.0", CultureInfo.InvariantCulture);
+
+                    return $"£{rounded}m";
+                }
+
+                if (value >= 1_000m)
+                {
+                    return $"£{Math.Round(value / 1_000m).ToString("0", CultureInfo.InvariantCulture)}k";
+                }
+
+                return $"£{value.ToString("N0", CultureInfo.InvariantCulture)}";
+            }
+        }
+
+        /// <summary>Whether the finances section exists at all; without it the Shares/Price row hides.</summary>
+        public bool HasFinances => PropertyPrice is not null || NumberOfShares is not null;
+
+        /// <summary>The card's Shares figure; empty when the finances section is not filled in yet.</summary>
+        public string SharesText => NumberOfShares is null
             ? string.Empty
-            : $"£{SharePrice.Value:N0}";
+            : NumberOfShares.Value.ToString("N0", CultureInfo.InvariantCulture);
+
+        /// <summary>
+        /// The web item's gross-yield estimate: a year of declared rent over the declared price,
+        /// to one decimal. Missing or nonsensical finances yield nothing rather than a fake figure.
+        /// </summary>
+        public string? GrossYieldText
+        {
+            get
+            {
+                if (PropertyPrice is not { } price || EstimatedRentalIncome is not { } rent
+                    || price <= 0)
+                {
+                    return null;
+                }
+
+                var percent = (double)(rent * 12m / price) * 100d;
+
+                if (!double.IsFinite(percent))
+                {
+                    return null;
+                }
+
+                return $"{percent.ToString("0.0", CultureInfo.InvariantCulture)}%";
+            }
+        }
+
+        public bool HasGrossYield => GrossYieldText is not null;
 
         /// <summary>The status as a reader sees it, with the one word the enum had to shorten.</summary>
         public string StatusText =>
@@ -305,8 +403,6 @@ namespace PlutoFramework.Model.Xcavate
         /// </summary>
         private static DeveloperProperty Parse(IDictionary<string, AttributeValue> item)
         {
-            item.TryGetValue("status", out var statusValue);
-
             return new DeveloperProperty
             {
                 PropertyId = Text(item, "propertyId") ?? string.Empty,
@@ -315,9 +411,14 @@ namespace PlutoFramework.Model.Xcavate
                 PropertyType = Text(item, "propertyType"),
                 PostCode = MapText(item, "address", "postCode"),
                 TownCity = MapText(item, "address", "townCity"),
+                Region = MapText(item, "address", "region"),
+                Location = MapText(item, "address", "location"),
+                Street = MapText(item, "address", "street"),
                 ImageUrl = FirstOf(item, "propertyImages"),
                 CompanyName = Text(item, "companyName"),
-                SharePrice = MapDecimal(item, "finances", "sharePrice"),
+                PropertyPrice = MapDecimal(item, "finances", "propertyPrice"),
+                NumberOfShares = MapDecimal(item, "finances", "numberOfShares"),
+                EstimatedRentalIncome = MapDecimal(item, "finances", "estimatedRentalIncome"),
                 ListingId = Text(item, "listingId"),
                 CreatedAt = Timestamp(item, "createdAt"),
                 UpdatedAt = Timestamp(item, "updatedAt"),

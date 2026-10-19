@@ -4,8 +4,9 @@ namespace PlutoFramework.Components.XcavateProperty;
 
 /// <summary>
 /// One property record as the developer's own store holds it - a draft, a submitted form, a
-/// listing that is live - rendered as a card. The marketplace card's shape, without the
-/// listing-only rows: a record that has not been listed has no price, no tokens and no yield.
+/// listing that is live - rendered as a card. The marketplace card's shape and rows, filled
+/// from the record's declared fields: a draft mid-form has no finances section, so the shares,
+/// price and gross-yield rows hide rather than showing zeroes.
 /// </summary>
 public partial class DeveloperPropertyCardView : ContentView
 {

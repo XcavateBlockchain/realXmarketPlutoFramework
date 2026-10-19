@@ -4,12 +4,13 @@
              x:Class="PlutoFramework.Components.XcavateProperty.DeveloperPropertyCardView"
              x:Name="root"
              xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
              xmlns:ffimageloading="clr-namespace:FFImageLoading.Maui;assembly=FFImageLoading.Maui"
              HorizontalOptions="Fill">
 
-    <!-- The marketplace card's shape, for a record that is not a listing yet. A draft has no
-         price, no tokens and no yield, so the rows under the photo carry what the record does
-         have: the name, what kind of property it is, and where. -->
+    <!-- The marketplace card's rows, filled from the developer's own record rather than a
+         listing: location, name with gross yield, then shares and price. A draft mid-form
+         has no finances section, so those rows hide instead of showing zeroes. -->
     <card:Card CardPadding="0, 0, 0, 0"
                HorizontalOptions="Fill">
         <card:Card.View>
@@ -29,6 +30,22 @@
                                                 AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
                                                 AbsoluteLayout.LayoutFlags="All"
                                                 InputTransparent="True" />
+
+                    <!-- What kind of property it is, top left like the web item's badge. -->
+                    <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}"
+                            StrokeThickness="0"
+                            AbsoluteLayout.LayoutBounds="0, 0, AutoSize, AutoSize"
+                            AbsoluteLayout.LayoutFlags="PositionProportional"
+                            Margin="10, 10, 0, 0">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="5" />
+                        </Border.StrokeShape>
+                        <Label Margin="8, 2, 8, 2"
+                               FontSize="12"
+                               Text="{Binding TypeText}"
+                               HorizontalTextAlignment="Center"
+                               VerticalOptions="Center" />
+                    </Border>
 
                     <Border BackgroundColor="#22888888"
                             StrokeThickness="0"
@@ -54,40 +71,74 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <Label FontAttributes="Bold"
-                           Text="{Binding Name}"
-                           HorizontalTextAlignment="Start"
-                           VerticalOptions="Center"
-                           LineBreakMode="TailTruncation"
-                           Grid.Column="0" />
-
-                    <Label Text="{Binding PropertyType}"
-                           TextColor="#A6A6A6"
-                           HorizontalTextAlignment="End"
-                           VerticalOptions="Center"
-                           Grid.Column="1" />
+                    <xcavateproperty:LocationView LocationName="{Binding LocationText}"
+                                                  HorizontalOptions="Start"
+                                                  VerticalOptions="Center"
+                                                  Grid.Column="0" />
                 </Grid>
 
                 <Grid ColumnSpacing="5"
-                      Margin="10, 0, 10, 10"
+                      Margin="10, 0, 10, 0"
                       InputTransparent="True">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <Label Text="{Binding LocationText}"
-                           TextColor="#A6A6A6"
+                    <Label FontAttributes="Bold"
+                           Text="{Binding NameText}"
                            HorizontalTextAlignment="Start"
                            VerticalOptions="Center"
                            LineBreakMode="TailTruncation"
                            Grid.Column="0" />
+
+                    <Label Text="Gross yield"
+                           IsVisible="{Binding HasGrossYield}"
+                           HorizontalTextAlignment="End"
+                           VerticalOptions="Center"
+                           Grid.Column="1" />
+
+                    <Label Text="{Binding GrossYieldText}"
+                           FontAttributes="Bold"
+                           IsVisible="{Binding HasGrossYield}"
+                           HorizontalTextAlignment="End"
+                           VerticalOptions="Center"
+                           Grid.Column="2" />
+                </Grid>
+
+                <Grid ColumnSpacing="5"
+                      Margin="10, 0, 10, 10"
+                      IsVisible="{Binding HasFinances}"
+                      InputTransparent="True">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Label Text="Shares"
+                           HorizontalTextAlignment="Start"
+                           VerticalOptions="Center"
+                           Grid.Column="0" />
+
+                    <Label Text="{Binding SharesText}"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Start"
+                           VerticalOptions="Center"
+                           Grid.Column="1" />
+
+                    <Label Text="Price"
+                           HorizontalTextAlignment="End"
+                           VerticalOptions="Center"
+                           Grid.Column="2" />
 
                     <Label Text="{Binding PriceText}"
                            FontAttributes="Bold"
                            HorizontalTextAlignment="End"
                            VerticalOptions="Center"
-                           Grid.Column="1" />
+                           Grid.Column="3" />
                 </Grid>
             </VerticalStackLayout>
         </Grid>
