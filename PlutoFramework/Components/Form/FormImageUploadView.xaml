@@ -1,75 +1,100 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
              x:Class="PlutoFramework.Components.Form.FormImageUploadView">
-    <card:ClickableCard CardPadding="0">
-        <card:ClickableCard.View>
-            <Grid HeightRequest="230">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+    <VerticalStackLayout Spacing="0">
 
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="30"/>
-                    <RowDefinition Height="200"/>
-                </Grid.RowDefinitions>
+        <Label x:Name="titleLabel"
+               FontSize="14"
+               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}" />
 
-                <Label Grid.ColumnSpan="2"
-                       Grid.Column="0"
-                       Grid.Row="0"
-                        FontAttributes="Bold"
-                        HorizontalOptions="Center"
-                       HorizontalTextAlignment="Center"
-                        VerticalTextAlignment="Start"
-                       Margin="5">
-                    <Label.FormattedText>
-                        <FormattedString>
-                            <Span FontAttributes="Bold"
-                                  x:Name="titleSpan"/>
+        <BoxView HeightRequest="1"
+                 Margin="0, 8, 0, 0"
+                 Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                 HorizontalOptions="Fill" />
 
-                        </FormattedString>
+        <Border Margin="0, 12, 0, 0"
+                Padding="20, 28"
+                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                StrokeThickness="1.5"
+                StrokeDashArray="4, 3"
+                HorizontalOptions="Fill">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="16" />
+            </Border.StrokeShape>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnSelectTapped" />
+            </Border.GestureRecognizers>
 
-                    </Label.FormattedText>
-
-                </Label>
-
+            <Grid>
                 <Image x:Name="image"
-                       Grid.Column="0"
-                       Grid.Row="1"
-                       Grid.ColumnSpan="2"
-                       Aspect="AspectFill"/>
-                
-                <Image Grid.Column="0"
-                       Grid.Row="1"
-                       Margin="60">
-                    <Image.Source>
-                        <FontImageSource Color="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                                         Glyph="&#xf030;"
-                                         FontFamily="FontAwesome"
-                                         Size="40" />
-                    </Image.Source>
+                       Aspect="AspectFill"
+                       HeightRequest="200"
+                       IsVisible="False" />
 
-                    <Image.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnCaptureTapped" />
-                    </Image.GestureRecognizers>
-                </Image>
+                <VerticalStackLayout x:Name="placeholderContent"
+                                     Spacing="10"
+                                     HorizontalOptions="Center">
 
-                <Image Grid.Column="1"
-                       Grid.Row="1"
-                        Margin="65">
-                    <Image.Source>
-                        <FontImageSource Color="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"
-                                         Glyph="&#xf1c5;"
-                                         FontFamily="FontAwesome"
-                                         Size="40" />
-                    </Image.Source>
-                    <Image.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnSelectTapped" />
-                    </Image.GestureRecognizers>
-                </Image>
+                    <Border HeightRequest="56"
+                            WidthRequest="56"
+                            Padding="0"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                            StrokeThickness="1"
+                            HorizontalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="28" />
+                        </Border.StrokeShape>
+                        <Label Text="+"
+                               FontSize="24"
+                               HorizontalTextAlignment="Center"
+                               VerticalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                    </Border>
+
+                    <Label Margin="0, 6, 0, 0"
+                           FontAttributes="Bold"
+                           FontSize="16"
+                           HorizontalTextAlignment="Center"
+                           Text="Drop your files here"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
+
+                    <Label FontSize="13"
+                           HorizontalTextAlignment="Center"
+                           Text="Max 10 files &#183; Up to 10MB"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray400}}" />
+
+                    <Border Margin="0, 8, 0, 0"
+                            Padding="20, 10"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}"
+                            Stroke="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}"
+                            StrokeThickness="1.5"
+                            HorizontalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="24" />
+                        </Border.StrokeShape>
+                        <HorizontalStackLayout Spacing="8">
+                            <Image HeightRequest="16"
+                                   WidthRequest="16"
+                                   VerticalOptions="Center">
+                                <Image.Source>
+                                    <FontImageSource Color="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}"
+                                                     FontFamily="FontAwesome"
+                                                     Glyph="&#xf093;"
+                                                     Size="16" />
+                                </Image.Source>
+                            </Image>
+                            <Label FontSize="14"
+                                   Text="Select files"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray200}}"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </Border>
+
+                </VerticalStackLayout>
             </Grid>
-        </card:ClickableCard.View>
-    </card:ClickableCard>
+        </Border>
+    </VerticalStackLayout>
 </ContentView>

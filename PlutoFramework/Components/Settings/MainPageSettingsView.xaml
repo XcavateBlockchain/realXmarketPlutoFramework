@@ -64,7 +64,7 @@
                     </BindableLayout.ItemTemplate>
                 </FlexLayout>
 
-                <Label Text="Choose which main page opens. The change applies the next time it is opened or the app restarts. Developer and Letting Agent currently use the investor page."
+                <Label Text="Choose which main page opens. The change applies immediately. Letting Agent currently uses the investor page."
                        FontSize="11"
                        TextColor="#A6A6A6" />
             </VerticalStackLayout>

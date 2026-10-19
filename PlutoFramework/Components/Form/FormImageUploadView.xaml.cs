@@ -12,7 +12,7 @@ public partial class FormImageUploadView : ContentView
         propertyChanged: (bindable, oldValue, newValue) =>
         {
             var control = (FormImageUploadView)bindable;
-            control.titleSpan.Text = (string)newValue;
+            control.titleLabel.Text = (string)newValue;
         });
     public FormImageUploadView()
 	{
@@ -27,13 +27,6 @@ public partial class FormImageUploadView : ContentView
     public string Title {
         get => (string)GetValue(TitleProperty);
         set => SetValue(TitleProperty, value);
-    }
-
-    private async void OnCaptureTapped(object sender, TappedEventArgs e)
-    {
-        var result = await MediaPicker.Default.CapturePhotoAsync();
-
-        await SetImageAsync(result);
     }
 
     private async void OnSelectTapped(object sender, TappedEventArgs e)
@@ -62,6 +55,10 @@ public partial class FormImageUploadView : ContentView
         await sourceStream.CopyToAsync(localFileStream);
 
         image.Source = ImageSource.FromFile(localFilePath);
+
+        image.IsVisible = true;
+
+        placeholderContent.IsVisible = false;
 
         SetValue(ImageStreamProperty, sourceStream);
     }

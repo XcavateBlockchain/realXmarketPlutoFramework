@@ -5,6 +5,13 @@ namespace PlutoFramework.Model.Xcavate
 {
     public static class MainPageRoleModel
     {
+        /// <summary>
+        /// Raised after the role override changes so the app can re-route to the new main
+        /// page immediately. Deliberately not raised by <see cref="ClearOverride"/> - logout
+        /// drives its own navigation.
+        /// </summary>
+        public static event Action? OverrideChanged;
+
         public static async Task<MainPageRole> GetSelectedRoleAsync()
         {
             if (MainPageRoleOptions.TryParse(
@@ -39,6 +46,8 @@ namespace PlutoFramework.Model.Xcavate
         public static void SetOverride(MainPageRole role)
         {
             Preferences.Set(PreferencesModel.SETTINGS_MAIN_PAGE_ROLE, role.ToString());
+
+            OverrideChanged?.Invoke();
         }
 
         public static void ClearOverride()
