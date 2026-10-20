@@ -7,14 +7,12 @@ public partial class FormInputView : ContentView, IFormFocusable
 {
     public static readonly BindableProperty CardWidthProperty = BindableProperty.Create(
        nameof(CardWidth), typeof(int), typeof(FormInputView),
-       defaultBindingMode: BindingMode.TwoWay,
-       propertyChanging: (bindable, oldValue, newValue) =>
-       {
-           var control = (FormInputView)bindable;
-
-           var width = (int)newValue - 20;
-           control.entry.WidthRequest = width;
-       });
+       defaultBindingMode: BindingMode.TwoWay);
+    // CardWidth deliberately does not set entry.WidthRequest anymore: callers pass the
+    // outer stack's full width (padding included), and the resulting explicit width is
+    // wider than the entry's grid cell - once MaxValue reveals the Max button, by the
+    // whole button column. An oversized Fill-aligned entry overflows to the left and
+    // clips the start of the text. The entry fills the grid on its own.
 
     public static readonly BindableProperty PlaceholderProperty = BindableProperty.Create(
         nameof(Placeholder), typeof(string), typeof(FormInputView),
