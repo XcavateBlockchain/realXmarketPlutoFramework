@@ -96,6 +96,14 @@ namespace PlutoFramework.Model.Xcavate
         public DocumentStatus SpvLawyerDocStatus { get; set; }
 
         /// <summary>
+        /// True only for FINALIZED - the single primary-listing status the marketplace
+        /// program's relist_shares accepts; every other status is refused on-chain with
+        /// PropertyNotFinalized (6073). The detail page gates its relist action on this
+        /// flag rather than submitting a transaction the program must reject.
+        /// </summary>
+        public bool IsFinalized => ListingStatus is "Finalized";
+
+        /// <summary>
         /// True once the listing enters the legal phase - the window in which the two
         /// lawyers review and rule on the sale documents - and through the settled and
         /// wound-down states that keep their verdicts readable. Before this (PENDING_ASSETS,

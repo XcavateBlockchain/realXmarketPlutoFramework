@@ -13,6 +13,13 @@
          has no finances section, so those rows hide instead of showing zeroes. -->
     <card:Card CardPadding="0, 0, 0, 0"
                HorizontalOptions="Fill">
+        <!-- The tap has to sit on the card itself, beside the recognizer Card is born with:
+             MAUI gestures do not bubble, so a recognizer attached to this ContentView wrapper
+             is swallowed by the card's own and never fires. -->
+        <card:ClickableCard.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding Source={x:Reference root}, Path=TapCommand}"
+                                  CommandParameter="{Binding Source={x:Reference root}, Path=PropertyRecord}" />
+        </card:ClickableCard.GestureRecognizers>
         <card:Card.View>
         <!-- The record, not the page's binding context, so every binding below reads it
              directly. The value itself comes from the PropertyRecord bindable property. -->

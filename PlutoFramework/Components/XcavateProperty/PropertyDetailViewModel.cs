@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.Loading;
+using PlutoFramework.Components.MessagePopup;
 using PlutoFramework.Components.Messages;
 using PlutoFramework.Components.TransactionAnalyzer;
 using PlutoFramework.Components.WebView;
@@ -1728,6 +1729,22 @@ namespace PlutoFramework.Components.XcavateProperty
         [RelayCommand]
         public async Task RelistAsync()
         {
+            // The marketplace program takes relist_shares only on a Finalized primary
+            // listing and refuses every other status with PropertyNotFinalized (6073) -
+            // say that in words rather than spending a wallet prompt on a transaction
+            // that must fail. Solana-sourced listings carry the status; anything older
+            // falls through to the chain's own rejection.
+            if (SolanaListing is { IsFinalized: false } unfinalized)
+            {
+                var messagePopup = DependencyService.Get<MessagePopupViewModel>();
+
+                messagePopup.Title = "Sale not settled yet";
+                messagePopup.Text = $"These tokens can be listed for resale once the property's sale has completed its legal process. This property's status is \"{unfinalized.ListingStatus}\" - refresh the page once it shows \"Finalized\".";
+                messagePopup.IsVisible = true;
+
+                return;
+            }
+
             var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
 
             fullPageLoadingViewModel.IsVisible = true;

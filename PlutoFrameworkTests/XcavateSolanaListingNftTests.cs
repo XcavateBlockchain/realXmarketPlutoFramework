@@ -71,5 +71,27 @@ namespace PlutoFrameworkTests
             Assert.That(listing.DirectBuyIsOpen(nowUnixSeconds: 1_800_000_100), Is.True);
             Assert.That(listing.DirectBuyIsOpen(nowUnixSeconds: 1_800_000_101), Is.True);
         }
+
+        /// <summary>
+        /// relist_shares is accepted only on a Finalized primary listing - every other
+        /// status is refused on-chain with PropertyNotFinalized (6073) - so the detail
+        /// page gates the relist action on this flag instead of submitting a transaction
+        /// the program must reject.
+        /// </summary>
+        [Test]
+        [TestCase("Finalized", true)]
+        [TestCase("PendingAssets", false)]
+        [TestCase("Listed", false)]
+        [TestCase("SoldOut", false)]
+        [TestCase("Legal", false)]
+        [TestCase("Expired", false)]
+        [TestCase("Cancelled", false)]
+        [TestCase("Refunding", false)]
+        public void IsFinalized_TrueOnlyForTheFinalizedStatus(string status, bool expected)
+        {
+            var listing = ListingWithClaimDeadline(0) with { ListingStatus = status };
+
+            Assert.That(listing.IsFinalized, Is.EqualTo(expected));
+        }
     }
 }

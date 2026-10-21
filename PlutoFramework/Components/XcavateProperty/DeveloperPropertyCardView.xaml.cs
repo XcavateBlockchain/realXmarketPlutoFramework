@@ -1,4 +1,5 @@
 using PlutoFramework.Model.Xcavate;
+using System.Windows.Input;
 
 namespace PlutoFramework.Components.XcavateProperty;
 
@@ -35,6 +36,21 @@ public partial class DeveloperPropertyCardView : ContentView
     {
         get => (DeveloperProperty)GetValue(PropertyRecordProperty);
         set => SetValue(PropertyRecordProperty, value);
+    }
+
+    /// <summary>
+    /// The command the card's tap fires, with <see cref="PropertyRecord"/> as the parameter.
+    /// The recognizer lives on the inner card itself, next to the one <c>Card</c> is born
+    /// with: MAUI gestures do not bubble, so a recognizer attached to this wrapper would be
+    /// swallowed by the card's own and would never fire.
+    /// </summary>
+    public static readonly BindableProperty TapCommandProperty = BindableProperty.Create(
+        nameof(TapCommand), typeof(ICommand), typeof(DeveloperPropertyCardView));
+
+    public ICommand? TapCommand
+    {
+        get => (ICommand?)GetValue(TapCommandProperty);
+        set => SetValue(TapCommandProperty, value);
     }
 
     /// <summary>
