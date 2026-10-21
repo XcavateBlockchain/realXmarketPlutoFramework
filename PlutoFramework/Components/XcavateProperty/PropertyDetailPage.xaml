@@ -14,6 +14,7 @@
                        xmlns:card="clr-namespace:PlutoFramework.Components.Card"
                        xmlns:map="clr-namespace:PlutoFramework.Components.Map"
                        xmlns:loading="clr-namespace:PlutoFramework.Components.Loading"
+                       xmlns:messagepopup="clr-namespace:PlutoFramework.Components.MessagePopup"
                        x:Class="PlutoFramework.Components.XcavateProperty.PropertyDetailPage"
                        Title="PropertyDetailPage"
                        NavigationBarIsVisible="False">
@@ -351,5 +352,7 @@
         <xcavateproperty:CastVotePopupView />
 
         <xcavateproperty:SendSharesPopupView />
+
+        <messagepopup:MessagePopupView />
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>
