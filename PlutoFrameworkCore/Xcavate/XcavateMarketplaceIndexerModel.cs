@@ -1454,10 +1454,13 @@ namespace PlutoFramework.Model.Xcavate
 
         /// <summary>
         /// The listings a lawyer can still be engaged on, one page at a time - the lawyer
-        /// page's "Newly listed" filter. Server-side that is SOLD_OUT listings whose legal
-        /// window is still open with at least one vacant lawyer slot and the asking wallet
-        /// in neither slot, ordered by sold-out recency (<c>assignableTo</c> on the shared
-        /// <c>listings</c> query).
+        /// page's "Newly listed" filter. Server-side that is every live listing with a
+        /// lawyer slot still open: LISTED (slots only fill after sell-out, so they are
+        /// always open there) or SOLD_OUT with the legal window still running, at least
+        /// one slot vacant and the asking wallet in neither, ordered by sold-out recency
+        /// then listing recency (<c>assignableTo</c> on the shared <c>listings</c> query).
+        /// An indexer predating the widened filter answers with its narrower sold-out-only
+        /// set instead - the page simply shows fewer rows, never an error.
         /// </summary>
         public static Task<(int TotalCount, IReadOnlyList<XcavateSolanaListingNft> Items)> GetLawyerAssignablePropertiesAsync(
             SolanaCluster cluster,
