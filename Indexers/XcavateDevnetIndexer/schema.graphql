@@ -783,7 +783,7 @@ type QueryRoot {
     active: Boolean
     "Base58 lawyer wallet: only listings where it sits in either lawyer slot (developer_lawyer OR spv_lawyer)."
     assignedLawyer: String
-    "Base58 lawyer wallet: only SOLD_OUT listings whose legal window is still open, with at least one vacant lawyer slot, that do not already have this lawyer in either slot. Ordered by sold-out recency."
+    "Base58 lawyer wallet: live listings (LISTED or SOLD_OUT with the legal window still open) with at least one vacant lawyer slot, that do not already have this lawyer in either slot. Ordered by sold-out recency, then listing recency."
     assignableTo: String
     first: Int
     offset: Int
