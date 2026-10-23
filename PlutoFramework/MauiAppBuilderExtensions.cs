@@ -357,7 +357,7 @@ namespace PlutoFramework
         /// </summary>
         private static void CustomizeWebViewHandler()
         {
-#if ANDROID26_0_OR_GREATER
+#if ANDROID
             Microsoft.Maui.Handlers.WebViewHandler.Mapper.ModifyMapping(
                 nameof(Android.Webkit.WebView.WebChromeClient),
                 (handler, view, args) => handler.PlatformView.SetWebChromeClient(new WebChromeClientWithPermissions(handler)));
