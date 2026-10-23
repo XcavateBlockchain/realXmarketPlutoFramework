@@ -43,6 +43,8 @@ namespace PlutoFrameworkTests
         [TestCase("finalize_spv_election")]
         [TestCase("resolve_silent_verdict")]
         [TestCase("execute_deal")]
+        [TestCase("assign_developer_lawyer")]
+        [TestCase("claim_spv_case")]
         public void Discriminators_MatchTheAnchorFormula(string instructionName)
         {
             var expected = SHA256.HashData(Encoding.UTF8.GetBytes($"global:{instructionName}"))[..8];
@@ -88,6 +90,10 @@ namespace PlutoFrameworkTests
                     Programs, SyntheticKey(1), 7, 3, SyntheticKey(2), SyntheticKey(3), SyntheticKey(4), SyntheticKey(5),
                     new PublicKey(SolanaTokenProgram.Token2022), new PublicKey(SolanaTokenProgram.Legacy),
                     SyntheticKey(6), SyntheticKey(7), []),
+                "assign_developer_lawyer" => XcavateMarketplaceProgram.AssignDeveloperLawyer(
+                    Programs, SyntheticKey(1), SyntheticKey(2), 7),
+                "claim_spv_case" => XcavateMarketplaceProgram.ClaimSpvCase(
+                    Programs, SyntheticKey(1), 7, 2, 10_000),
                 _ => throw new ArgumentOutOfRangeException(nameof(instructionName)),
             };
 
@@ -310,6 +316,97 @@ namespace PlutoFrameworkTests
             Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8 + 4));
             Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
             Assert.That(instruction.Data[16..20], Is.EqualTo(new byte[] { 0x0F, 0x0E, 0x0D, 0x0C }));
+        }
+
+        [Test]
+        public void AssignDeveloperLawyer_HasTheIdlAccountShape()
+        {
+            var developer = SyntheticKey(1);
+            var lawyer = SyntheticKey(2);
+
+            var instruction = XcavateMarketplaceProgram.AssignDeveloperLawyer(Programs, developer, lawyer, 7);
+
+            Assert.Multiple(() =>
+            {
+                // developer, developer_role, lawyer_role, registry, listing, property -
+                // 6 accounts, in IDL order; the named lawyer never signs.
+                Assert.That(instruction.Keys, Has.Count.EqualTo(6));
+                Assert.That(instruction.Keys[0].PublicKey, Is.EqualTo(developer.Key));
+                Assert.That(instruction.Keys[0].IsSigner, Is.True);
+                Assert.That(instruction.Keys[1].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveRoleAccount(Programs, developer, XcavateRole.RealEstateDeveloper).Key));
+                Assert.That(instruction.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveRoleAccount(Programs, lawyer, XcavateRole.Lawyer).Key));
+                Assert.That(instruction.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyer(Programs, lawyer).Key));
+                Assert.That(instruction.Keys[4].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveListing(Programs, 7).Key));
+                Assert.That(instruction.Keys[5].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveProperty(Programs, 7).Key));
+            });
+        }
+
+        [Test]
+        public void AssignDeveloperLawyer_EncodesArgsLittleEndian()
+        {
+            var lawyer = SyntheticKey(2);
+
+            var instruction = XcavateMarketplaceProgram.AssignDeveloperLawyer(
+                Programs, SyntheticKey(1), lawyer, 0x0102030405060708);
+
+            // discriminator + u64 listing_id + pubkey lawyer
+            Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8 + 32));
+            Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+            Assert.That(instruction.Data[16..48], Is.EqualTo(lawyer.KeyBytes));
+        }
+
+        [Test]
+        public void ClaimSpvCase_HasTheIdlAccountShape()
+        {
+            var lawyer = SyntheticKey(1);
+
+            var claim = XcavateMarketplaceProgram.ClaimSpvCase(Programs, lawyer, 7, 2, 10_000);
+
+            Assert.Multiple(() =>
+            {
+                // lawyer, payer, lawyer_role, registry, listing, property, candidacy,
+                // system_program - 8 accounts, in IDL order. The lawyer wallet fronts the
+                // candidacy's rent itself (payer == lawyer): the program accepts any
+                // paying wallet and the app takes the single-signer path.
+                Assert.That(claim.Keys, Has.Count.EqualTo(8));
+                Assert.That(claim.Keys[0].PublicKey, Is.EqualTo(lawyer.Key));
+                Assert.That(claim.Keys[0].IsSigner, Is.True);
+                Assert.That(claim.Keys[1].PublicKey, Is.EqualTo(lawyer.Key));
+                Assert.That(claim.Keys[1].IsSigner, Is.True);
+                Assert.That(claim.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveRoleAccount(Programs, lawyer, XcavateRole.Lawyer).Key));
+                Assert.That(claim.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyer(Programs, lawyer).Key));
+                Assert.That(claim.Keys[4].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveListing(Programs, 7).Key));
+                Assert.That(claim.Keys[5].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveProperty(Programs, 7).Key));
+                Assert.That(claim.Keys[6].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyerCandidacy(Programs, 7, 2, lawyer).Key));
+                Assert.That(claim.Keys[7].PublicKey, Is.EqualTo(SystemProgram.ProgramIdKey.Key));
+            });
+        }
+
+        [Test]
+        public void ClaimSpvCase_EncodesArgsLittleEndian()
+        {
+            var instruction = XcavateMarketplaceProgram.ClaimSpvCase(
+                Programs,
+                lawyer: SyntheticKey(1),
+                listingId: 0x0102030405060708,
+                round: 0x0A0B0C0D0E0F1011,
+                costs: 0x1213141516171819);
+
+            // discriminator + u64 listing_id + u64 round + u64 costs
+            Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8 + 8 + 8));
+            Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+            Assert.That(instruction.Data[16..24], Is.EqualTo(new byte[] { 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A }));
+            Assert.That(instruction.Data[24..32], Is.EqualTo(new byte[] { 0x19, 0x18, 0x17, 0x16, 0x15, 0x14, 0x13, 0x12 }));
         }
 
         [Test]

@@ -375,5 +375,69 @@ namespace PlutoFrameworkTests
                     Is.EqualTo(XcavateMarketplaceProgram.DeriveListing(Programs, 9).Key));
             });
         }
+
+        [Test]
+        public async Task AssignDeveloperLawyerAsync_ReturnsTheSingleProgramInstruction()
+        {
+            var developer = SyntheticKey(1);
+            var lawyer = SyntheticKey(2);
+
+            var instructions = await XcavateMarketplaceCallsModel.AssignDeveloperLawyerAsync(
+                SolanaCluster.Devnet, developer.Key, 9, lawyer.Key);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(1));
+                Assert.That(instructions[0].Data[..8], Is.EqualTo(Discriminator("assign_developer_lawyer")));
+                Assert.That(instructions[0].Keys[0].PublicKey, Is.EqualTo(developer.Key));
+                Assert.That(
+                    instructions[0].Keys[3].PublicKey,
+                    Is.EqualTo(XcavateMarketplaceProgram.DeriveLawyer(Programs, lawyer).Key));
+            });
+        }
+
+        [Test]
+        public async Task ClaimSpvCaseAsync_ReturnsTheSingleProgramInstructionKeyedByRound()
+        {
+            var lawyer = SyntheticKey(1);
+
+            var instructions = await XcavateMarketplaceCallsModel.ClaimSpvCaseAsync(
+                SolanaCluster.Devnet, lawyer.Key, 9, round: 4, costsQuote: 10_000);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(1));
+                Assert.That(instructions[0].Data[..8], Is.EqualTo(Discriminator("claim_spv_case")));
+                Assert.That(instructions[0].Keys[0].PublicKey, Is.EqualTo(lawyer.Key));
+                // payer == lawyer: the single-signer path.
+                Assert.That(instructions[0].Keys[1].PublicKey, Is.EqualTo(lawyer.Key));
+                Assert.That(
+                    instructions[0].Keys[6].PublicKey,
+                    Is.EqualTo(XcavateMarketplaceProgram.DeriveLawyerCandidacy(Programs, 9, 4, lawyer).Key));
+            });
+        }
+
+        [Test]
+        public void QuoteCostsFromDecimal_AllowsZeroAndScalesPositives()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(XcavateMarketplaceCallsModel.QuoteCostsFromDecimal(0m), Is.EqualTo(0UL));
+                Assert.That(XcavateMarketplaceCallsModel.QuoteCostsFromDecimal(25m), Is.EqualTo(25_000_000_000UL));
+                Assert.That(XcavateMarketplaceCallsModel.QuoteCostsFromDecimal(0.000000001m), Is.EqualTo(1UL));
+            });
+        }
+
+        [Test]
+        public void QuoteCostsFromDecimal_RejectsNegativeAndOverflowing()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() =>
+                    XcavateMarketplaceCallsModel.QuoteCostsFromDecimal(-1m));
+                Assert.Throws<ArgumentOutOfRangeException>(() =>
+                    XcavateMarketplaceCallsModel.QuoteCostsFromDecimal(decimal.MaxValue));
+            });
+        }
     }
 }

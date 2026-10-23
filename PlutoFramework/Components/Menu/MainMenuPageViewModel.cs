@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlutoFramework.Components.Keys;
 using PlutoFramework.Components.Xcavate;
+using PlutoFramework.Components.XcavateProperty;
 using PlutoFramework.Constants;
 using PlutoFramework.Model;
 using PlutoFramework.Model.SQLite;
@@ -173,5 +174,8 @@ namespace PlutoFramework.Components.Menu
 
         [RelayCommand]
         public Task RolesActionAsync() => Shell.Current.Navigation.PushAsync(new RolesPage());
+
+        [RelayCommand]
+        public Task PendingPropertiesActionAsync() => Shell.Current.Navigation.PushAsync(new PendingPropertiesPage());
     }
 }

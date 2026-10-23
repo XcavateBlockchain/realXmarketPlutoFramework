@@ -307,6 +307,12 @@ namespace PlutoFramework.Components.XcavateProperty
                     Console.WriteLine(ex);
                 }
 
+                // The bottom action bar follows the main-page role from Settings
+                // (Investor/LettingAgent keep the investor flow; Developer and Lawyer get
+                // their own bars). Read here so the first render is already role-correct;
+                // the page re-reads it on every appearance.
+                var mainPageRole = await MainPageRoleModel.GetSelectedRoleAsync().ConfigureAwait(false);
+
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
                     viewModel.Metadata = ((INftXcavateMetadata)nft.NftBase).XcavateMetadata;
@@ -316,6 +322,7 @@ namespace PlutoFramework.Components.XcavateProperty
                     viewModel.TokensOwned = nft.TokensOwned;
                     viewModel.SpvCreated = nft.SpvCreated;
                     viewModel.Roles = roles;
+                    viewModel.MainPageRole = mainPageRole;
 
                     // Set last, so the skeleton only steps aside once every field is in place.
                     viewModel.IsLoading = false;

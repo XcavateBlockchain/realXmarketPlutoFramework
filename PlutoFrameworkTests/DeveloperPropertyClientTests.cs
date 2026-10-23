@@ -106,5 +106,43 @@ namespace PlutoFrameworkTests
                 DeveloperPropertyQuery.ParseStatus("pending"),
                 Is.EqualTo(DeveloperPropertyStatus.Draft));
         }
+
+        [Test]
+        public void PageToken_RoundTripsEveryAttributeThroughTheEncoding()
+        {
+            // The token carries a DynamoDB LastEvaluatedKey verbatim: the composed ElectroDB
+            // keys contain '#' and '$', so any escaping slip breaks the round trip.
+            var key = new Dictionary<string, (string Type, string Value)>
+            {
+                ["pk"] = ("S", "$realxmarket#propertyid_prp_5zpvkvwr4u4y"),
+                ["sk"] = ("S", "$property_1"),
+                ["gsi1pk"] = ("S", "$realxmarket#companyid_company_4vaesqkcsxbxlhjnfz3jiq"),
+                ["gsi1sk"] = ("S", "$property_1#status_submitted#propertyid_prp_5zpvkvwr4u4y"),
+            };
+
+            var decoded = DeveloperPropertyQuery.DecodePageToken(
+                DeveloperPropertyQuery.EncodePageToken(key));
+
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded, Is.EquivalentTo(key));
+        }
+
+        [Test]
+        public void PageToken_AnEmptyPositionEncodesAnEmptyKey()
+        {
+            var decoded = DeveloperPropertyQuery.DecodePageToken(
+                DeveloperPropertyQuery.EncodePageToken(new Dictionary<string, (string Type, string Value)>()));
+
+            Assert.That(decoded, Is.Not.Null);
+            Assert.That(decoded, Is.Empty);
+        }
+
+        [Test]
+        public void PageToken_AMalformedTokenDecodesToNothing()
+        {
+            // The token is handed out and handed back verbatim, so anything that does not
+            // parse is "no valid position", not an exception.
+            Assert.That(DeveloperPropertyQuery.DecodePageToken("not a token!!!"), Is.Null);
+        }
     }
 }

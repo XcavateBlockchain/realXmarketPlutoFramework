@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<template:PageTemplate xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                       xmlns:template="clr-namespace:PlutoFramework.Templates.PageTemplate"
+                       xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+                       x:Class="PlutoFramework.Components.XcavateProperty.ClaimSubmittedPage"
+                       Title="ClaimSubmittedPage"
+                       NavigationBarIsVisible="False">
+    <template:PageTemplate.MainContent>
+        <Grid Padding="20, 80, 20, 20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <VerticalStackLayout Grid.Row="0"
+                                 Spacing="20"
+                                 VerticalOptions="Center">
+                <Label Text="Claim Submitted"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" />
+
+                <Label Text="Your terms document has been submitted and this property added to your Claimed section. The community of token holders is now voting to approve or reject your claim."
+                       HorizontalTextAlignment="Center"
+                       Opacity="0.8" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Row="1"
+                                 Spacing="15">
+                <Border Padding="15"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#1a1a1a}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                    </Border.StrokeShape>
+                    <Label Text="Once the majority of token holders approve your terms, the property will be placed under your instruction."
+                           FontSize="12"
+                           Opacity="0.8" />
+                </Border>
+
+                <buttons:ElevatedButton Text="My Profile"
+                                        Command="{Binding MyProfileCommand}" />
+
+                <buttons:BasicGrayButton Text="Cancel Claim"
+                                         Command="{Binding CancelClaimCommand}" />
+            </VerticalStackLayout>
+        </Grid>
+    </template:PageTemplate.MainContent>
+</template:PageTemplate>

@@ -174,6 +174,14 @@ namespace PlutoFramework.Model.Xcavate
     }
 
     /// <summary>
+    /// One page of a paged property read: the records the store returned and the token the
+    /// next page is requested with, null when the read has reached the end.
+    /// </summary>
+    public sealed record DeveloperPropertyPage(
+        IReadOnlyList<DeveloperProperty> Items,
+        string? NextPageToken);
+
+    /// <summary>
     /// Reads the developer's property records out of the DynamoDB table the web app writes
     /// them to, so the mobile page and the web page show the same list.
     /// </summary>
@@ -258,51 +266,20 @@ namespace PlutoFramework.Model.Xcavate
             CancellationToken cancellationToken = default)
         {
             var client = GetClient();
+            var request = BuildQueryRequest(companyId, userId, status, RecordsPerRequest);
 
-            var byCompany = !string.IsNullOrWhiteSpace(companyId);
-            var byUser = !byCompany && !string.IsNullOrWhiteSpace(userId);
-
-            if (client is null || (!byCompany && !byUser))
+            if (client is null || request is null)
             {
                 return [];
             }
-
-            var index = byCompany ? CompanyIndex : UserIndex;
-            var partitionKey = byCompany ? "gsi1pk" : "gsi2pk";
-            var sortKey = byCompany ? "gsi1sk" : "gsi2sk";
-            var key = byCompany
-                ? DeveloperPropertyQuery.BuildCompanyKey(companyId!)
-                : DeveloperPropertyQuery.BuildUserKey(userId!);
-            var prefix = DeveloperPropertyQuery.BuildStatusPrefix(status);
-
-            var (keyCondition, conditionValues) =
-                DeveloperPropertyQuery.BuildKeyCondition(partitionKey, sortKey, key, prefix);
 
             var records = new List<DeveloperProperty>();
 
             try
             {
-                Dictionary<string, AttributeValue>? startKey = null;
-
                 while (records.Count < MaxRecords)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-
-                    var request = new QueryRequest
-                    {
-                        TableName = GetTableName(),
-                        IndexName = index,
-                        Limit = RecordsPerRequest,
-                        KeyConditionExpression = keyCondition,
-                        ExpressionAttributeValues = conditionValues.ToDictionary(
-                            pair => pair.Key,
-                            pair => new AttributeValue(pair.Value)),
-                    };
-
-                    if (startKey is not null)
-                    {
-                        request.ExclusiveStartKey = startKey;
-                    }
 
                     var response = await client.QueryAsync(request, cancellationToken)
                         .ConfigureAwait(false);
@@ -317,7 +294,7 @@ namespace PlutoFramework.Model.Xcavate
                         break;
                     }
 
-                    startKey = response.LastEvaluatedKey;
+                    request.ExclusiveStartKey = response.LastEvaluatedKey;
                 }
             }
             catch (OperationCanceledException)
@@ -335,6 +312,143 @@ namespace PlutoFramework.Model.Xcavate
             return [.. records
                 .OrderByDescending(property => property.UpdatedAt ?? property.CreatedAt)
                 .ThenByDescending(property => property.CreatedAt)];
+        }
+
+        /// <summary>
+        /// One page of the developer's property records, for a list that loads more as it is
+        /// scrolled rather than reading the whole store up front.
+        /// </summary>
+        /// <remarks>
+        /// Unlike <see cref="GetPropertiesAsync"/> there is no cross-page recency sort here:
+        /// sorting needs the whole answer, and the whole answer is exactly what paging avoids.
+        /// Pages arrive in the index's own order - status, then property id.
+        /// </remarks>
+        /// <param name="limit">The most records this page holds.</param>
+        /// <param name="pageToken">
+        /// The <see cref="DeveloperPropertyPage.NextPageToken"/> the previous page returned;
+        /// null asks for the first page. A token that does not decode ends the list rather
+        /// than restarting it silently.
+        /// </param>
+        public static async Task<DeveloperPropertyPage> GetPropertiesPageAsync(
+            string? companyId,
+            string? userId,
+            DeveloperPropertyStatus? status,
+            int limit,
+            string? pageToken,
+            CancellationToken cancellationToken = default)
+        {
+            var client = GetClient();
+            var request = BuildQueryRequest(companyId, userId, status, limit);
+
+            if (client is null || request is null)
+            {
+                return new DeveloperPropertyPage([], null);
+            }
+
+            if (pageToken is not null)
+            {
+                var startKey = DecodePageToken(pageToken);
+
+                if (startKey is null)
+                {
+                    return new DeveloperPropertyPage([], null);
+                }
+
+                request.ExclusiveStartKey = startKey;
+            }
+
+            try
+            {
+                var response = await client.QueryAsync(request, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var nextToken = response.LastEvaluatedKey.Count == 0
+                    ? null
+                    : EncodePageToken(response.LastEvaluatedKey);
+
+                return new DeveloperPropertyPage(
+                    [.. response.Items.Select(Parse)],
+                    nextToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Developer property store query failed:");
+                Console.WriteLine(ex);
+                return new DeveloperPropertyPage([], null);
+            }
+        }
+
+        /// <summary>
+        /// The query one page of the read is run with, or null when there is nothing to key it
+        /// on - no developer's company and no wallet. Shared by the whole-list read and the
+        /// paged one so the two cannot drift apart on how the store is asked.
+        /// </summary>
+        private static QueryRequest? BuildQueryRequest(
+            string? companyId,
+            string? userId,
+            DeveloperPropertyStatus? status,
+            int limit)
+        {
+            var byCompany = !string.IsNullOrWhiteSpace(companyId);
+            var byUser = !byCompany && !string.IsNullOrWhiteSpace(userId);
+
+            if (!byCompany && !byUser)
+            {
+                return null;
+            }
+
+            var key = byCompany
+                ? DeveloperPropertyQuery.BuildCompanyKey(companyId!)
+                : DeveloperPropertyQuery.BuildUserKey(userId!);
+            var prefix = DeveloperPropertyQuery.BuildStatusPrefix(status);
+
+            var (keyCondition, conditionValues) = DeveloperPropertyQuery.BuildKeyCondition(
+                byCompany ? "gsi1pk" : "gsi2pk",
+                byCompany ? "gsi1sk" : "gsi2sk",
+                key,
+                prefix);
+
+            return new QueryRequest
+            {
+                TableName = GetTableName(),
+                IndexName = byCompany ? CompanyIndex : UserIndex,
+                Limit = limit,
+                KeyConditionExpression = keyCondition,
+                ExpressionAttributeValues = conditionValues.ToDictionary(
+                    pair => pair.Key,
+                    pair => new AttributeValue(pair.Value)),
+            };
+        }
+
+        /// <summary>
+        /// The store's resume position as an opaque token. The key attributes of this table are
+        /// all strings; a number is carried through anyway rather than dropped, and anything
+        /// else (there is nothing else on a key) breaks the read loudly, into the caller's
+        /// empty page.
+        /// </summary>
+        private static string EncodePageToken(Dictionary<string, AttributeValue> key) =>
+            DeveloperPropertyQuery.EncodePageToken(key.ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value.S is not null
+                    ? ("S", pair.Value.S)
+                    : pair.Value.N is not null
+                        ? ("N", pair.Value.N)
+                        : throw new InvalidOperationException(
+                            $"A page position cannot be encoded: '{pair.Key}' is neither a string nor a number.")));
+
+        private static Dictionary<string, AttributeValue>? DecodePageToken(string token)
+        {
+            var key = DeveloperPropertyQuery.DecodePageToken(token);
+
+            return key?.ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value.Type == "N"
+                    ? new AttributeValue { N = pair.Value.Value }
+                    : new AttributeValue { S = pair.Value.Value });
         }
 
         /// <summary>

@@ -324,10 +324,20 @@
                                              Extra3ImageHeight="28"
                                              Extra3ImageWidth="28" />
 
-        <xcavate:PageBottomBarButtonView IsVisible="{Binding IsLoaded}"
+        <xcavate:PageBottomBarButtonView IsVisible="{Binding ShowInvestorMainAction}"
                                          Text="{Binding MainActionText}"
                                          ButtonState="{Binding MainActionButtonState}"
                                          Command="{Binding MainActionCommand}" />
+
+        <xcavate:PageBottomBarButtonView IsVisible="{Binding ShowAssignDeveloperLawyerButton}"
+                                         Text="Assign Developer Lawyer"
+                                         ButtonState="Enabled"
+                                         Command="{Binding AssignDeveloperLawyerCommand}" />
+
+        <xcavate:PageBottomBarButtonView IsVisible="{Binding ShowClaimSpvCaseButton}"
+                                         Text="{Binding LawyerClaimText}"
+                                         ButtonState="{Binding LawyerClaimButtonState}"
+                                         Command="{Binding ClaimSpvCaseCommand}" />
 
         <xcavate:PageBottomBarTwoButtonsView IsVisible="{Binding ShowBuyMoreButtons}"
                                              LeftCommand="{Binding CancelReservationCommand}"
@@ -352,6 +362,10 @@
         <xcavateproperty:CastVotePopupView />
 
         <xcavateproperty:SendSharesPopupView />
+
+        <xcavateproperty:AssignDeveloperLawyerPopupView />
+
+        <xcavateproperty:ClaimSpvCasePopupView />
 
         <messagepopup:MessagePopupView />
     </template:PageTemplate.PopupContent>

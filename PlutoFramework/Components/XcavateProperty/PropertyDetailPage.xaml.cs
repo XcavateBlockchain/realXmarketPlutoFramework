@@ -42,6 +42,11 @@ public partial class PropertyDetailPage : PageTemplate
         _ = viewModel.RefreshIncomeAsync(CancellationToken.None);
         _ = viewModel.RefreshAgentElectionAsync(CancellationToken.None);
         _ = viewModel.RefreshPendingFinalizationsAsync(CancellationToken.None);
+
+        // The bottom action bar follows the Settings main-page role - re-read on every
+        // appearance so a role switch while this page sits on the stack takes effect
+        // (the lawyer claim-state probe rides along inside the role refresh).
+        _ = viewModel.RefreshMainPageRoleAsync();
     }
 
     protected override void OnDisappearing()

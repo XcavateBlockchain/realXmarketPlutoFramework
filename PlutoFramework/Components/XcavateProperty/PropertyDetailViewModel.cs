@@ -132,11 +132,38 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(StatusIsVisible))]
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
+        [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
         private HashSet<XcavateRole>? roles = null;
+
+        /// <summary>
+        /// The role picked in Settings as the main page (the same setting
+        /// <see cref="MainPageRoleModel.GetSelectedRoleAsync"/> serves the app shell). One
+        /// wallet can carry several on-chain roles; this page's bottom action follows the
+        /// chosen one: Investor and LettingAgent keep the investor flow, Developer gets
+        /// "Assign Developer Lawyer", Lawyer gets the SPV-case claim. Defaults to Investor
+        /// so anything that never sets it keeps today's behaviour.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowInvestorMainAction))]
+        [NotifyPropertyChangedFor(nameof(ShowAssignDeveloperLawyerButton))]
+        [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        private MainPageRole mainPageRole = MainPageRole.Investor;
+
+        /// <summary>Re-reads the Settings main-page role - called on every page appearance.</summary>
+        public async Task RefreshMainPageRoleAsync()
+        {
+            var role = await MainPageRoleModel.GetSelectedRoleAsync().ConfigureAwait(false);
+
+            await MainThread.InvokeOnMainThreadAsync(() => MainPageRole = role);
+
+            // The claim button's own-candidacy state depends on the role being current.
+            await RefreshLawyerClaimStateAsync(CancellationToken.None).ConfigureAwait(false);
+        }
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
+        [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
         private bool spvCreated;
 
         [ObservableProperty]
@@ -157,6 +184,8 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(SpvLawyerStatusIsVisible))]
         [NotifyPropertyChangedFor(nameof(SpvLawyerStatusText))]
         [NotifyPropertyChangedFor(nameof(SpvLawyerStatusColor))]
+        [NotifyPropertyChangedFor(nameof(ShowAssignDeveloperLawyerButton))]
+        [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
         private XcavateNftWrapper? nftWrapper;
 
         [ObservableProperty]
@@ -169,6 +198,9 @@ namespace PlutoFramework.Components.XcavateProperty
         /// </summary>
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsLoaded))]
+        [NotifyPropertyChangedFor(nameof(ShowInvestorMainAction))]
+        [NotifyPropertyChangedFor(nameof(ShowAssignDeveloperLawyerButton))]
+        [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
         private bool isLoading = true;
 
         public bool IsLoaded => !IsLoading;
@@ -396,6 +428,9 @@ namespace PlutoFramework.Components.XcavateProperty
             marketplaceTransactionsSubscribed = false;
 
             XcavateMarketplaceTransactionModel.TransactionConfirmed -= OnMarketplaceTransactionConfirmed;
+
+            // A pending claim's navigation dies with the page.
+            claimConfirmationPending = false;
         }
 
         // ── Governance voting (terms ratification, proposals, challenges, elections) ──
@@ -1045,6 +1080,268 @@ namespace PlutoFramework.Components.XcavateProperty
             _ => PrimaryColor,
         };
 
+        // ── Role-aware bottom action (the Settings main-page role) ──
+
+        /// <summary>
+        /// The investor lifecycle bar: shown for the Investor main-page role and for
+        /// LettingAgent, which has no detail-page actions of its own and keeps the
+        /// investor flow (the same fallback <see cref="MainPageRoleOptions.ResolveRoute"/>
+        /// applies to the shell).
+        /// </summary>
+        public bool ShowInvestorMainAction =>
+            IsLoaded && MainPageRole is MainPageRole.Investor or MainPageRole.LettingAgent;
+
+        /// <summary>
+        /// The developer's engagement action: assign_developer_lawyer opens once the sale
+        /// is SOLD_OUT while the developer-lawyer seat is still vacant. The program
+        /// enforces the remaining preconditions (the caller owning the listing, the
+        /// lawyer's region and compliance) on chain.
+        /// </summary>
+        public bool ShowAssignDeveloperLawyerButton =>
+            IsLoaded && MainPageRole == MainPageRole.Developer
+            && SolanaListing is { ListingStatus: "SoldOut" } listing
+            && XcavateMarketplaceIndexerModel.IsVacantSeat(listing.DeveloperLawyer);
+
+        /// <summary>
+        /// The lawyer's claim action: claim_spv_case opens for a compliant Lawyer-role
+        /// wallet on a SOLD_OUT listing whose SPV exists while the SPV-lawyer seat is
+        /// vacant and the wallet is not already the developer-side lawyer. The program
+        /// additionally enforces the region match and the legal deadline on chain.
+        /// </summary>
+        public bool ShowClaimSpvCaseButton =>
+            IsLoaded && MainPageRole == MainPageRole.Lawyer
+            && SolanaListing is { ListingStatus: "SoldOut" } listing
+            && SpvCreated
+            && XcavateMarketplaceIndexerModel.IsVacantSeat(listing.SpvLawyer)
+            && !string.Equals(KeysModel.GetSolanaAddress(), listing.DeveloperLawyer, StringComparison.Ordinal)
+            && (Roles?.Contains(XcavateRole.Lawyer) ?? false);
+
+        /// <summary>
+        /// True once the wallet's own candidacy stands in the round a new claim would
+        /// enter - the claim button then reads "Claim submitted" and stays disabled.
+        /// Refreshed by <see cref="RefreshLawyerClaimStateAsync"/>.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(LawyerClaimText))]
+        [NotifyPropertyChangedFor(nameof(LawyerClaimButtonState))]
+        private bool ownCandidacyStanding = false;
+
+        public string LawyerClaimText => OwnCandidacyStanding ? "Claim submitted" : "Claim";
+
+        public ButtonStateEnum LawyerClaimButtonState =>
+            OwnCandidacyStanding ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
+
+        /// <summary>
+        /// The election round a new candidacy stands in: while no round is running (the
+        /// election's expiry is 0 - or no election has ever opened) the first claim opens
+        /// the next round; while a round runs the candidacy joins the current one. Read
+        /// fresh at build time - a stale round fails the candidacy PDA's seed check.
+        /// </summary>
+        private ulong ClaimRound => Governance?.SpvElection is { } election && election.Expiry > 0
+            ? election.Round
+            : (Governance?.SpvElection?.Round ?? 0) + 1;
+
+        /// <summary>
+        /// Probes the chain for the wallet's own candidacy in the round a new claim would
+        /// enter, so a lawyer who already claimed sees "Claim submitted" instead of a
+        /// second (doomed) submission. Tolerant like <see cref="RefreshVotingAsync"/> - a
+        /// failed read keeps whatever the page already shows.
+        /// </summary>
+        public async Task RefreshLawyerClaimStateAsync(CancellationToken token)
+        {
+            if (MainPageRole != MainPageRole.Lawyer
+                || NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing
+                || !ShowClaimSpvCaseButton)
+            {
+                return;
+            }
+
+            try
+            {
+                var cluster = SolanaNetworkModel.SelectedCluster;
+                var wallet = KeysModel.GetSolanaAddress();
+
+                if (string.IsNullOrEmpty(wallet) || !XcavateDeploymentModel.IsDeployed(cluster))
+                {
+                    return;
+                }
+
+                var programs = XcavateProgramAddresses.Require(cluster);
+
+                var candidacy = XcavateMarketplaceProgram.DeriveLawyerCandidacy(
+                    programs, (ulong)solanaListing.ListingId, ClaimRound, new Solnet.Wallet.PublicKey(wallet));
+
+                // A missing account is a successful null answer; an RPC failure throws.
+                var account = await SolanaRpcModel.GetAccountInfoAsync(cluster, candidacy.Key, token)
+                    .ConfigureAwait(false);
+
+                token.ThrowIfCancellationRequested();
+
+                await MainThread.InvokeOnMainThreadAsync(() => OwnCandidacyStanding = account is not null);
+            }
+            catch (OperationCanceledException)
+            {
+                // The page went away mid-query.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to refresh the lawyer claim state: ");
+                Console.WriteLine(ex);
+            }
+        }
+
+        /// <summary>
+        /// Opens the developer-lawyer assignment sheet; the submit rides the popup's
+        /// ContinueRequested back to <see cref="ExecuteAssignDeveloperLawyerAsync"/>.
+        /// </summary>
+        [RelayCommand]
+        public void AssignDeveloperLawyer()
+        {
+            if (!ShowAssignDeveloperLawyerButton)
+            {
+                return;
+            }
+
+            var popupViewModel = DependencyService.Get<AssignDeveloperLawyerPopupViewModel>();
+
+            popupViewModel.SetToDefault();
+            popupViewModel.ContinueRequested = ExecuteAssignDeveloperLawyerAsync;
+            popupViewModel.IsVisible = true;
+        }
+
+        private async Task ExecuteAssignDeveloperLawyerAsync()
+        {
+            var popupViewModel = DependencyService.Get<AssignDeveloperLawyerPopupViewModel>();
+            var lawyerAddress = popupViewModel.LawyerAddress;
+
+            if (!SolanaAddressValidator.IsValidAddress(lawyerAddress))
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            try
+            {
+                if (!await RequirementsModel.CheckRequirementsAsync())
+                {
+                    return;
+                }
+
+                if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateDeveloper, CancellationToken.None))
+                {
+                    return;
+                }
+            }
+            finally
+            {
+                // Cleared on every exit path - a throwing requirements check (network or
+                // indexer failure) must not wedge the page behind the overlay.
+                fullPageLoadingViewModel.IsVisible = false;
+            }
+
+            await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Assign developer lawyer",
+                (developer, cluster, ct) => XcavateMarketplaceCallsModel.AssignDeveloperLawyerAsync(
+                    cluster, developer, ListingId, lawyerAddress, ct));
+        }
+
+        /// <summary>
+        /// Opens the SPV-case claim sheet with the seats' live status and the wallet's
+        /// published terms document preloaded; the submit rides the popup's
+        /// ContinueRequested back to <see cref="ExecuteClaimSpvCaseAsync"/>.
+        /// </summary>
+        [RelayCommand]
+        public async Task ClaimSpvCaseAsync()
+        {
+            if (!ShowClaimSpvCaseButton || OwnCandidacyStanding)
+            {
+                return;
+            }
+
+            var popupViewModel = DependencyService.Get<ClaimSpvCasePopupViewModel>();
+
+            popupViewModel.SetToDefault();
+            popupViewModel.DeveloperLawyerStatusText =
+                XcavateMarketplaceIndexerModel.IsVacantSeat(SolanaListing?.DeveloperLawyer)
+                    ? "Available"
+                    : "Assigned";
+            popupViewModel.ContinueRequested = ExecuteClaimSpvCaseAsync;
+            popupViewModel.IsVisible = true;
+
+            var wallet = KeysModel.GetSolanaAddress();
+
+            if (!string.IsNullOrEmpty(wallet))
+            {
+                await popupViewModel.LoadTermsAsync(wallet, CancellationToken.None);
+            }
+        }
+
+        /// <summary>
+        /// True between the claim's submission and its confirmation: the confirmation
+        /// (and only it) navigates to the claim-submitted page. Set from
+        /// <see cref="XcavateMarketplaceTransactionModel.SubmitAsync"/>'s result, so a
+        /// declined unlock prompt or a failed build never wedges it - a later unrelated
+        /// confirmation must not report a claim that was never signed.
+        /// </summary>
+        private bool claimConfirmationPending;
+
+        private async Task ExecuteClaimSpvCaseAsync()
+        {
+            var popupViewModel = DependencyService.Get<ClaimSpvCasePopupViewModel>();
+
+            // Validated and converted by the popup's Continue; null means the sheet
+            // closed without a usable quote and nothing may be submitted.
+            if (popupViewModel.CostsQuote is not { } costsQuote)
+            {
+                return;
+            }
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            try
+            {
+                if (!await RequirementsModel.CheckRequirementsAsync())
+                {
+                    return;
+                }
+
+                if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.Lawyer, CancellationToken.None))
+                {
+                    return;
+                }
+            }
+            finally
+            {
+                // Cleared on every exit path - a throwing requirements check (network or
+                // indexer failure) must not wedge the page behind the overlay.
+                fullPageLoadingViewModel.IsVisible = false;
+            }
+
+            var round = ClaimRound;
+
+            claimConfirmationPending = await XcavateMarketplaceTransactionModel.SubmitAsync(
+                "Claim SPV case",
+                (lawyer, cluster, ct) => XcavateMarketplaceCallsModel.ClaimSpvCaseAsync(
+                    cluster, lawyer, ListingId, round, costsQuote, ct));
+        }
+
+        /// <summary>
+        /// After a confirmed claim transaction, the lawyer lands on the claim-submitted
+        /// page. Runs inside the page's regular refresh handler: any other confirmed
+        /// marketplace transaction just refreshes, as before.
+        /// </summary>
+        private async Task OnClaimConfirmedNavigateAsync()
+        {
+            claimConfirmationPending = false;
+
+            await NavigationModel.PushAsync(new ClaimSubmittedPage());
+        }
+
         // ── Pending finalizations (the permissionless cranks) ──
 
         /// <summary>
@@ -1440,8 +1737,20 @@ namespace PlutoFramework.Components.XcavateProperty
         /// creation, see Indexer ADR-42), so the mobile app no longer prompts for a second
         /// signature here.
         /// </summary>
-        private void OnMarketplaceTransactionConfirmed(object? sender, EventArgs e) =>
-            MainThread.BeginInvokeOnMainThread(() => _ = RefreshListingAsync(CancellationToken.None));
+        private void OnMarketplaceTransactionConfirmed(object? sender, MarketplaceTransactionConfirmedEventArgs e) =>
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                await RefreshListingAsync(CancellationToken.None);
+
+                // The claim's confirmation lands the lawyer on the claim-submitted page,
+                // after the refresh so the page behind it already shows the new state.
+                if (claimConfirmationPending)
+                {
+                    claimConfirmationPending = false;
+
+                    await OnClaimConfirmedNavigateAsync();
+                }
+            });
 
         /// <summary>
         /// Re-reads this listing from the Xcavate indexer and re-applies it to the page.
@@ -1502,6 +1811,10 @@ namespace PlutoFramework.Components.XcavateProperty
                 // So does the income section: a confirmed claim (or a rent distribution)
                 // changes exactly these figures.
                 await RefreshIncomeAsync(token).ConfigureAwait(false);
+
+                // And the lawyer's own-candidacy state: a confirmed claim flips the
+                // claim button to its submitted state.
+                await RefreshLawyerClaimStateAsync(token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

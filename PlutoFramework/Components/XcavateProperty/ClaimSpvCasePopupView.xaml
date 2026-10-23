@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.XcavateProperty.ClaimSpvCasePopupView"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+             xmlns:form="clr-namespace:PlutoFramework.Components.Form"
+             IsVisible="{Binding IsVisible}"
+             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+             AbsoluteLayout.LayoutFlags="All">
+    <card:BottomPopupCard Title="Select lawyer type"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
+            <AbsoluteLayout>
+
+                <VerticalStackLayout AbsoluteLayout.LayoutBounds="0, 0, 1, AutoSize"
+                         AbsoluteLayout.LayoutFlags="WidthProportional"
+                         x:Name="verticalStackLayout"
+                         Spacing="15"
+                         Padding="10, 10, 10, 10">
+
+                    <!-- Developer-lawyer seat: context only, never selectable here. -->
+                    <Border Padding="15"
+                            Stroke="{StaticResource CardBorderColor}"
+                            StrokeThickness="{StaticResource CardBorderThickness}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark=#0a0a0a}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Label Text="Developer lawyer"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding DeveloperLawyerStatusText}"
+                                   TextColor="{Binding DeveloperLawyerStatusColor}"
+                                   HorizontalTextAlignment="End" />
+                        </Grid>
+                    </Border>
+
+                    <!-- SPV-lawyer seat: the claim this sheet submits. -->
+                    <Border Padding="15"
+                            Stroke="{StaticResource Primary}"
+                            StrokeThickness="1"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark=#0a0a0a}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Text="SPV lawyer"
+                                       FontAttributes="Bold" />
+                                <Border Grid.Column="1"
+                                        HeightRequest="20"
+                                        WidthRequest="20"
+                                        BackgroundColor="{StaticResource Primary}"
+                                        VerticalOptions="Center">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10" />
+                                    </Border.StrokeShape>
+                                </Border>
+                            </Grid>
+
+                            <Label Text="Appointed by Xcavate platform (or by investors collectively) to represent investor interests. Ensures investor funds remain secure."
+                                   FontSize="12"
+                                   Opacity="0.7" />
+
+                            <Border Padding="12"
+                                    BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#1a1a1a}"
+                                    StrokeThickness="0">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Image VerticalOptions="Center"
+                                           HeightRequest="20"
+                                           WidthRequest="20">
+                                        <Image.Source>
+                                            <FontImageSource Glyph="&#xf1c1;"
+                                                             FontFamily="FontAwesome"
+                                                             Color="{StaticResource Primary}"
+                                                             Size="20" />
+                                        </Image.Source>
+                                    </Image>
+                                    <Label Grid.Column="1"
+                                           Text="{Binding TermsDocumentName}"
+                                           VerticalOptions="Center"
+                                           LineBreakMode="TailTruncation" />
+                                </Grid>
+                            </Border>
+
+                            <form:FormInputView KeyboardType="Numeric"
+                                                Placeholder="Legal costs (tGBP)"
+                                                Text="{Binding LegalCosts}"
+                                                CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="{Binding ErrorMessage}" TextColor="Red" />
+
+                </VerticalStackLayout>
+
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 115"
+                    AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 105"
+                      AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                      RowSpacing="5"
+                      Margin="10, 0, 10, 10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="50" />
+                            <RowDefinition Height="50" />
+                        </Grid.RowDefinitions>
+
+                        <buttons:PlutoFrameworkElevatedButton Text="Claim &amp; Submit Terms"
+                                                              Grid.Row="0"
+                                                              Command="{Binding ContinueCommand}"
+                                                              ButtonState="{Binding ContinueButtonState}"/>
+
+                        <Label Grid.Row="1"
+                               Text="Upload new"
+                               TextColor="{StaticResource Primary}"
+                               HorizontalTextAlignment="Center"
+                               VerticalTextAlignment="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding UploadNewCommand}" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </Grid>
+                </AbsoluteLayout>
+
+            </AbsoluteLayout>
+
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+</ContentView>

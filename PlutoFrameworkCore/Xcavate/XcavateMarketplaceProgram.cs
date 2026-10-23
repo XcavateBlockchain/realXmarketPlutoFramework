@@ -43,6 +43,8 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] FinalizeSpvElectionDiscriminator = [2, 249, 39, 73, 224, 169, 145, 100];
         private static readonly byte[] ResolveSilentVerdictDiscriminator = [229, 121, 58, 51, 193, 189, 164, 60];
         private static readonly byte[] ExecuteDealDiscriminator = [107, 92, 176, 235, 53, 80, 14, 94];
+        private static readonly byte[] AssignDeveloperLawyerDiscriminator = [197, 167, 242, 89, 235, 9, 169, 65];
+        private static readonly byte[] ClaimSpvCaseDiscriminator = [175, 185, 102, 63, 166, 39, 168, 56];
 
         // PDA seed prefixes, from the IDL's constants section.
         private static readonly byte[] ConfigSeed = Encoding.UTF8.GetBytes("config");
@@ -491,6 +493,76 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
                 ],
                 Data = Encode(VoteOnSpvLawyerDiscriminator, U64(listingId), U32(amount)),
+            };
+        }
+
+        /// <summary>
+        /// assign_developer_lawyer(listing_id, lawyer): the listing's developer engages
+        /// the named lawyer for the developer side of the legal phase. The program
+        /// requires the listing to be SOLD_OUT inside its legal deadline, the
+        /// developer-lawyer seat still vacant, the lawyer registered in the property's
+        /// region with a compliant Lawyer role, and no conflict with the SPV side - all
+        /// enforced on chain, so the caller only derives accounts. The named lawyer
+        /// never signs; the developer's signature alone engages them.
+        /// </summary>
+        public static TransactionInstruction AssignDeveloperLawyer(
+            XcavateProgramSet programs,
+            PublicKey developer,
+            PublicKey lawyer,
+            ulong listingId)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(developer, true),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, developer, XcavateRole.RealEstateDeveloper), false),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, lawyer, XcavateRole.Lawyer), false),
+                    AccountMeta.Writable(DeriveLawyer(programs, lawyer), false),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.Writable(DeriveProperty(programs, listingId), false),
+                ],
+                Data = Encode(AssignDeveloperLawyerDiscriminator, U64(listingId), lawyer.KeyBytes),
+            };
+        }
+
+        /// <summary>
+        /// claim_spv_case(listing_id, round, costs): a lawyer's candidacy for the
+        /// listing's SPV-lawyer seat, which the token holders then vote on. The lawyer
+        /// wallet fronts the candidacy account's rent itself (the program accepts any
+        /// paying wallet, so the app takes the single-signer path with payer = lawyer).
+        /// <paramref name="round"/> is the election round the candidacy stands in: when
+        /// no round is running (the listing's spv_election expiry is 0) it must be the
+        /// next round (election.round + 1, which opens the window); while a round runs
+        /// it must be the current one. <paramref name="costs"/> is the lawyer's fee
+        /// quote on the 9-decimal price scale, capped on chain by the listing's
+        /// collected fee quote. The program further requires SOLD_OUT inside the legal
+        /// deadline, spv_created, a vacant SPV seat, no conflict with the developer
+        /// side, and a region-matching compliant lawyer registry entry.
+        /// </summary>
+        public static TransactionInstruction ClaimSpvCase(
+            XcavateProgramSet programs,
+            PublicKey lawyer,
+            ulong listingId,
+            ulong round,
+            ulong costs)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(lawyer, true),
+                    AccountMeta.Writable(lawyer, true),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, lawyer, XcavateRole.Lawyer), false),
+                    AccountMeta.Writable(DeriveLawyer(programs, lawyer), false),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.Writable(DeriveProperty(programs, listingId), false),
+                    AccountMeta.Writable(DeriveLawyerCandidacy(programs, listingId, round, lawyer), false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(ClaimSpvCaseDiscriminator, U64(listingId), U64(round), U64(costs)),
             };
         }
 

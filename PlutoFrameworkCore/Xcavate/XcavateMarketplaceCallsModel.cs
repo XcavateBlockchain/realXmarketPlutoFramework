@@ -459,6 +459,15 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// The costs counterpart of <see cref="QuoteFromDecimal"/>: a lawyer's legal-costs
+        /// quote may legitimately be zero (claim_spv_case only caps it at the collected
+        /// fee quote), while a share price may not. Everything else - the nine-decimal
+        /// scale, the decimal-places and u64-overflow guards - is shared.
+        /// </summary>
+        public static ulong QuoteCostsFromDecimal(decimal costs) =>
+            costs == 0 ? 0UL : QuoteFromDecimal(costs);
+
+        /// <summary>
         /// Rescales a quote from the program's 9-decimal price scale to the payment
         /// mint's base units by decimal count alone, rounding DOWN (the program's own
         /// floor semantics) - callers capping a cost add their own headroom. This is the
@@ -596,6 +605,54 @@ namespace PlutoFramework.Model.Xcavate
             return Task.FromResult<List<TransactionInstruction>>(
             [
                 XcavateMarketplaceProgram.CreateSpv(programs, new PublicKey(confirmer), (ulong)listingId),
+            ]);
+        }
+
+        /// <summary>
+        /// assign_developer_lawyer for listing <paramref name="listingId"/>, called by the
+        /// listing's developer to engage <paramref name="lawyer"/> for the developer side
+        /// of the legal phase. Pure - every account is derived; the program enforces the
+        /// developer's ownership of the listing, the vacant seat, the lawyer's region and
+        /// compliance.
+        /// </summary>
+        public static Task<List<TransactionInstruction>> AssignDeveloperLawyerAsync(
+            SolanaCluster cluster,
+            string developer,
+            long listingId,
+            string lawyer,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+
+            return Task.FromResult<List<TransactionInstruction>>(
+            [
+                XcavateMarketplaceProgram.AssignDeveloperLawyer(
+                    programs, new PublicKey(developer), new PublicKey(lawyer), (ulong)listingId),
+            ]);
+        }
+
+        /// <summary>
+        /// claim_spv_case for listing <paramref name="listingId"/>: the calling lawyer's
+        /// candidacy for the SPV-lawyer seat in election <paramref name="round"/>, quoting
+        /// <paramref name="costsQuote"/> (9-decimal price scale) for the job. Pure - the
+        /// round comes from the listing's election state (read it fresh: a stale round
+        /// fails the candidacy PDA's seed check) and the lawyer wallet fronts the
+        /// candidacy's rent itself, so nothing has to be looked up.
+        /// </summary>
+        public static Task<List<TransactionInstruction>> ClaimSpvCaseAsync(
+            SolanaCluster cluster,
+            string lawyer,
+            long listingId,
+            ulong round,
+            ulong costsQuote,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+
+            return Task.FromResult<List<TransactionInstruction>>(
+            [
+                XcavateMarketplaceProgram.ClaimSpvCase(
+                    programs, new PublicKey(lawyer), (ulong)listingId, round, costsQuote),
             ]);
         }
 

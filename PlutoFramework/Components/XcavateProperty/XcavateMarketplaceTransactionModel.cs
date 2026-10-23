@@ -58,7 +58,15 @@ namespace PlutoFramework.Components.XcavateProperty
         /// address - the investor/confirmer the program instructions are keyed by - and
         /// the cluster the listing came from, resolved once up front.
         /// </summary>
-        public static async Task SubmitAsync(
+        /// <returns>
+        /// True once a signed transaction was actually sent; false on every pre-submit
+        /// exit (undeployed cluster, missing account, a declined unlock prompt, an
+        /// unsatisfiable signer count) and on a failed build or submission. Callers that
+        /// gate follow-up UI on a real submission (the SPV-case claim's confirmation
+        /// navigation) switch on this instead of guessing from the events - the early
+        /// exits deliberately raise no SubmissionFailed.
+        /// </returns>
+        public static async Task<bool> SubmitAsync(
             string description,
             Func<string, SolanaCluster, CancellationToken, Task<List<TransactionInstruction>>> buildInstructionsAsync)
         {
@@ -78,7 +86,7 @@ namespace PlutoFramework.Components.XcavateProperty
                 info.Status = SolanaTransactionStatus.Error;
                 info.ErrorMessage = XcavateDeploymentModel.NotDeployedMessage(cluster);
 
-                return;
+                return false;
             }
 
             // Hoisted out of the try so the failure handler can resolve which program a
@@ -94,7 +102,7 @@ namespace PlutoFramework.Components.XcavateProperty
                     info.Status = SolanaTransactionStatus.Error;
                     info.ErrorMessage = "No Solana account is set up in this wallet.";
 
-                    return;
+                    return false;
                 }
 
                 // Built before the key is unlocked: a build failure (no position, closed
@@ -133,7 +141,7 @@ namespace PlutoFramework.Components.XcavateProperty
                     info.Status = SolanaTransactionStatus.Error;
                     info.ErrorMessage = "No Solana account is set up in this wallet, or the unlock prompt was declined.";
 
-                    return;
+                    return false;
                 }
 
                 if (signerKeys.Count > 2)
@@ -144,7 +152,7 @@ namespace PlutoFramework.Components.XcavateProperty
                     info.Status = SolanaTransactionStatus.Error;
                     info.ErrorMessage = $"This transaction needs {signerKeys.Count} signatures and this flow can provide at most two. Nothing was signed or submitted.";
 
-                    return;
+                    return false;
                 }
 
                 string signature;
@@ -186,6 +194,8 @@ namespace PlutoFramework.Components.XcavateProperty
                     signature, cluster, info, CancellationToken.None,
                     onConfirmed: _ => TransactionConfirmed?.Invoke(
                         null, new MarketplaceTransactionConfirmedEventArgs(signature, cluster)));
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -201,6 +211,8 @@ namespace PlutoFramework.Components.XcavateProperty
                 // rejection (balance, staleness) is form-correctable, and the form it
                 // came from is where the user can correct it.
                 SubmissionFailed?.Invoke(null, new MarketplaceSubmissionFailedEventArgs(ex));
+
+                return false;
             }
         }
 

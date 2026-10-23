@@ -84,5 +84,77 @@ namespace PlutoFramework.Model.Xcavate
                 // A status the app does not know is still a record; it shows as a draft rather
                 // as vanishing, which is what a reader on the All tab would want.
                 : DeveloperPropertyStatus.Draft;
+
+        /// <summary>
+        /// The wire form of a paged read's continuation: one DynamoDB key attribute per line as
+        /// <c>name, type, value</c>, the value base64url-encoded so any character survives the
+        /// round trip, and the whole thing base64url-encoded again into one opaque token. The
+        /// key attributes of this table are all strings (<c>S</c>); <c>N</c> is accepted
+        /// defensively because nothing in the encoding forbids it.
+        /// </summary>
+        public static string EncodePageToken(IReadOnlyDictionary<string, (string Type, string Value)> key) =>
+            ToUrlSafeBase64(string.Join("\n", key.Select(pair =>
+                $"{pair.Key}\t{pair.Value.Type}\t{ToUrlSafeBase64(pair.Value.Value)}")));
+
+        /// <summary>
+        /// The inverse of <see cref="EncodePageToken"/>. A malformed token decodes to null
+        /// rather than throwing: the token crosses a process boundary (it is handed out and
+        /// handed back verbatim), so anything that does not parse is simply "no valid position".
+        /// </summary>
+        public static IReadOnlyDictionary<string, (string Type, string Value)>? DecodePageToken(string token)
+        {
+            if (!TryFromUrlSafeBase64(token, out var joined))
+            {
+                return null;
+            }
+
+            var key = new Dictionary<string, (string Type, string Value)>();
+
+            foreach (var line in joined.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var parts = line.Split('\t');
+
+                if (parts.Length != 3 || !TryFromUrlSafeBase64(parts[2], out var value))
+                {
+                    return null;
+                }
+
+                key[parts[0]] = (parts[1], value);
+            }
+
+            return key;
+        }
+
+        /// <summary>Base64 with the URL-hostile characters swapped and the padding dropped.</summary>
+        private static string ToUrlSafeBase64(string text) =>
+            Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(text))
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+
+        private static bool TryFromUrlSafeBase64(string text, out string decoded)
+        {
+            decoded = string.Empty;
+
+            try
+            {
+                var base64 = text.Replace('-', '+').Replace('_', '/');
+
+                switch (base64.Length % 4)
+                {
+                    case 2: base64 += "=="; break;
+                    case 3: base64 += "="; break;
+                    case 0: break;
+                    default: return false;
+                }
+
+                decoded = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+                return true;
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+        }
     }
 }

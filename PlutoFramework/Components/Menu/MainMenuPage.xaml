@@ -67,6 +67,12 @@
                                       Title="Roles"
                                       Command="{Binding RolesActionCommand}"
                                       />
+                <menu:QuickActionItemView Grid.Column="1"
+                                      Grid.Row="1"
+                                      Icon="pendinggray.svg"
+                                      Title="Pending Properties"
+                                      Command="{Binding PendingPropertiesActionCommand}"
+                                      />
             </Grid>
         </VerticalStackLayout>
     </ScrollView>
