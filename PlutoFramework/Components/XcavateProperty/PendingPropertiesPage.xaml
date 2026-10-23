@@ -16,8 +16,8 @@
                                      Spacing="15">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate>
-                            <!-- Tappable but deliberately inert: what a tap on a pending
-                                 property should do has not been decided yet. -->
+                            <!-- The tap pushes the record's detail page, where the admin's
+                                 approve / reject decision lives. -->
                             <xcavateproperty:DeveloperPropertyCardView PropertyRecord="{Binding .}"
                                                                        TapCommand="{Binding Source={RelativeSource AncestorType={x:Type page:PageTemplate}}, Path=BindingContext.OpenPropertyCommand}" />
                         </DataTemplate>

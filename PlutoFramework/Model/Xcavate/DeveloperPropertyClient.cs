@@ -383,6 +383,140 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// Sets one record's status - the mobile half of the web repo's db:status script:
+        /// read the record, leave an already-correct status alone, and patch the rest.
+        /// </summary>
+        /// <remarks>
+        /// The patch rewrites more than the status attribute: every index sort key the item
+        /// carries embeds the status, so each one present is rebuilt with the new value -
+        /// otherwise the record would keep answering its old status's queries. The update is
+        /// conditioned on the status the read just saw, so two admins deciding at once cannot
+        /// both win; the loser gets the record as it actually stands.
+        /// </remarks>
+        /// <returns>
+        /// The record as it stands after the call, or null when the record is gone, the store
+        /// is not configured, or the write failed - the caller's honest answer to any of those
+        /// is "the decision did not go through".
+        /// </returns>
+        public static async Task<DeveloperProperty?> UpdatePropertyStatusAsync(
+            string propertyId,
+            DeveloperPropertyStatus status,
+            CancellationToken cancellationToken = default)
+        {
+            var client = GetClient();
+
+            if (client is null || string.IsNullOrWhiteSpace(propertyId))
+            {
+                return null;
+            }
+
+            var (partitionKey, sortKey) = DeveloperPropertyQuery.BuildPropertyKey(propertyId);
+            var key = new Dictionary<string, AttributeValue>
+            {
+                ["pk"] = new AttributeValue(partitionKey),
+                ["sk"] = new AttributeValue(sortKey),
+            };
+
+            try
+            {
+                var existing = await client.GetItemAsync(new GetItemRequest
+                    {
+                        TableName = GetTableName(),
+                        Key = key,
+                        // A decision is only valid against the record as it stands right now.
+                        ConsistentRead = true,
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!existing.IsItemSet)
+                {
+                    return null;
+                }
+
+                var previous = DeveloperPropertyQuery.ParseStatus(Text(existing.Item, "status"));
+
+                if (previous == status)
+                {
+                    return Parse(existing.Item);
+                }
+
+                // "status" is a DynamoDB reserved word, so the expression names it indirectly.
+                var names = new Dictionary<string, string> { ["#st"] = "status" };
+                var values = new Dictionary<string, AttributeValue>
+                {
+                    [":status"] = new AttributeValue(DeveloperPropertyQuery.ToStatusKeyPart(status)),
+                    [":previous"] = new AttributeValue(DeveloperPropertyQuery.ToStatusKeyPart(previous)),
+                    [":updatedAt"] = new AttributeValue(
+                        DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture)),
+                };
+                var sets = new List<string> { "#st = :status", "updatedAt = :updatedAt" };
+
+                foreach (var indexSortKey in new[] { "gsi1sk", "gsi2sk", "gsi3sk" })
+                {
+                    if (Text(existing.Item, indexSortKey) is not { } current)
+                    {
+                        continue;
+                    }
+
+                    names[$"#{indexSortKey}"] = indexSortKey;
+                    values[$":{indexSortKey}"] = new AttributeValue(
+                        DeveloperPropertyQuery.WithStatus(current, status));
+                    sets.Add($"#{indexSortKey} = :{indexSortKey}");
+                }
+
+                var updated = await client.UpdateItemAsync(new UpdateItemRequest
+                    {
+                        TableName = GetTableName(),
+                        Key = key,
+                        UpdateExpression = "SET " + string.Join(", ", sets),
+                        ConditionExpression = "#st = :previous",
+                        ExpressionAttributeNames = names,
+                        ExpressionAttributeValues = values,
+                        ReturnValues = ReturnValue.ALL_NEW,
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                return Parse(updated.Attributes);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (ConditionalCheckFailedException)
+            {
+                // Someone else decided first; answer with the record as it actually stands.
+                try
+                {
+                    var current = await client.GetItemAsync(new GetItemRequest
+                        {
+                            TableName = GetTableName(),
+                            Key = key,
+                            ConsistentRead = true,
+                        }, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    return current.IsItemSet ? Parse(current.Item) : null;
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Developer property status re-read failed:");
+                    Console.WriteLine(ex);
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Developer property status update failed:");
+                Console.WriteLine(ex);
+                return null;
+            }
+        }
+
+        /// <summary>
         /// The query one page of the read is run with, or null when there is nothing to key it
         /// on - no developer's company and no wallet. Shared by the whole-list read and the
         /// paged one so the two cannot drift apart on how the store is asked.

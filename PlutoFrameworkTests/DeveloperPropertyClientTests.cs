@@ -144,5 +144,34 @@ namespace PlutoFrameworkTests
             // parse is "no valid position", not an exception.
             Assert.That(DeveloperPropertyQuery.DecodePageToken("not a token!!!"), Is.Null);
         }
+
+        [Test]
+        public void BuildPropertyKey_LowerCasesTheIdIntoTheElectroDbShape()
+        {
+            var (partitionKey, sortKey) = DeveloperPropertyQuery.BuildPropertyKey("prp_5ZPVkVWR4u4Y");
+
+            Assert.That(partitionKey, Is.EqualTo("$realxmarket#propertyid_prp_5zpvkvwr4u4y"));
+            Assert.That(sortKey, Is.EqualTo("$property_1"));
+        }
+
+        [Test]
+        public void WithStatus_RewritesTheStatusSegmentAndKeepsTheRest()
+        {
+            // The index sort keys embed the status, so a status change has to follow them
+            // into the key or the record keeps answering its old status's queries.
+            Assert.That(
+                DeveloperPropertyQuery.WithStatus(
+                    "$property_1#status_submitted#propertyid_prp_5zpvkvwr4u4y",
+                    DeveloperPropertyStatus.Verified),
+                Is.EqualTo("$property_1#status_verified#propertyid_prp_5zpvkvwr4u4y"));
+        }
+
+        [Test]
+        public void WithStatus_AKeyWithoutAStatusSegmentIsLeftAlone()
+        {
+            Assert.That(
+                DeveloperPropertyQuery.WithStatus("$property_1", DeveloperPropertyStatus.Rejected),
+                Is.EqualTo("$property_1"));
+        }
     }
 }

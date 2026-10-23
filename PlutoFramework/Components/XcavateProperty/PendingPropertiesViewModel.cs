@@ -20,8 +20,8 @@ namespace PlutoFramework.Components.XcavateProperty;
 /// Paging follows the store's continuation token (<see cref="DeveloperPropertyClient.GetPropertiesPageAsync"/>),
 /// so the list grows a page at a time instead of reading the whole store up front.
 ///
-/// The cards are tappable but deliberately inert: what a tap on a pending property should do
-/// has not been decided yet.
+/// A tap pushes the record's detail page, where the admin decides it; the refresh on
+/// appearing then drops it from this list, since it is no longer submitted.
 /// </remarks>
 public partial class PendingPropertiesViewModel : ObservableObject
 {
@@ -81,11 +81,19 @@ public partial class PendingPropertiesViewModel : ObservableObject
                     : "Properties waiting for verification will appear here.";
 
     /// <summary>
-    /// Deliberately inert: the cards are tappable so the gesture is wired, but what a tap on
-    /// a pending property should do has not been decided yet.
+    /// The tapped property's detail page, where the admin's decision (approve / reject)
+    /// lives.
     /// </summary>
     [RelayCommand]
-    private Task OpenPropertyAsync(DeveloperProperty? property) => Task.CompletedTask;
+    private Task OpenPropertyAsync(DeveloperProperty? property)
+    {
+        if (property is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return NavigationModel.PushAsync(new PendingPropertyDetailPage(property));
+    }
 
     [RelayCommand]
     public async Task RefreshAsync()

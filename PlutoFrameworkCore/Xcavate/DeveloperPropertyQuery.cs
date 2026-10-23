@@ -86,6 +86,34 @@ namespace PlutoFramework.Model.Xcavate
                 : DeveloperPropertyStatus.Draft;
 
         /// <summary>
+        /// The table's own primary key for one property record - what a get or a status update
+        /// addresses the item by.
+        /// </summary>
+        public static (string PartitionKey, string SortKey) BuildPropertyKey(string propertyId) =>
+            ($"${Service}#propertyid_{ToKeyPart(propertyId)}", $"${Entity}_{EntityVersion}");
+
+        /// <summary>
+        /// The same index sort key with a different status baked in. A status change is not
+        /// complete without this: the sort keys embed the status
+        /// (<c>$property_1#status_submitted#propertyid_…</c>), so an update that touched only
+        /// the status attribute would leave the record answering its old status's queries.
+        /// </summary>
+        public static string WithStatus(string sortKey, DeveloperPropertyStatus status)
+        {
+            var segments = sortKey.Split('#');
+
+            for (var i = 0; i < segments.Length; i++)
+            {
+                if (segments[i].StartsWith("status_", StringComparison.Ordinal))
+                {
+                    segments[i] = $"status_{ToStatusKeyPart(status)}";
+                }
+            }
+
+            return string.Join('#', segments);
+        }
+
+        /// <summary>
         /// The wire form of a paged read's continuation: one DynamoDB key attribute per line as
         /// <c>name, type, value</c>, the value base64url-encoded so any character survives the
         /// round trip, and the whole thing base64url-encoded again into one opaque token. The

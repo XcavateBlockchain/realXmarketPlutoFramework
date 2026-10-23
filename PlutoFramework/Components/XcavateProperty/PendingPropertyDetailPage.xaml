@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<page:PageTemplate xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PlutoFramework.Components.XcavateProperty.PendingPropertyDetailPage"
+             xmlns:page="clr-namespace:PlutoFramework.Templates.PageTemplate"
+             xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
+             xmlns:xcavateproperty="clr-namespace:PlutoFramework.Components.XcavateProperty"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:form="clr-namespace:PlutoFramework.Components.Form"
+             Title="{Binding Title}">
+    <page:PageTemplate.MainContent>
+        <ScrollView>
+            <VerticalStackLayout Padding="20, 15, 20, 110"
+                                 Spacing="15">
+
+                <!-- The card's own layout, read-only here: photo with the type badge and the
+                     status pill, then location, name with gross yield, and shares/price. -->
+                <card:Card CardPadding="0, 0, 0, 0"
+                           HorizontalOptions="Fill">
+                    <card:Card.View>
+                        <VerticalStackLayout HorizontalOptions="Fill"
+                                             Spacing="5">
+                            <AbsoluteLayout HorizontalOptions="Fill"
+                                            HeightRequest="200">
+                                <Image Aspect="AspectFill"
+                                       BackgroundColor="{AppThemeBinding Light=#dddddd, Dark=#222222}"
+                                       Source="{Binding PropertyImageSource}"
+                                       AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+                                       AbsoluteLayout.LayoutFlags="All" />
+
+                                <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#0a0a0a}"
+                                        StrokeThickness="0"
+                                        AbsoluteLayout.LayoutBounds="0, 0, AutoSize, AutoSize"
+                                        AbsoluteLayout.LayoutFlags="PositionProportional"
+                                        Margin="10, 10, 0, 0">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="5" />
+                                    </Border.StrokeShape>
+                                    <Label Margin="8, 2, 8, 2"
+                                           FontSize="12"
+                                           Text="{Binding Property.TypeText}"
+                                           HorizontalTextAlignment="Center"
+                                           VerticalOptions="Center" />
+                                </Border>
+
+                                <Border BackgroundColor="#22888888"
+                                        StrokeThickness="0"
+                                        AbsoluteLayout.LayoutBounds="0, 1, AutoSize, AutoSize"
+                                        AbsoluteLayout.LayoutFlags="PositionProportional"
+                                        Margin="10, 0, 0, 10">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="5" />
+                                    </Border.StrokeShape>
+                                    <Label Margin="5, 0, 5, 0"
+                                           Text="{Binding Property.StatusText}"
+                                           FontAttributes="Bold"
+                                           HorizontalTextAlignment="Center"
+                                           VerticalOptions="Center" />
+                                </Border>
+                            </AbsoluteLayout>
+
+                            <xcavateproperty:LocationView LocationName="{Binding Property.LocationText}"
+                                                          HorizontalOptions="Start"
+                                                          Margin="10, 5, 10, 0" />
+
+                            <Grid ColumnSpacing="5"
+                                  Margin="10, 0, 10, 0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Label FontAttributes="Bold"
+                                       Text="{Binding Property.NameText}"
+                                       HorizontalTextAlignment="Start"
+                                       VerticalOptions="Center"
+                                       LineBreakMode="TailTruncation"
+                                       Grid.Column="0" />
+
+                                <Label Text="Gross yield"
+                                       IsVisible="{Binding Property.HasGrossYield}"
+                                       HorizontalTextAlignment="End"
+                                       VerticalOptions="Center"
+                                       Grid.Column="1" />
+
+                                <Label Text="{Binding Property.GrossYieldText}"
+                                       FontAttributes="Bold"
+                                       IsVisible="{Binding Property.HasGrossYield}"
+                                       HorizontalTextAlignment="End"
+                                       VerticalOptions="Center"
+                                       Grid.Column="2" />
+                            </Grid>
+
+                            <Grid ColumnSpacing="5"
+                                  Margin="10, 0, 10, 10"
+                                  IsVisible="{Binding Property.HasFinances}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Label Text="Shares"
+                                       HorizontalTextAlignment="Start"
+                                       VerticalOptions="Center"
+                                       Grid.Column="0" />
+
+                                <Label Text="{Binding Property.SharesText}"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Start"
+                                       VerticalOptions="Center"
+                                       Grid.Column="1" />
+
+                                <Label Text="Price"
+                                       HorizontalTextAlignment="End"
+                                       VerticalOptions="Center"
+                                       Grid.Column="2" />
+
+                                <Label Text="{Binding Property.PriceText}"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="End"
+                                       VerticalOptions="Center"
+                                       Grid.Column="3" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </card:Card.View>
+                </card:Card>
+
+                <form:FormWideValueView Title="Company"
+                                        Value="{Binding Property.CompanyName}"
+                                        IsVisible="{Binding HasCompany}" />
+
+                <form:FormWideValueView Title="Submitted"
+                                        Value="{Binding SubmittedText}"
+                                        IsVisible="{Binding HasSubmitted}" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </page:PageTemplate.MainContent>
+
+    <page:PageTemplate.PopupContent>
+        <!-- The decision, while one is still owed: Reject left, Approve right. -->
+        <xcavate:PageBottomBarTwoButtonsView IsVisible="{Binding ShowDecisionButtons}"
+                                             LeftText="Reject"
+                                             LeftCommand="{Binding RejectCommand}"
+                                             LeftButtonState="{Binding DecisionButtonsState}"
+                                             RightText="Approve"
+                                             RightCommand="{Binding ApproveCommand}"
+                                             RightButtonState="{Binding DecisionButtonsState}" />
+
+        <!-- Once decided - by this page or by anyone before it - the outcome takes the
+             buttons' place. -->
+        <xcavate:PageBottomBarView IsVisible="{Binding ShowDecidedText}"
+                                   AbsoluteLayout.LayoutBounds="0.5, 1, 1, 90"
+                                   AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+            <Label Text="{Binding DecidedText}"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="{Binding DecidedColor}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+        </xcavate:PageBottomBarView>
+    </page:PageTemplate.PopupContent>
+</page:PageTemplate>
