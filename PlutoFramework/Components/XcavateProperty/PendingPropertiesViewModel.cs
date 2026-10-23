@@ -81,8 +81,8 @@ public partial class PendingPropertiesViewModel : ObservableObject
                     : "Properties waiting for verification will appear here.";
 
     /// <summary>
-    /// The tapped property's detail page, where the admin's decision (approve / reject)
-    /// lives.
+    /// The tapped property on the regular detail page, in its admin-review state: the
+    /// approve / reject pair at the bottom, decided by the store write there.
     /// </summary>
     [RelayCommand]
     private Task OpenPropertyAsync(DeveloperProperty? property)
@@ -92,7 +92,8 @@ public partial class PendingPropertiesViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
-        return NavigationModel.PushAsync(new PendingPropertyDetailPage(property));
+        return NavigationModel.PushAsync(
+            new PropertyDetailPage(PropertyDetailViewModel.ForPendingProperty(property)));
     }
 
     [RelayCommand]

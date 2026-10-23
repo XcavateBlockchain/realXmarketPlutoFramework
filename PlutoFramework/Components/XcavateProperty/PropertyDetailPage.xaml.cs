@@ -31,6 +31,13 @@ public partial class PropertyDetailPage : PageTemplate
     {
         base.OnAppearing();
 
+        // Admin review of an off-chain record: nothing on chain exists yet, so none of the
+        // indexer-backed refreshes below have anything to read.
+        if (viewModel.IsPendingReview)
+        {
+            return;
+        }
+
         // Subscribed only while the page is on screen: a reserve submitted from this page
         // must re-read the listing once it confirms, but a popped page's view model must
         // not be kept alive by the static event.

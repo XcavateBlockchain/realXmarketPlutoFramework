@@ -171,6 +171,7 @@
                                             Percentage="{Binding AreaPricesPercentage}"
                                             MinimumTitle="£200,000"
                                             MaximumTitle="£270,000"
+                                            IsVisible="{Binding ShowOnChainSections}"
                                             InfoCommand="{Binding NavigateToFeesCommand}"/>
 
                     <Border HeightRequest="1"
@@ -193,6 +194,7 @@
                                             Percentage="{Binding RentalDemandPercentage}"
                                             MinimumTitle="Low"
                                             MaximumTitle="High"
+                                            IsVisible="{Binding ShowOnChainSections}"
                                             InfoCommand="{Binding NavigateToFeesCommand}" />
 
                     <xcavateproperty:OwnedPropertyTokensView IsVisible="{Binding OwnedPropertyTokensViewIsVisible}" />
@@ -294,6 +296,7 @@
 
                     <map:PropertyMapView x:Name="propertyMapView"
                                          HeightRequest="350"
+                                         IsVisible="{Binding ShowOnChainSections}"
                                          LocationName="{Binding PropertyAddressLine}"
                                          MapUrl="{Binding Metadata.Map}"
                                          PropertyMetadata="{Binding Metadata}" />
@@ -311,14 +314,16 @@
         <xcavate:XcavateTopNavigationBarView Title="{Binding Metadata.PropertyName}"
                                              Extra1Image="xcavateshare.png"
                                              Extra1Command="{Binding ShareCommand}"
+                                             Extra1IsVisible="{Binding ShowOnChainSections}"
                                              Extra1ImageMargin="0,0,5,0"
                                              Extra2Image="{Binding FavouriteImage}"
                                              Extra2Command="{Binding MakeFavouriteCommand}"
+                                             Extra2IsVisible="{Binding ShowOnChainSections}"
                                              Extra2ImageMargin="5, 6, 5, 4"
                                              Extra2ImageHeight="20"
                                              Extra2ImageWidth="20"
                                              Extra3Image="xcavatemail.png"
-                                             Extra3IsVisible="True"
+                                             Extra3IsVisible="{Binding ShowOnChainSections}"
                                              Extra3Command="{Binding MessageCommand}"
                                              Extra3ImageMargin="0"
                                              Extra3ImageHeight="28"
@@ -344,6 +349,29 @@
                                              LeftText="Cancel"
                                              RightCommand="{Binding BuyMoreCommand}"
                                              RightText="Reserve more" />
+
+        <!-- The admin's decision on a pending property: Reject left, Approve right, shown
+             while the record still awaits one. -->
+        <xcavate:PageBottomBarTwoButtonsView IsVisible="{Binding ShowAdminDecisionButtons}"
+                                             LeftCommand="{Binding RejectPendingPropertyCommand}"
+                                             LeftText="Reject"
+                                             LeftButtonState="{Binding AdminDecisionButtonsState}"
+                                             RightCommand="{Binding ApprovePendingPropertyCommand}"
+                                             RightText="Approve"
+                                             RightButtonState="{Binding AdminDecisionButtonsState}" />
+
+        <!-- Once decided - by this page or by another admin first - the outcome takes the
+             buttons' place. -->
+        <xcavate:PageBottomBarView IsVisible="{Binding ShowAdminDecidedText}"
+                                   AbsoluteLayout.LayoutBounds="0.5, 1, 1, 90"
+                                   AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+            <Label Text="{Binding AdminDecidedText}"
+                   FontAttributes="Bold"
+                   FontSize="16"
+                   TextColor="{Binding AdminDecidedColor}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+        </xcavate:PageBottomBarView>
 
         <extrinsic:ExtrinsicStatusStackLayout />
 

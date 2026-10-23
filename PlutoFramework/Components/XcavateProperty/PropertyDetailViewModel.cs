@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Maui.Alerts;
 using PlutoFramework.Components.Buttons;
 using PlutoFramework.Components.Loading;
 using PlutoFramework.Components.MessagePopup;
@@ -254,6 +255,77 @@ namespace PlutoFramework.Components.XcavateProperty
         /// <summary>True when the page was opened from a secondary-market card.</summary>
         public bool HasShareListingContext => ShareListingContext is not null;
 
+        // ── Admin review of a pending property ──
+
+        /// <summary>
+        /// The off-chain developer property record this page reviews when it was opened from
+        /// the pending-properties list. Set means admin-review mode: the property has nothing
+        /// on chain yet, so the page reads the record alone - the indexer refreshes stay off,
+        /// the on-chain sections hide, and the bottom bar is the admin's Reject / Approve
+        /// pair instead of any marketplace action.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsPendingReview))]
+        [NotifyPropertyChangedFor(nameof(ShowOnChainSections))]
+        [NotifyPropertyChangedFor(nameof(StatusText))]
+        [NotifyPropertyChangedFor(nameof(StatusIsVisible))]
+        [NotifyPropertyChangedFor(nameof(ShowInvestorMainAction))]
+        [NotifyPropertyChangedFor(nameof(ShowBuyMoreButtons))]
+        [NotifyPropertyChangedFor(nameof(ShowAdminDecisionButtons))]
+        [NotifyPropertyChangedFor(nameof(ShowAdminDecidedText))]
+        [NotifyPropertyChangedFor(nameof(AdminDecidedText))]
+        [NotifyPropertyChangedFor(nameof(AdminDecidedColor))]
+        private DeveloperProperty? pendingProperty;
+
+        public bool IsPendingReview => PendingProperty is not null;
+
+        /// <summary>The sections and chrome that only make sense for an on-chain listing.</summary>
+        public bool ShowOnChainSections => !IsPendingReview;
+
+        /// <summary>
+        /// The admin-review entry point: the record is already in hand, so the page skips the
+        /// skeleton - there is nothing to fetch.
+        /// </summary>
+        public static PropertyDetailViewModel ForPendingProperty(DeveloperProperty record) => new()
+        {
+            PendingProperty = record,
+            Metadata = MapPendingProperty(record),
+            IsLoading = false,
+        };
+
+        /// <summary>
+        /// The record in the page's metadata shape: every field the page binds that the
+        /// record actually carries; the indexer-only ones (gallery mirrors, map, the form's
+        /// detail attributes) stay empty. The record's stored share price is a junk mid-form
+        /// value (see docs/developer-page-dynamo-findings.md), so the per-token price is
+        /// derived from the declared price and share count instead.
+        /// </summary>
+        private static PropertyMetadata MapPendingProperty(DeveloperProperty record) => new()
+        {
+            PropertyName = record.NameText,
+            PropertyType = record.TypeText,
+            PropertyDescription = string.Empty,
+            Files = record.HasImage ? [record.ImageUrl!] : [],
+            Address = new PropertyAddress
+            {
+                PostCode = record.PostCode,
+                Street = record.Street ?? record.Location,
+                TownCity = record.TownCity ?? record.Region,
+            },
+            Company = record.CompanyName is { } company
+                ? new PropertyCompany { Name = company }
+                : null,
+            Financials = new PropertyFinancials
+            {
+                PropertyPrice = record.PropertyPrice ?? 0,
+                NumberOfTokens = (int)(record.NumberOfShares ?? 0),
+                EstimatedRentalIncome = record.EstimatedRentalIncome ?? 0,
+                PricePerToken = record.PropertyPrice is { } price && record.NumberOfShares is > 0
+                    ? price / record.NumberOfShares.Value
+                    : 0,
+            },
+        };
+
         public double AreaPricesPercentage => PropertyModel.GetAreaPricesPercentage(Metadata?.Financials.PropertyPrice ?? 0);
         public double RentalDemandPercentage => PropertyModel.GetRentalDemand();
 
@@ -326,7 +398,7 @@ namespace PlutoFramework.Components.XcavateProperty
         public bool RelistPropertyTokensButtonIsVisible => TokensOwned > 0;
         public bool SendSharesButtonIsVisible => TokensOwned > 0;
 
-        public bool ShowBuyMoreButtons => !NftWrapper!.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0;
+        public bool ShowBuyMoreButtons => !IsPendingReview && !NftWrapper!.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0;
 
         public string MainActionText => getMainActionState() switch
         {
@@ -367,8 +439,8 @@ namespace PlutoFramework.Components.XcavateProperty
             _ => ButtonStateEnum.Disabled,
         };
 
-        public string StatusText => NftWrapper?.Status ?? "Unknown";
-        public bool StatusIsVisible => NftWrapper?.StatusIsVisible ?? false;
+        public string StatusText => PendingProperty?.StatusText ?? NftWrapper?.Status ?? "Unknown";
+        public bool StatusIsVisible => IsPendingReview || (NftWrapper?.StatusIsVisible ?? false);
 
         /// <summary>
         /// The marketplace listing id the Solana program calls are keyed by. ItemId
@@ -1089,7 +1161,7 @@ namespace PlutoFramework.Components.XcavateProperty
         /// applies to the shell).
         /// </summary>
         public bool ShowInvestorMainAction =>
-            IsLoaded && MainPageRole is MainPageRole.Investor or MainPageRole.LettingAgent;
+            !IsPendingReview && IsLoaded && MainPageRole is MainPageRole.Investor or MainPageRole.LettingAgent;
 
         /// <summary>
         /// The developer's engagement action: assign_developer_lawyer opens once the sale
@@ -1130,6 +1202,70 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public ButtonStateEnum LawyerClaimButtonState =>
             OwnCandidacyStanding ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
+
+        // ── The admin's decision on a pending property ──
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(AdminDecisionButtonsState))]
+        private bool adminDecisionSaving;
+
+        /// <summary>The buttons belong to the awaiting-decision state alone.</summary>
+        public bool ShowAdminDecisionButtons =>
+            IsPendingReview && PendingProperty!.Status == DeveloperPropertyStatus.Submitted;
+
+        public bool ShowAdminDecidedText =>
+            IsPendingReview && PendingProperty!.Status
+                is DeveloperPropertyStatus.Verified or DeveloperPropertyStatus.Rejected;
+
+        public string AdminDecidedText =>
+            PendingProperty?.Status == DeveloperPropertyStatus.Verified ? "Approved" : "Rejected";
+
+        public Color AdminDecidedColor =>
+            PendingProperty?.Status == DeveloperPropertyStatus.Verified ? PrimaryColor : DangerousRedColor;
+
+        public ButtonStateEnum AdminDecisionButtonsState =>
+            AdminDecisionSaving ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
+
+        [RelayCommand]
+        private Task ApprovePendingPropertyAsync() => DecidePendingPropertyAsync(DeveloperPropertyStatus.Verified);
+
+        [RelayCommand]
+        private Task RejectPendingPropertyAsync() => DecidePendingPropertyAsync(DeveloperPropertyStatus.Rejected);
+
+        /// <summary>
+        /// The decision, written to the developer property store (Submitted → Verified or
+        /// Rejected). The store answers with the record as it stands after the write - or as
+        /// it stands, when another admin's decision beat this one - so the page settles on
+        /// the truth either way. Null means the decision did not go through: the buttons
+        /// stay, and a retry is a tap away.
+        /// </summary>
+        private async Task DecidePendingPropertyAsync(DeveloperPropertyStatus status)
+        {
+            if (AdminDecisionSaving || PendingProperty is null)
+            {
+                return;
+            }
+
+            AdminDecisionSaving = true;
+
+            try
+            {
+                var updated = await DeveloperPropertyClient.UpdatePropertyStatusAsync(
+                    PendingProperty.PropertyId, status, CancellationToken.None);
+
+                if (updated is null)
+                {
+                    await Toast.Make("The property could not be updated. Please try again.").Show();
+                    return;
+                }
+
+                PendingProperty = updated;
+            }
+            finally
+            {
+                AdminDecisionSaving = false;
+            }
+        }
 
         /// <summary>
         /// The election round a new candidacy stands in: while no round is running (the
