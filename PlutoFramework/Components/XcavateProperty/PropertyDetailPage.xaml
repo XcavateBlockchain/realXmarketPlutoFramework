@@ -339,6 +339,13 @@
                                          ButtonState="Enabled"
                                          Command="{Binding AssignDeveloperLawyerCommand}" />
 
+        <!-- The developer's listing action on their own Verified record; once the on-chain
+             listing confirms, the "Listed" decided text takes its place. -->
+        <xcavate:PageBottomBarButtonView IsVisible="{Binding ShowDeveloperListButton}"
+                                         Text="List on Marketplace"
+                                         ButtonState="{Binding DeveloperListButtonState}"
+                                         Command="{Binding ListPropertyCommand}" />
+
         <xcavate:PageBottomBarButtonView IsVisible="{Binding ShowClaimSpvCaseButton}"
                                          Text="{Binding LawyerClaimText}"
                                          ButtonState="{Binding LawyerClaimButtonState}"

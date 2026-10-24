@@ -31,10 +31,15 @@ public partial class PropertyDetailPage : PageTemplate
     {
         base.OnAppearing();
 
-        // Admin review of an off-chain record: nothing on chain exists yet, so none of the
-        // indexer-backed refreshes below have anything to read.
+        // Admin review of an off-chain record: none of the indexer-backed refreshes below
+        // have anything to read. The developer's "List on Marketplace" button lives in this
+        // mode too, though: its visibility follows the Settings main-page role, and its
+        // on-chain confirmation arrives through the marketplace transaction event - so both
+        // the subscription and the role refresh run here before returning.
         if (viewModel.IsPendingReview)
         {
+            viewModel.SubscribeToMarketplaceTransactions();
+            _ = viewModel.RefreshMainPageRoleAsync();
             return;
         }
 

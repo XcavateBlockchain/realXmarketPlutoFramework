@@ -54,7 +54,12 @@ namespace PlutoFramework.Components.XcavateProperty
 
         private MainActionStates getMainActionState()
         {
-            if (NftWrapper!.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0)
+            if (NftWrapper is null)
+            {
+                return MainActionStates.Unknown;
+            }
+
+            if (NftWrapper.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0)
             {
                 return MainActionStates.RefundBought;
             }
@@ -148,6 +153,8 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(ShowInvestorMainAction))]
         [NotifyPropertyChangedFor(nameof(ShowAssignDeveloperLawyerButton))]
         [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        [NotifyPropertyChangedFor(nameof(ShowDeveloperListButton))]
+        [NotifyPropertyChangedFor(nameof(ShowAdminDecidedText))]
         private MainPageRole mainPageRole = MainPageRole.Investor;
 
         /// <summary>Re-reads the Settings main-page role - called on every page appearance.</summary>
@@ -275,6 +282,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(ShowAdminDecidedText))]
         [NotifyPropertyChangedFor(nameof(AdminDecidedText))]
         [NotifyPropertyChangedFor(nameof(AdminDecidedColor))]
+        [NotifyPropertyChangedFor(nameof(ShowDeveloperListButton))]
         private DeveloperProperty? pendingProperty;
 
         public bool IsPendingReview => PendingProperty is not null;
@@ -503,6 +511,9 @@ namespace PlutoFramework.Components.XcavateProperty
 
             // A pending claim's navigation dies with the page.
             claimConfirmationPending = false;
+
+            // So does a pending listing's record update.
+            listConfirmationPending = false;
         }
 
         // ── Governance voting (terms ratification, proposals, challenges, elections) ──
@@ -1213,18 +1224,42 @@ namespace PlutoFramework.Components.XcavateProperty
         public bool ShowAdminDecisionButtons =>
             IsPendingReview && PendingProperty!.Status == DeveloperPropertyStatus.Submitted;
 
+        /// <summary>
+        /// The developer's own action on a decided record: list_property opens for the
+        /// Developer main-page role while the record stands Verified - once the on-chain
+        /// listing confirms, the record flips to Listed and the decided text takes over.
+        /// </summary>
+        public bool ShowDeveloperListButton =>
+            IsPendingReview && MainPageRole == MainPageRole.Developer
+            && PendingProperty is { Status: DeveloperPropertyStatus.Verified };
+
         public bool ShowAdminDecidedText =>
-            IsPendingReview && PendingProperty!.Status
-                is DeveloperPropertyStatus.Verified or DeveloperPropertyStatus.Rejected;
+            IsPendingReview && !ShowDeveloperListButton && PendingProperty!.Status
+                is DeveloperPropertyStatus.Verified or DeveloperPropertyStatus.Rejected
+                or DeveloperPropertyStatus.Listed;
 
         public string AdminDecidedText =>
-            PendingProperty?.Status == DeveloperPropertyStatus.Verified ? "Approved" : "Rejected";
+            PendingProperty?.Status switch
+            {
+                DeveloperPropertyStatus.Verified => "Approved",
+                DeveloperPropertyStatus.Listed => "Listed",
+                _ => "Rejected",
+            };
 
         public Color AdminDecidedColor =>
-            PendingProperty?.Status == DeveloperPropertyStatus.Verified ? PrimaryColor : DangerousRedColor;
+            PendingProperty?.Status is DeveloperPropertyStatus.Verified or DeveloperPropertyStatus.Listed
+                ? PrimaryColor
+                : DangerousRedColor;
 
         public ButtonStateEnum AdminDecisionButtonsState =>
             AdminDecisionSaving ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DeveloperListButtonState))]
+        private bool developerListSaving;
+
+        public ButtonStateEnum DeveloperListButtonState =>
+            DeveloperListSaving ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
 
         [RelayCommand]
         private Task ApprovePendingPropertyAsync() => DecidePendingPropertyAsync(DeveloperPropertyStatus.Verified);
@@ -1265,6 +1300,119 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 AdminDecisionSaving = false;
             }
+        }
+
+        /// <summary>
+        /// True between the listing's submission and its confirmation: the confirmation
+        /// (and only it) marks the record Listed in the developer property store. Set from
+        /// <see cref="XcavateMarketplaceTransactionModel.SubmitAsync"/>'s result together
+        /// with the listing id the build reserved, so a declined unlock prompt or a failed
+        /// build never wedges it - a later unrelated confirmation must not mark a record
+        /// whose transaction was never signed.
+        /// </summary>
+        private bool listConfirmationPending;
+        private ulong pendingListingId;
+
+        /// <summary>
+        /// The developer's "List on Marketplace" action: list_property opens the verified
+        /// property's sale on chain. The record's own update waits for the on-chain
+        /// confirmation (<see cref="OnMarketplaceTransactionConfirmed"/>), so the page never
+        /// claims a listing the chain rejected.
+        /// </summary>
+        [RelayCommand]
+        private async Task ListPropertyAsync()
+        {
+            if (!ShowDeveloperListButton || DeveloperListSaving || PendingProperty is not { } property)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(property.PostCode))
+            {
+                await Toast.Make("The property has no postcode to list under.").Show();
+                return;
+            }
+
+            if (property.PropertyPrice is not > 0 || property.NumberOfShares is not > 0)
+            {
+                await Toast.Make("The property's price and share count must be set before it can be listed.").Show();
+                return;
+            }
+
+            DeveloperListSaving = true;
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            try
+            {
+                if (!await RequirementsModel.CheckRequirementsAsync())
+                {
+                    return;
+                }
+
+                if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateDeveloper, CancellationToken.None))
+                {
+                    return;
+                }
+            }
+            finally
+            {
+                // Cleared on every exit path - a throwing requirements check (network or
+                // indexer failure) must not wedge the page behind the overlay.
+                fullPageLoadingViewModel.IsVisible = false;
+            }
+
+            try
+            {
+                ulong? listedId = null;
+
+                var submitted = await XcavateMarketplaceTransactionModel.SubmitAsync(
+                    "List property",
+                    async (developer, cluster, ct) =>
+                    {
+                        var (instructions, listingId) = await XcavateMarketplaceCallsModel.ListPropertyAsync(
+                            cluster,
+                            developer,
+                            property.PostCode!,
+                            property.PropertyPrice!.Value,
+                            (long)property.NumberOfShares!.Value,
+                            ct);
+
+                        listedId = listingId;
+                        return instructions;
+                    });
+
+                if (submitted && listedId is { } id)
+                {
+                    listConfirmationPending = true;
+                    pendingListingId = id;
+                }
+            }
+            finally
+            {
+                DeveloperListSaving = false;
+            }
+        }
+
+        /// <summary>
+        /// After a confirmed list_property transaction, the record flips to Listed in the
+        /// developer property store. A failed update leaves the on-chain listing without
+        /// its record link - the page says so rather than pretending the listing vanished.
+        /// </summary>
+        private async Task OnListConfirmedMarkListedAsync()
+        {
+            var updated = await DeveloperPropertyClient.MarkPropertyListedAsync(
+                PendingProperty?.PropertyId ?? string.Empty, pendingListingId, CancellationToken.None);
+
+            if (updated is null)
+            {
+                await Toast.Make("The property was listed on chain, but its record could not be updated.").Show();
+                return;
+            }
+
+            PendingProperty = updated;
         }
 
         /// <summary>
@@ -1885,6 +2033,16 @@ namespace PlutoFramework.Components.XcavateProperty
                     claimConfirmationPending = false;
 
                     await OnClaimConfirmedNavigateAsync();
+                }
+
+                // The listing's confirmation flips the record to Listed. In pending-review
+                // mode the refresh above reads nothing (there is no on-chain listing wrapper
+                // yet), so this runs on its own.
+                if (listConfirmationPending)
+                {
+                    listConfirmationPending = false;
+
+                    await OnListConfirmedMarkListedAsync();
                 }
             });
 

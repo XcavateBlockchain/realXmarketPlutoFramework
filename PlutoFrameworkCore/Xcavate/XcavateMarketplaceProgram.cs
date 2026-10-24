@@ -45,6 +45,7 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] ExecuteDealDiscriminator = [107, 92, 176, 235, 53, 80, 14, 94];
         private static readonly byte[] AssignDeveloperLawyerDiscriminator = [197, 167, 242, 89, 235, 9, 169, 65];
         private static readonly byte[] ClaimSpvCaseDiscriminator = [175, 185, 102, 63, 166, 39, 168, 56];
+        private static readonly byte[] ListPropertyDiscriminator = [254, 101, 42, 174, 220, 160, 42, 82];
 
         // PDA seed prefixes, from the IDL's constants section.
         private static readonly byte[] ConfigSeed = Encoding.UTF8.GetBytes("config");
@@ -66,6 +67,11 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>The regions program's Region PDA prefix - the one account the
         /// marketplace instructions pass that lives under a third program.</summary>
         private static readonly byte[] RegionSeed = Encoding.UTF8.GetBytes("region");
+
+        /// <summary>The regions program's Location PDA prefix - like <see cref="RegionSeed"/>,
+        /// owned by the regions program and passed to list_property so the program can bill
+        /// the location's registration deposit.</summary>
+        private static readonly byte[] LocationSeed = Encoding.UTF8.GetBytes("location");
 
         /// <summary>The marketplace program's own CPI signer seed - NOT the property
         /// program's [b"cpi-auth"] PDA (<see cref="XcavatePropertyProgram.DeriveCpiAuth"/>).
@@ -179,6 +185,15 @@ namespace PlutoFramework.Model.Xcavate
         /// </summary>
         public static PublicKey DeriveRegion(XcavateProgramSet programs, ushort regionId) =>
             SolanaProgramAddress.Derive(new(programs.Regions), RegionSeed, U16(regionId));
+
+        /// <summary>
+        /// A location account: [b"location", region_id LE (u16), postcode] under the REGIONS
+        /// program - the postcode as the region registered it (no spaces, upper case).
+        /// list_property passes it so the program can verify the property sits in a
+        /// registered location before opening the sale.
+        /// </summary>
+        public static PublicKey DeriveLocation(XcavateProgramSet programs, ushort regionId, byte[] postcode) =>
+            SolanaProgramAddress.Derive(new(programs.Regions), LocationSeed, U16(regionId), postcode);
 
         /// <summary>
         /// The marketplace program's own CPI signer PDA, [b"cpi-auth"] - what
@@ -524,6 +539,61 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(DeriveProperty(programs, listingId), false),
                 ],
                 Data = Encode(AssignDeveloperLawyerDiscriminator, U64(listingId), lawyer.KeyBytes),
+            };
+        }
+
+        /// <summary>
+        /// list_property(region_id, postcode, share_price, share_amount,
+        /// tax_paid_by_developer, max_deposit): the developer's opening of a verified
+        /// property's sale. The Listing and Property accounts are initialized under the
+        /// config's next_listing_id, so <paramref name="listingId"/> must be a fresh read
+        /// of that counter - a stale id fails the accounts' seed checks. The program
+        /// enforces the developer's compliant RealEstateDeveloper role, the registered
+        /// region/location pair, the share-count and share-price limits, and the listing
+        /// deposit (charged from <paramref name="developerToken"/> into the vault, capped
+        /// at <paramref name="maxDeposit"/>) on chain, so the caller only derives accounts.
+        /// The developer's signature alone opens the listing; no other wallet is involved.
+        /// </summary>
+        public static TransactionInstruction ListProperty(
+            XcavateProgramSet programs,
+            PublicKey developer,
+            PublicKey xcavMint,
+            PublicKey developerToken,
+            PublicKey xcavTokenProgram,
+            ushort regionId,
+            byte[] postcode,
+            ulong sharePrice,
+            uint shareAmount,
+            bool taxPaidByDeveloper,
+            ulong maxDeposit,
+            ulong listingId)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(developer, true),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, developer, XcavateRole.RealEstateDeveloper), false),
+                    AccountMeta.Writable(DeriveRegion(programs, regionId), false),
+                    AccountMeta.Writable(DeriveLocation(programs, regionId, postcode), false),
+                    AccountMeta.Writable(DeriveProperty(programs, listingId), false),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.Writable(xcavMint, false),
+                    AccountMeta.Writable(developerToken, false),
+                    AccountMeta.Writable(DeriveVault(programs), false),
+                    AccountMeta.Writable(xcavTokenProgram, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(
+                    ListPropertyDiscriminator,
+                    U16(regionId),
+                    VecU8(postcode),
+                    U64(sharePrice),
+                    U32(shareAmount),
+                    Bool(taxPaidByDeveloper),
+                    U64(maxDeposit)),
             };
         }
 
@@ -1072,6 +1142,17 @@ namespace PlutoFramework.Model.Xcavate
         {
             var bytes = new byte[2];
             BinaryPrimitives.WriteUInt16LittleEndian(bytes, value);
+            return bytes;
+        }
+
+        private static byte[] Bool(bool value) => [(byte)(value ? 1 : 0)];
+
+        /// <summary>A Borsh vec of bytes: the u32 LE length prefix, then the bytes.</summary>
+        private static byte[] VecU8(byte[] value)
+        {
+            var bytes = new byte[4 + value.Length];
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes, (uint)value.Length);
+            value.CopyTo(bytes, 4);
             return bytes;
         }
 

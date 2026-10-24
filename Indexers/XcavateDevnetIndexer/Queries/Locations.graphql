@@ -1,0 +1,16 @@
+# Every active location, paged - what list_property resolves a property's postcode
+# against to find the on-chain region id (the Location PDA's seeds are the region id
+# and the postcode, so the postcode alone does not derive the address). The regions
+# program owns the Location accounts; the indexer mirrors them while they are active.
+#
+# `first`/`offset` are explicit like everywhere else: this indexer rejects defaults
+# on non-null variables.
+query Locations($first: Int!, $offset: Int!) {
+  locations(active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      regionId
+      postcode
+    }
+  }
+}

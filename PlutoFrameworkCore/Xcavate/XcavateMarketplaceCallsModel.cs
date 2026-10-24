@@ -4,6 +4,7 @@ using Solnet.Wallet;
 using StrawberryShake;
 using System.Globalization;
 using System.Numerics;
+using System.Text;
 using System.Text.Json;
 using XcavateDevnetIndexer;
 
@@ -629,6 +630,153 @@ namespace PlutoFramework.Model.Xcavate
                 XcavateMarketplaceProgram.AssignDeveloperLawyer(
                     programs, new PublicKey(developer), new PublicKey(lawyer), (ulong)listingId),
             ]);
+        }
+
+        /// <summary>
+        /// list_property for the developer's verified property: opens the sale of
+        /// <paramref name="numberOfShares"/> shares at <paramref name="propertyPrice"/> /
+        /// shares each (9-decimal price scale, via <see cref="QuoteFromDecimal"/>). Returns
+        /// the instruction and the listing id it initializes under - the config's
+        /// next_listing_id, read ON CHAIN (<see cref="XcavateMarketplaceConfigModel"/>),
+        /// because the Listing/Property PDAs are seeded by that counter and the indexer
+        /// can lag it. The postcode resolves to its on-chain region id through the
+        /// indexer's registered locations, normalized the way the regions program stores
+        /// it (no spaces, upper case). The deposit cap is the config's listing_deposit,
+        /// fresh from the same read, so the charge cannot slip between builds; the tax is
+        /// left to the buyer side (tax_paid_by_developer = false), matching the web flow.
+        /// </summary>
+        public static async Task<(List<TransactionInstruction> Instructions, ulong ListingId)> ListPropertyAsync(
+            SolanaCluster cluster,
+            string developer,
+            string postcode,
+            decimal propertyPrice,
+            long numberOfShares,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            var config = await XcavateMarketplaceConfigModel.GetConfigAsync(cluster, token).ConfigureAwait(false);
+
+            var postcodeBytes = NormalizePostcode(postcode);
+
+            var regionId = await ResolveLocationRegionIdAsync(client, postcodeBytes, token).ConfigureAwait(false)
+                ?? throw new InvalidOperationException(
+                    "This property's postcode is not registered in any region on chain.");
+
+            if (numberOfShares < config.MinPropertyShares || numberOfShares > config.MaxPropertyShares)
+            {
+                throw new InvalidOperationException(
+                    $"The share count must be between {config.MinPropertyShares} and {config.MaxPropertyShares} - " +
+                    $"this property declares {numberOfShares}.");
+            }
+
+            var sharePrice = QuoteFromDecimal(propertyPrice / numberOfShares);
+
+            if (sharePrice < MinSharePriceQuote)
+            {
+                throw new InvalidOperationException(
+                    $"The share price must be at least {MinSharePriceQuote} quote units (9-decimal scale).");
+            }
+
+            var developerKey = new PublicKey(developer);
+
+            var (xcavTokenProgram, _) = await ResolveMintAsync(cluster, config.XcavMint, token).ConfigureAwait(false);
+
+            var developerToken = SolanaAssociatedTokenAccount.Derive(developerKey, config.XcavMint, xcavTokenProgram);
+
+            var listingId = config.NextListingId;
+
+            return
+            (
+                [
+                    XcavateMarketplaceProgram.ListProperty(
+                        programs,
+                        developerKey,
+                        config.XcavMint,
+                        developerToken,
+                        xcavTokenProgram,
+                        regionId,
+                        postcodeBytes,
+                        sharePrice,
+                        (uint)numberOfShares,
+                        taxPaidByDeveloper: false,
+                        maxDeposit: config.ListingDeposit,
+                        listingId),
+                ],
+                listingId
+            );
+        }
+
+        /// <summary>
+        /// The postcode in the form the regions program seeds Location PDAs with: spaces
+        /// out, upper case, UTF-8 bytes. The program caps the postcode at 10 bytes, so a
+        /// longer one can never have been registered - reject it here with the reason.
+        /// </summary>
+        private static byte[] NormalizePostcode(string postcode)
+        {
+            var normalized = postcode.Replace(" ", string.Empty).ToUpperInvariant();
+
+            if (normalized.Length == 0)
+            {
+                throw new InvalidOperationException("The property has no postcode to list under.");
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(normalized);
+
+            if (bytes.Length > 10)
+            {
+                throw new InvalidOperationException(
+                    $"The postcode '{postcode}' is longer than the 10 bytes the regions program accepts.");
+            }
+
+            return bytes;
+        }
+
+        /// <summary>
+        /// The region <paramref name="postcodeBytes"/> is registered in, from the indexer's
+        /// active locations - or null when no registered location matches. Locations are
+        /// few, so one page almost always answers; the loop covers the day they are not.
+        /// </summary>
+        private static async Task<ushort?> ResolveLocationRegionIdAsync(
+            IXcavateDevnetIndexerClient client, byte[] postcodeBytes, CancellationToken token)
+        {
+            const int pageSize = 100;
+            var postcode = Encoding.UTF8.GetString(postcodeBytes);
+
+            for (var offset = 0; ; offset += pageSize)
+            {
+                var result = await client.Locations
+                    .ExecuteAsync(first: pageSize, offset: offset, token)
+                    .ConfigureAwait(false);
+
+                result.EnsureNoErrors();
+
+                var locations = result.Data?.Locations;
+
+                if (locations is null)
+                {
+                    return null;
+                }
+
+                foreach (var node in locations.Nodes)
+                {
+                    // The indexer serves the postcode as the chain holds it; normalize it
+                    // anyway so a formatting drift cannot hide a registered location.
+                    if (string.Equals(
+                        node.Postcode.Replace(" ", string.Empty).ToUpperInvariant(),
+                        postcode,
+                        StringComparison.Ordinal))
+                    {
+                        return (ushort)node.RegionId;
+                    }
+                }
+
+                if (offset + locations.Nodes.Count >= locations.TotalCount)
+                {
+                    return null;
+                }
+            }
         }
 
         /// <summary>

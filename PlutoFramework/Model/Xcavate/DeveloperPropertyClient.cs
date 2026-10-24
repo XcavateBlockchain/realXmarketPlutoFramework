@@ -517,6 +517,124 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
+        /// Marks one Verified record as Listed and pins the on-chain listing id to it - the
+        /// record-keeping half of the developer's list_property transaction, run once the
+        /// transaction confirms on chain.
+        /// </summary>
+        /// <remarks>
+        /// Same store mechanics as <see cref="UpdatePropertyStatusAsync"/>: the status moves,
+        /// so every index sort key the item carries is rebuilt with the new value alongside
+        /// the listingId write. The update is conditioned on the record still being Verified,
+        /// so a second listing attempt (or an admin's reversal) cannot silently re-list.
+        /// </remarks>
+        /// <returns>
+        /// The record as it stands after the call, or null when the record is gone, the store
+        /// is not configured, the write failed, or the record was no longer Verified - the
+        /// on-chain listing then exists without its record link, which the caller reports.
+        /// </returns>
+        public static async Task<DeveloperProperty?> MarkPropertyListedAsync(
+            string propertyId,
+            ulong listingId,
+            CancellationToken cancellationToken = default)
+        {
+            var client = GetClient();
+
+            if (client is null || string.IsNullOrWhiteSpace(propertyId))
+            {
+                return null;
+            }
+
+            var (partitionKey, sortKey) = DeveloperPropertyQuery.BuildPropertyKey(propertyId);
+            var key = new Dictionary<string, AttributeValue>
+            {
+                ["pk"] = new AttributeValue(partitionKey),
+                ["sk"] = new AttributeValue(sortKey),
+            };
+
+            try
+            {
+                var existing = await client.GetItemAsync(new GetItemRequest
+                    {
+                        TableName = GetTableName(),
+                        Key = key,
+                        // A listing is only valid against the record as it stands right now.
+                        ConsistentRead = true,
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!existing.IsItemSet)
+                {
+                    return null;
+                }
+
+                var previous = DeveloperPropertyQuery.ParseStatus(Text(existing.Item, "status"));
+
+                if (previous == DeveloperPropertyStatus.Listed)
+                {
+                    return Parse(existing.Item);
+                }
+
+                // "status" is a DynamoDB reserved word, so the expression names it indirectly.
+                var names = new Dictionary<string, string> { ["#st"] = "status" };
+                var values = new Dictionary<string, AttributeValue>
+                {
+                    [":status"] = new AttributeValue(
+                        DeveloperPropertyQuery.ToStatusKeyPart(DeveloperPropertyStatus.Listed)),
+                    [":verified"] = new AttributeValue(
+                        DeveloperPropertyQuery.ToStatusKeyPart(DeveloperPropertyStatus.Verified)),
+                    [":listingId"] = new AttributeValue(
+                        listingId.ToString(CultureInfo.InvariantCulture)),
+                    [":updatedAt"] = new AttributeValue(
+                        DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture)),
+                };
+                var sets = new List<string> { "#st = :status", "listingId = :listingId", "updatedAt = :updatedAt" };
+
+                foreach (var indexSortKey in new[] { "gsi1sk", "gsi2sk", "gsi3sk" })
+                {
+                    if (Text(existing.Item, indexSortKey) is not { } current)
+                    {
+                        continue;
+                    }
+
+                    names[$"#{indexSortKey}"] = indexSortKey;
+                    values[$":{indexSortKey}"] = new AttributeValue(
+                        DeveloperPropertyQuery.WithStatus(current, DeveloperPropertyStatus.Listed));
+                    sets.Add($"#{indexSortKey} = :{indexSortKey}");
+                }
+
+                var updated = await client.UpdateItemAsync(new UpdateItemRequest
+                    {
+                        TableName = GetTableName(),
+                        Key = key,
+                        UpdateExpression = "SET " + string.Join(", ", sets),
+                        ConditionExpression = "#st = :verified",
+                        ExpressionAttributeNames = names,
+                        ExpressionAttributeValues = values,
+                        ReturnValues = ReturnValue.ALL_NEW,
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                return Parse(updated.Attributes);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (ConditionalCheckFailedException)
+            {
+                // The record was no longer Verified - nothing to re-read: the caller's
+                // answer to a failed condition is "the record could not be updated".
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Developer property listed-marking failed:");
+                Console.WriteLine(ex);
+                return null;
+            }
+        }
+
+        /// <summary>
         /// The query one page of the read is run with, or null when there is nothing to key it
         /// on - no developer's company and no wallet. Shared by the whole-list read and the
         /// paged one so the two cannot drift apart on how the store is asked.

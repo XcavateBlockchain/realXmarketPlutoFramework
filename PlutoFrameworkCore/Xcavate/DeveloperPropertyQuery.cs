@@ -29,7 +29,12 @@ namespace PlutoFramework.Model.Xcavate
         private const string Entity = "property";
         private const int EntityVersion = 1;
 
-        /// <summary>The lower-cased wire form of a status, as it sits inside the sort key.</summary>
+        /// <summary>
+        /// The lower-cased wire form of a status - inside the sort keys, and in the
+        /// <c>status</c> attribute itself: the live table stores the attribute lower-cased
+        /// too (docs/developer-page-dynamo-findings.md), so a get, patch or condition on it
+        /// must use the same casing or it misses.
+        /// </summary>
         public static string ToStatusKeyPart(DeveloperPropertyStatus status) =>
             status.ToString().ToLowerInvariant();
 

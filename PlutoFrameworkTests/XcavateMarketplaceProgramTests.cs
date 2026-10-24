@@ -45,6 +45,7 @@ namespace PlutoFrameworkTests
         [TestCase("execute_deal")]
         [TestCase("assign_developer_lawyer")]
         [TestCase("claim_spv_case")]
+        [TestCase("list_property")]
         public void Discriminators_MatchTheAnchorFormula(string instructionName)
         {
             var expected = SHA256.HashData(Encoding.UTF8.GetBytes($"global:{instructionName}"))[..8];
@@ -94,6 +95,10 @@ namespace PlutoFrameworkTests
                     Programs, SyntheticKey(1), SyntheticKey(2), 7),
                 "claim_spv_case" => XcavateMarketplaceProgram.ClaimSpvCase(
                     Programs, SyntheticKey(1), 7, 2, 10_000),
+                "list_property" => XcavateMarketplaceProgram.ListProperty(
+                    Programs, SyntheticKey(1), SyntheticKey(3), SyntheticKey(4),
+                    new PublicKey(SolanaTokenProgram.Legacy), 3, Encoding.UTF8.GetBytes("AB12CD"),
+                    1_000, 100, false, 5_000, 7),
                 _ => throw new ArgumentOutOfRangeException(nameof(instructionName)),
             };
 
@@ -407,6 +412,86 @@ namespace PlutoFrameworkTests
             Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
             Assert.That(instruction.Data[16..24], Is.EqualTo(new byte[] { 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A }));
             Assert.That(instruction.Data[24..32], Is.EqualTo(new byte[] { 0x19, 0x18, 0x17, 0x16, 0x15, 0x14, 0x13, 0x12 }));
+        }
+
+        [Test]
+        public void ListProperty_HasTheIdlAccountShape()
+        {
+            var developer = SyntheticKey(1);
+            var xcavMint = SyntheticKey(3);
+            var developerToken = SyntheticKey(4);
+            var legacyToken = new PublicKey(SolanaTokenProgram.Legacy);
+            var postcode = Encoding.UTF8.GetBytes("AB12CD");
+
+            var instruction = XcavateMarketplaceProgram.ListProperty(
+                Programs, developer, xcavMint, developerToken, legacyToken,
+                3, postcode, 1_000, 100, false, 5_000, 7);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instruction.ProgramId, Is.EqualTo(new PublicKey(Programs.Marketplace).KeyBytes));
+
+                // developer, config, developer_role, region, location, property, listing,
+                // xcav_mint, developer_token, vault, token_program, system_program -
+                // 12 accounts, in IDL order; the developer alone signs.
+                Assert.That(instruction.Keys, Has.Count.EqualTo(12));
+                Assert.That(instruction.Keys[0].PublicKey, Is.EqualTo(developer.Key));
+                Assert.That(instruction.Keys[0].IsSigner, Is.True);
+                Assert.That(instruction.Keys[1].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveConfig(Programs).Key));
+                Assert.That(instruction.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveRoleAccount(Programs, developer, XcavateRole.RealEstateDeveloper).Key));
+                Assert.That(instruction.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveRegion(Programs, 3).Key));
+                Assert.That(instruction.Keys[4].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLocation(Programs, 3, postcode).Key));
+                Assert.That(instruction.Keys[5].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveProperty(Programs, 7).Key));
+                Assert.That(instruction.Keys[6].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveListing(Programs, 7).Key));
+                Assert.That(instruction.Keys[7].PublicKey, Is.EqualTo(xcavMint.Key));
+                Assert.That(instruction.Keys[8].PublicKey, Is.EqualTo(developerToken.Key));
+                Assert.That(instruction.Keys[9].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveVault(Programs).Key));
+                Assert.That(instruction.Keys[10].PublicKey, Is.EqualTo(legacyToken.Key));
+                Assert.That(instruction.Keys[11].PublicKey, Is.EqualTo(SystemProgram.ProgramIdKey.Key));
+
+                // The deployed binary requires every account writable, and nobody but the
+                // developer signs.
+                Assert.That(instruction.Keys.All(key => key.IsWritable), Is.True);
+                Assert.That(instruction.Keys.Skip(1).All(key => !key.IsSigner), Is.True);
+            });
+        }
+
+        [Test]
+        public void ListProperty_EncodesArgsLittleEndian()
+        {
+            var postcode = Encoding.UTF8.GetBytes("AB12CD");
+
+            var instruction = XcavateMarketplaceProgram.ListProperty(
+                Programs,
+                developer: SyntheticKey(1),
+                xcavMint: SyntheticKey(3),
+                developerToken: SyntheticKey(4),
+                xcavTokenProgram: new PublicKey(SolanaTokenProgram.Legacy),
+                regionId: 0x0102,
+                postcode: postcode,
+                sharePrice: 0x1112131415161718,
+                shareAmount: 0x0A0B0C0D,
+                taxPaidByDeveloper: true,
+                maxDeposit: 0x2122232425262728,
+                listingId: 7);
+
+            // discriminator + u16 region_id + vec<u8> postcode (u32 length prefix + bytes)
+            // + u64 share_price + u32 share_amount + bool tax_paid_by_developer + u64 max_deposit
+            Assert.That(instruction.Data, Has.Length.EqualTo(8 + 2 + 4 + 6 + 8 + 4 + 1 + 8));
+            Assert.That(instruction.Data[8..10], Is.EqualTo(new byte[] { 0x02, 0x01 }));
+            Assert.That(instruction.Data[10..14], Is.EqualTo(new byte[] { 6, 0, 0, 0 }));
+            Assert.That(instruction.Data[14..20], Is.EqualTo(postcode));
+            Assert.That(instruction.Data[20..28], Is.EqualTo(new byte[] { 0x18, 0x17, 0x16, 0x15, 0x14, 0x13, 0x12, 0x11 }));
+            Assert.That(instruction.Data[28..32], Is.EqualTo(new byte[] { 0x0D, 0x0C, 0x0B, 0x0A }));
+            Assert.That(instruction.Data[32], Is.EqualTo((byte)1));
+            Assert.That(instruction.Data[33..41], Is.EqualTo(new byte[] { 0x28, 0x27, 0x26, 0x25, 0x24, 0x23, 0x22, 0x21 }));
         }
 
         [Test]
@@ -1096,6 +1181,19 @@ namespace PlutoFrameworkTests
                 XcavateMarketplaceProgram.DeriveRegion(Programs, 0x0102).Key,
                 Is.EqualTo(expectedRegion.Key));
 
+            // The location: [b"location", region_id LE (u16), postcode] under the REGIONS
+            // program, next to the region it belongs to.
+            var postcode = Encoding.UTF8.GetBytes("AB12CD");
+            var expectedLocation = SolanaProgramAddress.Derive(
+                new PublicKey(Programs.Regions),
+                Encoding.UTF8.GetBytes("location"),
+                BitConverter.GetBytes((ushort)0x0102),
+                postcode);
+
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveLocation(Programs, 0x0102, postcode).Key,
+                Is.EqualTo(expectedLocation.Key));
+
             // Derivation is keyed by every argument.
             Assert.That(
                 XcavateMarketplaceProgram.DeriveLawyer(Programs, SyntheticKey(2)).Key,
@@ -1103,6 +1201,9 @@ namespace PlutoFrameworkTests
             Assert.That(
                 XcavateMarketplaceProgram.DeriveRegion(Programs, 0x0103).Key,
                 Is.Not.EqualTo(XcavateMarketplaceProgram.DeriveRegion(Programs, 0x0102).Key));
+            Assert.That(
+                XcavateMarketplaceProgram.DeriveLocation(Programs, 0x0102, Encoding.UTF8.GetBytes("EF34GH")).Key,
+                Is.Not.EqualTo(XcavateMarketplaceProgram.DeriveLocation(Programs, 0x0102, Encoding.UTF8.GetBytes("AB12CD")).Key));
         }
 
         [Test]
