@@ -441,11 +441,14 @@ namespace PlutoFramework.Model.Xcavate
                 }
 
                 // "status" is a DynamoDB reserved word, so the expression names it indirectly.
+                // The store holds both casings (the web app writes some statuses verbatim,
+                // others lower-cased), so the condition accepts either form.
                 var names = new Dictionary<string, string> { ["#st"] = "status" };
                 var values = new Dictionary<string, AttributeValue>
                 {
                     [":status"] = new AttributeValue(DeveloperPropertyQuery.ToStatusKeyPart(status)),
                     [":previous"] = new AttributeValue(DeveloperPropertyQuery.ToStatusKeyPart(previous)),
+                    [":previousCaps"] = new AttributeValue(previous.ToString()),
                     [":updatedAt"] = new AttributeValue(
                         DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture)),
                 };
@@ -469,7 +472,7 @@ namespace PlutoFramework.Model.Xcavate
                         TableName = GetTableName(),
                         Key = key,
                         UpdateExpression = "SET " + string.Join(", ", sets),
-                        ConditionExpression = "#st = :previous",
+                        ConditionExpression = "#st = :previous OR #st = :previousCaps",
                         ExpressionAttributeNames = names,
                         ExpressionAttributeValues = values,
                         ReturnValues = ReturnValue.ALL_NEW,
@@ -575,6 +578,8 @@ namespace PlutoFramework.Model.Xcavate
                 }
 
                 // "status" is a DynamoDB reserved word, so the expression names it indirectly.
+                // The store holds both casings (the web app writes some statuses verbatim,
+                // others lower-cased), so the condition accepts either form.
                 var names = new Dictionary<string, string> { ["#st"] = "status" };
                 var values = new Dictionary<string, AttributeValue>
                 {
@@ -582,6 +587,7 @@ namespace PlutoFramework.Model.Xcavate
                         DeveloperPropertyQuery.ToStatusKeyPart(DeveloperPropertyStatus.Listed)),
                     [":verified"] = new AttributeValue(
                         DeveloperPropertyQuery.ToStatusKeyPart(DeveloperPropertyStatus.Verified)),
+                    [":verifiedCaps"] = new AttributeValue(DeveloperPropertyStatus.Verified.ToString()),
                     [":listingId"] = new AttributeValue(
                         listingId.ToString(CultureInfo.InvariantCulture)),
                     [":updatedAt"] = new AttributeValue(
@@ -607,7 +613,7 @@ namespace PlutoFramework.Model.Xcavate
                         TableName = GetTableName(),
                         Key = key,
                         UpdateExpression = "SET " + string.Join(", ", sets),
-                        ConditionExpression = "#st = :verified",
+                        ConditionExpression = "#st = :verified OR #st = :verifiedCaps",
                         ExpressionAttributeNames = names,
                         ExpressionAttributeValues = values,
                         ReturnValues = ReturnValue.ALL_NEW,
