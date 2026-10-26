@@ -130,5 +130,36 @@ namespace PlutoFrameworkTests
 
             Assert.That(text, Is.EqualTo(raw));
         }
+
+        /// <summary>
+        /// The failure that prompted this catalog: a framework rejection (3012,
+        /// AccountNotInitialized) is below the IDL's custom range, so the IDL catalog
+        /// cannot name it - but it is still a known, describable error.
+        /// </summary>
+        [Test]
+        public void DecodesAnchorFrameworkError()
+        {
+            var text = SolanaSubmissionErrorDescriber.Describe(
+                "Could not submit the transaction on Devnet: Transaction simulation failed: "
+                + "Error processing Instruction 0: custom program error: 0xbc4",
+                MarketplaceCatalog(), [IdlFixtures.MarketplaceAddress]);
+
+            Assert.That(text, Does.Contain("marketplace"));
+            Assert.That(text, Does.Contain("already initialized"));
+            Assert.That(text, Does.Contain("3012"));
+            Assert.That(text, Does.Not.Contain("cannot decode"));
+        }
+
+        /// <summary>A framework-range code Anchor does not define still falls through.</summary>
+        [Test]
+        public void UnknownFrameworkCodeKeepsCannotDecode()
+        {
+            var text = SolanaSubmissionErrorDescriber.Describe(
+                "Could not submit the transaction on Devnet: Transaction simulation failed: "
+                + "Error processing Instruction 0: custom program error: 0xc18",
+                MarketplaceCatalog(), [IdlFixtures.MarketplaceAddress]);
+
+            Assert.That(text, Does.Contain("cannot decode"));
+        }
     }
 }

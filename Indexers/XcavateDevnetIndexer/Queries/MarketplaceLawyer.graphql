@@ -1,0 +1,8 @@
+query MarketplaceLawyer($lawyer: String!) {
+  lawyers(lawyer: $lawyer, active: true, first: 1, offset: 0) {
+    nodes {
+      lawyer
+      regionId
+    }
+  }
+}

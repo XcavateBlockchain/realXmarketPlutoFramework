@@ -154,6 +154,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(ShowAssignDeveloperLawyerButton))]
         [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
         [NotifyPropertyChangedFor(nameof(ShowDeveloperListButton))]
+        [NotifyPropertyChangedFor(nameof(ShowCompleteListingButton))]
         [NotifyPropertyChangedFor(nameof(ShowAdminDecidedText))]
         private MainPageRole mainPageRole = MainPageRole.Investor;
 
@@ -283,6 +284,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(AdminDecidedText))]
         [NotifyPropertyChangedFor(nameof(AdminDecidedColor))]
         [NotifyPropertyChangedFor(nameof(ShowDeveloperListButton))]
+        [NotifyPropertyChangedFor(nameof(ShowCompleteListingButton))]
         private DeveloperProperty? pendingProperty;
 
         public bool IsPendingReview => PendingProperty is not null;
@@ -1185,25 +1187,41 @@ namespace PlutoFramework.Components.XcavateProperty
             && SolanaListing is { ListingStatus: "SoldOut" } listing
             && XcavateMarketplaceIndexerModel.IsVacantSeat(listing.DeveloperLawyer);
 
-        /// <summary>
-        /// The lawyer's claim action: claim_spv_case opens for a compliant Lawyer-role
-        /// wallet on a SOLD_OUT listing whose SPV exists while the SPV-lawyer seat is
-        /// vacant and the wallet is not already the developer-side lawyer. The program
-        /// additionally enforces the region match and the legal deadline on chain.
-        /// </summary>
-        public bool ShowClaimSpvCaseButton =>
-            IsLoaded && MainPageRole == MainPageRole.Lawyer
-            && SolanaListing is { ListingStatus: "SoldOut" } listing
-            && SpvCreated
-            && XcavateMarketplaceIndexerModel.IsVacantSeat(listing.SpvLawyer)
-            && !string.Equals(KeysModel.GetSolanaAddress(), listing.DeveloperLawyer, StringComparison.Ordinal)
-            && (Roles?.Contains(XcavateRole.Lawyer) ?? false);
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        private bool lawyerRoleCompliant;
 
-        /// <summary>
-        /// True once the wallet's own candidacy stands in the round a new claim would
-        /// enter - the claim button then reads "Claim submitted" and stays disabled.
-        /// Refreshed by <see cref="RefreshLawyerClaimStateAsync"/>.
-        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        private ushort? lawyerRegionId;
+
+        private SpvLawyerClaimEligibility.State? ClaimEligibilityState =>
+            SolanaListing is { } listing
+                ? new SpvLawyerClaimEligibility.State(
+                    MainPageRole == MainPageRole.Lawyer,
+                    LawyerRoleCompliant,
+                    LawyerRegionId,
+                    KeysModel.GetSolanaAddress() ?? string.Empty,
+                    listing.ListingStatus,
+                    SpvCreated,
+                    listing.SpvLawyer,
+                    listing.DeveloperLawyer,
+                    listing.PropertyRegionId,
+                    listing.LegalDeadlineTimestamp,
+                    listing.SpvElectionExpiryTimestamp,
+                    listing.SpvElectionCandidateCount)
+                : null;
+
+        public bool ShowClaimSpvCaseButton =>
+            IsLoaded
+            && ClaimEligibilityState is { } state
+            && SpvLawyerClaimEligibility.CanDisplay(state, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+
+        private bool CanSubmitClaim =>
+            ClaimEligibilityState is { } state
+            && SpvLawyerClaimEligibility.CanSubmit(
+                state, OwnCandidacyStanding, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(LawyerClaimText))]
         [NotifyPropertyChangedFor(nameof(LawyerClaimButtonState))]
@@ -1260,6 +1278,32 @@ namespace PlutoFramework.Components.XcavateProperty
 
         public ButtonStateEnum DeveloperListButtonState =>
             DeveloperListSaving ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
+
+        /// <summary>
+        /// Set by <see cref="RefreshListingAssetStateAsync"/>: the record is Listed but its
+        /// on-chain listing still stands PENDING_ASSETS - an app version before
+        /// list_property and init_property_assets were bundled left it half-open, and the
+        /// marketplace feed never shows it. The Complete Listing button finishes it.
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowCompleteListingButton))]
+        private bool listingNeedsAssetSetup;
+
+        /// <summary>
+        /// The developer's recovery action on a half-opened listing; only the developer
+        /// role sees it, and only while the on-chain state calls for it.
+        /// </summary>
+        public bool ShowCompleteListingButton =>
+            IsPendingReview && MainPageRole == MainPageRole.Developer
+            && PendingProperty is { Status: DeveloperPropertyStatus.Listed }
+            && ListingNeedsAssetSetup;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CompleteListingButtonState))]
+        private bool completeListingSaving;
+
+        public ButtonStateEnum CompleteListingButtonState =>
+            CompleteListingSaving ? ButtonStateEnum.Disabled : ButtonStateEnum.Enabled;
 
         [RelayCommand]
         private Task ApprovePendingPropertyAsync() => DecidePendingPropertyAsync(DeveloperPropertyStatus.Verified);
@@ -1406,8 +1450,10 @@ namespace PlutoFramework.Components.XcavateProperty
 
         /// <summary>
         /// The submission behind the region picker's callback: the requirements and
-        /// developer-role checks run against the wallet, then list_property goes out for
-        /// the picked (region, postcode) pair.
+        /// developer-role checks run against the wallet, then list_property and
+        /// init_property_assets go out in one atomic transaction for the picked
+        /// (region, postcode) pair - the property's name and image become the share
+        /// mint's on-chain metadata.
         /// </summary>
         private async Task ExecuteListPropertyAsync(SelectListingRegionOption option)
         {
@@ -1455,6 +1501,8 @@ namespace PlutoFramework.Components.XcavateProperty
                             option.Postcode,
                             property.PropertyPrice!.Value,
                             (long)property.NumberOfShares!.Value,
+                            property.NameText,
+                            property.ImageUrl ?? string.Empty,
                             ct);
 
                         listedId = listingId;
@@ -1493,26 +1541,126 @@ namespace PlutoFramework.Components.XcavateProperty
         }
 
         /// <summary>
-        /// The election round a new candidacy stands in: while no round is running (the
-        /// election's expiry is 0 - or no election has ever opened) the first claim opens
-        /// the next round; while a round runs the candidacy joins the current one. Read
-        /// fresh at build time - a stale round fails the candidacy PDA's seed check.
+        /// Re-reads the record's on-chain listing state: a Listed record whose listing
+        /// still stands PENDING_ASSETS was opened by an app version that sent
+        /// list_property without init_property_assets, and only the Complete Listing
+        /// button can finish it. Tolerant like the listing refresh - a failed read keeps
+        /// whatever the page already shows. No-op outside pending-review mode.
         /// </summary>
-        private ulong ClaimRound => Governance?.SpvElection is { } election && election.Expiry > 0
-            ? election.Round
-            : (Governance?.SpvElection?.Round ?? 0) + 1;
+        public async Task RefreshListingAssetStateAsync(CancellationToken token)
+        {
+            if (!IsPendingReview || PendingProperty is not { Status: DeveloperPropertyStatus.Listed } property)
+            {
+                await MainThread.InvokeOnMainThreadAsync(() => ListingNeedsAssetSetup = false);
+                return;
+            }
+
+            var cluster = SolanaNetworkModel.SelectedCluster;
+
+            var needsSetup = false;
+
+            if (XcavateDeploymentModel.IsDeployed(cluster)
+                && long.TryParse(property.ListingId, System.Globalization.NumberStyles.Integer,
+                    System.Globalization.CultureInfo.InvariantCulture, out var listingId))
+            {
+                try
+                {
+                    var listing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
+                        cluster, listingId, null, token).ConfigureAwait(false);
+
+                    // A null read (indexer lag) stays hidden rather than offering a
+                    // completion the chain may not need.
+                    needsSetup = listing?.ListingStatus == "PendingAssets";
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to read the listing's on-chain state: ");
+                    Console.WriteLine(ex);
+                }
+            }
+
+            await MainThread.InvokeOnMainThreadAsync(() => ListingNeedsAssetSetup = needsSetup);
+        }
 
         /// <summary>
-        /// Probes the chain for the wallet's own candidacy in the round a new claim would
-        /// enter, so a lawyer who already claimed sees "Claim submitted" instead of a
-        /// second (doomed) submission. Tolerant like <see cref="RefreshVotingAsync"/> - a
-        /// failed read keeps whatever the page already shows.
+        /// The Complete Listing button's submission: init_property_assets alone, for the
+        /// listing list_property already opened - the second half of the pair
+        /// <see cref="ExecuteListPropertyAsync"/> now bundles into one transaction. No
+        /// record update follows: the record is already Listed, and the confirmation's
+        /// refresh hides the button once the listing leaves PENDING_ASSETS.
         /// </summary>
+        [RelayCommand]
+        private async Task CompleteListingAsync()
+        {
+            if (!ShowCompleteListingButton || CompleteListingSaving || PendingProperty is not { } property
+                || !long.TryParse(property.ListingId, System.Globalization.NumberStyles.Integer,
+                    System.Globalization.CultureInfo.InvariantCulture, out var listingId))
+            {
+                return;
+            }
+
+            CompleteListingSaving = true;
+
+            try
+            {
+                var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+                fullPageLoadingViewModel.IsVisible = true;
+
+                try
+                {
+                    if (!await RequirementsModel.CheckRequirementsAsync())
+                    {
+                        return;
+                    }
+
+                    if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateDeveloper, CancellationToken.None))
+                    {
+                        return;
+                    }
+                }
+                finally
+                {
+                    // Cleared on every exit path - a throwing requirements check (network or
+                    // indexer failure) must not wedge the page behind the overlay.
+                    fullPageLoadingViewModel.IsVisible = false;
+                }
+
+                await XcavateMarketplaceTransactionModel.SubmitAsync(
+                    "Complete listing",
+                    (developer, cluster, ct) => XcavateMarketplaceCallsModel.InitPropertyAssetsAsync(
+                        cluster, developer, listingId, property.NameText, property.ImageUrl ?? string.Empty, ct));
+            }
+            finally
+            {
+                CompleteListingSaving = false;
+            }
+        }
+
+        private long lawyerClaimRefreshVersion;
+
+        private ulong ClaimRound => SpvLawyerClaimEligibility.GetClaimRound(
+            SolanaListing?.SpvElectionRound ?? 0,
+            SolanaListing?.SpvElectionExpiryTimestamp ?? 0);
+
         public async Task RefreshLawyerClaimStateAsync(CancellationToken token)
         {
+            var refreshVersion = Interlocked.Increment(ref lawyerClaimRefreshVersion);
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                if (refreshVersion != Interlocked.Read(ref lawyerClaimRefreshVersion))
+                {
+                    return;
+                }
+
+                LawyerRoleCompliant = false;
+                LawyerRegionId = null;
+                OwnCandidacyStanding = false;
+            });
+
             if (MainPageRole != MainPageRole.Lawyer
-                || NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing
-                || !ShowClaimSpvCaseButton)
+                || NftWrapper?.NftBase is not XcavateSolanaListingNft solanaListing)
             {
                 return;
             }
@@ -1528,17 +1676,27 @@ namespace PlutoFramework.Components.XcavateProperty
                 }
 
                 var programs = XcavateProgramAddresses.Require(cluster);
-
                 var candidacy = XcavateMarketplaceProgram.DeriveLawyerCandidacy(
                     programs, (ulong)solanaListing.ListingId, ClaimRound, new Solnet.Wallet.PublicKey(wallet));
 
-                // A missing account is a successful null answer; an RPC failure throws.
-                var account = await SolanaRpcModel.GetAccountInfoAsync(cluster, candidacy.Key, token)
-                    .ConfigureAwait(false);
+                var roleTask = WhitelistModel.HasRoleAsync(wallet, XcavateRole.Lawyer, cluster, token);
+                var regionTask = XcavateMarketplaceIndexerModel.GetLawyerRegionAsync(cluster, wallet, token);
+                var candidacyTask = SolanaRpcModel.GetAccountInfoAsync(cluster, candidacy.Key, token);
 
+                await Task.WhenAll(roleTask, regionTask, candidacyTask).ConfigureAwait(false);
                 token.ThrowIfCancellationRequested();
 
-                await MainThread.InvokeOnMainThreadAsync(() => OwnCandidacyStanding = account is not null);
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    if (refreshVersion != Interlocked.Read(ref lawyerClaimRefreshVersion))
+                    {
+                        return;
+                    }
+
+                    LawyerRoleCompliant = roleTask.Result;
+                    LawyerRegionId = regionTask.Result;
+                    OwnCandidacyStanding = candidacyTask.Result is not null;
+                });
             }
             catch (OperationCanceledException)
             {
@@ -1625,6 +1783,7 @@ namespace PlutoFramework.Components.XcavateProperty
             var popupViewModel = DependencyService.Get<ClaimSpvCasePopupViewModel>();
 
             popupViewModel.SetToDefault();
+            popupViewModel.CollectedFeeQuote = SolanaListing?.CollectedFeeQuote ?? 0;
             popupViewModel.DeveloperLawyerStatusText =
                 XcavateMarketplaceIndexerModel.IsVacantSeat(SolanaListing?.DeveloperLawyer)
                     ? "Available"
@@ -1673,6 +1832,14 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.Lawyer, CancellationToken.None))
                 {
+                    return;
+                }
+
+                await RefreshListingAsync(CancellationToken.None);
+
+                if (!CanSubmitClaim || costsQuote > (SolanaListing?.CollectedFeeQuote ?? 0))
+                {
+                    await Toast.Make("This SPV lawyer claim is no longer available.").Show();
                     return;
                 }
             }
@@ -2103,6 +2270,10 @@ namespace PlutoFramework.Components.XcavateProperty
             {
                 await RefreshListingAsync(CancellationToken.None);
 
+                // In pending-review mode the refresh above reads nothing; this is where a
+                // confirmed init_property_assets retires the Complete Listing button.
+                await RefreshListingAssetStateAsync(CancellationToken.None);
+
                 // The claim's confirmation lands the lawyer on the claim-submitted page,
                 // after the refresh so the page behind it already shows the new state.
                 if (claimConfirmationPending)
@@ -2148,6 +2319,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 if (freshListing is null)
                 {
+                    await MainThread.InvokeOnMainThreadAsync(() => LawyerRoleCompliant = false);
                     return;
                 }
 
@@ -2193,8 +2365,7 @@ namespace PlutoFramework.Components.XcavateProperty
             }
             catch (Exception ex)
             {
-                // Keep the current data - the same tolerance the first load applies when
-                // the indexer cannot be reached.
+                await MainThread.InvokeOnMainThreadAsync(() => LawyerRoleCompliant = false);
                 Console.WriteLine("Failed to refresh the Solana listing: ");
                 Console.WriteLine(ex);
             }

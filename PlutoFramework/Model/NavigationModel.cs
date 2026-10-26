@@ -6,6 +6,7 @@ using PlutoFramework.Components.TransferView;
 using PlutoFramework.Components.UniversalScannerView;
 using PlutoFramework.Components.Vault;
 using PlutoFrameworkCore.Keys;
+using PlutoFrameworkCore.Xcavate;
 using Plutonication;
 
 namespace PlutoFramework.Model
@@ -41,6 +42,9 @@ namespace PlutoFramework.Model
         }
 
         public static Func<Task> NavigateToSettingsPageAsync { get; set; } = () => Task.FromResult(0);
+
+        public static Func<TermsDocumentInfo, string, Task> NavigateToTermsDocumentPageAsync { get; set; } =
+            (_, _) => Task.FromResult(0);
 
         public static Action SetWelcomeShell { get; set; } = () => { };
 

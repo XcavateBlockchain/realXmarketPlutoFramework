@@ -996,6 +996,19 @@ namespace PlutoFramework.Model.Xcavate
         public static bool IsVacantSeat(string? pubkey) =>
             string.IsNullOrEmpty(pubkey) || pubkey == VacantSeatPubkey;
 
+        public static async Task<ushort?> GetLawyerRegionAsync(
+            SolanaCluster cluster, string lawyer, CancellationToken token = default)
+        {
+            var result = await XcavateWhitelistIndexer.GetClient(cluster).MarketplaceLawyer
+                .ExecuteAsync(lawyer, token)
+                .ConfigureAwait(false);
+            result.EnsureNoErrors();
+
+            return result.Data?.Lawyers.Nodes.FirstOrDefault()?.RegionId is { } regionId
+                ? (ushort)Math.Clamp(regionId, 0, ushort.MaxValue)
+                : null;
+        }
+
         /// <summary>
         /// The ledger's raw <c>streams</c> JSON (<c>[{"mint": ..., "per_share": "...", "dust": N}, ...]</c>)
         /// parsed into typed stream records; u128 values stay in BigInteger all the way.
@@ -1737,6 +1750,14 @@ namespace PlutoFramework.Model.Xcavate
                 AssetId = assetId,
                 ListingExpiryTimestamp = ParseInt64(listing.ListingExpiry),
                 ClaimDeadlineTimestamp = ParseInt64(listing.ClaimDeadline),
+                LegalDeadlineTimestamp = ParseInt64(listing.LegalDeadline),
+                CollectedFeeQuote = ParseUInt64(listing.CollectedFeeQuote),
+                SpvElectionRound = ParseUInt64(listing.SpvElectionRound),
+                SpvElectionExpiryTimestamp = ParseInt64(listing.SpvElectionExpiry),
+                SpvElectionCandidateCount = ParseInt64(listing.SpvElectionCandidateCount),
+                PropertyRegionId = asset?.RegionId is { } regionId
+                    ? (ushort)Math.Clamp(regionId, 0, ushort.MaxValue)
+                    : null,
                 ListingStatus = listing.Status.ToString(),
                 OpenForSale = listing.Status is not (ListingStatus.PendingAssets or ListingStatus.Cancelled or ListingStatus.Refunding),
                 IsTornDown = listing.Status is ListingStatus.Cancelled or ListingStatus.Refunding,

@@ -47,6 +47,13 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>Unix seconds; 0 while claiming has not started.</summary>
         public required long ClaimDeadlineTimestamp { get; set; }
 
+        public long LegalDeadlineTimestamp { get; set; }
+        public ulong CollectedFeeQuote { get; set; }
+        public ulong SpvElectionRound { get; set; }
+        public long SpvElectionExpiryTimestamp { get; set; }
+        public long SpvElectionCandidateCount { get; set; }
+        public ushort? PropertyRegionId { get; set; }
+
         /// <summary>The marketplace program's ListingStatus, e.g. "Listed" or "SoldOut".</summary>
         public required string ListingStatus { get; set; }
 

@@ -78,6 +78,7 @@ fragment ListingParts on Listing {
   # legal deadline the terms vote's window is capped by. The detail page's
   # voting section reads these; they are plain scalars on the listing row.
   legalDeadline
+  collectedFeeQuote
   legalProcessTime
   lawyerVotingTime
   minVotingQuorumBps

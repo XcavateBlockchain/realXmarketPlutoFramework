@@ -2,6 +2,7 @@ using PlutoFrameworkCore.Solana;
 using Solnet.Rpc.Models;
 using Solnet.Wallet;
 using StrawberryShake;
+using System.Buffers.Binary;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
@@ -645,6 +646,16 @@ namespace PlutoFramework.Model.Xcavate
         /// can lag it. The deposit cap is the config's listing_deposit, fresh from the
         /// same read, so the charge cannot slip between builds; the tax is left to the
         /// buyer side (tax_paid_by_developer = false), matching the web flow.
+        /// <para>
+        /// list_property alone leaves the listing PENDING_ASSETS - invisible to the
+        /// marketplace feed - until init_property_assets creates the share mint and
+        /// property vault. Both are the developer's alone to sign, so the second
+        /// instruction is bundled into the same transaction: one atomic submission opens
+        /// the listing fully, and a failed half leaves nothing behind. The chain stores
+        /// <paramref name="name"/> and <paramref name="uri"/> as the share mint's
+        /// Metaplex metadata (capped at 40/200 bytes, truncated here to fit); an empty
+        /// uri is rejected - the property needs an image before it can be listed.
+        /// </para>
         /// </summary>
         public static async Task<(List<TransactionInstruction> Instructions, ulong ListingId)> ListPropertyAsync(
             SolanaCluster cluster,
@@ -653,6 +664,8 @@ namespace PlutoFramework.Model.Xcavate
             string postcode,
             decimal propertyPrice,
             long numberOfShares,
+            string name,
+            string uri,
             CancellationToken token = default)
         {
             var programs = XcavateProgramAddresses.Require(cluster);
@@ -678,11 +691,44 @@ namespace PlutoFramework.Model.Xcavate
 
             var developerKey = new PublicKey(developer);
 
-            var (xcavTokenProgram, _) = await ResolveMintAsync(cluster, config.XcavMint, token).ConfigureAwait(false);
+            var (xcavTokenProgram, xcavDecimals) = await ResolveMintAsync(cluster, config.XcavMint, token).ConfigureAwait(false);
 
             var developerToken = SolanaAssociatedTokenAccount.Derive(developerKey, config.XcavMint, xcavTokenProgram);
 
+            // Fail here with the real reason rather than on chain with a raw account error:
+            // list_property PULLS the deposit from the developer's XCAV account - it does not
+            // create one - so a wallet without XCAV dies on chain with Anchor's
+            // AccountNotInitialized on developer_token.
+            var depositDisplay = SolanaAmount.FromBaseUnits(config.ListingDeposit.ToString(CultureInfo.InvariantCulture), xcavDecimals);
+
+            var developerTokenInfo = await SolanaRpcModel.GetAccountInfoAsync(cluster, developerToken.Key, token).ConfigureAwait(false);
+
+            if (developerTokenInfo is null)
+            {
+                throw new InvalidOperationException(
+                    $"This wallet holds no XCAV. Listing takes a {depositDisplay} XCAV deposit - fund the wallet first.");
+            }
+
+            // SPL token account layout: the amount sits at offset 64. Anything that is not
+            // a parseable token account lets the chain decide - the deposit check is a
+            // diagnosis, not a gate.
+            var developerTokenData = Convert.FromBase64String(developerTokenInfo.Data[0]);
+
+            if (developerTokenData.Length >= 72)
+            {
+                var developerXcav = BinaryPrimitives.ReadUInt64LittleEndian(developerTokenData.AsSpan(64));
+
+                if (developerXcav < config.ListingDeposit)
+                {
+                    throw new InvalidOperationException(
+                        $"The listing deposit is {depositDisplay} XCAV; this wallet holds " +
+                        $"{SolanaAmount.FromBaseUnits(developerXcav.ToString(CultureInfo.InvariantCulture), xcavDecimals)} XCAV.");
+                }
+            }
+
             var listingId = config.NextListingId;
+
+            var (assetName, assetUri) = AssetMetadata(name, uri);
 
             return
             (
@@ -700,9 +746,90 @@ namespace PlutoFramework.Model.Xcavate
                         taxPaidByDeveloper: false,
                         maxDeposit: config.ListingDeposit,
                         listingId),
+                    XcavateMarketplaceProgram.InitPropertyAssets(
+                        programs,
+                        developerKey,
+                        listingId,
+                        assetName,
+                        assetUri),
                 ],
                 listingId
             );
+        }
+
+        /// <summary>
+        /// init_property_assets on its own, for a listing whose list_property landed
+        /// without it (a PENDING_ASSETS listing - the marketplace feed never shows one,
+        /// and the sale cannot open until the share mint exists). Normally bundled into
+        /// <see cref="ListPropertyAsync"/>'s transaction; this is the recovery path. Pure
+        /// - every account is derived; the program enforces the developer's role, its
+        /// ownership of the listing and the PENDING_ASSETS state. The metadata caps are
+        /// the same as the bundled path's.
+        /// </summary>
+        public static Task<List<TransactionInstruction>> InitPropertyAssetsAsync(
+            SolanaCluster cluster,
+            string developer,
+            long listingId,
+            string name,
+            string uri,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+
+            var (assetName, assetUri) = AssetMetadata(name, uri);
+
+            return Task.FromResult<List<TransactionInstruction>>(
+            [
+                XcavateMarketplaceProgram.InitPropertyAssets(
+                    programs, new PublicKey(developer), (ulong)listingId, assetName, assetUri),
+            ]);
+        }
+
+        /// <summary>
+        /// The share mint's on-chain metadata, fitted to the program's bounds: name at 40
+        /// and uri at 200 bytes, both non-empty - truncate to fit and fail here with the
+        /// reason when nothing is left.
+        /// </summary>
+        private static (string Name, string Uri) AssetMetadata(string name, string uri)
+        {
+            var assetName = TruncateToBytes(name.Trim(), 40);
+            var assetUri = TruncateToBytes(uri.Trim(), 200);
+
+            if (assetName.Length == 0)
+            {
+                throw new InvalidOperationException("The property needs a name before it can be listed.");
+            }
+
+            if (assetUri.Length == 0)
+            {
+                throw new InvalidOperationException("The property needs an image before it can be listed.");
+            }
+
+            return (assetName, assetUri);
+        }
+
+        /// <summary>
+        /// Trims <paramref name="value"/> to at most <paramref name="maxBytes"/> of UTF-8,
+        /// cutting on a character boundary so no multi-byte sequence is split.
+        /// </summary>
+        private static string TruncateToBytes(string value, int maxBytes)
+        {
+            if (Encoding.UTF8.GetByteCount(value) <= maxBytes)
+            {
+                return value;
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(value);
+            var cut = maxBytes;
+
+            // A continuation byte (10xxxxxx) means the cut falls inside a multi-byte
+            // character - step back to its lead byte.
+            while (cut > 0 && (bytes[cut] & 0xC0) == 0x80)
+            {
+                cut--;
+            }
+
+            return Encoding.UTF8.GetString(bytes, 0, cut);
         }
 
         /// <summary>

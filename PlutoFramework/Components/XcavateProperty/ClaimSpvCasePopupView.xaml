@@ -75,6 +75,9 @@
                             <Border Padding="12"
                                     BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#1a1a1a}"
                                     StrokeThickness="0">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ViewTermsCommand}" />
+                                </Border.GestureRecognizers>
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="10" />
                                 </Border.StrokeShape>

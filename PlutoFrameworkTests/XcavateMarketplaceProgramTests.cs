@@ -46,6 +46,7 @@ namespace PlutoFrameworkTests
         [TestCase("assign_developer_lawyer")]
         [TestCase("claim_spv_case")]
         [TestCase("list_property")]
+        [TestCase("init_property_assets")]
         public void Discriminators_MatchTheAnchorFormula(string instructionName)
         {
             var expected = SHA256.HashData(Encoding.UTF8.GetBytes($"global:{instructionName}"))[..8];
@@ -99,6 +100,8 @@ namespace PlutoFrameworkTests
                     Programs, SyntheticKey(1), SyntheticKey(3), SyntheticKey(4),
                     new PublicKey(SolanaTokenProgram.Legacy), 3, Encoding.UTF8.GetBytes("AB12CD"),
                     1_000, 100, false, 5_000, 7),
+                "init_property_assets" => XcavateMarketplaceProgram.InitPropertyAssets(
+                    Programs, SyntheticKey(1), 7, "Test Property", "https://example.com/image.png"),
                 _ => throw new ArgumentOutOfRangeException(nameof(instructionName)),
             };
 
@@ -492,6 +495,72 @@ namespace PlutoFrameworkTests
             Assert.That(instruction.Data[28..32], Is.EqualTo(new byte[] { 0x0D, 0x0C, 0x0B, 0x0A }));
             Assert.That(instruction.Data[32], Is.EqualTo((byte)1));
             Assert.That(instruction.Data[33..41], Is.EqualTo(new byte[] { 0x28, 0x27, 0x26, 0x25, 0x24, 0x23, 0x22, 0x21 }));
+        }
+
+        [Test]
+        public void InitPropertyAssets_HasTheIdlAccountShape()
+        {
+            var developer = SyntheticKey(1);
+            var token2022 = new PublicKey(SolanaTokenProgram.Token2022);
+
+            var instruction = XcavateMarketplaceProgram.InitPropertyAssets(
+                Programs, developer, 7, "Test Property", "https://example.com/image.png");
+
+            var shareMint = XcavateMarketplaceProgram.DeriveShareMint(Programs, 7);
+            var propertyVault = XcavateMarketplaceProgram.DerivePropertyVault(Programs, 7);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instruction.ProgramId, Is.EqualTo(new PublicKey(Programs.Marketplace).KeyBytes));
+
+                // developer, developer_role, listing, property, share_mint, mint_auth,
+                // property_vault, vault_share_account, token_program,
+                // associated_token_program, system_program - 11 accounts, in IDL order;
+                // the developer alone signs.
+                Assert.That(instruction.Keys, Has.Count.EqualTo(11));
+                Assert.That(instruction.Keys[0].PublicKey, Is.EqualTo(developer.Key));
+                Assert.That(instruction.Keys[0].IsSigner, Is.True);
+                Assert.That(instruction.Keys[1].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveRoleAccount(Programs, developer, XcavateRole.RealEstateDeveloper).Key));
+                Assert.That(instruction.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveListing(Programs, 7).Key));
+                Assert.That(instruction.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveProperty(Programs, 7).Key));
+                Assert.That(instruction.Keys[4].PublicKey, Is.EqualTo(shareMint.Key));
+                Assert.That(instruction.Keys[5].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveMintAuth(Programs, 7).Key));
+                Assert.That(instruction.Keys[6].PublicKey, Is.EqualTo(propertyVault.Key));
+                Assert.That(instruction.Keys[7].PublicKey, Is.EqualTo(
+                    SolanaAssociatedTokenAccount.Derive(propertyVault, shareMint, token2022).Key));
+                Assert.That(instruction.Keys[8].PublicKey, Is.EqualTo(token2022.Key));
+                Assert.That(instruction.Keys[9].PublicKey, Is.EqualTo(AssociatedTokenAccountProgram.ProgramIdKey.Key));
+                Assert.That(instruction.Keys[10].PublicKey, Is.EqualTo(SystemProgram.ProgramIdKey.Key));
+
+                // The deployed binary requires every account writable, and nobody but the
+                // developer signs.
+                Assert.That(instruction.Keys.All(key => key.IsWritable), Is.True);
+                Assert.That(instruction.Keys.Skip(1).All(key => !key.IsSigner), Is.True);
+            });
+        }
+
+        [Test]
+        public void InitPropertyAssets_EncodesArgsLittleEndian()
+        {
+            var instruction = XcavateMarketplaceProgram.InitPropertyAssets(
+                Programs,
+                developer: SyntheticKey(1),
+                listingId: 0x0102030405060708,
+                name: "Test Property",
+                uri: "ipfs://image");
+
+            // discriminator + u64 listing_id + string name (u32 length prefix + bytes)
+            // + string uri (u32 length prefix + bytes)
+            Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8 + 4 + 13 + 4 + 12));
+            Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+            Assert.That(instruction.Data[16..20], Is.EqualTo(new byte[] { 13, 0, 0, 0 }));
+            Assert.That(instruction.Data[20..33], Is.EqualTo(Encoding.UTF8.GetBytes("Test Property")));
+            Assert.That(instruction.Data[33..37], Is.EqualTo(new byte[] { 12, 0, 0, 0 }));
+            Assert.That(instruction.Data[37..49], Is.EqualTo(Encoding.UTF8.GetBytes("ipfs://image")));
         }
 
         [Test]

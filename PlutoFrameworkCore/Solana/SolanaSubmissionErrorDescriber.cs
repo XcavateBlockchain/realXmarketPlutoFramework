@@ -51,6 +51,11 @@ namespace PlutoFrameworkCore.Solana
 
             var rest = catalog.TryDescribe(programId, parsed.Code, out var error) && error is not null
                 ? $" - {error.Message} (error {error.Code})."
+                // Framework errors live below the custom range and are shared by every
+                // Anchor program, so the IDL's catalog never names them - the framework
+                // catalog does.
+                : AnchorFrameworkErrorCatalog.TryDescribe(parsed.Code, out var framework)
+                    ? $" - {framework} (framework error {parsed.Code})."
                 // Stale metadata: the program deployed errors this app version does not
                 // know. Name the program and keep the node's own words so support can
                 // still match the failure.

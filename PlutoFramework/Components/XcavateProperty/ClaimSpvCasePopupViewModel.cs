@@ -50,6 +50,7 @@ public partial class ClaimSpvCasePopupViewModel : ObservableObject, IPopup, ISet
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TermsDocumentName))]
     [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
+    [NotifyCanExecuteChangedFor(nameof(ViewTermsCommand))]
     private TermsDocumentInfo? termsDocument = null;
 
     public string TermsDocumentName => TermsDocument?.FileName ?? "No terms document uploaded";
@@ -58,6 +59,10 @@ public partial class ClaimSpvCasePopupViewModel : ObservableObject, IPopup, ISet
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
     private string legalCosts = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
+    private ulong collectedFeeQuote;
 
     /// <summary>
     /// The validated costs quote, set by Continue before the sheet closes; null while the
@@ -75,9 +80,18 @@ public partial class ClaimSpvCasePopupViewModel : ObservableObject, IPopup, ISet
     private bool termsBusy = false;
 
     public ButtonStateEnum ContinueButtonState =>
-        IsVisible && TermsDocument is not null && !TermsBusy && TryParseCosts(LegalCosts, out _)
+        IsVisible && TermsDocument is not null && !TermsBusy
+        && TryParseCosts(LegalCosts, out var costs)
+        && SpvLawyerClaimEligibility.TryCreateCostsQuote(costs, CollectedFeeQuote, out _)
             ? ButtonStateEnum.Enabled
             : ButtonStateEnum.Disabled;
+
+    [RelayCommand(CanExecute = nameof(CanViewTerms))]
+    private Task ViewTermsAsync() =>
+        NavigationModel.NavigateToTermsDocumentPageAsync(
+            TermsDocument!, KeysModel.GetSolanaAddress() ?? string.Empty);
+
+    private bool CanViewTerms() => TermsDocument is not null;
 
     /// <summary>
     /// The page view model's submission callback - runs after the sheet closes, with
@@ -215,40 +229,61 @@ public partial class ClaimSpvCasePopupViewModel : ObservableObject, IPopup, ISet
     public void Cancel() => SetToDefault();
 
     [RelayCommand]
-    public Task ContinueAsync()
+    public async Task ContinueAsync()
     {
-        if (TermsDocument is null || !TryParseCosts(LegalCosts, out var costs))
+        if (TermsBusy || TermsDocument is null || !TryParseCosts(LegalCosts, out var costs))
         {
-            return Task.FromResult(0);
+            return;
         }
 
-        // Zero is a legitimate quote on chain; anything else goes through the share-price
-        // conversion's nine-decimal and u64 guards. A rejection keeps the sheet open with
-        // the reason, rather than closing it over a submission that never happens.
-        ulong quote;
+        if (!SpvLawyerClaimEligibility.TryCreateCostsQuote(costs, CollectedFeeQuote, out var quote))
+        {
+            ErrorMessage = "The legal costs must fit the collected fee quote and use at most nine decimal places.";
+            return;
+        }
+
+        var address = KeysModel.GetSolanaAddress();
+        if (string.IsNullOrEmpty(address))
+        {
+            return;
+        }
+
+        TermsBusy = true;
 
         try
         {
-            quote = XcavateMarketplaceCallsModel.QuoteCostsFromDecimal(costs);
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            ErrorMessage = "The legal costs must have at most nine decimal places and fit the program's range.";
+            TermsDocument = await TermsDocumentClient.GetAsync(address, CancellationToken.None);
 
-            return Task.FromResult(0);
+            if (TermsDocument is null)
+            {
+                ErrorMessage = "Upload your terms document before claiming.";
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Failed to verify the terms document: ");
+            Console.WriteLine(ex);
+            ErrorMessage = "Your terms document could not be verified. Try again.";
+            return;
+        }
+        finally
+        {
+            TermsBusy = false;
         }
 
         CostsQuote = quote;
         ErrorMessage = "";
         IsVisible = false;
 
-        return MainThread.InvokeOnMainThreadAsync(ContinueRequested);
+        await MainThread.InvokeOnMainThreadAsync(ContinueRequested);
     }
 
     public void SetToDefault()
     {
         IsVisible = false;
         LegalCosts = "";
+        CollectedFeeQuote = 0;
         CostsQuote = null;
         ErrorMessage = "";
         TermsBusy = false;

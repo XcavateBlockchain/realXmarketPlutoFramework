@@ -46,6 +46,7 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] AssignDeveloperLawyerDiscriminator = [197, 167, 242, 89, 235, 9, 169, 65];
         private static readonly byte[] ClaimSpvCaseDiscriminator = [175, 185, 102, 63, 166, 39, 168, 56];
         private static readonly byte[] ListPropertyDiscriminator = [254, 101, 42, 174, 220, 160, 42, 82];
+        private static readonly byte[] InitPropertyAssetsDiscriminator = [86, 217, 248, 184, 33, 187, 144, 253];
 
         // PDA seed prefixes, from the IDL's constants section.
         private static readonly byte[] ConfigSeed = Encoding.UTF8.GetBytes("config");
@@ -594,6 +595,48 @@ namespace PlutoFramework.Model.Xcavate
                     U32(shareAmount),
                     Bool(taxPaidByDeveloper),
                     U64(maxDeposit)),
+            };
+        }
+
+        /// <summary>
+        /// init_property_assets(listing_id, name, uri): the mandatory second half of
+        /// opening a sale - list_property leaves the listing PENDING_ASSETS, and only this
+        /// creates the share mint (Token-2022, 0 decimals, supply = the listed share
+        /// amount), its authority and the property vault, then flips the listing to
+        /// Listed. Sent in the same transaction as <see cref="ListProperty"/>: both are
+        /// the developer's alone to sign, and one atomic submission leaves no
+        /// PENDING_ASSETS listing behind when the second half fails. The program caps
+        /// <paramref name="name"/> at 40 and <paramref name="uri"/> at 200 bytes, both
+        /// non-empty; the caller truncates to fit.
+        /// </summary>
+        public static TransactionInstruction InitPropertyAssets(
+            XcavateProgramSet programs,
+            PublicKey developer,
+            ulong listingId,
+            string name,
+            string uri)
+        {
+            var shareMint = DeriveShareMint(programs, listingId);
+            var propertyVault = DerivePropertyVault(programs, listingId);
+
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(developer, true),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, developer, XcavateRole.RealEstateDeveloper), false),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.Writable(DeriveProperty(programs, listingId), false),
+                    AccountMeta.Writable(shareMint, false),
+                    AccountMeta.Writable(DeriveMintAuth(programs, listingId), false),
+                    AccountMeta.Writable(propertyVault, false),
+                    AccountMeta.Writable(SolanaAssociatedTokenAccount.Derive(propertyVault, shareMint, ShareTokenProgram), false),
+                    AccountMeta.Writable(ShareTokenProgram, false),
+                    AccountMeta.Writable(AssociatedTokenAccountProgram.ProgramIdKey, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(InitPropertyAssetsDiscriminator, U64(listingId), BorshString(name), BorshString(uri)),
             };
         }
 
@@ -1155,6 +1198,9 @@ namespace PlutoFramework.Model.Xcavate
             value.CopyTo(bytes, 4);
             return bytes;
         }
+
+        /// <summary>A Borsh string: the UTF-8 bytes behind a u32 LE length prefix.</summary>
+        private static byte[] BorshString(string value) => VecU8(Encoding.UTF8.GetBytes(value));
 
         private static byte[] Encode(byte[] discriminator, params byte[][] args)
         {

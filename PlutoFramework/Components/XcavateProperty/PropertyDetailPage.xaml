@@ -346,6 +346,13 @@
                                          ButtonState="{Binding DeveloperListButtonState}"
                                          Command="{Binding ListPropertyCommand}" />
 
+        <!-- Recovery for a listing an older app version left half-open (PENDING_ASSETS):
+             sends the init_property_assets half on its own. -->
+        <xcavate:PageBottomBarButtonView IsVisible="{Binding ShowCompleteListingButton}"
+                                         Text="Complete Listing"
+                                         ButtonState="{Binding CompleteListingButtonState}"
+                                         Command="{Binding CompleteListingCommand}" />
+
         <xcavate:PageBottomBarButtonView IsVisible="{Binding ShowClaimSpvCaseButton}"
                                          Text="{Binding LawyerClaimText}"
                                          ButtonState="{Binding LawyerClaimButtonState}"

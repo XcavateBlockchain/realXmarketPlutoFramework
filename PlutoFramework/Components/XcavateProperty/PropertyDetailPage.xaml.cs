@@ -40,6 +40,10 @@ public partial class PropertyDetailPage : PageTemplate
         {
             viewModel.SubscribeToMarketplaceTransactions();
             _ = viewModel.RefreshMainPageRoleAsync();
+
+            // A Listed record whose on-chain listing is still PENDING_ASSETS gets the
+            // Complete Listing button; the read decides.
+            _ = viewModel.RefreshListingAssetStateAsync(CancellationToken.None);
             return;
         }
 
