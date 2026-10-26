@@ -56,6 +56,10 @@ namespace PlutoFrameworkCore.Solana
                 // catalog does.
                 : AnchorFrameworkErrorCatalog.TryDescribe(parsed.Code, out var framework)
                     ? $" - {framework} (framework error {parsed.Code})."
+                // Below the framework range the code is not the named program's at all:
+                // it bubbled up from a native or SPL program the instruction called.
+                : TryDescribeRelayedNativeError(parsed.Code, out var native)
+                    ? $" - {native} (error {parsed.Code}, relayed from a program it called)."
                 // Stale metadata: the program deployed errors this app version does not
                 // know. Name the program and keep the node's own words so support can
                 // still match the failure.
@@ -64,6 +68,24 @@ namespace PlutoFrameworkCore.Solana
             return leadIn.Length == 0
                 ? char.ToUpperInvariant(subject[0]) + subject[1..] + " refused the transaction" + rest
                 : $"{leadIn}: {subject} refused it{rest}";
+        }
+
+        /// <summary>
+        /// Codes below Anchor's framework range are CPI errors relayed from a native or
+        /// SPL program, not the named program's own: the system program's 1 (a transfer
+        /// failed for lack of lamports - on this app's flows, almost always the new
+        /// accounts' rent) and the token programs' 1 (too few tokens) both surface so.
+        /// </summary>
+        private static bool TryDescribeRelayedNativeError(long code, out string? description)
+        {
+            description = code switch
+            {
+                1 => "the wallet did not hold enough for what the transaction moves - " +
+                     "most often the SOL for the new accounts' rent, else the tokens for a transfer",
+                _ => null,
+            };
+
+            return description is not null;
         }
     }
 }

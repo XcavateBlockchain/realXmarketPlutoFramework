@@ -161,5 +161,24 @@ namespace PlutoFrameworkTests
 
             Assert.That(text, Does.Contain("cannot decode"));
         }
+
+        /// <summary>
+        /// The failure behind the relayed-native branch: init_property_assets on a wallet
+        /// too light on SOL fails the rent CPI, and the node reports the system program's
+        /// 0x1 against the marketplace instruction that called it.
+        /// </summary>
+        [Test]
+        public void DecodesRelayedNativeInsufficientFunds()
+        {
+            var text = SolanaSubmissionErrorDescriber.Describe(
+                "Could not submit the transaction on Devnet: Transaction simulation failed: "
+                + "Error processing Instruction 0: custom program error: 0x1",
+                MarketplaceCatalog(), [IdlFixtures.MarketplaceAddress]);
+
+            Assert.That(text, Does.Contain("marketplace"));
+            Assert.That(text, Does.Contain("rent"));
+            Assert.That(text, Does.Contain("relayed"));
+            Assert.That(text, Does.Not.Contain("cannot decode"));
+        }
     }
 }

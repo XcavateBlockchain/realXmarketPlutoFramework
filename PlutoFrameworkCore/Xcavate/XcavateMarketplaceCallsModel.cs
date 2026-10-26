@@ -47,6 +47,22 @@ namespace PlutoFramework.Model.Xcavate
         public const ulong MinSharePriceQuote = 1_000;
 
         /// <summary>
+        /// Lamports the developer's wallet must hold to open a listing: the listing and
+        /// property accounts' rent (2,291,080 + 3,662,880, measured from a devnet
+        /// list_property), the share mint / property vault / vault share account's
+        /// (3,398,520, from a devnet init_property_assets) and the fee - 9,357,480 exact,
+        /// rounded up for margin. The chain reports a shortfall as a bare
+        /// "custom program error: 0x1" from a CPI; the pre-flight check says it in words.
+        /// </summary>
+        private const ulong ListRentBudgetLamports = 10_000_000;
+
+        /// <summary>
+        /// The same for init_property_assets alone (the Complete Listing recovery path):
+        /// 3,398,520 of rent measured on devnet plus the fee, rounded up.
+        /// </summary>
+        private const ulong AssetSetupRentBudgetLamports = 3_600_000;
+
+        /// <summary>
         /// reserve_shares for <paramref name="amount"/> shares of listing
         /// <paramref name="listingId"/> - the sale-phase purchase behind the Reserve button.
         /// The deployed program pins the rent-fronting payer to the config's rent
@@ -654,7 +670,7 @@ namespace PlutoFramework.Model.Xcavate
         /// the listing fully, and a failed half leaves nothing behind. The chain stores
         /// <paramref name="name"/> and <paramref name="uri"/> as the share mint's
         /// Metaplex metadata (capped at 40/200 bytes, truncated here to fit); an empty
-        /// uri is rejected - the property needs an image before it can be listed.
+        /// uri is rejected - the property needs a published metadata document before it can be listed.
         /// </para>
         /// </summary>
         public static async Task<(List<TransactionInstruction> Instructions, ulong ListingId)> ListPropertyAsync(
@@ -690,6 +706,10 @@ namespace PlutoFramework.Model.Xcavate
             }
 
             var developerKey = new PublicKey(developer);
+
+            await EnsureRentBudgetAsync(
+                cluster, developer, ListRentBudgetLamports,
+                "Listing a property opens its on-chain accounts", token).ConfigureAwait(false);
 
             var (xcavTokenProgram, xcavDecimals) = await ResolveMintAsync(cluster, config.XcavMint, token).ConfigureAwait(false);
 
@@ -766,7 +786,7 @@ namespace PlutoFramework.Model.Xcavate
         /// ownership of the listing and the PENDING_ASSETS state. The metadata caps are
         /// the same as the bundled path's.
         /// </summary>
-        public static Task<List<TransactionInstruction>> InitPropertyAssetsAsync(
+        public static async Task<List<TransactionInstruction>> InitPropertyAssetsAsync(
             SolanaCluster cluster,
             string developer,
             long listingId,
@@ -776,13 +796,46 @@ namespace PlutoFramework.Model.Xcavate
         {
             var programs = XcavateProgramAddresses.Require(cluster);
 
+            await EnsureRentBudgetAsync(
+                cluster, developer, AssetSetupRentBudgetLamports,
+                "Completing the listing creates the share mint and vault accounts", token).ConfigureAwait(false);
+
             var (assetName, assetUri) = AssetMetadata(name, uri);
 
-            return Task.FromResult<List<TransactionInstruction>>(
+            return
             [
                 XcavateMarketplaceProgram.InitPropertyAssets(
                     programs, new PublicKey(developer), (ulong)listingId, assetName, assetUri),
-            ]);
+            ];
+        }
+
+        /// <summary>
+        /// Fails the build with the real reason when the wallet cannot pay the new
+        /// accounts' rent: the chain would otherwise say it as a bare
+        /// "custom program error: 0x1" bubbled up from a system-program CPI.
+        /// <paramref name="budgetLamports"/> covers the accounts' rent and the fee.
+        /// </summary>
+        private static async Task EnsureRentBudgetAsync(
+            SolanaCluster cluster,
+            string developer,
+            ulong budgetLamports,
+            string what,
+            CancellationToken token)
+        {
+            var lamports = await SolanaRpcModel.GetLamportBalanceAsync(cluster, developer, token).ConfigureAwait(false);
+
+            if (lamports >= budgetLamports)
+            {
+                return;
+            }
+
+            static string Sol(ulong lamports) =>
+                SolanaAmount.FromBaseUnits(lamports.ToString(CultureInfo.InvariantCulture), 9)
+                    .ToString(CultureInfo.InvariantCulture);
+
+            throw new InvalidOperationException(
+                $"{what} - about {Sol(budgetLamports)} SOL of rent and fees; " +
+                $"this wallet holds {Sol(lamports)} SOL. Top up the wallet and try again.");
         }
 
         /// <summary>
@@ -802,7 +855,7 @@ namespace PlutoFramework.Model.Xcavate
 
             if (assetUri.Length == 0)
             {
-                throw new InvalidOperationException("The property needs an image before it can be listed.");
+                throw new InvalidOperationException("The property needs a metadata document before it can be listed.");
             }
 
             return (assetName, assetUri);

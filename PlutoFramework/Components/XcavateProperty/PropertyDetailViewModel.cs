@@ -1452,8 +1452,8 @@ namespace PlutoFramework.Components.XcavateProperty
         /// The submission behind the region picker's callback: the requirements and
         /// developer-role checks run against the wallet, then list_property and
         /// init_property_assets go out in one atomic transaction for the picked
-        /// (region, postcode) pair - the property's name and image become the share
-        /// mint's on-chain metadata.
+        /// (region, postcode) pair - the property's name and published JSON document URL
+        /// become the share mint's on-chain metadata.
         /// </summary>
         private async Task ExecuteListPropertyAsync(SelectListingRegionOption option)
         {
@@ -1488,6 +1488,15 @@ namespace PlutoFramework.Components.XcavateProperty
 
             try
             {
+                var metadataUri = await DeveloperPropertyClient.UploadMetadataAsync(
+                    property.PropertyId, CancellationToken.None);
+
+                if (metadataUri is null)
+                {
+                    await Toast.Make("The property details could not be published. Please try again.").Show();
+                    return;
+                }
+
                 ulong? listedId = null;
 
                 var submitted = await XcavateMarketplaceTransactionModel.SubmitAsync(
@@ -1502,7 +1511,7 @@ namespace PlutoFramework.Components.XcavateProperty
                             property.PropertyPrice!.Value,
                             (long)property.NumberOfShares!.Value,
                             property.NameText,
-                            property.ImageUrl ?? string.Empty,
+                            metadataUri,
                             ct);
 
                         listedId = listingId;
@@ -1626,10 +1635,19 @@ namespace PlutoFramework.Components.XcavateProperty
                     fullPageLoadingViewModel.IsVisible = false;
                 }
 
+                var metadataUri = await DeveloperPropertyClient.UploadMetadataAsync(
+                    property.PropertyId, CancellationToken.None);
+
+                if (metadataUri is null)
+                {
+                    await Toast.Make("The property details could not be published. Please try again.").Show();
+                    return;
+                }
+
                 await XcavateMarketplaceTransactionModel.SubmitAsync(
                     "Complete listing",
                     (developer, cluster, ct) => XcavateMarketplaceCallsModel.InitPropertyAssetsAsync(
-                        cluster, developer, listingId, property.NameText, property.ImageUrl ?? string.Empty, ct));
+                        cluster, developer, listingId, property.NameText, metadataUri, ct));
             }
             finally
             {

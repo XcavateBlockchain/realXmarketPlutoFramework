@@ -1,9 +1,14 @@
 using Amazon;
 using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
+using PlutoFrameworkCore.Xcavate;
 using System.Globalization;
+using System.Text.Json.Nodes;
 
 namespace PlutoFramework.Model.Xcavate
 {
@@ -241,6 +246,79 @@ namespace PlutoFramework.Model.Xcavate
         /// show" apart from "no store configured" without running a query.
         /// </summary>
         public static bool IsConfigured => GetClient() is not null;
+
+        /// <summary>
+        /// Publishes the complete submitted record in the JSON format the indexer's metadata
+        /// enricher reads, and returns the document URL to store in init_property_assets.
+        /// </summary>
+        public static async Task<string?> UploadMetadataAsync(
+            string propertyId,
+            CancellationToken cancellationToken = default)
+        {
+            const string bucketName = "realxmarketplace-dev-bucket";
+            var client = GetClient();
+
+            if (client is null || string.IsNullOrWhiteSpace(propertyId))
+            {
+                return null;
+            }
+
+            var (partitionKey, sortKey) = DeveloperPropertyQuery.BuildPropertyKey(propertyId);
+
+            try
+            {
+                var configuration = MauiAppBuilderExtensions.Services.GetService<IConfiguration>();
+                var accessKey = configuration?.GetValue<string>("DYNAMO_ACCESS_KEY");
+                var secretKey = configuration?.GetValue<string>("DYNAMO_SECRET_KEY");
+
+                if (string.IsNullOrWhiteSpace(accessKey) || string.IsNullOrWhiteSpace(secretKey))
+                {
+                    return null;
+                }
+
+                using var s3Client = new AmazonS3Client(accessKey, secretKey, RegionEndpoint.EUWest1);
+                var response = await client.GetItemAsync(new GetItemRequest
+                    {
+                        TableName = GetTableName(),
+                        Key = new Dictionary<string, AttributeValue>
+                        {
+                            ["pk"] = new AttributeValue(partitionKey),
+                            ["sk"] = new AttributeValue(sortKey),
+                        },
+                        ConsistentRead = true,
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!response.IsItemSet)
+                {
+                    return null;
+                }
+
+                var record = JsonNode.Parse(Document.FromAttributeMap(response.Item).ToJson())!.AsObject();
+                var objectKey = DeveloperPropertyMetadata.BuildObjectKey(propertyId, DateTimeOffset.UtcNow);
+
+                await s3Client.PutObjectAsync(new PutObjectRequest
+                    {
+                        BucketName = bucketName,
+                        Key = objectKey,
+                        ContentBody = DeveloperPropertyMetadata.Serialize(record),
+                        ContentType = "application/json",
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                return $"https://{bucketName}.s3.eu-west-1.amazonaws.com/{objectKey}";
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Developer property metadata upload failed:");
+                Console.WriteLine(ex);
+                return null;
+            }
+        }
 
         /// <summary>
         /// The developer's property records, newest first.

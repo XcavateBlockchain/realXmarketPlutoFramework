@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.7.409.10" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.0">
       <Aliases>bc26</Aliases>
     </PackageReference>
