@@ -635,34 +635,31 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// list_property for the developer's verified property: opens the sale of
         /// <paramref name="numberOfShares"/> shares at <paramref name="propertyPrice"/> /
-        /// shares each (9-decimal price scale, via <see cref="QuoteFromDecimal"/>). Returns
-        /// the instruction and the listing id it initializes under - the config's
+        /// shares each (9-decimal price scale, via <see cref="QuoteFromDecimal"/>) in the
+        /// on-chain location the developer picked (<paramref name="regionId"/> +
+        /// <paramref name="postcode"/> - the picker only offers registered locations
+        /// (<see cref="GetRegisteredLocationsAsync"/>), so nothing is resolved here.
+        /// Returns the instruction and the listing id it initializes under - the config's
         /// next_listing_id, read ON CHAIN (<see cref="XcavateMarketplaceConfigModel"/>),
         /// because the Listing/Property PDAs are seeded by that counter and the indexer
-        /// can lag it. The postcode resolves to its on-chain region id through the
-        /// indexer's registered locations, normalized the way the regions program stores
-        /// it (no spaces, upper case). The deposit cap is the config's listing_deposit,
-        /// fresh from the same read, so the charge cannot slip between builds; the tax is
-        /// left to the buyer side (tax_paid_by_developer = false), matching the web flow.
+        /// can lag it. The deposit cap is the config's listing_deposit, fresh from the
+        /// same read, so the charge cannot slip between builds; the tax is left to the
+        /// buyer side (tax_paid_by_developer = false), matching the web flow.
         /// </summary>
         public static async Task<(List<TransactionInstruction> Instructions, ulong ListingId)> ListPropertyAsync(
             SolanaCluster cluster,
             string developer,
+            ushort regionId,
             string postcode,
             decimal propertyPrice,
             long numberOfShares,
             CancellationToken token = default)
         {
             var programs = XcavateProgramAddresses.Require(cluster);
-            var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var config = await XcavateMarketplaceConfigModel.GetConfigAsync(cluster, token).ConfigureAwait(false);
 
             var postcodeBytes = NormalizePostcode(postcode);
-
-            var regionId = await ResolveLocationRegionIdAsync(client, postcodeBytes, token).ConfigureAwait(false)
-                ?? throw new InvalidOperationException(
-                    "This property's postcode is not registered in any region on chain.");
 
             if (numberOfShares < config.MinPropertyShares || numberOfShares > config.MaxPropertyShares)
             {
@@ -734,15 +731,17 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
-        /// The region <paramref name="postcodeBytes"/> is registered in, from the indexer's
-        /// active locations - or null when no registered location matches. Locations are
-        /// few, so one page almost always answers; the loop covers the day they are not.
+        /// Every location registered on chain, in the regions program's own postcode form -
+        /// what the developer picks the listing's region/location from. Locations are few,
+        /// so one page almost always answers; the loop covers the day they are not.
         /// </summary>
-        private static async Task<ushort?> ResolveLocationRegionIdAsync(
-            IXcavateDevnetIndexerClient client, byte[] postcodeBytes, CancellationToken token)
+        public static async Task<IReadOnlyList<(ushort RegionId, string Postcode)>> GetRegisteredLocationsAsync(
+            SolanaCluster cluster, CancellationToken token = default)
         {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
             const int pageSize = 100;
-            var postcode = Encoding.UTF8.GetString(postcodeBytes);
+            var found = new List<(ushort RegionId, string Postcode)>();
 
             for (var offset = 0; ; offset += pageSize)
             {
@@ -756,27 +755,21 @@ namespace PlutoFramework.Model.Xcavate
 
                 if (locations is null)
                 {
-                    return null;
+                    break;
                 }
 
                 foreach (var node in locations.Nodes)
                 {
-                    // The indexer serves the postcode as the chain holds it; normalize it
-                    // anyway so a formatting drift cannot hide a registered location.
-                    if (string.Equals(
-                        node.Postcode.Replace(" ", string.Empty).ToUpperInvariant(),
-                        postcode,
-                        StringComparison.Ordinal))
-                    {
-                        return (ushort)node.RegionId;
-                    }
+                    found.Add(((ushort)node.RegionId, node.Postcode));
                 }
 
                 if (offset + locations.Nodes.Count >= locations.TotalCount)
                 {
-                    return null;
+                    break;
                 }
             }
+
+            return [.. found.OrderBy(location => location.Postcode, StringComparer.Ordinal)];
         }
 
         /// <summary>

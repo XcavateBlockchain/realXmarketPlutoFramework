@@ -402,6 +402,8 @@
 
         <xcavateproperty:ClaimSpvCasePopupView />
 
+        <xcavateproperty:SelectListingRegionPopupView />
+
         <messagepopup:MessagePopupView />
     </template:PageTemplate.PopupContent>
 </template:PageTemplate>

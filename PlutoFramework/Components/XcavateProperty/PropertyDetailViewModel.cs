@@ -1314,22 +1314,18 @@ namespace PlutoFramework.Components.XcavateProperty
         private ulong pendingListingId;
 
         /// <summary>
-        /// The developer's "List on Marketplace" action: list_property opens the verified
-        /// property's sale on chain. The record's own update waits for the on-chain
-        /// confirmation (<see cref="OnMarketplaceTransactionConfirmed"/>), so the page never
-        /// claims a listing the chain rejected.
+        /// The developer's "List on Marketplace" action: validates the record, loads the
+        /// registered on-chain locations and opens the region picker; the submission itself
+        /// rides the picker's callback to <see cref="ExecuteListPropertyAsync"/>. The
+        /// record's own update waits for the on-chain confirmation
+        /// (<see cref="OnMarketplaceTransactionConfirmed"/>), so the page never claims a
+        /// listing the chain rejected.
         /// </summary>
         [RelayCommand]
         private async Task ListPropertyAsync()
         {
             if (!ShowDeveloperListButton || DeveloperListSaving || PendingProperty is not { } property)
             {
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(property.PostCode))
-            {
-                await Toast.Make("The property has no postcode to list under.").Show();
                 return;
             }
 
@@ -1340,6 +1336,86 @@ namespace PlutoFramework.Components.XcavateProperty
             }
 
             DeveloperListSaving = true;
+
+            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+            fullPageLoadingViewModel.IsVisible = true;
+
+            IReadOnlyList<(ushort RegionId, string Postcode)>? locations = null;
+
+            try
+            {
+                locations = await XcavateMarketplaceCallsModel.GetRegisteredLocationsAsync(
+                    SolanaNetworkModel.SelectedCluster, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to load the registered regions: ");
+                Console.WriteLine(ex);
+            }
+            finally
+            {
+                // Cleared on every exit path - a throwing read (network or indexer
+                // failure) must not wedge the page behind the overlay.
+                fullPageLoadingViewModel.IsVisible = false;
+            }
+
+            if (locations is null)
+            {
+                DeveloperListSaving = false;
+                await Toast.Make("The registered regions could not be loaded. Please try again.").Show();
+                return;
+            }
+
+            if (locations.Count == 0)
+            {
+                DeveloperListSaving = false;
+                await Toast.Make("No regions are registered on chain yet.").Show();
+                return;
+            }
+
+            var popupViewModel = DependencyService.Get<SelectListingRegionPopupViewModel>();
+
+            // The saving flag spans the picker's lifetime: a selection hands it to
+            // ExecuteListPropertyAsync's finally, a dismissal without one releases it
+            // here - the button must not stay disabled over a closed popup, nor wake
+            // up mid-submission (the popup closes AFTER its callback fires).
+            var selectionMade = false;
+
+            popupViewModel.PropertyChanged += OnRegionPopupPropertyChanged;
+
+            popupViewModel.Open(locations, option =>
+            {
+                selectionMade = true;
+                _ = ExecuteListPropertyAsync(option);
+            });
+
+            void OnRegionPopupPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+            {
+                if (e.PropertyName == nameof(SelectListingRegionPopupViewModel.IsVisible) && !popupViewModel.IsVisible)
+                {
+                    popupViewModel.PropertyChanged -= OnRegionPopupPropertyChanged;
+
+                    if (!selectionMade)
+                    {
+                        DeveloperListSaving = false;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The submission behind the region picker's callback: the requirements and
+        /// developer-role checks run against the wallet, then list_property goes out for
+        /// the picked (region, postcode) pair.
+        /// </summary>
+        private async Task ExecuteListPropertyAsync(SelectListingRegionOption option)
+        {
+            if (PendingProperty is not { } property)
+            {
+                DeveloperListSaving = false;
+                return;
+            }
 
             var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
 
@@ -1375,7 +1451,8 @@ namespace PlutoFramework.Components.XcavateProperty
                         var (instructions, listingId) = await XcavateMarketplaceCallsModel.ListPropertyAsync(
                             cluster,
                             developer,
-                            property.PostCode!,
+                            option.RegionId,
+                            option.Postcode,
                             property.PropertyPrice!.Value,
                             (long)property.NumberOfShares!.Value,
                             ct);

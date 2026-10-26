@@ -274,6 +274,8 @@ namespace PlutoFramework
 
             DependencyService.Register<ClaimSpvCasePopupViewModel>();
 
+            DependencyService.Register<SelectListingRegionPopupViewModel>();
+
             DependencyService.Register<XcavateNavigationBarViewModel>();
 
             DependencyService.Register<XcavatePropertyNavigationBarViewModel>();
@@ -339,6 +341,7 @@ namespace PlutoFramework
                 DependencyService.Get<SendSharesPopupViewModel>(),
                 DependencyService.Get<AssignDeveloperLawyerPopupViewModel>(),
                 DependencyService.Get<ClaimSpvCasePopupViewModel>(),
+                DependencyService.Get<SelectListingRegionPopupViewModel>(),
                 DependencyService.Get<NotWhitelistedPopupViewModel>(),
                 DependencyService.Get<UserProfileNotCreatedPopupViewModel>(),
                 DependencyService.Get<WebSignRawPopupViewModel>(),
