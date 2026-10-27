@@ -34,7 +34,8 @@
                                 <Grid ColumnDefinitions="*,Auto,Auto">
                                     <Label Text="{Binding Postcode}"
                                            VerticalTextAlignment="Center"
-                                           FontAttributes="Bold" />
+                                           FontAttributes="Bold"
+                                           IsVisible="{Binding ShowPostcode}" />
                                     <Label Grid.Column="1"
                                            Text="{Binding RegionText}"
                                            VerticalTextAlignment="Center"

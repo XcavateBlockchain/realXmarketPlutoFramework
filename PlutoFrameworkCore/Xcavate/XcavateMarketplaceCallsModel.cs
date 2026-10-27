@@ -952,6 +952,50 @@ namespace PlutoFramework.Model.Xcavate
             return [.. found.OrderBy(location => location.Postcode, StringComparer.Ordinal)];
         }
 
+        public static IReadOnlyList<ushort> NormalizeRegionIds(IEnumerable<int> regionIds)
+        {
+            return [.. regionIds
+                .Select(regionId => regionId is < 0 or > ushort.MaxValue
+                    ? throw new InvalidOperationException($"Region id {regionId} is outside the supported u16 range.")
+                    : (ushort)regionId)
+                .Distinct()
+                .Order()];
+        }
+
+        public static async Task<IReadOnlyList<ushort>> GetActiveRegionIdsAsync(
+            SolanaCluster cluster, CancellationToken token = default)
+        {
+            var client = XcavateWhitelistIndexer.GetClient(cluster);
+
+            const int pageSize = 100;
+            var found = new List<int>();
+
+            for (var offset = 0; ; offset += pageSize)
+            {
+                var result = await client.ActiveRegions
+                    .ExecuteAsync(first: pageSize, offset: offset, token)
+                    .ConfigureAwait(false);
+
+                result.EnsureNoErrors();
+
+                var regions = result.Data?.Regions;
+
+                if (regions is null)
+                {
+                    break;
+                }
+
+                found.AddRange(regions.Nodes.Select(node => node.RegionId));
+
+                if (offset + regions.Nodes.Count >= regions.TotalCount)
+                {
+                    break;
+                }
+            }
+
+            return NormalizeRegionIds(found);
+        }
+
         /// <summary>
         /// claim_spv_case for listing <paramref name="listingId"/>: the calling lawyer's
         /// candidacy for the SPV-lawyer seat in election <paramref name="round"/>, quoting

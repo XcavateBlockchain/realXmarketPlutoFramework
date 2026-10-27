@@ -22,13 +22,13 @@ public partial class SelectListingRegionOption : ObservableObject
 
     [ObservableProperty]
     private bool isSelected;
+
+    [ObservableProperty]
+    private bool showPostcode = true;
 }
 
 /// <summary>
-/// The developer's pick of the on-chain region/location a verified property lists under:
-/// the regions program only accepts a registered (region, postcode) pair, so the picker
-/// offers exactly the registered ones rather than letting the record's free-form postcode
-/// fail on chain.
+/// Selects a registered location for a property listing or a region for lawyer registration.
 /// </summary>
 public partial class SelectListingRegionPopupViewModel : ObservableObject, IPopup
 {
@@ -57,6 +57,26 @@ public partial class SelectListingRegionPopupViewModel : ObservableObject, IPopu
                 RegionId = location.RegionId,
                 RegionText = $"Region {location.RegionId}",
                 IsSelected = false,
+                ShowPostcode = true,
+            }));
+
+        IsVisible = true;
+    }
+
+    public void OpenRegions(
+        IEnumerable<ushort> regionIds,
+        Action<SelectListingRegionOption> onOptionSelectedAction)
+    {
+        Title = "Select your region";
+        onOptionSelected = onOptionSelectedAction;
+
+        Options = new ObservableCollection<SelectListingRegionOption>(
+            regionIds.Select(regionId => new SelectListingRegionOption
+            {
+                RegionId = regionId,
+                RegionText = $"Region {regionId}",
+                IsSelected = false,
+                ShowPostcode = false,
             }));
 
         IsVisible = true;

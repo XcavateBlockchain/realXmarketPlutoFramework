@@ -13,3 +13,14 @@ query Regions($regionId: Int!, $first: Int!, $offset: Int!) {
     }
   }
 }
+
+# Every governed region a lawyer can select. Unlike the single-region lookup above,
+# regionId is deliberately absent: zero is a real filter value, not a wildcard.
+query ActiveRegions($first: Int!, $offset: Int!) {
+  regions(active: true, first: $first, offset: $offset) {
+    totalCount
+    nodes {
+      regionId
+    }
+  }
+}

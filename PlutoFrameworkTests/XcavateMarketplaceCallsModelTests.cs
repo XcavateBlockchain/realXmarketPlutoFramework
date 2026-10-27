@@ -418,6 +418,31 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public void NormalizeRegionIds_ReturnsDistinctIdsInNumericOrder()
+        {
+            var regionIds = XcavateMarketplaceCallsModel.NormalizeRegionIds([7, 1, 7, 3, 1]);
+
+            Assert.That(regionIds, Is.EqualTo(new ushort[] { 1, 3, 7 }));
+        }
+
+        [Test]
+        public void NormalizeRegionIds_ReturnsEmptyForNoRegions()
+        {
+            Assert.That(XcavateMarketplaceCallsModel.NormalizeRegionIds([]), Is.Empty);
+        }
+
+        [Test]
+        [TestCase(-1)]
+        [TestCase(65_536)]
+        public void NormalizeRegionIds_RejectsIdsOutsideUInt16(int regionId)
+        {
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                XcavateMarketplaceCallsModel.NormalizeRegionIds([regionId]));
+
+            Assert.That(ex!.Message, Does.Contain(regionId.ToString()));
+        }
+
+        [Test]
         public void QuoteCostsFromDecimal_AllowsZeroAndScalesPositives()
         {
             Assert.Multiple(() =>
