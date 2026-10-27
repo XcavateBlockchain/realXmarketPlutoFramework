@@ -45,6 +45,7 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] ExecuteDealDiscriminator = [107, 92, 176, 235, 53, 80, 14, 94];
         private static readonly byte[] AssignDeveloperLawyerDiscriminator = [197, 167, 242, 89, 235, 9, 169, 65];
         private static readonly byte[] ClaimSpvCaseDiscriminator = [175, 185, 102, 63, 166, 39, 168, 56];
+        private static readonly byte[] RegisterLawyerDiscriminator = [165, 135, 154, 240, 244, 159, 91, 255];
         private static readonly byte[] ListPropertyDiscriminator = [254, 101, 42, 174, 220, 160, 42, 82];
         private static readonly byte[] InitPropertyAssetsDiscriminator = [86, 217, 248, 184, 33, 187, 144, 253];
 
@@ -540,6 +541,42 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(DeriveProperty(programs, listingId), false),
                 ],
                 Data = Encode(AssignDeveloperLawyerDiscriminator, U64(listingId), lawyer.KeyBytes),
+            };
+        }
+
+        /// <summary>
+        /// register_lawyer(region_id, max_deposit): creates the calling lawyer's
+        /// registry entry in one region, funded by the configured XCAV deposit.
+        /// The lawyer and rent-fronting payer both sign.
+        /// </summary>
+        public static TransactionInstruction RegisterLawyer(
+            XcavateProgramSet programs,
+            PublicKey lawyer,
+            PublicKey payer,
+            PublicKey xcavMint,
+            PublicKey lawyerToken,
+            PublicKey xcavTokenProgram,
+            ushort regionId,
+            ulong maxDeposit)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(lawyer, true),
+                    AccountMeta.Writable(payer, true),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(DeriveRoleAccount(programs, lawyer, XcavateRole.Lawyer), false),
+                    AccountMeta.Writable(DeriveRegion(programs, regionId), false),
+                    AccountMeta.Writable(DeriveLawyer(programs, lawyer), false),
+                    AccountMeta.Writable(xcavMint, false),
+                    AccountMeta.Writable(lawyerToken, false),
+                    AccountMeta.Writable(DeriveVault(programs), false),
+                    AccountMeta.Writable(xcavTokenProgram, false),
+                    AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
+                ],
+                Data = Encode(RegisterLawyerDiscriminator, U16(regionId), U64(maxDeposit)),
             };
         }
 
