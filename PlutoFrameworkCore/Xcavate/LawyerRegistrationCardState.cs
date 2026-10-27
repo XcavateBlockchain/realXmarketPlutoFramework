@@ -16,6 +16,7 @@ namespace PlutoFramework.Model.Xcavate
         public static LawyerRegistrationCardState Create(
             ushort? registeredRegion,
             ushort? pendingRegion,
+            bool statusLoaded,
             bool loadFailed,
             bool busy)
         {
@@ -35,6 +36,11 @@ namespace PlutoFramework.Model.Xcavate
                     LawyerRegistrationCardKind.Unavailable,
                     "Registration status unavailable. Pull down to try again.",
                     false);
+            }
+
+            if (!statusLoaded)
+            {
+                return new(LawyerRegistrationCardKind.Unavailable, "Checking registration status…", false);
             }
 
             return new(LawyerRegistrationCardKind.Unregistered, "Select the region you work in", !busy);

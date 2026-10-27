@@ -7,7 +7,7 @@ namespace PlutoFrameworkTests
         [Test]
         public void Create_Unregistered_OffersRegionSelection()
         {
-            var state = LawyerRegistrationCardState.Create(null, null, loadFailed: false, busy: false);
+            var state = LawyerRegistrationCardState.Create(null, null, statusLoaded: true, loadFailed: false, busy: false);
 
             Assert.Multiple(() =>
             {
@@ -20,15 +20,28 @@ namespace PlutoFrameworkTests
         [Test]
         public void Create_BusyUnregistered_BlocksDuplicateRegistration()
         {
-            var state = LawyerRegistrationCardState.Create(null, null, loadFailed: false, busy: true);
+            var state = LawyerRegistrationCardState.Create(null, null, statusLoaded: true, loadFailed: false, busy: true);
 
             Assert.That(state.CanRegister, Is.False);
         }
 
         [Test]
+        public void Create_InitialUnknown_DoesNotOfferRegistration()
+        {
+            var state = LawyerRegistrationCardState.Create(null, null, statusLoaded: false, loadFailed: false, busy: false);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(state.Kind, Is.EqualTo(LawyerRegistrationCardKind.Unavailable));
+                Assert.That(state.Text, Is.EqualTo("Checking registration status…"));
+                Assert.That(state.CanRegister, Is.False);
+            });
+        }
+
+        [Test]
         public void Create_Registered_ShowsTheSingleRegionAndBlocksRegistration()
         {
-            var state = LawyerRegistrationCardState.Create(7, null, loadFailed: false, busy: false);
+            var state = LawyerRegistrationCardState.Create(7, null, statusLoaded: true, loadFailed: false, busy: false);
 
             Assert.Multiple(() =>
             {
@@ -41,7 +54,7 @@ namespace PlutoFrameworkTests
         [Test]
         public void Create_Pending_ShowsSyncingEvenWhileTheIndexerIsUnavailable()
         {
-            var state = LawyerRegistrationCardState.Create(null, 3, loadFailed: true, busy: false);
+            var state = LawyerRegistrationCardState.Create(null, 3, statusLoaded: true, loadFailed: true, busy: false);
 
             Assert.Multiple(() =>
             {
@@ -54,7 +67,7 @@ namespace PlutoFrameworkTests
         [Test]
         public void Create_UnknownAfterLoadFailure_OffersRetryInsteadOfRegistration()
         {
-            var state = LawyerRegistrationCardState.Create(null, null, loadFailed: true, busy: false);
+            var state = LawyerRegistrationCardState.Create(null, null, statusLoaded: true, loadFailed: true, busy: false);
 
             Assert.Multiple(() =>
             {

@@ -45,15 +45,20 @@ namespace PlutoFramework.Components.Solana.Status
         /// reserve refreshing the pages that show its listing) rather than to every
         /// confirmation the <see cref="TransactionConfirmed"/> event reports.
         /// </param>
+        /// <param name="onFailed">
+        /// Optional per-transaction callback for confirmed/finalized failure or a drop.
+        /// </param>
         public static async Task TrackAsync(
             string signature,
             SolanaCluster cluster,
             SolanaTransactionInfo info,
             CancellationToken token,
-            Action<string>? onConfirmed = null)
+            Action<string>? onConfirmed = null,
+            Action<string>? onFailed = null)
         {
             var startedAt = DateTimeOffset.UtcNow;
             var announcedConfirmation = false;
+            var announcedFailure = false;
 
             while (!token.IsCancellationRequested)
             {
@@ -111,10 +116,18 @@ namespace PlutoFramework.Components.Solana.Status
                         info,
                         "The transaction was never seen by the network; the recent blockhash expired before it was processed.");
 
+                    MainThread.BeginInvokeOnMainThread(() => onFailed?.Invoke(signature));
                     return;
                 }
 
                 SetStatus(info, status);
+
+                if (!announcedFailure && status is SolanaTransactionStatus.ConfirmedFailed
+                    or SolanaTransactionStatus.FinalizedFailed)
+                {
+                    announcedFailure = true;
+                    MainThread.BeginInvokeOnMainThread(() => onFailed?.Invoke(signature));
+                }
 
                 if (!announcedConfirmation && IsConfirmedSuccess(status))
                 {

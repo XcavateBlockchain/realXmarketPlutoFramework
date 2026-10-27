@@ -38,6 +38,8 @@ namespace PlutoFramework.Components.XcavateProperty
         /// </remarks>
         public static event EventHandler<MarketplaceTransactionConfirmedEventArgs>? TransactionConfirmed;
 
+        public static event EventHandler<MarketplaceTransactionFailedEventArgs>? TransactionFailed;
+
         /// <summary>
         /// Raised when a submission fails with an exception - including the build
         /// callback's own rejections (insufficient balance, stale listing), which carry
@@ -68,7 +70,8 @@ namespace PlutoFramework.Components.XcavateProperty
         /// </returns>
         public static async Task<bool> SubmitAsync(
             string description,
-            Func<string, SolanaCluster, CancellationToken, Task<List<TransactionInstruction>>> buildInstructionsAsync)
+            Func<string, SolanaCluster, CancellationToken, Task<List<TransactionInstruction>>> buildInstructionsAsync,
+            Action<string>? onSubmitted = null)
         {
             // The marketplace follows the selected network: the listing being acted on came
             // from this cluster's deployment, and so must the transaction. Where nothing is
@@ -190,10 +193,14 @@ namespace PlutoFramework.Components.XcavateProperty
                 // not cost the property pages a re-query. The args carry the signature so
                 // follow-up writes (the purchased status message) can name the
                 // transaction they report.
+                onSubmitted?.Invoke(signature);
+
                 _ = SolanaTransactionTracker.TrackAsync(
                     signature, cluster, info, CancellationToken.None,
                     onConfirmed: _ => TransactionConfirmed?.Invoke(
-                        null, new MarketplaceTransactionConfirmedEventArgs(signature, cluster)));
+                        null, new MarketplaceTransactionConfirmedEventArgs(signature, cluster)),
+                    onFailed: _ => TransactionFailed?.Invoke(
+                        null, new MarketplaceTransactionFailedEventArgs(signature, cluster)));
 
                 return true;
             }
@@ -315,6 +322,12 @@ namespace PlutoFramework.Components.XcavateProperty
         public string Signature { get; } = signature;
 
         /// <summary>The cluster the transaction confirmed on.</summary>
+        public SolanaCluster Cluster { get; } = cluster;
+    }
+
+    public sealed class MarketplaceTransactionFailedEventArgs(string signature, SolanaCluster cluster) : EventArgs
+    {
+        public string Signature { get; } = signature;
         public SolanaCluster Cluster { get; } = cluster;
     }
 
