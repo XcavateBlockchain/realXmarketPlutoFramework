@@ -418,6 +418,38 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public async Task RegisterLawyerAsync_ReturnsTheConfiguredTwoSignerInstruction()
+        {
+            const string lawyer = "3oX5ttHJvcqJDwbYh96tkShaa4bnWMM3JHc2N4kocSNY";
+            var config = await XcavateMarketplaceConfigModel.GetConfigAsync(SolanaCluster.Devnet);
+
+            var instructions = await XcavateMarketplaceCallsModel.RegisterLawyerAsync(
+                SolanaCluster.Devnet, lawyer, regionId: 1);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(1));
+                Assert.That(instructions[0].Data[..8], Is.EqualTo(Discriminator("register_lawyer")));
+                Assert.That(instructions[0].Data[10..18], Is.EqualTo(BitConverter.GetBytes(config.LawyerDeposit)));
+                Assert.That(instructions[0].Keys[0].PublicKey, Is.EqualTo(lawyer));
+                Assert.That(instructions[0].Keys[1].PublicKey, Is.EqualTo(config.RentCollector.Key));
+                Assert.That(instructions[0].Keys[6].PublicKey, Is.EqualTo(config.XcavMint.Key));
+                Assert.That(instructions[0].Keys.Count(key => key.IsSigner), Is.EqualTo(2));
+            });
+        }
+
+        [Test]
+        public void RegisterLawyerAsync_RejectsAWalletWithoutAnXcavAccount()
+        {
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await XcavateMarketplaceCallsModel.RegisterLawyerAsync(
+                    SolanaCluster.Devnet, SyntheticKey(255).Key, regionId: 1));
+
+            Assert.That(ex!.Message, Does.Contain("This wallet holds no XCAV"));
+            Assert.That(ex.Message, Does.Contain("fund the wallet first"));
+        }
+
+        [Test]
         public void NormalizeRegionIds_ReturnsDistinctIdsInNumericOrder()
         {
             var regionIds = XcavateMarketplaceCallsModel.NormalizeRegionIds([7, 1, 7, 3, 1]);

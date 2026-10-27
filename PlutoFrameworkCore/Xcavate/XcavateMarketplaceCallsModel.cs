@@ -996,6 +996,55 @@ namespace PlutoFramework.Model.Xcavate
             return NormalizeRegionIds(found);
         }
 
+        public static async Task<List<TransactionInstruction>> RegisterLawyerAsync(
+            SolanaCluster cluster,
+            string lawyer,
+            ushort regionId,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var config = await XcavateMarketplaceConfigModel.GetConfigAsync(cluster, token).ConfigureAwait(false);
+            var lawyerKey = new PublicKey(lawyer);
+            var (xcavTokenProgram, xcavDecimals) = await ResolveMintAsync(cluster, config.XcavMint, token).ConfigureAwait(false);
+            var lawyerToken = SolanaAssociatedTokenAccount.Derive(lawyerKey, config.XcavMint, xcavTokenProgram);
+            var depositDisplay = SolanaAmount.FromBaseUnits(
+                config.LawyerDeposit.ToString(CultureInfo.InvariantCulture), xcavDecimals);
+            var lawyerTokenInfo = await SolanaRpcModel.GetAccountInfoAsync(cluster, lawyerToken.Key, token).ConfigureAwait(false);
+
+            if (lawyerTokenInfo is null)
+            {
+                throw new InvalidOperationException(
+                    $"This wallet holds no XCAV. Lawyer registration takes a {depositDisplay} XCAV deposit - fund the wallet first.");
+            }
+
+            var lawyerTokenData = Convert.FromBase64String(lawyerTokenInfo.Data[0]);
+
+            if (lawyerTokenData.Length >= 72)
+            {
+                var lawyerXcav = BinaryPrimitives.ReadUInt64LittleEndian(lawyerTokenData.AsSpan(64));
+
+                if (lawyerXcav < config.LawyerDeposit)
+                {
+                    throw new InvalidOperationException(
+                        $"The lawyer registration deposit is {depositDisplay} XCAV; this wallet holds " +
+                        $"{SolanaAmount.FromBaseUnits(lawyerXcav.ToString(CultureInfo.InvariantCulture), xcavDecimals)} XCAV.");
+                }
+            }
+
+            return
+            [
+                XcavateMarketplaceProgram.RegisterLawyer(
+                    programs,
+                    lawyerKey,
+                    config.RentCollector,
+                    config.XcavMint,
+                    lawyerToken,
+                    xcavTokenProgram,
+                    regionId,
+                    maxDeposit: config.LawyerDeposit),
+            ];
+        }
+
         /// <summary>
         /// claim_spv_case for listing <paramref name="listingId"/>: the calling lawyer's
         /// candidacy for the SPV-lawyer seat in election <paramref name="round"/>, quoting
