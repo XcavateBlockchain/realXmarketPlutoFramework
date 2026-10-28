@@ -112,6 +112,17 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        [TestCase(0UL, "0")]
+        [TestCase(1_000_000_000UL, "1")]
+        [TestCase(100_000_000UL, "0.1")]
+        [TestCase(1_234_567_890UL, "1.23456789")]
+        [TestCase(3_300_000_000_000UL, "3300")]
+        public void FormatCostsQuote_UsesNineDecimalsWithoutTrailingZeroes(ulong quote, string expected)
+        {
+            Assert.That(SpvLawyerClaimEligibility.FormatCostsQuote(quote), Is.EqualTo(expected));
+        }
+
+        [Test]
         public void TryCreateCostsQuote_RejectsAnythingAboveTheCollectedFeeCap()
         {
             Assert.That(SpvLawyerClaimEligibility.TryCreateCostsQuote(1.000000001m, 1_000_000_000, out var quote), Is.False);

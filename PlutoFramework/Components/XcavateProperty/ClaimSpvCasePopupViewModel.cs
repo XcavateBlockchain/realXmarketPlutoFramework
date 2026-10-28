@@ -62,7 +62,11 @@ public partial class ClaimSpvCasePopupViewModel : ObservableObject, IPopup, ISet
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
+    [NotifyPropertyChangedFor(nameof(MaximumLegalCostsText))]
     private ulong collectedFeeQuote;
+
+    public string MaximumLegalCostsText =>
+        $"Maximum legal costs: {SpvLawyerClaimEligibility.FormatCostsQuote(CollectedFeeQuote)} tGBP";
 
     /// <summary>
     /// The validated costs quote, set by Continue before the sheet closes; null while the

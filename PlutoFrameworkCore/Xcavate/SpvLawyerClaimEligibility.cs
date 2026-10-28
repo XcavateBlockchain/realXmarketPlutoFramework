@@ -36,6 +36,10 @@ namespace PlutoFramework.Model.Xcavate
         public static ulong GetClaimRound(ulong currentRound, long expiry) =>
             expiry > 0 ? currentRound : currentRound + 1;
 
+        public static string FormatCostsQuote(ulong quote) =>
+            ((decimal)quote / 1_000_000_000m).ToString(
+                "0.#########", System.Globalization.CultureInfo.InvariantCulture);
+
         public static bool TryCreateCostsQuote(decimal costs, ulong collectedFeeQuote, out ulong quote)
         {
             quote = 0;

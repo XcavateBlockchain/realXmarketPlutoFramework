@@ -107,6 +107,10 @@
                                                 Placeholder="Legal costs (tGBP)"
                                                 Text="{Binding LegalCosts}"
                                                 CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}" />
+
+                            <Label Text="{Binding MaximumLegalCostsText}"
+                                   TextColor="Red"
+                                   FontSize="12" />
                         </VerticalStackLayout>
                     </Border>
 
