@@ -996,6 +996,18 @@ namespace PlutoFramework.Model.Xcavate
             return NormalizeRegionIds(found);
         }
 
+        public static string FormatLawyerDeposit(ulong baseUnits, int decimals) =>
+            $"{SolanaAmount.FromBaseUnits(baseUnits.ToString(CultureInfo.InvariantCulture), decimals).ToString(CultureInfo.InvariantCulture)} XCAV";
+
+        public static async Task<string> GetLawyerDepositDisplayAsync(
+            SolanaCluster cluster, CancellationToken token = default)
+        {
+            var config = await XcavateMarketplaceConfigModel.GetConfigAsync(cluster, token).ConfigureAwait(false);
+            var (_, xcavDecimals) = await ResolveMintAsync(cluster, config.XcavMint, token).ConfigureAwait(false);
+
+            return FormatLawyerDeposit(config.LawyerDeposit, xcavDecimals);
+        }
+
         public static async Task<List<TransactionInstruction>> RegisterLawyerAsync(
             SolanaCluster cluster,
             string lawyer,

@@ -783,8 +783,10 @@ type QueryRoot {
     active: Boolean
     "Base58 lawyer wallet: only listings where it sits in either lawyer slot (developer_lawyer OR spv_lawyer)."
     assignedLawyer: String
-    "Base58 lawyer wallet: live listings (LISTED or SOLD_OUT with the legal window still open) whose SPV has been created and whose SPV-lawyer seat is still vacant, that do not already have this lawyer in either slot. Ordered by sold-out recency, then listing recency."
+    "Base58 lawyer wallet: listings where claim_spv_case can currently succeed for this wallet, excluding its own claim history. Ordered by sold-out recency, then listing recency."
     assignableTo: String
+    "Base58 lawyer wallet: listings with any candidacy by this wallet, including closed candidacies and earlier rounds."
+    claimedBy: String
     first: Int
     offset: Int
   ): ListingConnection!

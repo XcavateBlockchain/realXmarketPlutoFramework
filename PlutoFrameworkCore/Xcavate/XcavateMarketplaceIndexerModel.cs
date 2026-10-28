@@ -1466,16 +1466,9 @@ namespace PlutoFramework.Model.Xcavate
         }
 
         /// <summary>
-        /// The listings a lawyer can still claim the SPV case on, one page at a time - the
-        /// lawyer page's "Newly listed" filter. Server-side that is every live listing
-        /// whose SPV-lawyer job is still open: LISTED or SOLD_OUT with the legal window
-        /// still running, the property's SPV created, and the SPV-lawyer seat vacant -
-        /// the developer-lawyer seat is filled by the developer alone, so it never opens
-        /// this feed - with the asking wallet neither the SPV lawyer nor that listing's
-        /// developer lawyer, ordered by sold-out recency then listing recency
-        /// (<c>assignableTo</c> on the shared <c>listings</c> query). An indexer predating
-        /// this filter answers with its narrower sold-out-only set instead - the page
-        /// simply shows fewer rows, never an error.
+        /// The listings where the lawyer can currently submit claim_spv_case, one page at
+        /// a time - the lawyer page's "Newly listed" filter. The indexer enforces every
+        /// on-chain eligibility gate and excludes the asking wallet's own claim history.
         /// </summary>
         public static Task<(int TotalCount, IReadOnlyList<XcavateSolanaListingNft> Items)> GetLawyerAssignablePropertiesAsync(
             SolanaCluster cluster,
@@ -1483,11 +1476,11 @@ namespace PlutoFramework.Model.Xcavate
             int first,
             int offset,
             CancellationToken token = default) =>
-            GetLawyerPropertiesAsync(cluster, assignedLawyer: null, assignableTo: lawyer, first, offset, token);
+            GetLawyerPropertiesAsync(cluster, assignedLawyer: null, assignableTo: lawyer, claimedBy: null, first, offset, token);
 
         /// <summary>
         /// The listings where the lawyer's wallet already sits in a lawyer slot (developer
-        /// or SPV side), one page at a time - the lawyer page's "Under Instruction" filter
+        /// or SPV side), one page at a time - the lawyer page's "Under instruction" filter
         /// and, through <c>TotalCount</c> at <c>first: 1</c>, its "Manage properties"
         /// count.
         /// </summary>
@@ -1497,18 +1490,31 @@ namespace PlutoFramework.Model.Xcavate
             int first,
             int offset,
             CancellationToken token = default) =>
-            GetLawyerPropertiesAsync(cluster, assignedLawyer: lawyer, assignableTo: null, first, offset, token);
+            GetLawyerPropertiesAsync(cluster, assignedLawyer: lawyer, assignableTo: null, claimedBy: null, first, offset, token);
 
         /// <summary>
-        /// The shared <c>LawyerProperties</c> execution behind both lawyer filters: exactly
-        /// one of the two lawyer arguments is set, the other stays null (absent = filter
-        /// off). Nodes map through the same <see cref="MapListing"/> the investor path
-        /// wraps with <c>ToXcavateNftWrapperAsync</c>.
+        /// The listings with any SPV-case candidacy submitted by the lawyer, including
+        /// closed candidacies and earlier rounds - the lawyer page's "Claimed" filter.
+        /// </summary>
+        public static Task<(int TotalCount, IReadOnlyList<XcavateSolanaListingNft> Items)> GetLawyerClaimedPropertiesAsync(
+            SolanaCluster cluster,
+            string lawyer,
+            int first,
+            int offset,
+            CancellationToken token = default) =>
+            GetLawyerPropertiesAsync(cluster, assignedLawyer: null, assignableTo: null, claimedBy: lawyer, first, offset, token);
+
+        /// <summary>
+        /// The shared <c>LawyerProperties</c> execution behind all three lawyer filters:
+        /// exactly one lawyer argument is set; the others stay null (absent = filter off).
+        /// Nodes map through the same <see cref="MapListing"/> the investor path wraps
+        /// with <c>ToXcavateNftWrapperAsync</c>.
         /// </summary>
         private static async Task<(int TotalCount, IReadOnlyList<XcavateSolanaListingNft> Items)> GetLawyerPropertiesAsync(
             SolanaCluster cluster,
             string? assignedLawyer,
             string? assignableTo,
+            string? claimedBy,
             int first,
             int offset,
             CancellationToken token)
@@ -1516,7 +1522,7 @@ namespace PlutoFramework.Model.Xcavate
             var client = XcavateWhitelistIndexer.GetClient(cluster);
 
             var result = await client.LawyerProperties
-                .ExecuteAsync(assignedLawyer, assignableTo, first, offset, token)
+                .ExecuteAsync(assignedLawyer, assignableTo, claimedBy, first, offset, token)
                 .ConfigureAwait(false);
 
             result.EnsureNoErrors();

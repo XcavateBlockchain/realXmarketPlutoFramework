@@ -418,6 +418,18 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        [TestCase(100_000_000_000UL, 9, "100 XCAV")]
+        [TestCase(1UL, 9, "0.000000001 XCAV")]
+        [TestCase(500_000UL, 6, "0.5 XCAV")]
+        public void FormatLawyerDeposit_ConvertsBaseUnitsWithoutLosingPrecision(
+            ulong baseUnits, int decimals, string expected)
+        {
+            var display = XcavateMarketplaceCallsModel.FormatLawyerDeposit(baseUnits, decimals);
+
+            Assert.That(display, Is.EqualTo(expected));
+        }
+
+        [Test]
         public async Task RegisterLawyerAsync_ReturnsTheConfiguredTwoSignerInstruction()
         {
             const string lawyer = "3oX5ttHJvcqJDwbYh96tkShaa4bnWMM3JHc2N4kocSNY";

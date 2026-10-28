@@ -114,9 +114,6 @@
                                                             ButtonState="{Binding CrankButtonState}"
                                                             IsVisible="{Binding ExecuteDealIsVisible}" />
 
-                    <!-- Letting agent: the seat holder and its election (post-settlement) -->
-                    <xcavateproperty:AgentElectionSectionView Margin="0,10,0,0" />
-
                     <!-- Rent income: claimable amounts, the claim action, and the
                          lifetime per-token distribution totals. -->
                     <xcavateproperty:IncomeSectionView Margin="0,10,0,0" />
@@ -305,6 +302,9 @@
                          status of their document verdict, read from the indexer's listing
                          row (shown from the legal phase onwards). -->
                     <xcavateproperty:LawyerStatusSectionView Margin="0,10,0,0" />
+
+                    <!-- Letting agent: the seat holder and its election (post-settlement) -->
+                    <xcavateproperty:AgentElectionSectionView Margin="0,10,0,0" />
                 </VerticalStackLayout>
             </ScrollView>
         </Grid>
