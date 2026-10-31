@@ -49,6 +49,9 @@ namespace PlutoFramework.Components.Menu
         public bool IsLoggedIn => Address is not null;
 
         [ObservableProperty]
+        private bool isAdmin;
+
+        [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(FullName))]
         private Profile? profile;
 
@@ -64,6 +67,7 @@ namespace PlutoFramework.Components.Menu
             ProfilePictureImageSource = ProfilePictureImageSourceModel.Create(value?.ProfilePicture);
 
         private readonly XcavateProfileService profileService = new();
+        private int roleLoadGeneration;
 
         public MainMenuPageViewModel()
         {
@@ -80,14 +84,17 @@ namespace PlutoFramework.Components.Menu
         }
 
         /// <summary>
-        /// Roles come from the Xcavate whitelist Solana program on the selected network, so
-        /// they follow the Solana key rather than the main one. A Substrate-only user simply
-        /// has none, and neither does a wallet on a network the programs are not deployed on;
-        /// the badge layout renders nothing for an empty list. Best effort: a failed query
-        /// keeps whatever roles were shown before.
+        /// Roles and admin status come from the Xcavate whitelist Solana program on the selected
+        /// network, so they follow the Solana key rather than the main one. A Substrate-only user
+        /// simply has none, and neither does a wallet on a network the programs are not deployed on;
+        /// the badge layout renders nothing for an empty list. Best effort: a failed role query
+        /// keeps whatever roles were shown before, while the admin actions stay hidden.
         /// </summary>
         private async Task LoadRolesAsync()
         {
+            var loadGeneration = ++roleLoadGeneration;
+            IsAdmin = false;
+
             var address = KeysModel.GetSolanaAddress();
 
             if (address is null)
@@ -99,14 +106,26 @@ namespace PlutoFramework.Components.Menu
 
             if (!XcavateDeploymentModel.IsDeployed(cluster))
             {
-                Roles = [];
+                if (loadGeneration == roleLoadGeneration)
+                {
+                    Roles = [];
+                }
 
                 return;
             }
 
             try
             {
-                Roles = [.. await WhitelistModel.GetRolesCachedAsync(address, cluster, CancellationToken.None)];
+                var loadedRoles = await WhitelistModel.GetRolesCachedAsync(address, cluster, CancellationToken.None);
+                var isAdmin = await WhitelistModel.IsAdminAsync(address, cluster, CancellationToken.None);
+
+                if (loadGeneration != roleLoadGeneration)
+                {
+                    return;
+                }
+
+                Roles = [.. loadedRoles];
+                IsAdmin = isAdmin;
             }
             catch (Exception ex)
             {

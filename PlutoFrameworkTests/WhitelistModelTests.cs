@@ -4,8 +4,8 @@ using PlutoFrameworkCore.Solana;
 namespace PlutoFrameworkTests
 {
     /// <summary>
-    /// Hits the live Xcavate devnet indexer. The addresses below are devnet whitelist holders,
-    /// so a failure here is as likely to mean "devnet was reset" as "the model is broken".
+    /// Hits the live Xcavate devnet indexer and RPC. The addresses below are devnet whitelist
+    /// holders, so a failure here is as likely to mean "devnet was reset" as "the model is broken".
     /// </summary>
     internal class WhitelistModelTests
     {

@@ -629,11 +629,13 @@ namespace PlutoFramework.Model.Xcavate
         /// <summary>
         /// assign_developer_lawyer for listing <paramref name="listingId"/>, called by the
         /// listing's developer to engage <paramref name="lawyer"/> for the developer side
-        /// of the legal phase. Pure - every account is derived; the program enforces the
-        /// developer's ownership of the listing, the vacant seat, the lawyer's region and
+        /// of the legal phase. The lawyer's role and registry accounts are checked on chain
+        /// first so a missing prerequisite names the required onboarding step rather than
+        /// surfacing as Anchor's generic account-not-initialized error. The program enforces
+        /// the developer's ownership of the listing, the vacant seat, the lawyer's region and
         /// compliance.
         /// </summary>
-        public static Task<List<TransactionInstruction>> AssignDeveloperLawyerAsync(
+        public static async Task<List<TransactionInstruction>> AssignDeveloperLawyerAsync(
             SolanaCluster cluster,
             string developer,
             long listingId,
@@ -641,12 +643,32 @@ namespace PlutoFramework.Model.Xcavate
             CancellationToken token = default)
         {
             var programs = XcavateProgramAddresses.Require(cluster);
+            var lawyerKey = new PublicKey(lawyer);
+            var lawyerRole = XcavateMarketplaceProgram.DeriveRoleAccount(programs, lawyerKey, XcavateRole.Lawyer);
+            var registry = XcavateMarketplaceProgram.DeriveLawyer(programs, lawyerKey);
 
-            return Task.FromResult<List<TransactionInstruction>>(
+            var roleTask = SolanaRpcModel.GetAccountInfoAsync(cluster, lawyerRole.Key, token);
+            var registryTask = SolanaRpcModel.GetAccountInfoAsync(cluster, registry.Key, token);
+
+            await Task.WhenAll(roleTask, registryTask).ConfigureAwait(false);
+
+            if (roleTask.Result?.Owner != programs.Whitelist)
+            {
+                throw new InvalidOperationException(
+                    "This address has no Lawyer role on this network. The lawyer must have a compliant Lawyer role before being assigned.");
+            }
+
+            if (registryTask.Result?.Owner != programs.Marketplace)
+            {
+                throw new InvalidOperationException(
+                    "This lawyer has not joined the marketplace lawyer registry. They must register for the property's region before being assigned.");
+            }
+
+            return
             [
                 XcavateMarketplaceProgram.AssignDeveloperLawyer(
-                    programs, new PublicKey(developer), new PublicKey(lawyer), (ulong)listingId),
-            ]);
+                    programs, new PublicKey(developer), lawyerKey, (ulong)listingId),
+            ];
         }
 
         /// <summary>

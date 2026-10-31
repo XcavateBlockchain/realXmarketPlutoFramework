@@ -380,10 +380,10 @@ namespace PlutoFrameworkTests
         public async Task AssignDeveloperLawyerAsync_ReturnsTheSingleProgramInstruction()
         {
             var developer = SyntheticKey(1);
-            var lawyer = SyntheticKey(2);
+            const string lawyer = "3oX5ttHJvcqJDwbYh96tkShaa4bnWMM3JHc2N4kocSNY";
 
             var instructions = await XcavateMarketplaceCallsModel.AssignDeveloperLawyerAsync(
-                SolanaCluster.Devnet, developer.Key, 9, lawyer.Key);
+                SolanaCluster.Devnet, developer.Key, 9, lawyer);
 
             Assert.Multiple(() =>
             {
@@ -392,8 +392,18 @@ namespace PlutoFrameworkTests
                 Assert.That(instructions[0].Keys[0].PublicKey, Is.EqualTo(developer.Key));
                 Assert.That(
                     instructions[0].Keys[3].PublicKey,
-                    Is.EqualTo(XcavateMarketplaceProgram.DeriveLawyer(Programs, lawyer).Key));
+                    Is.EqualTo(XcavateMarketplaceProgram.DeriveLawyer(Programs, new PublicKey(lawyer)).Key));
             });
+        }
+
+        [Test]
+        public void AssignDeveloperLawyerAsync_RejectsAnAddressWithoutALawyerRole()
+        {
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await XcavateMarketplaceCallsModel.AssignDeveloperLawyerAsync(
+                    SolanaCluster.Devnet, SyntheticKey(1).Key, 9, SyntheticKey(255).Key));
+
+            Assert.That(ex!.Message, Does.Contain("no Lawyer role"));
         }
 
         [Test]

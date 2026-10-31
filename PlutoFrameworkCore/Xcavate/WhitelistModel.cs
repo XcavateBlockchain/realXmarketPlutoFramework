@@ -130,6 +130,24 @@ namespace PlutoFramework.Model.Xcavate
             return result.Data?.CheckAccess.Compliant ?? false;
         }
 
+        /// <summary>
+        /// Whether the whitelist program's Admin PDA exists for <paramref name="address"/>.
+        /// Admins are separate from the Role enum and need no compliance flag.
+        /// </summary>
+        public static async Task<bool> IsAdminAsync(string address, SolanaCluster cluster, CancellationToken token)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var adminAccount = SolanaProgramAddress.Derive(
+                new(programs.Whitelist),
+                "admin"u8.ToArray(),
+                new Solnet.Wallet.PublicKey(address).KeyBytes);
+
+            var accountInfo = await SolanaRpcModel.GetAccountInfoAsync(cluster, adminAccount.Key, token)
+                .ConfigureAwait(false);
+
+            return accountInfo?.Owner == programs.Whitelist;
+        }
+
         private static XcavateRole? FromIndexerRole(Role role) => role switch
         {
             Role.RegionalOperator => XcavateRole.RegionalOperator,

@@ -54,20 +54,6 @@
                                VerticalOptions="Center" />
                     </Border>
 
-                    <Border BackgroundColor="#22888888"
-                            StrokeThickness="0"
-                            AbsoluteLayout.LayoutBounds="0, 1, AutoSize, AutoSize"
-                            AbsoluteLayout.LayoutFlags="PositionProportional"
-                            Margin="10, 0, 0, 10">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="5" />
-                        </Border.StrokeShape>
-                        <Label Margin="5, 0, 5, 0"
-                               Text="{Binding StatusText}"
-                               FontAttributes="Bold"
-                               HorizontalTextAlignment="Center"
-                               VerticalOptions="Center" />
-                    </Border>
                 </AbsoluteLayout>
 
                 <Grid ColumnSpacing="5"
@@ -82,6 +68,20 @@
                                                   HorizontalOptions="Start"
                                                   VerticalOptions="Center"
                                                   Grid.Column="0" />
+
+                    <Border BackgroundColor="#22888888"
+                            StrokeThickness="0"
+                            Grid.Column="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="5" />
+                        </Border.StrokeShape>
+                        <Label Margin="5, 0, 5, 0"
+                               Text="{Binding StatusText}"
+                               FontAttributes="Bold"
+                               HorizontalTextAlignment="Center"
+                               VerticalOptions="Center"
+                               VerticalTextAlignment="Center" />
+                    </Border>
                 </Grid>
 
                 <Grid ColumnSpacing="5"

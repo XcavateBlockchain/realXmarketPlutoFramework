@@ -29,6 +29,10 @@ public partial class PropertyThumbnailView : ContentView
 
             control.propertyNameLabel.Text = nftBase.XcavateMetadata.PropertyName;
 
+            control.propertyTypeLabel.Text = string.IsNullOrWhiteSpace(nftBase.XcavateMetadata.PropertyType)
+                ? "Property"
+                : nftBase.XcavateMetadata.PropertyType!;
+
             control.apyLabel.Text = PropertyModel.GetAPY(nftBase.XcavateMetadata.Financials);
 
             control.priceLabelText.Text = ((double)nftBase.XcavateMetadata.Financials.PropertyPrice).ToCurrencyString();
