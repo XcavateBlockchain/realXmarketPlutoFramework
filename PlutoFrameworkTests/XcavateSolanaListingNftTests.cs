@@ -1,4 +1,7 @@
 using PlutoFramework.Model.Xcavate;
+using PlutoFrameworkCore.Xcavate;
+using Substrate.NetApi.Model.Types.Primitive;
+using UniqueryPlus.Nfts;
 
 namespace PlutoFrameworkTests
 {
@@ -119,5 +122,73 @@ namespace PlutoFrameworkTests
 
             Assert.That(listing.IsFinalized, Is.EqualTo(expected));
         }
+
+        [Test]
+        [TestCase(0u, false)]
+        [TestCase(1u, true)]
+        public void Status_LegalProcessExpiredOverridesOtherTerminalStates(
+            uint unclaimedTokens,
+            bool claimHasExpired)
+        {
+            var listing = ListingWithClaimDeadline(0) with
+            {
+                ListingStatus = "Legal",
+                LegalDeadlineTimestamp = DateTimeOffset.UtcNow.AddMinutes(-5).ToUnixTimeSeconds(),
+                OngoingObjectListingDetails = ListingDetails(unclaimedTokens),
+            };
+            var wrapper = new XcavateNftWrapper
+            {
+                NftBase = listing,
+                Endpoint = PlutoFramework.Constants.Endpoints.GetEndpointDictionary[
+                    PlutoFramework.Constants.EndpointEnum.XcavatePaseo],
+                TokensBought = 0,
+                TokensOwned = 0,
+                Region = null,
+                ListingHasExpired = false,
+                ClaimHasExpired = claimHasExpired,
+                SpvCreated = true,
+            };
+
+            Assert.That(wrapper.Status, Is.EqualTo("Legal process expired"));
+        }
+
+        [Test]
+        [TestCase("SoldOut", 100L, 99L, false)]
+        [TestCase("SoldOut", 100L, 100L, false)]
+        [TestCase("SoldOut", 100L, 101L, true)]
+        [TestCase("Legal", 100L, 101L, true)]
+        [TestCase("Refunding", 0L, 101L, true)]
+        [TestCase("Finalized", 100L, 101L, false)]
+        [TestCase("Cancelled", 100L, 101L, false)]
+        [TestCase("Listed", 100L, 101L, false)]
+        [TestCase("SoldOut", 0L, 101L, false)]
+        public void LegalProcessHasExpired_MatchesTheProgramsLegalExitStates(
+            string status,
+            long legalDeadline,
+            long now,
+            bool expected)
+        {
+            var listing = ListingWithClaimDeadline(0) with
+            {
+                ListingStatus = status,
+                LegalDeadlineTimestamp = legalDeadline,
+            };
+
+            Assert.That(listing.LegalProcessHasExpired(now), Is.EqualTo(expected));
+        }
+
+        private static XcavateOngoingObjectListingDetails ListingDetails(uint unclaimedTokens) => new()
+        {
+            RealEstateDeveloper = "developer",
+            TaxPaidByDeveloper = false,
+            ListingExpiry = 0,
+            ClaimExpiry = null,
+            ListedTokens = 0,
+            UnclaimedTokens = unclaimedTokens,
+            AssetId = new U32(1),
+            CollectionId = new U32(0),
+            ItemId = new U32(1),
+            ShareOwners = [],
+        };
     }
 }

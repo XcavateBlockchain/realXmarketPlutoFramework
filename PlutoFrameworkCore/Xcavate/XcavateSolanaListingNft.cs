@@ -150,6 +150,12 @@ namespace PlutoFramework.Model.Xcavate
         public bool DirectBuyIsOpen(long nowUnixSeconds) =>
             ClaimDeadlineTimestamp != 0 && nowUnixSeconds >= ClaimDeadlineTimestamp;
 
+        public bool LegalProcessHasExpired(long nowUnixSeconds) =>
+            ListingStatus is "Refunding"
+            || (ListingStatus is "SoldOut" or "Legal"
+                && LegalDeadlineTimestamp != 0
+                && nowUnixSeconds > LegalDeadlineTimestamp);
+
         public Task<ICollectionBase> GetCollectionAsync(CancellationToken token) => throw new NotSupportedException();
 
         public Task<INftBase> GetFullAsync(CancellationToken token) => Task.FromResult<INftBase>(this);

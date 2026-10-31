@@ -38,6 +38,7 @@ namespace PlutoFramework.Components.XcavateProperty
         ClaimExpired,
         RefundUnclaimed,
         RefundClaimed,
+        LegalProcessExpired,
         Relist,
         MakeOffer,
         Unknown
@@ -57,6 +58,21 @@ namespace PlutoFramework.Components.XcavateProperty
             if (NftWrapper is null)
             {
                 return MainActionStates.Unknown;
+            }
+
+            if (LegalProcessHasExpired)
+            {
+                if (TokensOwned > 0)
+                {
+                    return MainActionStates.RefundClaimed;
+                }
+
+                if (TokensBought > 0)
+                {
+                    return MainActionStates.RefundUnclaimed;
+                }
+
+                return MainActionStates.LegalProcessExpired;
             }
 
             if (NftWrapper.ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0)
@@ -424,6 +440,7 @@ namespace PlutoFramework.Components.XcavateProperty
             MainActionStates.ClaimExpired => "Claim Expired",
             MainActionStates.RefundUnclaimed => "Refund",
             MainActionStates.RefundClaimed => "Refund",
+            MainActionStates.LegalProcessExpired => "Legal process expired",
             MainActionStates.Relist => "Relist",
             MainActionStates.MakeOffer => "Make offer",
             MainActionStates.Unknown => "Unknown",
@@ -443,6 +460,7 @@ namespace PlutoFramework.Components.XcavateProperty
             MainActionStates.ClaimExpired => ButtonStateEnum.Disabled,
             MainActionStates.RefundUnclaimed => ButtonStateEnum.Enabled,
             MainActionStates.RefundClaimed => ButtonStateEnum.Enabled,
+            MainActionStates.LegalProcessExpired => ButtonStateEnum.Disabled,
             MainActionStates.Relist => ButtonStateEnum.Enabled,
             MainActionStates.MakeOffer => ButtonStateEnum.Enabled,
             MainActionStates.Unknown => ButtonStateEnum.Disabled,
@@ -1111,6 +1129,9 @@ namespace PlutoFramework.Components.XcavateProperty
         /// <summary>The Solana listing the lawyers section reads, null for Substrate-sourced items.</summary>
         private XcavateSolanaListingNft? SolanaListing => NftWrapper?.NftBase as XcavateSolanaListingNft;
 
+        private bool LegalProcessHasExpired =>
+            SolanaListing?.LegalProcessHasExpired(DateTimeOffset.UtcNow.ToUnixTimeSeconds()) == true;
+
         /// <summary>
         /// The lawyers carry the legal phase - there is nothing to show before the sale
         /// sells out (the program only engages them from SOLD_OUT on) and no reason to
@@ -1178,12 +1199,12 @@ namespace PlutoFramework.Components.XcavateProperty
 
         /// <summary>
         /// The developer's engagement action: assign_developer_lawyer opens once the sale
-        /// is SOLD_OUT while the developer-lawyer seat is still vacant. The program
-        /// enforces the remaining preconditions (the caller owning the listing, the
-        /// lawyer's region and compliance) on chain.
+        /// is SOLD_OUT, before the legal deadline, while the developer-lawyer seat is still
+        /// vacant. The program enforces the remaining preconditions (the caller owning the
+        /// listing, the lawyer's region and compliance) on chain.
         /// </summary>
         public bool ShowAssignDeveloperLawyerButton =>
-            IsLoaded && MainPageRole == MainPageRole.Developer
+            IsLoaded && MainPageRole == MainPageRole.Developer && !LegalProcessHasExpired
             && SolanaListing is { ListingStatus: "SoldOut" } listing
             && XcavateMarketplaceIndexerModel.IsVacantSeat(listing.DeveloperLawyer);
 
@@ -1736,6 +1757,11 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             if (!ShowAssignDeveloperLawyerButton)
             {
+                if (LegalProcessHasExpired)
+                {
+                    ShowLegalProcessExpired();
+                }
+
                 return;
             }
 
@@ -1749,6 +1775,14 @@ namespace PlutoFramework.Components.XcavateProperty
         private async Task ExecuteAssignDeveloperLawyerAsync()
         {
             var popupViewModel = DependencyService.Get<AssignDeveloperLawyerPopupViewModel>();
+
+            if (LegalProcessHasExpired)
+            {
+                popupViewModel.IsVisible = false;
+                ShowLegalProcessExpired();
+                return;
+            }
+
             var lawyerAddress = popupViewModel.LawyerAddress;
 
             if (!SolanaAddressValidator.IsValidAddress(lawyerAddress))
@@ -1913,8 +1947,10 @@ namespace PlutoFramework.Components.XcavateProperty
         public bool FinalizeProposalIsVisible => PendingFinalizations?.Proposal is not null;
         public bool FinalizeChallengeIsVisible => PendingFinalizations?.Challenge is not null;
         public bool FinalizeSpvElectionIsVisible => PendingFinalizations?.SpvElection is not null;
-        public bool ResolveSilentVerdictIsVisible => PendingFinalizations?.SilentVerdictOverdue == true;
-        public bool ExecuteDealIsVisible => PendingFinalizations?.ExecuteDeal is not null;
+        public bool ResolveSilentVerdictIsVisible =>
+            !LegalProcessHasExpired && PendingFinalizations?.SilentVerdictOverdue == true;
+        public bool ExecuteDealIsVisible =>
+            !LegalProcessHasExpired && PendingFinalizations?.ExecuteDeal is not null;
 
         /// <summary>Enabled while no crank is in flight - one submission at a time.</summary>
         public ButtonStateEnum CrankButtonState =>
@@ -2035,17 +2071,52 @@ namespace PlutoFramework.Components.XcavateProperty
 
         /// <summary>resolve_silent_verdict: rules on the developer's lawyer who let the review window run out.</summary>
         [RelayCommand]
-        public Task ResolveSilentVerdictAsync() => RunCrankAsync(
-            $"Resolve silent verdict on {CrankPropertyName}",
-            (cranker, cluster, ct) => XcavateMarketplaceCallsModel.ResolveSilentVerdictAsync(
-                cluster, cranker, ListingId, ct));
+        public Task ResolveSilentVerdictAsync()
+        {
+            if (LegalProcessHasExpired)
+            {
+                ShowLegalProcessExpired();
+                return Task.CompletedTask;
+            }
+
+            return RunCrankAsync(
+                $"Resolve silent verdict on {CrankPropertyName}",
+                (cranker, cluster, ct) => XcavateMarketplaceCallsModel.ResolveSilentVerdictAsync(
+                    cluster, cranker, ListingId, ct));
+        }
 
         /// <summary>execute_deal: settles the sale for every investor once both lawyers approved.</summary>
         [RelayCommand]
-        public Task ExecuteDealAsync() => RunCrankAsync(
-            $"Complete settlement for {CrankPropertyName}",
-            (cranker, cluster, ct) => XcavateMarketplaceCallsModel.ExecuteDealAsync(
-                cluster, cranker, ListingId, ct));
+        public Task ExecuteDealAsync()
+        {
+            if (LegalProcessHasExpired)
+            {
+                ShowLegalProcessExpired();
+                return Task.CompletedTask;
+            }
+
+            return RunCrankAsync(
+                $"Complete settlement for {CrankPropertyName}",
+                (cranker, cluster, ct) => XcavateMarketplaceCallsModel.ExecuteDealAsync(
+                    cluster, cranker, ListingId, ct));
+        }
+
+        private void ShowLegalProcessExpired()
+        {
+            var messagePopup = DependencyService.Get<MessagePopupViewModel>();
+            messagePopup.Title = "Legal process expired";
+            messagePopup.Text = "The legal review period for this property has ended. Settlement and lawyer actions are no longer available. Investors with reserved or owned tokens can use Refund instead.";
+            messagePopup.IsVisible = true;
+
+            OnPropertyChanged(nameof(StatusText));
+            OnPropertyChanged(nameof(StatusIsVisible));
+            OnPropertyChanged(nameof(MainActionText));
+            OnPropertyChanged(nameof(MainActionButtonState));
+            OnPropertyChanged(nameof(ShowAssignDeveloperLawyerButton));
+            OnPropertyChanged(nameof(ShowClaimSpvCaseButton));
+            OnPropertyChanged(nameof(ResolveSilentVerdictIsVisible));
+            OnPropertyChanged(nameof(ExecuteDealIsVisible));
+        }
 
         /// <summary>
         /// True only when the indexer still shows this wallet's ShareHolding row with

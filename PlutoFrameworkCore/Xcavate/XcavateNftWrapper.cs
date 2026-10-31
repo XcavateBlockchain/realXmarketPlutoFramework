@@ -46,6 +46,12 @@ namespace PlutoFrameworkCore.Xcavate
                     return null;
                 }
 
+                if (NftBase is XcavateSolanaListingNft solanaListing
+                    && solanaListing.LegalProcessHasExpired(DateTimeOffset.UtcNow.ToUnixTimeSeconds()))
+                {
+                    return "Legal process expired";
+                }
+
                 if (ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0)
                 {
                     return "Can be refunded";
