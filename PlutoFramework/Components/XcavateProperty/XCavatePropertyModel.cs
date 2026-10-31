@@ -167,7 +167,11 @@ namespace PlutoFramework.Components.XcavateProperty
             };
         }
 
-        public static async Task NavigateToPropertyDetailPageAsync(XcavateNftWrapper nft, CancellationToken token, XcavateShareListingContext? shareListingContext = null)
+        public static async Task NavigateToPropertyDetailPageAsync(
+            XcavateNftWrapper nft,
+            CancellationToken token,
+            XcavateShareListingContext? shareListingContext = null,
+            XcavateSolanaListingNft? prefetchedSolanaListing = null)
         {
             // The page pushes instantly with its skeleton showing (IsLoading defaults to
             // true); the details load in the background and the skeleton swaps to the
@@ -199,12 +203,13 @@ namespace PlutoFramework.Components.XcavateProperty
                     {
                         var solanaAddress = KeysModel.GetSolanaAddress();
 
-                        var freshListing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
-                                SolanaNetworkModel.SelectedCluster,
-                                solanaListing.ListingId,
-                                solanaAddress,
-                                token)
-                            .ConfigureAwait(false);
+                        var freshListing = prefetchedSolanaListing
+                            ?? await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
+                                    SolanaNetworkModel.SelectedCluster,
+                                    solanaListing.ListingId,
+                                    solanaAddress,
+                                    token)
+                                .ConfigureAwait(false);
 
                         if (freshListing is not null)
                         {
