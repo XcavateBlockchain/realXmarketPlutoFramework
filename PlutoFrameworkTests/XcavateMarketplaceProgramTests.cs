@@ -46,6 +46,7 @@ namespace PlutoFrameworkTests
         [TestCase("assign_developer_lawyer")]
         [TestCase("claim_spv_case")]
         [TestCase("register_lawyer")]
+        [TestCase("unregister_lawyer")]
         [TestCase("list_property")]
         [TestCase("init_property_assets")]
         public void Discriminators_MatchTheAnchorFormula(string instructionName)
@@ -100,6 +101,9 @@ namespace PlutoFrameworkTests
                 "register_lawyer" => XcavateMarketplaceProgram.RegisterLawyer(
                     Programs, SyntheticKey(1), SyntheticKey(2), SyntheticKey(3), SyntheticKey(4),
                     new PublicKey(SolanaTokenProgram.Token2022), 0x0102, 0x0102030405060708),
+                "unregister_lawyer" => XcavateMarketplaceProgram.UnregisterLawyer(
+                    Programs, SyntheticKey(1), SyntheticKey(2), SyntheticKey(3), SyntheticKey(4),
+                    new PublicKey(SolanaTokenProgram.Token2022)),
                 "list_property" => XcavateMarketplaceProgram.ListProperty(
                     Programs, SyntheticKey(1), SyntheticKey(3), SyntheticKey(4),
                     new PublicKey(SolanaTokenProgram.Legacy), 3, Encoding.UTF8.GetBytes("AB12CD"),
@@ -167,6 +171,40 @@ namespace PlutoFrameworkTests
                 Assert.That(instruction.Data, Has.Length.EqualTo(18));
                 Assert.That(instruction.Data[8..10], Is.EqualTo(new byte[] { 0x02, 0x01 }));
                 Assert.That(instruction.Data[10..18], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+            });
+        }
+
+        [Test]
+        public void UnregisterLawyer_HasTheIdlAccountShapeAndNoArgs()
+        {
+            var lawyer = SyntheticKey(1);
+            var rentCollector = SyntheticKey(2);
+            var mint = SyntheticKey(3);
+            var lawyerToken = SyntheticKey(4);
+            var tokenProgram = new PublicKey(SolanaTokenProgram.Token2022);
+
+            var instruction = XcavateMarketplaceProgram.UnregisterLawyer(
+                Programs, lawyer, rentCollector, mint, lawyerToken, tokenProgram);
+
+            var expectedKeys = new[]
+            {
+                lawyer,
+                XcavateMarketplaceProgram.DeriveConfig(Programs),
+                rentCollector,
+                XcavateMarketplaceProgram.DeriveLawyer(Programs, lawyer),
+                mint,
+                lawyerToken,
+                XcavateMarketplaceProgram.DeriveVault(Programs),
+                tokenProgram,
+            };
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instruction.Data, Is.EqualTo(new byte[] { 184, 26, 138, 218, 96, 199, 142, 99 }));
+                Assert.That(instruction.Keys.Select(key => key.PublicKey), Is.EqualTo(expectedKeys.Select(key => key.Key)));
+                Assert.That(instruction.Keys.Count(key => key.IsSigner), Is.EqualTo(1));
+                Assert.That(instruction.Keys[0].IsSigner, Is.True);
+                Assert.That(instruction.Keys.All(key => key.IsWritable), Is.True);
             });
         }
 

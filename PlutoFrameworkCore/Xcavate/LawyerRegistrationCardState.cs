@@ -11,15 +11,22 @@ namespace PlutoFramework.Model.Xcavate
     public sealed record LawyerRegistrationCardState(
         LawyerRegistrationCardKind Kind,
         string Text,
-        bool CanRegister)
+        bool CanRegister,
+        bool CanUnregister = false)
     {
         public static LawyerRegistrationCardState Create(
             ushort? registeredRegion,
             ushort? pendingRegion,
             bool statusLoaded,
             bool loadFailed,
-            bool busy)
+            bool busy,
+            bool unregistrationConfirmed = false)
         {
+            if (unregistrationConfirmed)
+            {
+                return new(LawyerRegistrationCardKind.Syncing, "Unregistration confirmed · Syncing…", false);
+            }
+
             if (pendingRegion is not null)
             {
                 return new(LawyerRegistrationCardKind.Syncing, "Registration confirmed · Syncing…", false);
@@ -27,7 +34,7 @@ namespace PlutoFramework.Model.Xcavate
 
             if (registeredRegion is { } regionId)
             {
-                return new(LawyerRegistrationCardKind.Registered, $"Registered in Region {regionId}", false);
+                return new(LawyerRegistrationCardKind.Registered, $"Registered in Region {regionId}", false, !busy);
             }
 
             if (loadFailed)

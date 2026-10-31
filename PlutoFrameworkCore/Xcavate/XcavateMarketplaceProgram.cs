@@ -46,6 +46,7 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] AssignDeveloperLawyerDiscriminator = [197, 167, 242, 89, 235, 9, 169, 65];
         private static readonly byte[] ClaimSpvCaseDiscriminator = [175, 185, 102, 63, 166, 39, 168, 56];
         private static readonly byte[] RegisterLawyerDiscriminator = [165, 135, 154, 240, 244, 159, 91, 255];
+        private static readonly byte[] UnregisterLawyerDiscriminator = [184, 26, 138, 218, 96, 199, 142, 99];
         private static readonly byte[] ListPropertyDiscriminator = [254, 101, 42, 174, 220, 160, 42, 82];
         private static readonly byte[] InitPropertyAssetsDiscriminator = [86, 217, 248, 184, 33, 187, 144, 253];
 
@@ -577,6 +578,37 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
                 ],
                 Data = Encode(RegisterLawyerDiscriminator, U16(regionId), U64(maxDeposit)),
+            };
+        }
+
+        /// <summary>
+        /// unregister_lawyer(): closes the calling lawyer's registry entry and returns
+        /// its recorded XCAV deposit. Only the lawyer signs; active cases block the exit
+        /// on chain, and the closed entry's rent returns to the rent collector.
+        /// </summary>
+        public static TransactionInstruction UnregisterLawyer(
+            XcavateProgramSet programs,
+            PublicKey lawyer,
+            PublicKey rentCollector,
+            PublicKey xcavMint,
+            PublicKey lawyerToken,
+            PublicKey xcavTokenProgram)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(lawyer, true),
+                    AccountMeta.Writable(DeriveConfig(programs), false),
+                    AccountMeta.Writable(rentCollector, false),
+                    AccountMeta.Writable(DeriveLawyer(programs, lawyer), false),
+                    AccountMeta.Writable(xcavMint, false),
+                    AccountMeta.Writable(lawyerToken, false),
+                    AccountMeta.Writable(DeriveVault(programs), false),
+                    AccountMeta.Writable(xcavTokenProgram, false),
+                ],
+                Data = Encode(UnregisterLawyerDiscriminator),
             };
         }
 

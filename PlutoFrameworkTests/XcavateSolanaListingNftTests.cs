@@ -45,6 +45,32 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        [TestCase("Listed", XcavateRefundInstruction.Expired)]
+        [TestCase("Expired", XcavateRefundInstruction.Expired)]
+        [TestCase("Cancelled", XcavateRefundInstruction.Cancelled)]
+        [TestCase("SoldOut", XcavateRefundInstruction.LegalProcessExpired)]
+        [TestCase("Legal", XcavateRefundInstruction.LegalProcessExpired)]
+        [TestCase("Refunding", XcavateRefundInstruction.LegalProcessExpired)]
+        public void RefundInstruction_MatchesTheProgramsAcceptedListingStatus(
+            string status,
+            XcavateRefundInstruction expected)
+        {
+            var listing = ListingWithClaimDeadline(0) with { ListingStatus = status };
+
+            Assert.That(listing.RefundInstruction, Is.EqualTo(expected));
+        }
+
+        [Test]
+        [TestCase("PendingAssets")]
+        [TestCase("Finalized")]
+        public void RefundInstruction_RejectsAStatusWithoutAnInvestorRefund(string status)
+        {
+            var listing = ListingWithClaimDeadline(0) with { ListingStatus = status };
+
+            Assert.Throws<InvalidOperationException>(() => _ = listing.RefundInstruction);
+        }
+
+        [Test]
         public void DirectBuyIsOpen_FalseBeforeTheSpvOpensTheWindow()
         {
             // Claim deadline 0: no create_spv yet, purchases are reservations.

@@ -1057,6 +1057,36 @@ namespace PlutoFramework.Model.Xcavate
             ];
         }
 
+        public static async Task<List<TransactionInstruction>> UnregisterLawyerAsync(
+            SolanaCluster cluster,
+            string lawyer,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var config = await XcavateMarketplaceConfigModel.GetConfigAsync(cluster, token).ConfigureAwait(false);
+            var lawyerKey = new PublicKey(lawyer);
+            var (xcavTokenProgram, _) = await ResolveMintAsync(cluster, config.XcavMint, token).ConfigureAwait(false);
+            var lawyerToken = SolanaAssociatedTokenAccount.Derive(lawyerKey, config.XcavMint, xcavTokenProgram);
+
+            var instructions = new List<TransactionInstruction>();
+
+            if (await SolanaRpcModel.GetAccountInfoAsync(cluster, lawyerToken.Key, token).ConfigureAwait(false) is null)
+            {
+                instructions.Add(SolanaAssociatedTokenAccount.CreateIdempotentInstruction(
+                    lawyerKey, lawyerKey, config.XcavMint, xcavTokenProgram));
+            }
+
+            instructions.Add(XcavateMarketplaceProgram.UnregisterLawyer(
+                programs,
+                lawyerKey,
+                config.RentCollector,
+                config.XcavMint,
+                lawyerToken,
+                xcavTokenProgram));
+
+            return instructions;
+        }
+
         /// <summary>
         /// claim_spv_case for listing <paramref name="listingId"/>: the calling lawyer's
         /// candidacy for the SPV-lawyer seat in election <paramref name="round"/>, quoting

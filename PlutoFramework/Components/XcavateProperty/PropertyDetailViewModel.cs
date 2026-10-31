@@ -2527,7 +2527,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 "Refund property tokens",
-                (investor, cluster, ct) => XcavateMarketplaceCallsModel.WithdrawExpiredAsync(cluster, investor, ListingId, ct));
+                BuildRefundAsync);
         }
 
         public async Task RefundUnclaimedAsync()
@@ -2553,7 +2553,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 "Refund property tokens",
-                BuildClaimPhaseRefundAsync);
+                BuildRefundAsync);
         }
 
         public async Task RefundClaimedAsync()
@@ -2579,24 +2579,29 @@ namespace PlutoFramework.Components.XcavateProperty
 
             await XcavateMarketplaceTransactionModel.SubmitAsync(
                 "Refund property tokens",
-                BuildClaimPhaseRefundAsync);
+                BuildRefundAsync);
         }
 
         /// <summary>
-        /// The claim-phase refund instruction keys off the listing's exact on-chain
-        /// status, not on what the caller holds: withdraw_cancelled takes only a
-        /// cancelled listing, while a refunding one - the legal deadline blew out and
-        /// exits already started - still goes through withdraw_legal_process_expired,
-        /// the same instruction that moved it into refunding with the first withdrawal.
+        /// Selects the withdrawal by the listing's exact on-chain status. Each wrapper
+        /// also routes a reservation-only position to release_reservation.
         /// </summary>
-        private Task<List<Solnet.Rpc.Models.TransactionInstruction>> BuildClaimPhaseRefundAsync(
+        private Task<List<Solnet.Rpc.Models.TransactionInstruction>> BuildRefundAsync(
             string investor, SolanaCluster cluster, CancellationToken ct)
         {
-            var isCancelled = (NftWrapper?.NftBase as XcavateSolanaListingNft)?.IsCancelled == true;
+            var listing = SolanaListing
+                ?? throw new InvalidOperationException("A refund requires the Solana listing state.");
 
-            return isCancelled
-                ? XcavateMarketplaceCallsModel.WithdrawCancelledAsync(cluster, investor, ListingId, ct)
-                : XcavateMarketplaceCallsModel.WithdrawLegalProcessExpiredAsync(cluster, investor, ListingId, ct);
+            return listing.RefundInstruction switch
+            {
+                XcavateRefundInstruction.Expired =>
+                    XcavateMarketplaceCallsModel.WithdrawExpiredAsync(cluster, investor, ListingId, ct),
+                XcavateRefundInstruction.Cancelled =>
+                    XcavateMarketplaceCallsModel.WithdrawCancelledAsync(cluster, investor, ListingId, ct),
+                XcavateRefundInstruction.LegalProcessExpired =>
+                    XcavateMarketplaceCallsModel.WithdrawLegalProcessExpiredAsync(cluster, investor, ListingId, ct),
+                _ => throw new InvalidOperationException("Unknown refund instruction."),
+            };
         }
 
         [RelayCommand]

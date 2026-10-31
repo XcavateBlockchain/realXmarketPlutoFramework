@@ -46,6 +46,16 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        [TestCase("51WS7bUH3QMof1FrBatqyBnBUwjTx1buN9asAtDiVgSA", true)]
+        [TestCase("11111111111111111111111111111111", false)]
+        public async Task IsAdminAsync_MatchesAdminAccountExistenceAsync(string address, bool expected)
+        {
+            bool isAdmin = await WhitelistModel.IsAdminAsync(address, SolanaCluster.Devnet, CancellationToken.None);
+
+            Assert.That(isAdmin, Is.EqualTo(expected));
+        }
+
+        [Test]
         [TestCase("EJpEpZ8rQY5gVkv6exjZ2urQpPwF6BS6RTaE4UzvhhsF", XcavateRole.RealEstateInvestor, true)]
         [TestCase("EJpEpZ8rQY5gVkv6exjZ2urQpPwF6BS6RTaE4UzvhhsF", XcavateRole.Lawyer, false)]
         // Not a role the Solana whitelist program knows about, so it is answered without a

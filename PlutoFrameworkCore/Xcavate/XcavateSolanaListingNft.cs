@@ -7,6 +7,13 @@ using XcavateDevnetIndexer;
 
 namespace PlutoFramework.Model.Xcavate
 {
+    public enum XcavateRefundInstruction
+    {
+        Expired,
+        Cancelled,
+        LegalProcessExpired,
+    }
+
     /// <summary>
     /// A property listing read from the Xcavate Solana marketplace program through the
     /// Xcavate devnet indexer, shaped like the Substrate-era NFT records so every existing
@@ -80,6 +87,15 @@ namespace PlutoFramework.Model.Xcavate
         /// rejected with ListingNotActive.
         /// </summary>
         public bool IsCancelled => ListingStatus == "Cancelled";
+
+        /// <summary>The withdrawal instruction whose status rules match this listing.</summary>
+        public XcavateRefundInstruction RefundInstruction => ListingStatus switch
+        {
+            "Listed" or "Expired" => XcavateRefundInstruction.Expired,
+            "Cancelled" => XcavateRefundInstruction.Cancelled,
+            "SoldOut" or "Legal" or "Refunding" => XcavateRefundInstruction.LegalProcessExpired,
+            _ => throw new InvalidOperationException($"Listing status '{ListingStatus}' has no investor refund instruction."),
+        };
 
         /// <summary>
         /// The lawyer engaged on the developer side of the legal phase, as its base58

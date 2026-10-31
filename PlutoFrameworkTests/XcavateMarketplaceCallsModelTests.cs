@@ -451,6 +451,48 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public async Task UnregisterLawyerAsync_ReturnsTheConfiguredSingleSignerInstruction()
+        {
+            const string lawyer = "3oX5ttHJvcqJDwbYh96tkShaa4bnWMM3JHc2N4kocSNY";
+            var config = await XcavateMarketplaceConfigModel.GetConfigAsync(SolanaCluster.Devnet);
+
+            var instructions = await XcavateMarketplaceCallsModel.UnregisterLawyerAsync(
+                SolanaCluster.Devnet, lawyer);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(1));
+                Assert.That(instructions[0].Data, Has.Length.EqualTo(8));
+                Assert.That(instructions[0].Data[..8], Is.EqualTo(Discriminator("unregister_lawyer")));
+                Assert.That(instructions[0].Keys[0].PublicKey, Is.EqualTo(lawyer));
+                Assert.That(instructions[0].Keys[2].PublicKey, Is.EqualTo(config.RentCollector.Key));
+                Assert.That(instructions[0].Keys[4].PublicKey, Is.EqualTo(config.XcavMint.Key));
+                Assert.That(instructions[0].Keys.Count(key => key.IsSigner), Is.EqualTo(1));
+                Assert.That(instructions[0].Keys[0].IsSigner, Is.True);
+            });
+        }
+
+        [Test]
+        public async Task UnregisterLawyerAsync_RecreatesAMissingRefundTokenAccount()
+        {
+            var lawyer = SyntheticKey(255);
+
+            var instructions = await XcavateMarketplaceCallsModel.UnregisterLawyerAsync(
+                SolanaCluster.Devnet, lawyer.Key);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(2));
+                Assert.That(instructions[0].Data, Is.EqualTo(new byte[] { 1 }));
+                Assert.That(instructions[0].Keys[0].PublicKey, Is.EqualTo(lawyer.Key));
+                Assert.That(instructions[0].Keys[0].IsSigner, Is.True);
+                Assert.That(instructions[1].Data[..8], Is.EqualTo(Discriminator("unregister_lawyer")));
+                Assert.That(instructions[1].Keys[0].PublicKey, Is.EqualTo(lawyer.Key));
+                Assert.That(instructions[1].Keys.Count(key => key.IsSigner), Is.EqualTo(1));
+            });
+        }
+
+        [Test]
         public void RegisterLawyerAsync_RejectsAWalletWithoutAnXcavAccount()
         {
             var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
