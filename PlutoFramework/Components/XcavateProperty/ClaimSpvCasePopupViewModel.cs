@@ -58,15 +58,21 @@ public partial class ClaimSpvCasePopupViewModel : ObservableObject, IPopup, ISet
     /// <summary>The lawyer's fee quote in tGBP; converted to the 9-decimal quote on Continue.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
+    [NotifyPropertyChangedFor(nameof(IsMaximumLegalCostsVisible))]
     private string legalCosts = "";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ContinueButtonState))]
     [NotifyPropertyChangedFor(nameof(MaximumLegalCostsText))]
+    [NotifyPropertyChangedFor(nameof(IsMaximumLegalCostsVisible))]
     private ulong collectedFeeQuote;
 
     public string MaximumLegalCostsText =>
         $"Maximum legal costs: {SpvLawyerClaimEligibility.FormatCostsQuote(CollectedFeeQuote)} tGBP";
+
+    public bool IsMaximumLegalCostsVisible =>
+        TryParseCosts(LegalCosts, out var costs)
+        && SpvLawyerClaimEligibility.IsAboveCollectedFeeCap(costs, CollectedFeeQuote);
 
     /// <summary>
     /// The validated costs quote, set by Continue before the sheet closes; null while the

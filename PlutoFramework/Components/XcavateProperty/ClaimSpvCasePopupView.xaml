@@ -109,7 +109,8 @@
                                                 CardWidth="{Binding Source={x:Reference verticalStackLayout}, Path=Width}" />
 
                             <Label Text="{Binding MaximumLegalCostsText}"
-                                   TextColor="Red"
+                                   IsVisible="{Binding IsMaximumLegalCostsVisible}"
+                                   TextColor="{StaticResource Negative}"
                                    FontSize="12" />
                         </VerticalStackLayout>
                     </Border>

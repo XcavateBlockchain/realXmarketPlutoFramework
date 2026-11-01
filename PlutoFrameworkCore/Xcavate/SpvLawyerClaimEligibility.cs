@@ -40,6 +40,9 @@ namespace PlutoFramework.Model.Xcavate
             ((decimal)quote / 1_000_000_000m).ToString(
                 "0.#########", System.Globalization.CultureInfo.InvariantCulture);
 
+        public static bool IsAboveCollectedFeeCap(decimal costs, ulong collectedFeeQuote) =>
+            costs > (decimal)collectedFeeQuote / 1_000_000_000m;
+
         public static bool TryCreateCostsQuote(decimal costs, ulong collectedFeeQuote, out ulong quote)
         {
             quote = 0;

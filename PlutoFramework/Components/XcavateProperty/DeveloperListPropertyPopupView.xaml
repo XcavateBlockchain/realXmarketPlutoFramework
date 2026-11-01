@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:PlutoFramework.Components.XcavateProperty"
+             xmlns:card="clr-namespace:PlutoFramework.Components.Card"
+             xmlns:buttons="clr-namespace:PlutoFramework.Components.Buttons"
+             x:Class="PlutoFramework.Components.XcavateProperty.DeveloperListPropertyPopupView"
+             x:DataType="local:DeveloperListPropertyPopupViewModel"
+             IsVisible="{Binding IsVisible}"
+             AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 1"
+             AbsoluteLayout.LayoutFlags="All">
+
+    <card:BottomPopupCard Title="List property"
+                          IsShown="{Binding IsVisible}">
+        <card:BottomPopupCard.View>
+            <AbsoluteLayout>
+                <ScrollView AbsoluteLayout.LayoutBounds="0, 0, 1, 1"
+                            AbsoluteLayout.LayoutFlags="SizeProportional"
+                            Margin="0, 0, 0, 90">
+                    <VerticalStackLayout Spacing="16"
+                                         Padding="20, 10">
+                        <Label Text="List your property on the marketplace in a registered region. Select the region and postcode where the property is located, then confirm to submit the listing transaction."
+                               TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Region"
+                                   FontAttributes="Bold" />
+                            <Border Padding="16, 14"
+                                    Stroke="{StaticResource CardBorderColor}"
+                                    StrokeThickness="{StaticResource CardBorderThickness}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark=#0a0a0a}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="{StaticResource CardCornerRadius}" />
+                                </Border.StrokeShape>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectRegionCommand}" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Text="{Binding SelectedRegionText}"
+                                           VerticalTextAlignment="Center"
+                                           TextColor="{StaticResource Primary}" />
+                                    <Image Grid.Column="1"
+                                           Source="xcavatecellarrow.png"
+                                           HeightRequest="20"
+                                           WidthRequest="20"
+                                           VerticalOptions="Center"
+                                           InputTransparent="True" />
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <AbsoluteLayout AbsoluteLayout.LayoutBounds="0.5, 1, 1, 80"
+                                AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional">
+                    <Grid AbsoluteLayout.LayoutBounds="0.5, 0.5, 1, 50"
+                          AbsoluteLayout.LayoutFlags="PositionProportional, WidthProportional"
+                          Margin="10, 0, 10, 10">
+                        <buttons:PlutoFrameworkElevatedButton Text="List on Marketplace"
+                                                              Command="{Binding ListPropertyCommand}"
+                                                              ButtonState="{Binding ListButtonState}" />
+                    </Grid>
+                </AbsoluteLayout>
+            </AbsoluteLayout>
+        </card:BottomPopupCard.View>
+    </card:BottomPopupCard>
+</ContentView>

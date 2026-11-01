@@ -409,6 +409,8 @@
 
         <xcavateproperty:ClaimSpvCasePopupView />
 
+        <xcavateproperty:DeveloperListPropertyPopupView />
+
         <xcavateproperty:SelectListingRegionPopupView />
 
         <messagepopup:MessagePopupView />

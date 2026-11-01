@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.Input;
-using PlutoFramework.Model;
 
 namespace PlutoFramework.Components.XcavateProperty
 {
@@ -19,11 +18,5 @@ namespace PlutoFramework.Components.XcavateProperty
         [RelayCommand]
         public Task MyProfileAsync() => Shell.Current.GoToAsync("//LawyerAccount");
 
-        /// <summary>
-        /// Back to the property page. There is no on-chain cancel for a candidacy - it
-        /// lapses when its election round ends - so this is navigation only.
-        /// </summary>
-        [RelayCommand]
-        public Task CancelClaimAsync() => NavigationModel.PopAsync();
     }
 }

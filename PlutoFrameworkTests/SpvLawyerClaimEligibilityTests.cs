@@ -123,6 +123,17 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public void IsAboveCollectedFeeCap_ReturnsTrueOnlyWhenCostsExceedTheCap()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(SpvLawyerClaimEligibility.IsAboveCollectedFeeCap(0.999999999m, 1_000_000_000), Is.False);
+                Assert.That(SpvLawyerClaimEligibility.IsAboveCollectedFeeCap(1m, 1_000_000_000), Is.False);
+                Assert.That(SpvLawyerClaimEligibility.IsAboveCollectedFeeCap(1.000000001m, 1_000_000_000), Is.True);
+            });
+        }
+
+        [Test]
         public void TryCreateCostsQuote_RejectsAnythingAboveTheCollectedFeeCap()
         {
             Assert.That(SpvLawyerClaimEligibility.TryCreateCostsQuote(1.000000001m, 1_000_000_000, out var quote), Is.False);

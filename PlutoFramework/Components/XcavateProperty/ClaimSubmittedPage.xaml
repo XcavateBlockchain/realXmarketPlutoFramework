@@ -41,9 +41,6 @@
 
                 <buttons:ElevatedButton Text="My Profile"
                                         Command="{Binding MyProfileCommand}" />
-
-                <buttons:BasicGrayButton Text="Cancel Claim"
-                                         Command="{Binding CancelClaimCommand}" />
             </VerticalStackLayout>
         </Grid>
     </template:PageTemplate.MainContent>

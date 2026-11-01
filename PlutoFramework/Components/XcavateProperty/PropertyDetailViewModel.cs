@@ -1380,8 +1380,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
         /// <summary>
         /// The developer's "List on Marketplace" action: validates the record, loads the
-        /// registered on-chain locations and opens the region picker; the submission itself
-        /// rides the picker's callback to <see cref="ExecuteListPropertyAsync"/>. The
+        /// registered on-chain locations and opens the listing explanation popup; its region
+        /// selector and confirmation callback lead to <see cref="ExecuteListPropertyAsync"/>. The
         /// record's own update waits for the on-chain confirmation
         /// (<see cref="OnMarketplaceTransactionConfirmed"/>), so the page never claims a
         /// listing the chain rejected.
@@ -1439,39 +1439,17 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            var popupViewModel = DependencyService.Get<SelectListingRegionPopupViewModel>();
+            var popupViewModel = DependencyService.Get<DeveloperListPropertyPopupViewModel>();
 
-            // The saving flag spans the picker's lifetime: a selection hands it to
-            // ExecuteListPropertyAsync's finally, a dismissal without one releases it
-            // here - the button must not stay disabled over a closed popup, nor wake
-            // up mid-submission (the popup closes AFTER its callback fires).
-            var selectionMade = false;
-
-            popupViewModel.PropertyChanged += OnRegionPopupPropertyChanged;
-
-            popupViewModel.Open(locations, option =>
-            {
-                selectionMade = true;
-                _ = ExecuteListPropertyAsync(option);
-            });
-
-            void OnRegionPopupPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-            {
-                if (e.PropertyName == nameof(SelectListingRegionPopupViewModel.IsVisible) && !popupViewModel.IsVisible)
-                {
-                    popupViewModel.PropertyChanged -= OnRegionPopupPropertyChanged;
-
-                    if (!selectionMade)
-                    {
-                        DeveloperListSaving = false;
-                    }
-                }
-            }
+            popupViewModel.Open(
+                locations,
+                ExecuteListPropertyAsync,
+                () => DeveloperListSaving = false);
         }
 
         /// <summary>
-        /// The submission behind the region picker's callback: the requirements and
-        /// developer-role checks run against the wallet, then list_property and
+        /// The submission behind the listing popup's confirmation callback: the requirements
+        /// and developer-role checks run against the wallet, then list_property and
         /// init_property_assets go out in one atomic transaction for the picked
         /// (region, postcode) pair - the property's name and published JSON document URL
         /// become the share mint's on-chain metadata.
@@ -1484,31 +1462,31 @@ namespace PlutoFramework.Components.XcavateProperty
                 return;
             }
 
-            var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
-
-            fullPageLoadingViewModel.IsVisible = true;
-
             try
             {
-                if (!await RequirementsModel.CheckRequirementsAsync())
+                var fullPageLoadingViewModel = DependencyService.Get<FullPageLoadingViewModel>();
+
+                fullPageLoadingViewModel.IsVisible = true;
+
+                try
                 {
-                    return;
+                    if (!await RequirementsModel.CheckRequirementsAsync())
+                    {
+                        return;
+                    }
+
+                    if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateDeveloper, CancellationToken.None))
+                    {
+                        return;
+                    }
+                }
+                finally
+                {
+                    // Cleared on every exit path - a throwing requirements check (network or
+                    // indexer failure) must not wedge the page behind the overlay.
+                    fullPageLoadingViewModel.IsVisible = false;
                 }
 
-                if (!await RequirementsModel.CheckXcavateRoleAsync(XcavateRole.RealEstateDeveloper, CancellationToken.None))
-                {
-                    return;
-                }
-            }
-            finally
-            {
-                // Cleared on every exit path - a throwing requirements check (network or
-                // indexer failure) must not wedge the page behind the overlay.
-                fullPageLoadingViewModel.IsVisible = false;
-            }
-
-            try
-            {
                 var metadataUri = await DeveloperPropertyClient.UploadMetadataAsync(
                     property.PropertyId, CancellationToken.None);
 
