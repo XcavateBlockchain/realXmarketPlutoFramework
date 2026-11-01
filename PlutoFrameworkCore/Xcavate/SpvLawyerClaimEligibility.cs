@@ -33,8 +33,18 @@ namespace PlutoFramework.Model.Xcavate
         public static bool CanSubmit(State state, bool ownCandidacyStanding, long nowUnixSeconds) =>
             !ownCandidacyStanding && CanDisplay(state, nowUnixSeconds);
 
+        public static bool CanRemove(State state, bool ownCandidacyStanding, long nowUnixSeconds) =>
+            state.LawyerMainPageSelected
+            && ownCandidacyStanding
+            && !string.IsNullOrEmpty(state.WalletAddress)
+            && nowUnixSeconds > state.LegalDeadline;
+
         public static ulong GetClaimRound(ulong currentRound, long expiry) =>
             expiry > 0 ? currentRound : currentRound + 1;
+
+        public static ulong GetCandidacyRound(
+            ulong currentRound, long expiry, long legalDeadline, long nowUnixSeconds) =>
+            nowUnixSeconds > legalDeadline ? currentRound : GetClaimRound(currentRound, expiry);
 
         public static string FormatCostsQuote(ulong quote) =>
             ((decimal)quote / 1_000_000_000m).ToString(

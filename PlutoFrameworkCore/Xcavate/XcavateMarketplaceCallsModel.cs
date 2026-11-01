@@ -1134,6 +1134,41 @@ namespace PlutoFramework.Model.Xcavate
             ]);
         }
 
+        public static async Task<List<TransactionInstruction>> RemoveSpvCaseClaimAsync(
+            SolanaCluster cluster,
+            string lawyer,
+            long listingId,
+            ulong round,
+            CancellationToken token = default)
+        {
+            var programs = XcavateProgramAddresses.Require(cluster);
+            var pending = await XcavateMarketplaceIndexerModel
+                .GetPendingFinalizationsAsync(cluster, listingId, listingId, lawyer, token)
+                .ConfigureAwait(false);
+
+            return BuildRemoveSpvCaseClaim(programs, lawyer, listingId, round, pending.SpvElection);
+        }
+
+        public static List<TransactionInstruction> BuildRemoveSpvCaseClaim(
+            XcavateProgramSet programs,
+            string lawyer,
+            long listingId,
+            ulong round,
+            XcavateMarketplaceIndexerModel.PendingFinalizations.ElectionFinalization? finalization)
+        {
+            var lawyerKey = new PublicKey(lawyer);
+            var instructions = new List<TransactionInstruction>();
+
+            if (finalization is not null)
+            {
+                instructions.Add(BuildFinalizeSpvElection(programs, lawyer, listingId, finalization));
+            }
+
+            instructions.Add(XcavateMarketplaceProgram.CloseCandidacy(
+                programs, lawyerKey, lawyerKey, (ulong)listingId, round, lawyerKey));
+            return instructions;
+        }
+
         /// <summary>
         /// The transfer the send flow must clear: <paramref name="amount"/> fits the
         /// sender's transferable holding (amount minus listed minus the largest vote

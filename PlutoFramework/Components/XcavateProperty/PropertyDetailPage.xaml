@@ -358,6 +358,11 @@
                                          ButtonState="{Binding LawyerClaimButtonState}"
                                          Command="{Binding ClaimSpvCaseCommand}" />
 
+        <xcavate:PageBottomBarButtonView IsVisible="{Binding ShowRemoveSpvCaseClaimButton}"
+                                         Text="Remove claim"
+                                         ButtonState="{Binding RemoveSpvCaseClaimButtonState}"
+                                         Command="{Binding RemoveSpvCaseClaimCommand}" />
+
         <xcavate:PageBottomBarTwoButtonsView IsVisible="{Binding ShowBuyMoreButtons}"
                                              LeftCommand="{Binding CancelReservationCommand}"
                                              LeftText="Cancel"

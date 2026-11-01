@@ -45,6 +45,7 @@ namespace PlutoFramework.Model.Xcavate
         private static readonly byte[] ExecuteDealDiscriminator = [107, 92, 176, 235, 53, 80, 14, 94];
         private static readonly byte[] AssignDeveloperLawyerDiscriminator = [197, 167, 242, 89, 235, 9, 169, 65];
         private static readonly byte[] ClaimSpvCaseDiscriminator = [175, 185, 102, 63, 166, 39, 168, 56];
+        private static readonly byte[] CloseCandidacyDiscriminator = [219, 28, 41, 13, 28, 103, 134, 84];
         private static readonly byte[] RegisterLawyerDiscriminator = [165, 135, 154, 240, 244, 159, 91, 255];
         private static readonly byte[] UnregisterLawyerDiscriminator = [184, 26, 138, 218, 96, 199, 142, 99];
         private static readonly byte[] ListPropertyDiscriminator = [254, 101, 42, 174, 220, 160, 42, 82];
@@ -745,6 +746,32 @@ namespace PlutoFramework.Model.Xcavate
                     AccountMeta.Writable(SystemProgram.ProgramIdKey, false),
                 ],
                 Data = Encode(ClaimSpvCaseDiscriminator, U64(listingId), U64(round), U64(costs)),
+            };
+        }
+
+        /// <summary>
+        /// close_candidacy(listing_id, round, lawyer): closes a settled round's candidacy
+        /// and refunds its rent to the wallet that funded it.
+        /// </summary>
+        public static TransactionInstruction CloseCandidacy(
+            XcavateProgramSet programs,
+            PublicKey cranker,
+            PublicKey rentPayer,
+            ulong listingId,
+            ulong round,
+            PublicKey lawyer)
+        {
+            return new TransactionInstruction
+            {
+                ProgramId = new PublicKey(programs.Marketplace).KeyBytes,
+                Keys =
+                [
+                    AccountMeta.Writable(cranker, true),
+                    AccountMeta.Writable(rentPayer, false),
+                    AccountMeta.Writable(DeriveListing(programs, listingId), false),
+                    AccountMeta.Writable(DeriveLawyerCandidacy(programs, listingId, round, lawyer), false),
+                ],
+                Data = Encode(CloseCandidacyDiscriminator, U64(listingId), U64(round), lawyer.KeyBytes),
             };
         }
 

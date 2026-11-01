@@ -428,6 +428,45 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public void BuildRemoveSpvCaseClaim_FinalizesAPendingElectionBeforeClosingTheClaim()
+        {
+            var lawyer = SyntheticKey(1);
+            var otherCandidate = SyntheticKey(2);
+            var finalization = new XcavateMarketplaceIndexerModel.PendingFinalizations.ElectionFinalization(
+                null, Round: 4, [lawyer.Key, otherCandidate.Key]);
+
+            var instructions = XcavateMarketplaceCallsModel.BuildRemoveSpvCaseClaim(
+                Programs, lawyer.Key, listingId: 9, round: 4, finalization);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(2));
+                Assert.That(instructions[0].Data[..8], Is.EqualTo(Discriminator("finalize_spv_election")));
+                Assert.That(instructions[1].Data[..8], Is.EqualTo(Discriminator("close_candidacy")));
+                Assert.That(instructions[1].Keys[0].PublicKey, Is.EqualTo(lawyer.Key));
+                Assert.That(instructions[1].Keys[1].PublicKey, Is.EqualTo(lawyer.Key));
+                Assert.That(instructions[1].Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyerCandidacy(Programs, 9, 4, lawyer).Key));
+            });
+        }
+
+        [Test]
+        public void BuildRemoveSpvCaseClaim_ClosesDirectlyWhenTheElectionIsAlreadyFinalized()
+        {
+            var lawyer = SyntheticKey(1);
+
+            var instructions = XcavateMarketplaceCallsModel.BuildRemoveSpvCaseClaim(
+                Programs, lawyer.Key, listingId: 9, round: 4, finalization: null);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instructions, Has.Count.EqualTo(1));
+                Assert.That(instructions[0].Data[..8], Is.EqualTo(Discriminator("close_candidacy")));
+                Assert.That(instructions[0].Data[16..24], Is.EqualTo(BitConverter.GetBytes(4UL)));
+            });
+        }
+
+        [Test]
         [TestCase(100_000_000_000UL, 9, "100 XCAV")]
         [TestCase(1UL, 9, "0.000000001 XCAV")]
         [TestCase(500_000UL, 6, "0.5 XCAV")]

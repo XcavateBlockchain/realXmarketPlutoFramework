@@ -518,6 +518,53 @@ namespace PlutoFrameworkTests
         }
 
         [Test]
+        public void CloseCandidacy_HasTheIdlDiscriminatorAndAccountShape()
+        {
+            var lawyer = SyntheticKey(1);
+
+            var instruction = XcavateMarketplaceProgram.CloseCandidacy(
+                Programs, lawyer, lawyer, 7, 2, lawyer);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    instruction.Data[..8],
+                    Is.EqualTo(SHA256.HashData(Encoding.UTF8.GetBytes("global:close_candidacy"))[..8]));
+                Assert.That(instruction.Keys, Has.Count.EqualTo(4));
+                Assert.That(instruction.Keys[0].PublicKey, Is.EqualTo(lawyer.Key));
+                Assert.That(instruction.Keys[0].IsSigner, Is.True);
+                Assert.That(instruction.Keys[1].PublicKey, Is.EqualTo(lawyer.Key));
+                Assert.That(instruction.Keys[1].IsSigner, Is.False);
+                Assert.That(instruction.Keys[2].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveListing(Programs, 7).Key));
+                Assert.That(instruction.Keys[3].PublicKey, Is.EqualTo(
+                    XcavateMarketplaceProgram.DeriveLawyerCandidacy(Programs, 7, 2, lawyer).Key));
+            });
+        }
+
+        [Test]
+        public void CloseCandidacy_EncodesArgsLittleEndian()
+        {
+            var lawyer = SyntheticKey(1);
+
+            var instruction = XcavateMarketplaceProgram.CloseCandidacy(
+                Programs,
+                cranker: lawyer,
+                rentPayer: lawyer,
+                listingId: 0x0102030405060708,
+                round: 0x0A0B0C0D0E0F1011,
+                lawyer: lawyer);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(instruction.Data, Has.Length.EqualTo(8 + 8 + 8 + 32));
+                Assert.That(instruction.Data[8..16], Is.EqualTo(new byte[] { 8, 7, 6, 5, 4, 3, 2, 1 }));
+                Assert.That(instruction.Data[16..24], Is.EqualTo(new byte[] { 0x11, 0x10, 0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A }));
+                Assert.That(instruction.Data[24..56], Is.EqualTo(lawyer.KeyBytes));
+            });
+        }
+
+        [Test]
         public void ListProperty_HasTheIdlAccountShape()
         {
             var developer = SyntheticKey(1);

@@ -155,6 +155,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
         [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        [NotifyPropertyChangedFor(nameof(ShowRemoveSpvCaseClaimButton))]
         private HashSet<XcavateRole>? roles = null;
 
         /// <summary>
@@ -169,6 +170,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(ShowInvestorMainAction))]
         [NotifyPropertyChangedFor(nameof(ShowAssignDeveloperLawyerButton))]
         [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        [NotifyPropertyChangedFor(nameof(ShowRemoveSpvCaseClaimButton))]
         [NotifyPropertyChangedFor(nameof(ShowDeveloperListButton))]
         [NotifyPropertyChangedFor(nameof(ShowCompleteListingButton))]
         [NotifyPropertyChangedFor(nameof(ShowAdminDecidedText))]
@@ -189,6 +191,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(MainActionButtonState))]
         [NotifyPropertyChangedFor(nameof(MainActionText))]
         [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        [NotifyPropertyChangedFor(nameof(ShowRemoveSpvCaseClaimButton))]
         private bool spvCreated;
 
         [ObservableProperty]
@@ -211,6 +214,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(SpvLawyerStatusColor))]
         [NotifyPropertyChangedFor(nameof(ShowAssignDeveloperLawyerButton))]
         [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        [NotifyPropertyChangedFor(nameof(ShowRemoveSpvCaseClaimButton))]
         private XcavateNftWrapper? nftWrapper;
 
         [ObservableProperty]
@@ -226,6 +230,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(ShowInvestorMainAction))]
         [NotifyPropertyChangedFor(nameof(ShowAssignDeveloperLawyerButton))]
         [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        [NotifyPropertyChangedFor(nameof(ShowRemoveSpvCaseClaimButton))]
         private bool isLoading = true;
 
         public bool IsLoaded => !IsLoading;
@@ -1210,10 +1215,12 @@ namespace PlutoFramework.Components.XcavateProperty
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        [NotifyPropertyChangedFor(nameof(ShowRemoveSpvCaseClaimButton))]
         private bool lawyerRoleCompliant;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(ShowClaimSpvCaseButton))]
+        [NotifyPropertyChangedFor(nameof(ShowRemoveSpvCaseClaimButton))]
         private ushort? lawyerRegionId;
 
         private SpvLawyerClaimEligibility.State? ClaimEligibilityState =>
@@ -1238,6 +1245,14 @@ namespace PlutoFramework.Components.XcavateProperty
             && ClaimEligibilityState is { } state
             && SpvLawyerClaimEligibility.CanDisplay(state, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
+        public bool ShowRemoveSpvCaseClaimButton =>
+            IsLoaded
+            && ClaimEligibilityState is { } state
+            && SpvLawyerClaimEligibility.CanRemove(
+                state, OwnCandidacyStanding, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+
+        public ButtonStateEnum RemoveSpvCaseClaimButtonState => CrankButtonState;
+
         private bool CanSubmitClaim =>
             ClaimEligibilityState is { } state
             && SpvLawyerClaimEligibility.CanSubmit(
@@ -1246,6 +1261,7 @@ namespace PlutoFramework.Components.XcavateProperty
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(LawyerClaimText))]
         [NotifyPropertyChangedFor(nameof(LawyerClaimButtonState))]
+        [NotifyPropertyChangedFor(nameof(ShowRemoveSpvCaseClaimButton))]
         private bool ownCandidacyStanding = false;
 
         public string LawyerClaimText => OwnCandidacyStanding ? "Claim submitted" : "Claim";
@@ -1660,6 +1676,12 @@ namespace PlutoFramework.Components.XcavateProperty
             SolanaListing?.SpvElectionRound ?? 0,
             SolanaListing?.SpvElectionExpiryTimestamp ?? 0);
 
+        private ulong LawyerCandidacyRound => SpvLawyerClaimEligibility.GetCandidacyRound(
+            SolanaListing?.SpvElectionRound ?? 0,
+            SolanaListing?.SpvElectionExpiryTimestamp ?? 0,
+            SolanaListing?.LegalDeadlineTimestamp ?? 0,
+            DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+
         public async Task RefreshLawyerClaimStateAsync(CancellationToken token)
         {
             var refreshVersion = Interlocked.Increment(ref lawyerClaimRefreshVersion);
@@ -1694,7 +1716,7 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 var programs = XcavateProgramAddresses.Require(cluster);
                 var candidacy = XcavateMarketplaceProgram.DeriveLawyerCandidacy(
-                    programs, (ulong)solanaListing.ListingId, ClaimRound, new Solnet.Wallet.PublicKey(wallet));
+                    programs, (ulong)solanaListing.ListingId, LawyerCandidacyRound, new Solnet.Wallet.PublicKey(wallet));
 
                 var roleTask = WhitelistModel.HasRoleAsync(wallet, XcavateRole.Lawyer, cluster, token);
                 var regionTask = XcavateMarketplaceIndexerModel.GetLawyerRegionAsync(cluster, wallet, token);
@@ -1888,6 +1910,29 @@ namespace PlutoFramework.Components.XcavateProperty
                     cluster, lawyer, ListingId, round, costsQuote, ct));
         }
 
+        [RelayCommand]
+        public async Task RemoveSpvCaseClaimAsync()
+        {
+            if (!ShowRemoveSpvCaseClaimButton)
+            {
+                return;
+            }
+
+            await RefreshListingAsync(CancellationToken.None);
+
+            if (!ShowRemoveSpvCaseClaimButton)
+            {
+                await Toast.Make("This SPV lawyer claim has already been removed.").Show();
+                return;
+            }
+
+            var round = SolanaListing?.SpvElectionRound ?? 0;
+            await RunCrankAsync(
+                "Remove SPV case claim",
+                (lawyer, cluster, ct) => XcavateMarketplaceCallsModel.RemoveSpvCaseClaimAsync(
+                    cluster, lawyer, ListingId, round, ct));
+        }
+
         /// <summary>
         /// After a confirmed claim transaction, the lawyer lands on the claim-submitted
         /// page. Runs inside the page's regular refresh handler: any other confirmed
@@ -1920,6 +1965,7 @@ namespace PlutoFramework.Components.XcavateProperty
         /// <summary>True while any crank submission is being built, signed or submitted.</summary>
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(CrankButtonState))]
+        [NotifyPropertyChangedFor(nameof(RemoveSpvCaseClaimButtonState))]
         private bool crankRunning;
 
         public bool FinalizeProposalIsVisible => PendingFinalizations?.Proposal is not null;
@@ -2083,7 +2129,7 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             var messagePopup = DependencyService.Get<MessagePopupViewModel>();
             messagePopup.Title = "Legal process expired";
-            messagePopup.Text = "The legal review period for this property has ended. Settlement and lawyer actions are no longer available. Investors with reserved or owned tokens can use Refund instead.";
+            messagePopup.Text = "The legal review period for this property has ended. Settlement and new lawyer engagements are no longer available. Investors with reserved or owned tokens can use Refund instead.";
             messagePopup.IsVisible = true;
 
             OnPropertyChanged(nameof(StatusText));
@@ -2092,6 +2138,7 @@ namespace PlutoFramework.Components.XcavateProperty
             OnPropertyChanged(nameof(MainActionButtonState));
             OnPropertyChanged(nameof(ShowAssignDeveloperLawyerButton));
             OnPropertyChanged(nameof(ShowClaimSpvCaseButton));
+            OnPropertyChanged(nameof(ShowRemoveSpvCaseClaimButton));
             OnPropertyChanged(nameof(ResolveSilentVerdictIsVisible));
             OnPropertyChanged(nameof(ExecuteDealIsVisible));
         }

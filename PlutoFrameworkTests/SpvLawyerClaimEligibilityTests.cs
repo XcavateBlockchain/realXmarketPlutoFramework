@@ -90,6 +90,58 @@ namespace PlutoFrameworkTests
             Assert.That(SpvLawyerClaimEligibility.CanSubmit(EligibleState(), ownCandidacyStanding: true, nowUnixSeconds: 2_000), Is.False);
         }
 
+        [Test]
+        public void CanRemove_AcceptsTheLawyersOwnCandidacyAfterTheLegalDeadline()
+        {
+            Assert.That(
+                SpvLawyerClaimEligibility.CanRemove(
+                    EligibleState(), ownCandidacyStanding: true, nowUnixSeconds: 2_001),
+                Is.True);
+        }
+
+        [Test]
+        public void CanRemove_RejectsTheCandidacyAtOrBeforeTheLegalDeadline()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    SpvLawyerClaimEligibility.CanRemove(
+                        EligibleState(), ownCandidacyStanding: true, nowUnixSeconds: 2_000),
+                    Is.False);
+                Assert.That(
+                    SpvLawyerClaimEligibility.CanRemove(
+                        EligibleState(), ownCandidacyStanding: true, nowUnixSeconds: 1_999),
+                    Is.False);
+            });
+        }
+
+        [Test]
+        public void CanRemove_RejectsAnotherLawyersCandidacyOrAnotherMainPageRole()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    SpvLawyerClaimEligibility.CanRemove(
+                        EligibleState(), ownCandidacyStanding: false, nowUnixSeconds: 2_001),
+                    Is.False);
+                Assert.That(
+                    SpvLawyerClaimEligibility.CanRemove(
+                        EligibleState() with { LawyerMainPageSelected = false },
+                        ownCandidacyStanding: true, nowUnixSeconds: 2_001),
+                    Is.False);
+            });
+        }
+
+        [Test]
+        public void CanRemove_RejectsAnEmptyWalletAddress()
+        {
+            Assert.That(
+                SpvLawyerClaimEligibility.CanRemove(
+                    EligibleState() with { WalletAddress = string.Empty },
+                    ownCandidacyStanding: true, nowUnixSeconds: 2_001),
+                Is.False);
+        }
+
         [TestCase(0UL, 0L, 1UL)]
         [TestCase(3UL, 0L, 4UL)]
         [TestCase(3UL, 2_001L, 3UL)]
@@ -97,6 +149,18 @@ namespace PlutoFrameworkTests
             ulong currentRound, long expiry, ulong expected)
         {
             Assert.That(SpvLawyerClaimEligibility.GetClaimRound(currentRound, expiry), Is.EqualTo(expected));
+        }
+
+        [TestCase(3UL, 0L, 2_000L, 2_001L, 3UL, TestName = "GetCandidacyRound_UsesTheSettledRoundAfterTheLegalDeadline")]
+        [TestCase(3UL, 2_500L, 2_000L, 2_001L, 3UL, TestName = "GetCandidacyRound_UsesTheActiveRoundAfterTheLegalDeadline")]
+        [TestCase(3UL, 0L, 2_000L, 2_000L, 4UL, TestName = "GetCandidacyRound_UsesTheNextClaimRoundAtTheLegalDeadline")]
+        public void GetCandidacyRound_SelectsTheRoundToProbe(
+            ulong currentRound, long expiry, long legalDeadline, long nowUnixSeconds, ulong expected)
+        {
+            Assert.That(
+                SpvLawyerClaimEligibility.GetCandidacyRound(
+                    currentRound, expiry, legalDeadline, nowUnixSeconds),
+                Is.EqualTo(expected));
         }
 
         [Test]
