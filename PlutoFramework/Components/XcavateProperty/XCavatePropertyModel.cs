@@ -124,8 +124,37 @@ namespace PlutoFramework.Components.XcavateProperty
         /// off-chain files yet), no Substrate client and no region cache: Solana deadlines
         /// are unix timestamps, so expiry is plain wall-clock arithmetic.
         /// </summary>
-        public static async Task<XcavateNftWrapper> ToXcavateNftWrapperAsync(XcavateSolanaListingNft nft, CancellationToken token)
+        public static async Task<XcavateNftWrapper> ToXcavateNftWrapperAsync(
+            XcavateSolanaListingNft nft,
+            CancellationToken token,
+            PropertyRoleContext? roleContext = null,
+            MainPageRole? activeRole = null,
+            bool loadMissingRoleContext = true)
         {
+            var selectedRole = activeRole ?? await MainPageRoleModel.GetSelectedRoleAsync().ConfigureAwait(false);
+            var solanaAddress = KeysModel.GetSolanaAddress();
+
+            if (roleContext is null && loadMissingRoleContext
+                && !string.IsNullOrEmpty(solanaAddress)
+                && XcavateDeploymentModel.IsDeployed(SolanaNetworkModel.SelectedCluster))
+            {
+                try
+                {
+                    roleContext = await XcavateMarketplaceIndexerModel.GetPropertyRoleContextAsync(
+                        SolanaNetworkModel.SelectedCluster, nft.ListingId, solanaAddress, token)
+                        .ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to load the property role context: ");
+                    Console.WriteLine(ex);
+                }
+            }
+
             if (nft.Metadata is not null && string.IsNullOrWhiteSpace(nft.Metadata!.Image))
             {
                 nft.Metadata!.Image = "noimage.png";
@@ -133,21 +162,17 @@ namespace PlutoFramework.Components.XcavateProperty
 
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-            // A listing that is not open for sale (pending assets, cancelled, refunding)
-            // counts as expired outright: no countdown chip, nothing offering to buy. A
-            // torn-down listing's claim window counts as expired the same way, which is
-            // what routes its holders into the refund states instead of "claim".
-            var listingHasExpired = !nft.OpenForSale || now > nft.ListingExpiryTimestamp;
-            var claimHasExpired = nft.IsTornDown || (nft.ClaimDeadlineTimestamp != 0 && now > nft.ClaimDeadlineTimestamp);
+            var listingHasExpired = !nft.OpenForSale || now >= nft.ListingExpiryTimestamp;
+            var claimHasExpired = nft.IsTornDown || (nft.ClaimDeadlineTimestamp != 0 && now >= nft.ClaimDeadlineTimestamp);
 
-            var solanaAddress = KeysModel.GetSolanaAddress();
-
-            var tokensBought = solanaAddress is not null && nft.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareBuyer) == true
-                ? shareBuyer.ShareAmount
-                : 0u;
-            var tokensOwned = solanaAddress is not null && nft.RealWorldAssetDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareOwner) == true
-                ? shareOwner.ShareAmount
-                : 0u;
+            var tokensBought = roleContext?.ReservedShares
+                ?? (solanaAddress is not null && nft.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareBuyer) == true
+                    ? shareBuyer.ShareAmount
+                    : 0u);
+            var tokensOwned = roleContext?.OwnedShares
+                ?? (solanaAddress is not null && nft.RealWorldAssetDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareOwner) == true
+                    ? shareOwner.ShareAmount
+                    : 0u);
 
             return new XcavateNftWrapper
             {
@@ -155,16 +180,62 @@ namespace PlutoFramework.Components.XcavateProperty
                 TokensOwned = tokensOwned,
                 Favourite = await XcavatePropertyDatabase.IsPropertyFavouriteAsync(nft.Type, nft.CollectionId, nft.Id).ConfigureAwait(false),
                 NftBase = nft,
-                // Regions live on Solana now; the Substrate region cache has nothing for them.
                 Region = null,
                 ListingHasExpired = listingHasExpired,
                 TimeLeftToBuy = listingHasExpired ? null : TimeSpan.FromSeconds(nft.ListingExpiryTimestamp - now),
                 ClaimHasExpired = claimHasExpired,
                 TimeLeftToClaim = nft.ClaimDeadlineTimestamp == 0 || claimHasExpired ? null : TimeSpan.FromSeconds(nft.ClaimDeadlineTimestamp - now),
                 SpvCreated = nft.RealWorldAssetDetails?.SpvCreated ?? true,
-                // Still the Substrate endpoint: the detail page's buy flow is unmigrated.
                 Endpoint = Endpoints.GetEndpointDictionary[EndpointEnum.XcavatePaseo],
+                ActiveRole = selectedRole,
+                ViewerAddress = solanaAddress,
+                RoleContext = roleContext,
             };
+        }
+
+        public static async Task<IReadOnlyList<XcavateNftWrapper>> ToXcavateNftWrappersAsync(
+            IReadOnlyList<XcavateSolanaListingNft> nfts,
+            CancellationToken token)
+        {
+            if (nfts.Count == 0)
+            {
+                return [];
+            }
+
+            var selectedRole = await MainPageRoleModel.GetSelectedRoleAsync().ConfigureAwait(false);
+            var solanaAddress = KeysModel.GetSolanaAddress();
+            IReadOnlyDictionary<long, PropertyRoleContext>? contexts = null;
+
+            if (!string.IsNullOrEmpty(solanaAddress)
+                && XcavateDeploymentModel.IsDeployed(SolanaNetworkModel.SelectedCluster))
+            {
+                try
+                {
+                    contexts = await XcavateMarketplaceIndexerModel.GetPropertyRoleContextsAsync(
+                        SolanaNetworkModel.SelectedCluster,
+                        nfts.Select(nft => nft.ListingId).ToList(),
+                        solanaAddress,
+                        token)
+                        .ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to load the property role contexts: ");
+                    Console.WriteLine(ex);
+                }
+            }
+
+            return await Task.WhenAll(nfts.Select(nft =>
+            {
+                PropertyRoleContext? roleContext = null;
+                contexts?.TryGetValue(nft.ListingId, out roleContext);
+                return ToXcavateNftWrapperAsync(
+                    nft, token, roleContext, selectedRole, loadMissingRoleContext: false);
+            })).ConfigureAwait(false);
         }
 
         public static async Task NavigateToPropertyDetailPageAsync(
@@ -213,14 +284,9 @@ namespace PlutoFramework.Components.XcavateProperty
 
                         if (freshListing is not null)
                         {
-                            nft.NftBase = freshListing;
-                            nft.TokensBought = solanaAddress is not null && freshListing.OngoingObjectListingDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareBuyer) == true
-                                ? shareBuyer.ShareAmount
-                                : 0u;
-                            nft.TokensOwned = solanaAddress is not null && freshListing.RealWorldAssetDetails?.ShareOwners?.TryGetValue(solanaAddress, out var shareOwner) == true
-                                ? shareOwner.ShareAmount
-                                : 0u;
-                            nft.SpvCreated = freshListing.RealWorldAssetDetails?.SpvCreated ?? true;
+                            nft = await ToXcavateNftWrapperAsync(
+                                freshListing, token, activeRole: nft.ActiveRole)
+                                .ConfigureAwait(false);
                         }
                     }
                     catch (Exception ex)
@@ -320,6 +386,8 @@ namespace PlutoFramework.Components.XcavateProperty
 
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
+                    nft.ActiveRole = mainPageRole;
+                    viewModel.NftWrapper = nft;
                     viewModel.Metadata = ((INftXcavateMetadata)nft.NftBase).XcavateMetadata;
                     viewModel.ListingDetails = ((INftXcavateOngoingObjectListing)nft.NftBase).OngoingObjectListingDetails;
                     viewModel.Region = nft.Region;

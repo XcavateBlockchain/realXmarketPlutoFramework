@@ -137,6 +137,7 @@ namespace PlutoFramework.Components.XcavateProperty
             // is re-read just like after a confirmed transaction. Same singleton lifetime,
             // same no-unsubscribe convention as the subscription above.
             SolanaNetworkModel.ClusterChanged += OnSolanaClusterChanged;
+            MainPageRoleModel.OverrideChanged += OnMainPageRoleChanged;
         }
 
         /// <summary>
@@ -151,6 +152,9 @@ namespace PlutoFramework.Components.XcavateProperty
         /// re-fetch is pure async I/O, so nothing blocks the UI while it runs.
         /// </summary>
         private void OnSolanaClusterChanged(object? sender, SolanaCluster cluster) =>
+            MainThread.BeginInvokeOnMainThread(() => _ = RefreshInBackgroundAsync());
+
+        private void OnMainPageRoleChanged() =>
             MainThread.BeginInvokeOnMainThread(() => _ = RefreshInBackgroundAsync());
 
         /// <summary>
@@ -233,8 +237,7 @@ namespace PlutoFramework.Components.XcavateProperty
                             includesPropertyName))
                         .ToList();
 
-                    var wrappedResults = await Task.WhenAll(
-                        matchingResults.Select(result => XcavatePropertyModel.ToXcavateNftWrapperAsync(result, token)))
+                    var wrappedResults = await XcavatePropertyModel.ToXcavateNftWrappersAsync(matchingResults, token)
                         .ConfigureAwait(false);
 
                     token.ThrowIfCancellationRequested();

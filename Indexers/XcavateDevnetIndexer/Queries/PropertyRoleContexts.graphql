@@ -1,0 +1,24 @@
+# One viewer's role-specific facts for a page of marketplace listings (ADR-50).
+# The app calls this once per page, not once per card; detail navigation passes one id.
+query PropertyRoleContexts($viewer: String!, $listingIds: [I64!]!) {
+  propertyRoleContexts(viewer: $viewer, listingIds: $listingIds) {
+    listingId
+    reservedShares
+    ownedShares
+    hasClaimedSpvCase
+    activeSpvCaseClaimRound
+    canClaimSpvCase
+    lettingAgent
+    lettingElectionRound
+    lettingElectionExpiry
+    lettingElectionCandidateCount
+    activeProposalId
+    activeProposalProposer
+    activeChallengeId
+    activeChallengeAgent
+    hasClaimedProperty
+    activePropertyClaimRound
+    canClaimProperty
+    resignationDueTimestamp
+  }
+}

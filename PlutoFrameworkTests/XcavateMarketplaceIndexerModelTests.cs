@@ -748,5 +748,17 @@ namespace PlutoFrameworkTests
             Assert.That(state.MyVote, Is.Null);
             Assert.That(state.WinnerOrNull, Is.Null);
         }
+
+        [Test]
+        public async Task GetPropertyRoleContextsAsync_EmptyInput_ReturnsEmptyWithoutNetwork()
+        {
+            var contexts = await XcavateMarketplaceIndexerModel.GetPropertyRoleContextsAsync(
+                SolanaCluster.Devnet,
+                [],
+                viewer: "not-a-solana-address",
+                CancellationToken.None);
+
+            Assert.That(contexts, Is.Empty);
+        }
     }
 }

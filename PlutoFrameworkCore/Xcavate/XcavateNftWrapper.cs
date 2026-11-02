@@ -1,6 +1,5 @@
 using PlutoFramework.Model;
 using PlutoFramework.Model.Xcavate;
-using UniqueryPlus.Nfts;
 
 namespace PlutoFrameworkCore.Xcavate
 {
@@ -35,82 +34,13 @@ namespace PlutoFrameworkCore.Xcavate
                 }
             }
         }
-        public string? Status
-        {
-            get
-            {
-                var ListingDetails = ((INftXcavateOngoingObjectListing)NftBase).OngoingObjectListingDetails;
+        public MainPageRole ActiveRole { get; set; } = MainPageRole.Investor;
+        public string? ViewerAddress { get; set; }
+        public PropertyRoleContext? RoleContext { get; set; }
 
-                if (ListingDetails is null)
-                {
-                    return null;
-                }
+        public string? Status => PropertyStatusResolver.Resolve(
+            this, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
-                if (NftBase is XcavateSolanaListingNft solanaListing
-                    && solanaListing.LegalProcessHasExpired(DateTimeOffset.UtcNow.ToUnixTimeSeconds()))
-                {
-                    return "Legal process expired";
-                }
-
-                if (ListingHasExpired && ListingDetails?.ListedTokens > 0 && TokensBought > 0)
-                {
-                    return "Can be refunded";
-                }
-
-                if (ListingHasExpired && ListingDetails?.ListedTokens > 0)
-                {
-                    return "Listing expired";
-                }
-
-                if (!ListingHasExpired && ListingDetails?.ListedTokens > 0)
-                {
-                    return TimeModel.GetTimeLeftText(TimeLeftToBuy.Value, "to reserve");
-                }
-
-                if (ListingDetails?.ListedTokens == 0 && !SpvCreated)
-                {
-                    return "SPV to be created";
-                }
-
-                if (ClaimHasExpired && ListingDetails?.UnclaimedTokens > 0 && TokensOwned > 0)
-                {
-                    return "Can be refunded";
-                }
-
-                if (ClaimHasExpired && ListingDetails?.UnclaimedTokens > 0 && TokensBought > 0)
-                {
-                    return "Can be refunded";
-                }
-
-                if (ClaimHasExpired && ListingDetails?.UnclaimedTokens > 0)
-                {
-                    return "Claim period expired";
-                }
-
-                if (!ClaimHasExpired && ListingDetails?.UnclaimedTokens > 0 && TokensBought > 0)
-                {
-                    return TimeModel.GetTimeLeftText(TimeLeftToClaim.Value, "to claim");
-                }
-
-                if (!ClaimHasExpired && ListingDetails?.UnclaimedTokens > 0 && TokensBought == 0)
-                {
-                    return TimeModel.GetTimeLeftText(TimeLeftToClaim.Value, "to claim");
-                }
-
-                if (ListingDetails?.UnclaimedTokens == 0 && TokensOwned > 0)
-                {
-                    return null;
-                }
-
-                if (!ListingHasExpired && ListingDetails?.ListedTokens == 0 && TokensBought == 0 && TokensOwned == 0)
-                {
-                    return "Sold out";
-                }
-
-                return null;
-            }
-        }
-
-        public bool StatusIsVisible => Status is not null;
+        public bool StatusIsVisible => !string.IsNullOrEmpty(Status);
     }
 }

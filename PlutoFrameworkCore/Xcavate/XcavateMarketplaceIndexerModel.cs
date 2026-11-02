@@ -1009,6 +1009,68 @@ namespace PlutoFramework.Model.Xcavate
                 : null;
         }
 
+        public static async Task<IReadOnlyDictionary<long, PropertyRoleContext>> GetPropertyRoleContextsAsync(
+            SolanaCluster cluster,
+            IReadOnlyCollection<long> listingIds,
+            string viewer,
+            CancellationToken token = default)
+        {
+            if (listingIds.Count == 0)
+            {
+                return new Dictionary<long, PropertyRoleContext>();
+            }
+
+            var ids = listingIds.Select(id => id.ToString(CultureInfo.InvariantCulture)).ToArray();
+            var result = await XcavateWhitelistIndexer.GetClient(cluster).PropertyRoleContexts
+                .ExecuteAsync(viewer, ids, token)
+                .ConfigureAwait(false);
+            result.EnsureNoErrors();
+
+            return (result.Data?.PropertyRoleContexts ?? [])
+                .Select(MapPropertyRoleContext)
+                .ToDictionary(context => context.ListingId);
+        }
+
+        public static async Task<PropertyRoleContext?> GetPropertyRoleContextAsync(
+            SolanaCluster cluster,
+            long listingId,
+            string viewer,
+            CancellationToken token = default)
+        {
+            var contexts = await GetPropertyRoleContextsAsync(cluster, [listingId], viewer, token)
+                .ConfigureAwait(false);
+
+            return contexts.TryGetValue(listingId, out var context) ? context : null;
+        }
+
+        private static PropertyRoleContext MapPropertyRoleContext(
+            IPropertyRoleContexts_PropertyRoleContexts node) => new()
+        {
+            ListingId = ParseInt64(node.ListingId),
+            ReservedShares = ToUInt32(node.ReservedShares),
+            OwnedShares = ToUInt32(node.OwnedShares),
+            HasClaimedSpvCase = node.HasClaimedSpvCase,
+            ActiveSpvCaseClaimRound = ParseOptionalInt64(node.ActiveSpvCaseClaimRound),
+            CanClaimSpvCase = node.CanClaimSpvCase,
+            LettingAgent = node.LettingAgent,
+            LettingElectionRound = ParseInt64(node.LettingElectionRound),
+            LettingElectionExpiry = ParseInt64(node.LettingElectionExpiry),
+            LettingElectionCandidateCount = ParseInt64(node.LettingElectionCandidateCount),
+            ActiveProposalId = ParseInt64(node.ActiveProposalId),
+            ActiveProposalProposer = node.ActiveProposalProposer,
+            ActiveChallengeId = ParseInt64(node.ActiveChallengeId),
+            ActiveChallengeAgent = node.ActiveChallengeAgent,
+            HasClaimedProperty = node.HasClaimedProperty,
+            ActivePropertyClaimRound = ParseOptionalInt64(node.ActivePropertyClaimRound),
+            CanClaimProperty = node.CanClaimProperty,
+            ResignationDueTimestamp = ParseOptionalInt64(node.ResignationDueTimestamp),
+        };
+
+        private static long? ParseOptionalInt64(string? value) =>
+            long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+                ? parsed
+                : null;
+
         /// <summary>
         /// The ledger's raw <c>streams</c> JSON (<c>[{"mint": ..., "per_share": "...", "dust": N}, ...]</c>)
         /// parsed into typed stream records; u128 values stay in BigInteger all the way.

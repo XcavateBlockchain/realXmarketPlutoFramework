@@ -174,6 +174,8 @@ namespace PlutoFramework.Components.XcavateProperty
         [NotifyPropertyChangedFor(nameof(ShowDeveloperListButton))]
         [NotifyPropertyChangedFor(nameof(ShowCompleteListingButton))]
         [NotifyPropertyChangedFor(nameof(ShowAdminDecidedText))]
+        [NotifyPropertyChangedFor(nameof(StatusText))]
+        [NotifyPropertyChangedFor(nameof(StatusIsVisible))]
         private MainPageRole mainPageRole = MainPageRole.Investor;
 
         /// <summary>Re-reads the Settings main-page role - called on every page appearance.</summary>
@@ -181,7 +183,15 @@ namespace PlutoFramework.Components.XcavateProperty
         {
             var role = await MainPageRoleModel.GetSelectedRoleAsync().ConfigureAwait(false);
 
-            await MainThread.InvokeOnMainThreadAsync(() => MainPageRole = role);
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                if (NftWrapper is not null)
+                {
+                    NftWrapper.ActiveRole = role;
+                }
+
+                MainPageRole = role;
+            });
 
             // The claim button's own-candidacy state depends on the role being current.
             await RefreshLawyerClaimStateAsync(CancellationToken.None).ConfigureAwait(false);
@@ -472,8 +482,13 @@ namespace PlutoFramework.Components.XcavateProperty
             _ => ButtonStateEnum.Disabled,
         };
 
-        public string StatusText => PendingProperty?.StatusText ?? NftWrapper?.Status ?? "Unknown";
-        public bool StatusIsVisible => IsPendingReview || (NftWrapper?.StatusIsVisible ?? false);
+        public string StatusText => PendingProperty?.StatusText
+            ?? (NftWrapper is { } wrapper
+                ? PropertyStatusResolver.Resolve(
+                    wrapper, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), MainPageRole)
+                : null)
+            ?? "Unknown";
+        public bool StatusIsVisible => IsPendingReview || (NftWrapper is not null && StatusText != "Unknown");
 
         /// <summary>
         /// The marketplace listing id the Solana program calls are keyed by. ItemId
@@ -1714,12 +1729,17 @@ namespace PlutoFramework.Components.XcavateProperty
                     return;
                 }
 
-                var programs = XcavateProgramAddresses.Require(cluster);
+                var candidacyRound = LawyerCandidacyRound;
                 var candidacy = XcavateMarketplaceProgram.DeriveLawyerCandidacy(
-                    programs, (ulong)solanaListing.ListingId, LawyerCandidacyRound, new Solnet.Wallet.PublicKey(wallet));
+                    XcavateProgramAddresses.Require(cluster),
+                    (ulong)solanaListing.ListingId,
+                    candidacyRound,
+                    new Solnet.Wallet.PublicKey(wallet));
 
                 var roleTask = WhitelistModel.HasRoleAsync(wallet, XcavateRole.Lawyer, cluster, token);
                 var regionTask = XcavateMarketplaceIndexerModel.GetLawyerRegionAsync(cluster, wallet, token);
+                // Indexed context drives the label, but only the chain may enable or remove an
+                // action: a just-confirmed claim can still be absent from the lagging indexer.
                 var candidacyTask = SolanaRpcModel.GetAccountInfoAsync(cluster, candidacy.Key, token);
 
                 await Task.WhenAll(roleTask, regionTask, candidacyTask).ConfigureAwait(false);
