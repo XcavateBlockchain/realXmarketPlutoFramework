@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:xcavate="clr-namespace:PlutoFramework.Components.Xcavate"
              x:Class="PlutoFramework.Components.Loading.PropertyDetailSkeletonView"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=Black}"
              HorizontalOptions="Fill">
     <ContentView.Resources>
         <!-- Placeholder text bar. Corner radius is half the bar height, so each bar stays
@@ -44,22 +46,9 @@
                                  Padding="20, 80, 20, 110"
                                  HorizontalOptions="Fill">
 
-                <!-- RiskWarningView: the fixed warning paragraph. -->
-                <Border Style="{StaticResource SkeletonBar}" HeightRequest="14">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="7" />
-                    </Border.StrokeShape>
-                </Border>
-                <Border Style="{StaticResource SkeletonBar}" HeightRequest="14">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="7" />
-                    </Border.StrokeShape>
-                </Border>
-                <Border Style="{StaticResource SkeletonBar}" HeightRequest="14" WidthRequest="180" HorizontalOptions="Start">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="7" />
-                    </Border.StrokeShape>
-                </Border>
+                <!-- Static content can be shared with the loaded page, keeping its measured
+                     height and the gallery position identical across the loading swap. -->
+                <xcavate:RiskWarningView />
 
                 <!-- NftMultiImageView: square main image (kept square in code-behind). -->
                 <Border x:Name="mainImageBorder"

@@ -20,11 +20,7 @@
                        NavigationBarIsVisible="False">
     <template:PageTemplate.MainContent>
         <Grid x:Name="contentGrid">
-            <!-- Shown until the details finish loading. Mirrors the content below block for
-                 block, so the page appears instantly and the swap to real data is seamless. -->
-            <loading:PropertyDetailSkeletonView IsVisible="{Binding IsLoading}" />
-
-            <ScrollView IsVisible="{Binding IsLoaded}">
+            <ScrollView>
                 <VerticalStackLayout Spacing="15"
                                      Padding="20, 80, 20, 110">
 
@@ -307,6 +303,10 @@
                     <xcavateproperty:AgentElectionSectionView Margin="0,10,0,0" />
                 </VerticalStackLayout>
             </ScrollView>
+
+            <!-- The real content stays measured underneath this opaque cover, so revealing it
+                 does not trigger a visible first layout pass for the square gallery image. -->
+            <loading:PropertyDetailSkeletonView IsVisible="{Binding IsLoading}" />
         </Grid>
     </template:PageTemplate.MainContent>
 
