@@ -734,6 +734,27 @@ type ProposalConnection {
   totalCount: Int!
 }
 
+type PropertyRoleContext {
+  listingId: I64!
+  reservedShares: I64!
+  ownedShares: I64!
+  hasClaimedSpvCase: Boolean!
+  activeSpvCaseClaimRound: I64
+  canClaimSpvCase: Boolean!
+  lettingAgent: String
+  lettingElectionRound: I64!
+  lettingElectionExpiry: I64!
+  lettingElectionCandidateCount: I64!
+  activeProposalId: I64!
+  activeProposalProposer: String
+  activeChallengeId: I64!
+  activeChallengeAgent: String
+  hasClaimedProperty: Boolean!
+  activePropertyClaimRound: I64
+  canClaimProperty: Boolean!
+  resignationDueTimestamp: I64
+}
+
 type QueryRoot {
   "Singleton config row. `null` before `initialize_config` has ever been indexed."
   config: Config
@@ -941,6 +962,8 @@ type QueryRoot {
     first: Int
     offset: Int
   ): IncomeCheckpointConnection!
+  "One viewer's role-specific facts for a page of listings (ADR-50)."
+  propertyRoleContexts(viewer: String!, listingIds: [I64!]!): [PropertyRoleContext!]!
   "The regions program's singleton config PDA."
   regionsConfig: RegionsConfig
   "Governed regions."

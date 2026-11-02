@@ -255,7 +255,7 @@ namespace PlutoFramework.Components.XcavateProperty
             // distinct new asset, in parallel like the marketplace feed's wrapping.
             var investor = KeysModel.GetSolanaAddress();
 
-            var newCards = await Task.WhenAll(newAssetIds.Select(async assetId =>
+            var newListings = await Task.WhenAll(newAssetIds.Select(async assetId =>
             {
                 var listing = await XcavateMarketplaceIndexerModel.GetListingFullInfoAsync(
                         SolanaNetworkModel.SelectedCluster, assetId, investor, token)
@@ -266,14 +266,24 @@ namespace PlutoFramework.Components.XcavateProperty
                     // The share listings outlived the primary listing's account (it was
                     // wound down); without the primary record there is no card to show.
                     Console.WriteLine($"Noticeboard: no primary listing for asset {assetId}; its share listings are skipped.");
-
-                    return (assetId, wrapper: (XcavateNftWrapper?)null);
                 }
 
-                var wrapper = await XcavatePropertyModel.ToXcavateNftWrapperAsync(listing, token).ConfigureAwait(false);
-
-                return (assetId, wrapper: (XcavateNftWrapper?)wrapper);
+                return (assetId, listing);
             })).ConfigureAwait(false);
+
+            var wrappedListings = await XcavatePropertyModel.ToXcavateNftWrappersAsync(
+                newListings.Where(item => item.listing is not null)
+                    .Select(item => item.listing!)
+                    .ToList(), token)
+                .ConfigureAwait(false);
+            var wrappersByAsset = wrappedListings.ToDictionary(
+                wrapper => ((XcavateSolanaListingNft)wrapper.NftBase).AssetId);
+
+            var newCards = newListings.Select(item =>
+                (item.assetId, wrapper: item.listing is null
+                    ? null
+                    : (XcavateNftWrapper?)wrappersByAsset[item.assetId]))
+                .ToList();
 
             token.ThrowIfCancellationRequested();
 
